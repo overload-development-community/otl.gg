@@ -141,6 +141,48 @@ class Commands {
             resolve(true);
         });
     }
+
+    createteam(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            if (message) {
+                commands.service.queue(`Sorry, ${user}, but this command does not take any parameters.  Use \`!createteam\` by itself to begin the process of creating a team.`, channel);
+                resolve(false);
+                return;
+            }
+
+            Discord.userIsStartingTeam(user.id).then((isStarting) => {
+                if (isStarting) {
+                    commands.service.queue(`Sorry, ${user}, but you are already in the process of starting a team!  Visit #new-team-${user.id} to get started.`, channel);
+                    reject(new Error("User is already in the process of starting a team."));
+                    return;
+                }
+
+                Db.getTeamByUserId(user.id).then((team) => {
+                    if (team) {
+                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName} to talk with your teammates, or use \`!leaveteam\` to leave your current team.`, channel);
+                        reject(new Error("User is already on a team."));
+                        return;
+                    }
+
+                    Discord.createTeamForUser(user.id).then(() => {
+                        commands.service.queue(`${user}, you have begun the process of creating a team.  Visit #new-team-${user.id} to set up your new team.`, channel);
+                        resolve(true);
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  roncli will be notified about this.`, channel);
+                        reject(new Exception("There was a Discord error starting a new team for the user.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  roncli will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting the current team the user is on.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  roncli will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is starting a team.", err));
+            });
+        });
+    }
 }
 
 module.exports = Commands;

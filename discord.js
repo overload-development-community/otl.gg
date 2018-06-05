@@ -1,7 +1,6 @@
 const DiscordJs = require("discord.js"),
 
     Commands = require("./commands"),
-    Db = require("./database"),
     Log = require("./log"),
     settings = require("./settings"),
 
