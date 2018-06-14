@@ -2,8 +2,10 @@ const Db = require("./database"),
     Exception = require("./exception"),
     pjson = require("./package.json"),
 
-    teamNameMatch = /[0-9a-zA-Z ]{3,25}/,
-    teamTagMatch = /[0-9A-Z]{1,5}/;
+    colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    mapMatch = /^([123]) (.+)$/,
+    teamNameMatch = /^[0-9a-zA-Z ]{3,25}$/,
+    teamTagMatch = /^[0-9A-Z]{1,5}$/;
 
 let Discord;
 
@@ -168,7 +170,7 @@ class Commands {
                 return;
             }
 
-            Discord.userIsStartingTeam(user.id).then((isStarting) => {
+            Discord.userIsStartingTeam(user).then((isStarting) => {
                 if (isStarting) {
                     commands.service.queue(`Sorry, ${user}, but you are already in the process of starting a team!  Visit #new-team-${user.id} to get started.`, channel);
                     reject(new Error("User is already in the process of starting a team."));
@@ -182,7 +184,7 @@ class Commands {
                         return;
                     }
 
-                    Discord.createTeamForUser(user.id).then(() => {
+                    Discord.createTeamForUser(user).then(() => {
                         commands.service.queue(`${user}, you have begun the process of creating a team.  Visit #new-team-${user.id} to set up your new team.`, channel);
                         resolve(true);
                     }).catch((err) => {
@@ -221,7 +223,7 @@ class Commands {
                 return;
             }
 
-            Discord.userIsStartingTeam(user.id).then((isStarting) => {
+            Discord.userIsStartingTeam(user).then((isStarting) => {
                 if (!isStarting) {
                     commands.service.queue(`Sorry, ${user}, but you cannot name a team when you're not in the process of creating one.  If you need to rename your team due to a misspelling or typo, please contact an admin.`, channel);
                     reject(new Error("User is not in the process of starting a team."));
@@ -241,7 +243,7 @@ class Commands {
                         return;
                     }
 
-                    Discord.applyTeamName(user.id, message).then(() => {
+                    Discord.applyTeamName(user, message).then(() => {
                         commands.service.queue(`${user}, your team name is now set to ${message}.  Note that proper casing may be applied to your name by an admin.`, channel);
                         resolve(true);
                     }).catch((err) => {
@@ -283,7 +285,7 @@ class Commands {
                 return;
             }
 
-            Discord.userIsStartingTeam(user.id).then((isStarting) => {
+            Discord.userIsStartingTeam(user).then((isStarting) => {
                 if (!isStarting) {
                     commands.service.queue(`Sorry, ${user}, but you cannot name a team when you're not in the process of creating one.  If you need to rename your team due to a misspelling or typo, please contact an admin.`, channel);
                     reject(new Error("User is not in the process of starting a team."));
@@ -305,7 +307,7 @@ class Commands {
                         return;
                     }
 
-                    Discord.applyTeamTag(user.id, message).then(() => {
+                    Discord.applyTeamTag(user, message).then(() => {
                         commands.service.queue(`${user}, your team tag is now set to ${message}.`, channel);
                         resolve(true);
                     }).catch((err) => {
@@ -319,6 +321,282 @@ class Commands {
             }).catch((err) => {
                 commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
                 reject(new Exception("There was a Discord error getting whether a user is starting a team.", err));
+            });
+        });
+    }
+
+    //                               ##
+    //                                #
+    //  ##    ###  ###    ##    ##    #
+    // #     #  #  #  #  #     # ##   #
+    // #     # ##  #  #  #     ##     #
+    //  ##    # #  #  #   ##    ##   ###
+    /**
+     * Cancels a new team request.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    cancel(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsStartingTeam(user).then((isStarting) => {
+                if (!isStarting) {
+                    commands.service.queue(`Sorry, ${user}, but you cannot cancel new team creation when you're not in the process of creating one.`, channel);
+                    reject(new Error("User is not in the process of starting a team."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue(`${user}, are you sure you want to cancel your new team request?  There is no undoing this action!  Type \`!cancel confirm\` to confirm.`, channel);
+                    resolve(true);
+                    return;
+                }
+
+                if (message !== "confirm") {
+                    commands.service.queue(`Sorry, ${user}, but you must type \`!cancel confirm\` to confirm that you wish to cancel your request to create a team.`, channel);
+                    resolve(true);
+                    return;
+                }
+
+                Discord.cancelCreateTeamForUser(user).then(() => {
+                    commands.service.queue("Your request to create a team has been cancelled.", user);
+                    resolve(true);
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a Discord error cancelling the create team process.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is starting a team.", err));
+            });
+        });
+    }
+
+    // #
+    // #
+    // ###    ##   # #    ##
+    // #  #  #  #  ####  # ##
+    // #  #  #  #  #  #  ##
+    // #  #   ##   #  #   ##
+    /**
+     * Sets a team's home map.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    home(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsCaptainOrFounder(user).then((isCaptain) => {
+                if (!isCaptain) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team captain or founder to use this command.`);
+                    reject(new Error("User is not a founder or captain."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue("To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`");
+                    resolve(true);
+                    return;
+                }
+
+                if (!mapMatch.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you must include the home number you wish to set, followed by the name of the map, such as \`!home 2 Vault\`.`);
+                    reject(new Error("User is not a founder or captain."));
+                    return;
+                }
+
+                const {1: number, 2: map} = mapMatch.exec(message);
+
+                Db.getTeamHomeMapsByUserId(user.id).then((homes) => {
+                    if (homes.indexOf(map) !== -1) {
+                        commands.service.queue(`Sorry, ${user}, but you already have this map set as your home.`);
+                        reject(new Error("Team already has this home map set."));
+                        return;
+                    }
+
+                    Db.setHomeMapByUserId(user.id, number, map).then(() => {
+                        Discord.applyHomeMap(user, number, map).then(() => {
+                            commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`);
+                            resolve(true);
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a database error setting a home map for the team the user is on.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting the home maps for the team the user is on.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
+            });
+        });
+    }
+
+    //             ##
+    //              #
+    //  ##    ##    #     ##   ###
+    // #     #  #   #    #  #  #  #
+    // #     #  #   #    #  #  #
+    //  ##    ##   ###    ##   #
+    /**
+     * Assigns a color to the team's Discord role.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    color(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsFounder(user).then((isFounder) => {
+                if (!isFounder) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`);
+                    reject(new Error("User is not a founder."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue("You can use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel);
+                    resolve(true);
+                    return;
+                }
+
+                if (!colorMatch.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you can only use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`);
+                    reject(new Error("Invalid color."));
+                    return;
+                }
+
+                Db.getTeamByUserId(user.id).then((team) => {
+                    if (!team) {
+                        commands.service.queue(`Sorry, ${user}, but you must be on a team to use this command.`);
+                        reject(new Error("User not on a team."));
+                        return;
+                    }
+
+                    const colors = message.split(" ");
+                    let color;
+
+                    switch (colors[colors.length === 1 ? 0 : 1]) {
+                        case "red":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#800000";
+                                    break;
+                                case "light":
+                                    color = "#FF8080";
+                                    break;
+                                default:
+                                    color = "#FF0000";
+                                    break;
+                            }
+                            break;
+                        case "orange":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#804000";
+                                    break;
+                                case "light":
+                                    color = "#FFC080";
+                                    break;
+                                default:
+                                    color = "#FF8000";
+                                    break;
+                            }
+                            break;
+                        case "yellow":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#808000";
+                                    break;
+                                case "light":
+                                    color = "#FFFF80";
+                                    break;
+                                default:
+                                    color = "#FFFF00";
+                                    break;
+                            }
+                            break;
+                        case "green":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#008000";
+                                    break;
+                                case "light":
+                                    color = "#80FF80";
+                                    break;
+                                default:
+                                    color = "#00FF00";
+                                    break;
+                            }
+                            break;
+                        case "aqua":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#008080";
+                                    break;
+                                case "light":
+                                    color = "#80FFFF";
+                                    break;
+                                default:
+                                    color = "#00FFFF";
+                                    break;
+                            }
+                            break;
+                        case "blue":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#000080";
+                                    break;
+                                case "light":
+                                    color = "#8080FF";
+                                    break;
+                                default:
+                                    color = "#0000FF";
+                                    break;
+                            }
+                            break;
+                        case "purple":
+                            switch (colors[0]) {
+                                case "dark":
+                                    color = "#800080";
+                                    break;
+                                case "light":
+                                    color = "#FF80FF";
+                                    break;
+                                default:
+                                    color = "#FF00FF";
+                                    break;
+                            }
+                            break;
+                    }
+
+                    Discord.changeUserTeamColor(user, color).then(() => {
+                        commands.service.queue(`${user}, your team's color has been updated.`);
+                        resolve(true);
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a Discord error changing a team's color.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting the current team the user is on.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
             });
         });
     }
