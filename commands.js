@@ -3,6 +3,7 @@ const Db = require("./database"),
     pjson = require("./package.json"),
 
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    idParse = /^<@!?([0-9]+)>$/,
     mapMatch = /^([123]) (.+)$/,
     teamNameMatch = /^[0-9a-zA-Z ]{3,25}$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/;
@@ -114,7 +115,7 @@ class Commands {
                 return;
             }
 
-            commands.service.queue(`The 4th Sovereign by roncli, Version ${pjson.version}`, channel);
+            commands.service.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}`, channel);
             resolve(true);
         });
     }
@@ -177,9 +178,9 @@ class Commands {
                     return;
                 }
 
-                Db.getTeamByUserId(user.id).then((team) => {
+                Db.getTeamByUser(user).then((team) => {
                     if (team) {
-                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName} to talk with your teammates, or use \`!leaveteam\` to leave your current team.`, channel);
+                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leaveteam\` to leave your current team.`, channel);
                         reject(new Error("User is already on a team."));
                         return;
                     }
@@ -231,14 +232,14 @@ class Commands {
                 }
 
                 if (!teamNameMatch.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but to prevent abuse, you can only use alphanumeric characters and spaces and are limited to 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`);
+                    commands.service.queue(`Sorry, ${user}, but to prevent abuse, you can only use alphanumeric characters and spaces and are limited to 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`, channel);
                     reject(new Error("User used non-alphanumeric characters in their team name."));
                     return;
                 }
 
                 Db.teamNameExists(message).then((exists) => {
                     if (exists) {
-                        commands.service.queue(`Sorry, ${user}, but this team name already exists!`);
+                        commands.service.queue(`Sorry, ${user}, but this team name already exists!`, channel);
                         reject(new Error("Team name already exists."));
                         return;
                     }
@@ -295,14 +296,14 @@ class Commands {
                 message = message.toUpperCase();
 
                 if (!teamTagMatch.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but you can only use alphanumeric characters, and are limited to 5 characters.`);
+                    commands.service.queue(`Sorry, ${user}, but you can only use alphanumeric characters, and are limited to 5 characters.`, channel);
                     reject(new Error("User used non-alphanumeric characters in their team tag."));
                     return;
                 }
 
                 Db.teamTagExists(message).then((exists) => {
                     if (exists) {
-                        commands.service.queue(`Sorry, ${user}, but this team tag already exists!`);
+                        commands.service.queue(`Sorry, ${user}, but this team tag already exists!`, channel);
                         reject(new Error("Team tag already exists."));
                         return;
                     }
@@ -375,70 +376,86 @@ class Commands {
         });
     }
 
-    // #
-    // #
-    // ###    ##   # #    ##
-    // #  #  #  #  ####  # ##
-    // #  #  #  #  #  #  ##
-    // #  #   ##   #  #   ##
+    //                         ##           #
+    //                          #           #
+    //  ##    ##   # #   ###    #     ##   ###    ##
+    // #     #  #  ####  #  #   #    # ##   #    # ##
+    // #     #  #  #  #  #  #   #    ##     #    ##
+    //  ##    ##   #  #  ###   ###    ##     ##   ##
+    //                   #
     /**
-     * Sets a team's home map.
+     * Completes a new team request.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
      * @returns {Promise} A promise that resolves when the command completes.
      */
-    home(user, channel, message) {
+    complete(user, channel, message) {
         const commands = this;
 
         return new Promise((resolve, reject) => {
-            Discord.userIsCaptainOrFounder(user).then((isCaptain) => {
-                if (!isCaptain) {
-                    commands.service.queue(`Sorry, ${user}, but you must be a team captain or founder to use this command.`);
-                    reject(new Error("User is not a founder or captain."));
+            Discord.userIsStartingTeam(user).then((isStarting) => {
+                if (!isStarting) {
+                    commands.service.queue(`Sorry, ${user}, but you cannot complete creating a team when you're not in the process of creating one.`, channel);
+                    reject(new Error("User is not in the process of starting a team."));
                     return;
                 }
 
-                if (!message) {
-                    commands.service.queue("To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`");
-                    resolve(true);
-                    return;
-                }
-
-                if (!mapMatch.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but you must include the home number you wish to set, followed by the name of the map, such as \`!home 2 Vault\`.`);
-                    reject(new Error("User is not a founder or captain."));
-                    return;
-                }
-
-                const {1: number, 2: map} = mapMatch.exec(message);
-
-                Db.getTeamHomeMapsByUserId(user.id).then((homes) => {
-                    if (homes.indexOf(map) !== -1) {
-                        commands.service.queue(`Sorry, ${user}, but you already have this map set as your home.`);
-                        reject(new Error("Team already has this home map set."));
+                Discord.isUserReadyToCreateTeam(user).then((isReady, name, tag) => {
+                    if (!isReady) {
+                        commands.service.queue(`Sorry, ${user}, but you must use the \`!name\` and \`!tag\` commands to give your team a name and a tag before completing your request to create a team.`, channel);
+                        reject(new Error("User is not in the process of starting a team."));
                         return;
                     }
 
-                    Db.setHomeMapByUserId(user.id, number, map).then(() => {
-                        Discord.applyHomeMap(user, number, map).then(() => {
-                            commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`);
-                            resolve(true);
+                    if (!message) {
+                        commands.service.queue(`${user}, are you sure you want to complete your request to create a team?  There is no undoing this action!  Type \`!complete confirm\` to confirm.`, channel);
+                        resolve(true);
+                        return;
+                    }
+
+                    if (message !== "confirm") {
+                        commands.service.queue(`Sorry, ${user}, but you must type \`!complete confirm\` to confirm that you wish to complete your request to create a team.`, channel);
+                        resolve(true);
+                        return;
+                    }
+
+                    Db.teamNameOrTagNameExists(message).then((teamNameExists, tagNameExists) => {
+                        if (teamNameExists) {
+                            commands.service.queue(`Sorry, ${user}, but this team name already exists!  You'll need to use the \`!name\` command to try another.`, channel);
+                            reject(new Error("Team name already exists."));
+                            return;
+                        }
+
+                        if (tagNameExists) {
+                            commands.service.queue(`Sorry, ${user}, but this team tag already exists!  You'll need to use the \`!tag\` command to try another.`, channel);
+                            reject(new Error("Team tag already exists."));
+                            return;
+                        }
+
+                        Db.createTeamForUser(user, name, tag).then(() => {
+                            Discord.createTeamForUser(user, name, tag).then(() => {
+                                commands.service.queue(`Congratulations, ${user}!  Your team has been created!  You may now visit #team-${tag.toLowerCase()} for team chat, and #team-${tag.toLowerCase()}-captains for private chat with your team captains as well as system notifications for your team.`, user);
+                                resolve(true);
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a critical Discord error creating a team.  Please resolve this manually as soon as possible.", err));
+                            });
                         }).catch((err) => {
                             commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                            reject(new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err));
+                            reject(new Exception("There was a database error creating a team.", err));
                         });
                     }).catch((err) => {
                         commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                        reject(new Exception("There was a database error setting a home map for the team the user is on.", err));
+                        reject(new Exception("There was a database error checking if the team name exists.", err));
                     });
                 }).catch((err) => {
                     commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                    reject(new Exception("There was a database error getting the home maps for the team the user is on.", err));
+                    reject(new Exception("There was a Discord error checking if the user is ready to create their team.", err));
                 });
             }).catch((err) => {
                 commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
+                reject(new Exception("There was a Discord error getting whether a user is starting a team.", err));
             });
         });
     }
@@ -462,7 +479,7 @@ class Commands {
         return new Promise((resolve, reject) => {
             Discord.userIsFounder(user).then((isFounder) => {
                 if (!isFounder) {
-                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`);
+                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`, channel);
                     reject(new Error("User is not a founder."));
                     return;
                 }
@@ -474,14 +491,14 @@ class Commands {
                 }
 
                 if (!colorMatch.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but you can only use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`);
+                    commands.service.queue(`Sorry, ${user}, but you can only use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`, channel);
                     reject(new Error("Invalid color."));
                     return;
                 }
 
-                Db.getTeamByUserId(user.id).then((team) => {
+                Db.getTeamByUser(user).then((team) => {
                     if (!team) {
-                        commands.service.queue(`Sorry, ${user}, but you must be on a team to use this command.`);
+                        commands.service.queue(`Sorry, ${user}, but you must be on a team to use this command.`, channel);
                         reject(new Error("User not on a team."));
                         return;
                     }
@@ -584,7 +601,7 @@ class Commands {
                     }
 
                     Discord.changeUserTeamColor(user, color).then(() => {
-                        commands.service.queue(`${user}, your team's color has been updated.`);
+                        commands.service.queue(`${user}, your team's color has been updated.`, channel);
                         resolve(true);
                     }).catch((err) => {
                         commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
@@ -600,6 +617,276 @@ class Commands {
             });
         });
     }
+
+    //          #     #                     #           #
+    //          #     #                     #
+    //  ###   ###   ###   ##    ###  ###   ###    ###  ##    ###
+    // #  #  #  #  #  #  #     #  #  #  #   #    #  #   #    #  #
+    // # ##  #  #  #  #  #     # ##  #  #   #    # ##   #    #  #
+    //  # #   ###   ###   ##    # #  ###     ##   # #  ###   #  #
+    //                               #
+    /**
+     * Adds a captain to the team.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    addcaptain(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsFounder(user).then((isFounder) => {
+                if (!isFounder) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`, channel);
+                    reject(new Error("User is not a founder."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.  Be sure to do this in a channel that the pilot you want to add as a captain is also in.`, channel);
+                    resolve(false);
+                    return;
+                }
+
+                if (!idParse.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.  Be sure to do this in a channel that the pilot you want to add as a captain is also in.`, channel);
+                    reject(new Error("User did not mention another user."));
+                    return;
+                }
+
+                Discord.captainCountOnUserTeam(user).then((captainCount) => {
+                    if (captainCount >= 2) {
+                        commands.service.queue(`Sorry, ${user}, but you already have ${captainCount} captains, and the limit is 2.`, channel);
+                        reject(new Error("Captain count limit reached."));
+                        return;
+                    }
+
+                    const {1: userId} = idParse.exec(message),
+                        captain = Discord.findGuildUserById(userId);
+
+                    Discord.UsersAreOnTheSameTeam(user, captain).then((sameTeam) => {
+                        if (!sameTeam) {
+                            commands.service.queue(`Sorry, ${user}, but you can only add a captain if they are on your team.`, channel);
+                            reject(new Error("Users are not on the same team."));
+                            return;
+                        }
+
+                        Discord.userIsCaptainOrFounder(captain).then((isCaptain) => {
+                            if (isCaptain) {
+                                commands.service.queue(`Sorry, ${user}, but that pilot is already a captain!`, channel);
+                                reject(new Error("Pilot is already a captain."));
+                                return;
+                            }
+
+                            Db.addCaptainForUser(captain, user).then(() => {
+                                Discord.addCaptainForUser(captain, user).then(() => {
+                                    commands.service.queue(`${user}, ${captain} is now a team captain!`, channel);
+                                    resolve(true);
+                                }).catch((err) => {
+                                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                    reject(new Exception("There was a critical Discord error adding a captain.  Please resolve this manually as soon as possible.", err));
+                                });
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a database error adding a captain.", err));
+                            });
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a Discord error getting whether a user is a team founder or captin.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a Discord error checking whether two users are on the same team.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a Discord error getting the number of captains for the user's team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
+            });
+        });
+    }
+
+    //                                                        #           #
+    //                                                        #
+    // ###    ##   # #    ##   # #    ##    ##    ###  ###   ###    ###  ##    ###
+    // #  #  # ##  ####  #  #  # #   # ##  #     #  #  #  #   #    #  #   #    #  #
+    // #     ##    #  #  #  #  # #   ##    #     # ##  #  #   #    # ##   #    #  #
+    // #      ##   #  #   ##    #     ##    ##    # #  ###     ##   # #  ###   #  #
+    //                                                 #
+    /**
+     * Removes a captain from the team.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    removecaptain(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsFounder(user).then((isFounder) => {
+                if (!isFounder) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`, channel);
+                    reject(new Error("User is not a founder."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.  Be sure to do this in a channel that the pilot you want to remove as a captain is also in.`, channel);
+                    resolve(false);
+                    return;
+                }
+
+                if (!idParse.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.  Be sure to do this in a channel that the pilot you want to remove as a captain is also in.`, channel);
+                    reject(new Error("User did not mention another user."));
+                    return;
+                }
+
+                const {1: userId} = idParse.exec(message),
+                    captain = Discord.findGuildUserById(userId);
+
+                Discord.UsersAreOnTheSameTeam(user, captain).then((sameTeam) => {
+                    if (!sameTeam) {
+                        commands.service.queue(`Sorry, ${user}, but you can only remove a captain if they are on your team.`, channel);
+                        reject(new Error("Users are not on the same team."));
+                        return;
+                    }
+
+                    Discord.userIsCaptainOrFounder(captain).then((isCaptain) => {
+                        if (!isCaptain) {
+                            commands.service.queue(`Sorry, ${user}, but that pilot is not a captain!`, channel);
+                            reject(new Error("Pilot is already a captain."));
+                            return;
+                        }
+
+                        Db.removeCaptainForUser(captain, user).then(() => {
+                            Discord.removeCaptainForUser(captain, user).then(() => {
+                                commands.service.queue(`${user}, ${captain} is no longer a team captain.`, channel);
+                                resolve(true);
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a critical Discord error removing a captain.  Please resolve this manually as soon as possible.", err));
+                            });
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a database error removing a captain.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a Discord error getting whether a user is a team founder or captin.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a Discord error checking whether two users are on the same team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
+            });
+        });
+    }
+
+    // !disband
+
+    // #
+    // #
+    // ###    ##   # #    ##
+    // #  #  #  #  ####  # ##
+    // #  #  #  #  #  #  ##
+    // #  #   ##   #  #   ##
+    /**
+     * Sets a team's home map.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    home(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsCaptainOrFounder(user).then((isCaptain) => {
+                if (!isCaptain) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team captain or founder to use this command.`, channel);
+                    reject(new Error("User is not a founder or captain."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue("To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`", channel);
+                    resolve(true);
+                    return;
+                }
+
+                if (!mapMatch.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you must include the home number you wish to set, followed by the name of the map, such as \`!home 2 Vault\`.`, channel);
+                    reject(new Error("User is not a founder or captain."));
+                    return;
+                }
+
+                const {1: number, 2: map} = mapMatch.exec(message);
+
+                Db.getTeamHomeMapsByUser(user).then((homes) => {
+                    if (homes.indexOf(map) !== -1) {
+                        commands.service.queue(`Sorry, ${user}, but you already have this map set as your home.`, channel);
+                        reject(new Error("Team already has this home map set."));
+                        return;
+                    }
+
+                    Db.setHomeMapByUser(user, number, map).then(() => {
+                        Discord.applyHomeMap(user, number, map).then(() => {
+                            commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
+                            resolve(true);
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a database error setting a home map for the team the user is on.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting the home maps for the team the user is on.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder or captin.", err));
+            });
+        });
+    }
+
+    // !request
+    // !invite
+    // !accept
+    // !leave
+    // !remove
+
+    // !challenge
+    // !clock
+    // !pickmap
+    // !suggestmap
+    // !confirmmap
+    // !suggestserver
+    // !confirmserver
+    // !suggestteamsize
+    // !confirmteamsize
+    // !suggesttime
+    // !confirmtime
+    // !report
+    // !confirm
+
+    // !forcereport
+    // !adjudicate
+    // !playerstat
+    // !rename
+    // !retag
+    // !replacefounder
 }
 
 module.exports = Commands;
