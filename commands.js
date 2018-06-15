@@ -180,7 +180,7 @@ class Commands {
 
                 Db.getTeamByUser(user).then((team) => {
                     if (team) {
-                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leaveteam\` to leave your current team.`, channel);
+                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                         reject(new Error("User is already on a team."));
                         return;
                     }
@@ -846,6 +846,83 @@ class Commands {
         });
     }
 
+    //              #                  #           #
+    //                                 #           #
+    // ###    ##   ##    ###    ###   ###    ###  ###    ##
+    // #  #  # ##   #    #  #  ##      #    #  #   #    # ##
+    // #     ##     #    #  #    ##    #    # ##   #    ##
+    // #      ##   ###   #  #  ###      ##   # #    ##   ##
+    /**
+     * Sets a team's home map.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    reinstate(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            if (!message) {
+                commands.service.queue("You must include the name of the team you wish to reinstate.", channel);
+                resolve(false);
+                return;
+            }
+
+            Db.getTeamByUser(user).then((currentTeam) => {
+                if (currentTeam) {
+                    commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                    reject(new Error("User is already on a team."));
+                    return;
+                }
+
+                Db.getTeamByTagOrName(message).then((team) => {
+                    if (!team) {
+                        commands.service.queue(`Sorry, ${user}, but I have no record of that team ever existing.`, channel);
+                        reject(new Error("Team does not exist."));
+                        return;
+                    }
+
+                    if (!team.disbanded) {
+                        commands.service.queue(`Sorry, ${user}, but you can't reinstate a team that isn't disbanded.`, channel);
+                        reject(new Error("Team is not disbanded."));
+                        return;
+                    }
+
+                    Db.wasUserPreviousCaptainOrFounderOfTeam(user, team).then((wasCaptain) => {
+                        if (!wasCaptain) {
+                            commands.service.queue(`Sorry, ${user}, but you must have been a captain or founder of the team you are trying to reinstate.`, channel);
+                            reject(new Error("Team does not exist."));
+                            return;
+                        }
+
+                        Db.reinstateTeam(team).then(() => {
+                            Discord.reinstateTeam(team).then(() => {
+                                commands.service.queue(`Congratulations, ${user}!  Your team has been reinstated!  You may now visit #team-${team.tag.toLowerCase()} for team chat, and #team-${team.tag.toLowerCase()}-captains for private chat with your team captains as well as system notifications for your team.`, user);
+                                resolve(true);
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a critical Discord error reinstating a team.  Please resolve this manually as soon as possible.", err));
+                            });
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a database error reinstating a team.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a database error checking if the user was a captain or founder of a team.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting a team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a database error getting the team the user is on.", err));
+            });
+        });
+    }
+
     // #
     // #
     // ###    ##   # #    ##
@@ -914,9 +991,84 @@ class Commands {
         });
     }
 
-    // !reinstate
+    //                                       #
+    //                                       #
+    // ###    ##    ###  #  #   ##    ###   ###
+    // #  #  # ##  #  #  #  #  # ##  ##      #
+    // #     ##    #  #  #  #  ##      ##    #
+    // #      ##    ###   ###   ##   ###      ##
+    //                #
+    /**
+     * Request to join a team.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    request(user, channel, message) {
+        const commands = this;
 
-    // !request
+        return new Promise((resolve, reject) => {
+            Db.getTeamByUser(user).then((currentTeam) => {
+                if (currentTeam) {
+                    commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                    reject(new Error("User is already on a team."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue("You must include the name of the team you want to send a join request to.", channel);
+                    resolve(false);
+                    return;
+                }
+    
+                Db.getTeamByTagOrName(message).then((team) => {
+                    if (!team) {
+                        commands.service.queue(`Sorry, ${user}, but I have no record of that team ever existing.`, channel);
+                        reject(new Error("Team does not exist."));
+                        return;
+                    }
+
+                    if (team.disbanded) {
+                        commands.service.queue(`Sorry, ${user}, but that team has disbanded.  A former captain or founder may reinstate the team with the \`!reinstate ${team.tag}\` command.`, channel);
+                        reject(new Error("Team is disbanded."));
+                        return;
+                    }
+
+                    Db.hasPlayerAlreadyRequestedTeam(user, team).then((hasRequested) => {
+                        if (hasRequested) {
+                            commands.service.queue(`Sorry, ${user}, but to prevent abuse, you may only requeset to join a team once.`);
+                            reject(new Error("Request already exists."));
+                            return;
+                        }
+
+                        Db.requestTeam(user, team).then(() => {
+                            Discord.requestTeam(user, team).then(() => {
+                                commands.service.queue(`${user}, your request has been sent to join ${team.name}.  The team's leadership has been notified of this request.`);
+                                resolve(true);
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a critical Discord error requesting to join a team.  Please resolve this manually as soon as possible.", err));
+                            });
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a database error requesting to join a team.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a database error checking if a player has already requested to join a team.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting a team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a database error getting the team the user is on.", err));
+            });
+        });
+    }
+
     // !invite
     // !accept
     // !leave
