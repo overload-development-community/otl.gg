@@ -358,7 +358,7 @@ class Commands {
 
                 if (message !== "confirm") {
                     commands.service.queue(`Sorry, ${user}, but you must type \`!cancel confirm\` to confirm that you wish to cancel your request to create a team.`, channel);
-                    resolve(true);
+                    resolve(false);
                     return;
                 }
 
@@ -416,7 +416,7 @@ class Commands {
 
                     if (message !== "confirm") {
                         commands.service.queue(`Sorry, ${user}, but you must type \`!complete confirm\` to confirm that you wish to complete your request to create a team.`, channel);
-                        resolve(true);
+                        resolve(false);
                         return;
                     }
 
@@ -791,7 +791,60 @@ class Commands {
         });
     }
 
-    // !disband
+    //    #   #           #                    #
+    //    #               #                    #
+    //  ###  ##     ###   ###    ###  ###    ###
+    // #  #   #    ##     #  #  #  #  #  #  #  #
+    // #  #   #      ##   #  #  # ##  #  #  #  #
+    //  ###  ###   ###    ###    # #  #  #   ###
+    /**
+     * Disbands a team.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    disband(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsFounder(user).then((isFounder) => {
+                if (!isFounder) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team founder to use this command.`, channel);
+                    reject(new Error("User is not a founder."));
+                    return;
+                }
+
+                if (!message) {
+                    commands.service.queue(`${user}, are you sure you want to disband your team?  There is no undoing this action!  Type \`!disband confirm\` to confirm.`, channel);
+                    resolve(true);
+                    return;
+                }
+
+                if (message !== "confirm") {
+                    commands.service.queue(`Sorry, ${user}, but you must type \`!disband confirm\` to confirm that you wish to disband your team.`, channel);
+                    resolve(false);
+                    return;
+                }
+
+                Db.disbandTeamForUser(user).then(() => {
+                    Discord.disbandTeamForUser(user).then(() => {
+                        commands.service.queue("You have successfully disbanded your team.  Note that you or anyone else who has been founder or captain of your team in the past may `!reinstate` your team.", user);
+                        resolve(true);
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a critical Discord error disbanding a team.  Please resolve this manually as soon as possible.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error disbanding a team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder.", err));
+            });
+        });
+    }
 
     // #
     // #
@@ -860,6 +913,8 @@ class Commands {
             });
         });
     }
+
+    // !reinstate
 
     // !request
     // !invite
