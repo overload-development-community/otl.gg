@@ -3,7 +3,7 @@ const Db = require("./database"),
     pjson = require("./package.json"),
 
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
-    idParse = /^<@!?([0-9]+)>$/,
+    idParse = /^<@!?([0-9]+)>$/, // TODO: Allow places that accept IDs to also accept names.
     mapMatch = /^([123]) (.+)$/,
     teamNameMatch = /^[0-9a-zA-Z ]{3,25}$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/;
@@ -644,13 +644,13 @@ class Commands {
                 }
 
                 if (!message) {
-                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.  Be sure to do this in a channel that the pilot you want to add as a captain is also in.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.`, channel);
                     resolve(false);
                     return;
                 }
 
                 if (!idParse.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.  Be sure to do this in a channel that the pilot you want to add as a captain is also in.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to add as a captain.`, channel);
                     reject(new Error("User did not mention another user."));
                     return;
                 }
@@ -736,13 +736,13 @@ class Commands {
                 }
 
                 if (!message) {
-                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.  Be sure to do this in a channel that the pilot you want to remove as a captain is also in.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.`, channel);
                     resolve(false);
                     return;
                 }
 
                 if (!idParse.test(message)) {
-                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.  Be sure to do this in a channel that the pilot you want to remove as a captain is also in.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to remove as a captain.`, channel);
                     reject(new Error("User did not mention another user."));
                     return;
                 }
@@ -1021,7 +1021,7 @@ class Commands {
                     resolve(false);
                     return;
                 }
-    
+
                 Db.getTeamByTagOrName(message).then((team) => {
                     if (!team) {
                         commands.service.queue(`Sorry, ${user}, but I have no record of that team ever existing.`, channel);
@@ -1037,14 +1037,14 @@ class Commands {
 
                     Db.hasPlayerAlreadyRequestedTeam(user, team).then((hasRequested) => {
                         if (hasRequested) {
-                            commands.service.queue(`Sorry, ${user}, but to prevent abuse, you may only requeset to join a team once.`);
+                            commands.service.queue(`Sorry, ${user}, but to prevent abuse, you may only requeset to join a team once.`, channel);
                             reject(new Error("Request already exists."));
                             return;
                         }
 
                         Db.requestTeam(user, team).then(() => {
                             Discord.requestTeam(user, team).then(() => {
-                                commands.service.queue(`${user}, your request has been sent to join ${team.name}.  The team's leadership has been notified of this request.`);
+                                commands.service.queue(`${user}, your request has been sent to join ${team.name}.  The team's leadership has been notified of this request.`, channel);
                                 resolve(true);
                             }).catch((err) => {
                                 commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
@@ -1069,7 +1069,91 @@ class Commands {
         });
     }
 
-    // !invite
+    //  #                 #     #
+    //                          #
+    // ##    ###   # #   ##    ###    ##
+    //  #    #  #  # #    #     #    # ##
+    //  #    #  #  # #    #     #    ##
+    // ###   #  #   #    ###     ##   ##
+    /**
+     * Invites a player to a team.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    invite(user, channel, message) {
+        const commands = this;
+
+        return new Promise((resolve, reject) => {
+            Discord.userIsCaptainOrFounder(user).then((isCaptain) => {
+                if (!isCaptain) {
+                    commands.service.queue(`Sorry, ${user}, but you must be a team captain or founder to use this command.`, channel);
+                    reject(new Error("User is not a founder or captain."));
+                    return;
+                }
+
+                if (!idParse.test(message)) {
+                    commands.service.queue(`Sorry, ${user}, but you must mention the pilot on your team that you wish to invite to your team.`, channel);
+                    reject(new Error("User did not mention another user."));
+                    return;
+                }
+
+                Db.playerAndInvitedCountOnUserTeam(user).then((playerCount) => {
+                    if (playerCount >= 8) {
+                        commands.service.queue(`Sorry, ${user}, but there is a maximum of 8 pilots per roster, and your team currently has ${playerCount}.`, channel);
+                        reject(new Error("Roster is full."));
+                        return;
+                    }
+
+                    const {1: userId} = idParse.exec(message),
+                        player = Discord.findGuildUserById(userId);
+
+                    Db.hasUserInvitedPlayerToTeam(user, player).then((invited) => {
+                        if (invited) {
+                            commands.service.queue(`Sorry, ${user}, but to prevent abuse you can only invite a pilot to your team once.  If they have not responded yet, ask them to \`!accept\` the invitation.`, channel);
+                            reject(new Error("Player already invited."));
+                            return;
+                        }
+
+                        Db.getTeamByUser(player).then((team) => {
+                            if (team) {
+                                commands.service.queue(`Sorry, ${user}, but that pilot is already on another team!`);
+                                reject(new Error("Player already on another team."));
+                                return;
+                            }
+
+                            Db.userInvitePlayerToTeam(user, player).then(() => {
+                                Discord.userInvitePlayerToTeam(user, player).then(() => {
+                                    commands.service.queue(`${user}, ${player} has been invited to your team.`); // TODO: Correct user to show user name.
+                                    resolve(true);
+                                }).catch((err) => {
+                                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                    reject(new Exception("There was a critical Discord error inviting a player to a team.  Please resolve this manually as soon as possible.", err));
+                                });
+                            }).catch((err) => {
+                                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                                reject(new Exception("There was a database error inviting a player to a team.", err));
+                            });
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a database error getting the current team the user is on.", err));
+                        });
+                    }).catch((err) => {
+                        commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                        reject(new Exception("There was a database error checking if a player was already invited to a team.", err));
+                    });
+                }).catch((err) => {
+                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                    reject(new Exception("There was a database error getting the number of players on and invited to a user's team.", err));
+                });
+            }).catch((err) => {
+                commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                reject(new Exception("There was a Discord error getting whether a user is a team founder or captin.", err));
+            });
+        });
+    }
+
     // !accept
     // !leave
     // !remove
@@ -1088,12 +1172,14 @@ class Commands {
     // !report
     // !confirm
 
-    // !forcereport
-    // !adjudicate
-    // !playerstat
     // !rename
     // !retag
     // !replacefounder
+    // !removeplayer
+    // !forcereport
+    // !adjudicate
+    // !playerstat
+    // !voidgame
 }
 
 module.exports = Commands;
