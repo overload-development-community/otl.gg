@@ -226,6 +226,22 @@ class Discord {
         return otlGuild.members.find("id", id);
     }
 
+    //   #    #             #   ##          #    ##       #  #  #                     ###         ###    #                 ##                #  #
+    //  # #                 #  #  #               #       #  #  #                     #  #        #  #                      #                ## #
+    //  #    ##    ###    ###  #     #  #  ##     #     ###  #  #   ###    ##   ###   ###   #  #  #  #  ##     ###   ###    #     ###  #  #  ## #   ###  # #    ##
+    // ###    #    #  #  #  #  # ##  #  #   #     #    #  #  #  #  ##     # ##  #  #  #  #  #  #  #  #   #    ##     #  #   #    #  #  #  #  # ##  #  #  ####  # ##
+    //  #     #    #  #  #  #  #  #  #  #   #     #    #  #  #  #    ##   ##    #     #  #   # #  #  #   #      ##   #  #   #    # ##   # #  # ##  # ##  #  #  ##
+    //  #    ###   #  #   ###   ###   ###  ###   ###    ###   ##   ###     ##   #     ###     #   ###   ###   ###    ###   ###    # #    #   #  #   # #  #  #   ##
+    //                                                                                       #                       #                  #
+    /**
+     * Returns the Discord user in the guild by their display name.
+     * @param {string} displayName The display name of the Discord user.
+     * @returns {User} The Discord user.
+     */
+    static findGuildUserByDisplayName(displayName) {
+        return otlGuild.members.find("displayName", displayName);
+    }
+
     //   #    #             #   ##   #                             ##    ###         #  #
     //  # #                 #  #  #  #                              #    #  #        ## #
     //  #    ##    ###    ###  #     ###    ###  ###   ###    ##    #    ###   #  #  ## #   ###  # #    ##
