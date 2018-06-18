@@ -180,21 +180,21 @@ class Commands {
                     return;
                 }
 
-                Db.getTeamByUser(user).then((team) => {
+                Db.getTeam(user).then((team) => {
                     if (team) {
                         commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                         reject(new Error("User is already on a team."));
                         return;
                     }
 
-                    Db.userAcceptDeniedUntil(user).then((deniedUntil) => {
+                    Db.joinTeamDeniedUntil(user).then((deniedUntil) => {
                         if (deniedUntil) {
                             commands.service.queue(`Sorry, ${user}, but you have accepted an invitation in the past 28 days.  You will be able to create a new team on ${deniedUntil.toUTCString()}`, channel);
                             reject(new Error("User not allowed to create a new team."));
                             return;
                         }
 
-                        Discord.createTeamForUser(user).then(() => {
+                        Discord.startCreateTeam(user).then(() => {
                             commands.service.queue(`${user}, you have begun the process of creating a team.  Visit #new-team-${user.id} to set up your new team.`, channel);
                             resolve(true);
                         }).catch((err) => {
@@ -250,7 +250,7 @@ class Commands {
                     return;
                 }
 
-                Db.teamNameExists(message).then((exists) => {
+                Discord.teamNameExists(message).then((exists) => {
                     if (exists) {
                         commands.service.queue(`Sorry, ${user}, but this team name already exists!`, channel);
                         reject(new Error("Team name already exists."));
@@ -266,7 +266,7 @@ class Commands {
                     });
                 }).catch((err) => {
                     commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                    reject(new Exception("There was a database error checking if the team name exists.", err));
+                    reject(new Exception("There was a Discord error checking if the team name exists.", err));
                 });
             }).catch((err) => {
                 commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
@@ -375,7 +375,7 @@ class Commands {
                     return;
                 }
 
-                Discord.cancelCreateTeamForUser(user).then(() => {
+                Discord.cancelCreateTeam(user).then(() => {
                     commands.service.queue("Your request to create a team has been cancelled.", user);
                     resolve(true);
                 }).catch((err) => {
@@ -414,7 +414,7 @@ class Commands {
                     return;
                 }
 
-                Discord.isUserReadyToCreateTeam(user).then((isReady, name, tag) => {
+                Discord.readyToCreateTeam(user).then((isReady, name, tag) => {
                     if (!isReady) {
                         commands.service.queue(`Sorry, ${user}, but you must use the \`!name\` and \`!tag\` commands to give your team a name and a tag before completing your request to create a team.`, channel);
                         reject(new Error("User is not in the process of starting a team."));
@@ -433,7 +433,7 @@ class Commands {
                         return;
                     }
 
-                    Db.teamNameOrTagNameExists(message).then((teamNameExists, tagNameExists) => {
+                    Db.teamNameOrTagNameExists(name, tag).then((teamNameExists, tagNameExists) => {
                         if (teamNameExists) {
                             commands.service.queue(`Sorry, ${user}, but this team name already exists!  You'll need to use the \`!name\` command to try another.`, channel);
                             reject(new Error("Team name already exists."));
@@ -446,8 +446,8 @@ class Commands {
                             return;
                         }
 
-                        Db.createTeamForUser(user, name, tag).then(() => {
-                            Discord.createTeamForUser(user, name, tag).then(() => {
+                        Db.createTeam(user, name, tag).then(() => {
+                            Discord.createTeam(user, name, tag).then(() => {
                                 commands.service.queue(`Congratulations, ${user}!  Your team has been created!  You may now visit #team-${tag.toLowerCase()} for team chat, and #team-${tag.toLowerCase()}-captains for private chat with your team captains as well as system notifications for your team.`, user);
                                 resolve(true);
                             }).catch((err) => {
@@ -509,7 +509,7 @@ class Commands {
                     return;
                 }
 
-                Db.getTeamByUser(user).then((team) => {
+                Db.getTeam(user).then((team) => {
                     if (!team) {
                         commands.service.queue(`Sorry, ${user}, but you must be on a team to use this command.`, channel);
                         reject(new Error("User not on a team."));
@@ -613,7 +613,7 @@ class Commands {
                             break;
                     }
 
-                    Discord.changeUserTeamColor(user, color).then(() => {
+                    Discord.changeTeamColor(user, color).then(() => {
                         commands.service.queue(`${user}, your team's color has been updated.`, channel);
                         resolve(true);
                     }).catch((err) => {
@@ -674,9 +674,9 @@ class Commands {
                     if (idParse.test(message)) {
                         const {1: userId} = idParse.exec(message);
 
-                        captain = Discord.findGuildUserById(userId);
+                        captain = Discord.findGuildMemberById(userId);
                     } else {
-                        captain = Discord.findGuildUserByDisplayName(message);
+                        captain = Discord.findGuildMemberByDisplayName(message);
                     }
 
                     if (!captain) {
@@ -685,7 +685,13 @@ class Commands {
                         return;
                     }
 
-                    Discord.UsersAreOnTheSameTeam(user, captain).then((sameTeam) => {
+                    if (captain.id === user.id) {
+                        commands.service.queue(`Sorry, ${user}, but you can't promote yourself to captain!`, channel);
+                        reject(new Error("User can't promote themselves."));
+                        return;
+                    }
+
+                    Discord.usersAreOnTheSameTeam(user, captain).then((sameTeam) => {
                         if (!sameTeam) {
                             commands.service.queue(`Sorry, ${user}, but you can only add a captain if they are on your team.`, channel);
                             reject(new Error("Users are not on the same team."));
@@ -699,8 +705,8 @@ class Commands {
                                 return;
                             }
 
-                            Db.addCaptainForUser(captain, user).then(() => {
-                                Discord.addCaptainForUser(captain, user).then(() => {
+                            Db.addCaptain(user, captain).then(() => {
+                                Discord.addCaptain(user, captain).then(() => {
                                     commands.service.queue(`${user}, ${captain.displayName} is now a team captain!`, channel);
                                     resolve(true);
                                 }).catch((err) => {
@@ -766,9 +772,9 @@ class Commands {
                 if (idParse.test(message)) {
                     const {1: userId} = idParse.exec(message);
 
-                    captain = Discord.findGuildUserById(userId);
+                    captain = Discord.findGuildMemberById(userId);
                 } else {
-                    captain = Discord.findGuildUserByDisplayName(message);
+                    captain = Discord.findGuildMemberByDisplayName(message);
                 }
 
                 if (!captain) {
@@ -777,7 +783,7 @@ class Commands {
                     return;
                 }
 
-                Discord.UsersAreOnTheSameTeam(user, captain).then((sameTeam) => {
+                Discord.usersAreOnTheSameTeam(user, captain).then((sameTeam) => {
                     if (!sameTeam) {
                         commands.service.queue(`Sorry, ${user}, but you can only remove a captain if they are on your team.`, channel);
                         reject(new Error("Users are not on the same team."));
@@ -791,8 +797,8 @@ class Commands {
                             return;
                         }
 
-                        Db.removeCaptainForUser(captain, user).then(() => {
-                            Discord.removeCaptainForUser(captain, user).then(() => {
+                        Db.removeCaptain(user, captain).then(() => {
+                            Discord.removeCaptain(user, captain).then(() => {
                                 commands.service.queue(`${user}, ${captain.displayName} is no longer a team captain.`, channel);
                                 resolve(true);
                             }).catch((err) => {
@@ -854,8 +860,8 @@ class Commands {
                     return;
                 }
 
-                Db.disbandTeamForUser(user).then(() => {
-                    Discord.disbandTeamForUser(user).then(() => {
+                Db.disbandTeam(user).then(() => {
+                    Discord.disbandTeam(user).then(() => {
                         commands.service.queue("You have successfully disbanded your team.  Note that you or anyone else who has been founder or captain of your team in the past may `!reinstate` your team.", user);
                         resolve(true);
                     }).catch((err) => {
@@ -896,7 +902,7 @@ class Commands {
                 return;
             }
 
-            Db.getTeamByUser(user).then((currentTeam) => {
+            Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
                     commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
@@ -916,7 +922,7 @@ class Commands {
                         return;
                     }
 
-                    Db.wasUserPreviousCaptainOrFounderOfTeam(user, team).then((wasCaptain) => {
+                    Db.userWasPreviousCaptainOrFounderOfTeam(user, team).then((wasCaptain) => {
                         if (!wasCaptain) {
                             commands.service.queue(`Sorry, ${user}, but you must have been a captain or founder of the team you are trying to reinstate.`, channel);
                             reject(new Error("Team does not exist."));
@@ -988,21 +994,17 @@ class Commands {
 
                 const {1: number, 2: map} = mapMatch.exec(message);
 
-                Db.getTeamHomeMapsByUser(user).then((homes) => {
+                Db.getTeamHomeMaps(user).then((homes) => {
                     if (homes.indexOf(map) !== -1) {
                         commands.service.queue(`Sorry, ${user}, but you already have this map set as your home.`, channel);
                         reject(new Error("Team already has this home map set."));
                         return;
                     }
 
-                    Db.setHomeMapByUser(user, number, map).then(() => {
-                        Discord.applyHomeMap(user, number, map).then(() => {
-                            commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
-                            resolve(true);
-                        }).catch((err) => {
-                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                            reject(new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err));
-                        });
+                    Db.applyHomeMap(user, number, map).then(() => {
+                        Discord.updateUserTeam(user);
+                        commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
+                        resolve(true);
                     }).catch((err) => {
                         commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
                         reject(new Exception("There was a database error setting a home map for the team the user is on.", err));
@@ -1036,7 +1038,7 @@ class Commands {
         const commands = this;
 
         return new Promise((resolve, reject) => {
-            Db.getTeamByUser(user).then((currentTeam) => {
+            Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
                     commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
@@ -1062,7 +1064,7 @@ class Commands {
                         return;
                     }
 
-                    Db.hasPlayerAlreadyRequestedTeam(user, team).then((hasRequested) => {
+                    Db.userHasAlreadyRequestedTeam(user, team).then((hasRequested) => {
                         if (hasRequested) {
                             commands.service.queue(`Sorry, ${user}, but to prevent abuse, you may only requeset to join a team once.`, channel);
                             reject(new Error("Request already exists."));
@@ -1120,7 +1122,7 @@ class Commands {
                     return;
                 }
 
-                Db.playerAndInvitedCountOnUserTeam(user).then((playerCount) => {
+                Db.getTeamPlayerAndInvitedCount(user).then((playerCount) => {
                     if (playerCount >= 8) {
                         commands.service.queue(`Sorry, ${user}, but there is a maximum of 8 pilots per roster, and your team currently has ${playerCount}.`, channel);
                         reject(new Error("Roster is full."));
@@ -1132,9 +1134,9 @@ class Commands {
                     if (idParse.test(message)) {
                         const {1: userId} = idParse.exec(message);
 
-                        player = Discord.findGuildUserById(userId);
+                        player = Discord.findGuildMemberById(userId);
                     } else {
-                        player = Discord.findGuildUserByDisplayName(message);
+                        player = Discord.findGuildMemberByDisplayName(message);
                     }
 
                     if (!player) {
@@ -1143,22 +1145,22 @@ class Commands {
                         return;
                     }
 
-                    Db.hasUserInvitedPlayerToTeam(user, player).then((invited) => {
+                    Db.userTeamHasInvitedPlayer(user, player).then((invited) => {
                         if (invited) {
                             commands.service.queue(`Sorry, ${user}, but to prevent abuse you can only invite a pilot to your team once.  If ${player.displayName} has not responded yet, ask them to \`!accept\` the invitation.`, channel);
                             reject(new Error("Player already invited."));
                             return;
                         }
 
-                        Db.getTeamByUser(player).then((team) => {
+                        Db.getTeam(player).then((team) => {
                             if (team) {
                                 commands.service.queue(`Sorry, ${user}, but ${player.displayName} is already on another team!`, channel);
                                 reject(new Error("Player already on another team."));
                                 return;
                             }
 
-                            Db.userInvitePlayerToTeam(user, player).then(() => {
-                                Discord.userInvitePlayerToTeam(user, player).then(() => {
+                            Db.invitePlayerToTeam(user, player).then(() => {
+                                Discord.invitePlayerToTeam(user, player).then(() => {
                                     commands.service.queue(`${user}, ${player.displayName} has been invited to your team.`, channel);
                                     resolve(true);
                                 }).catch((err) => {
@@ -1206,21 +1208,29 @@ class Commands {
         const commands = this;
 
         return new Promise((resolve, reject) => {
-            Db.getTeamByUser(user).then((currentTeam) => {
+            Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
                     commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
                     return;
                 }
 
-                Db.userInvitedToTeam(user).then((team) => {
+                if (!message) {
+                    commands.service.queue(`Sorry, ${user}, but you must include the name or tag of the team you wish to accept an invitation from.  For example, if you wish to accept an invitation from Cronus Frontier, use either \`!accept Cronus Frontier\` or \`!accept CF\`.`, channel);
+                    resolve(false);
+                    return;
+                }
+
+                const {1: name, 2: confirm} = nameConfirmParse.exec(message);
+
+                Db.userIsInvitedToTeam(user, name).then((team) => {
                     if (!team) {
-                        commands.service.queue(`Sorry, ${user}, but you don't have a pending invitation to any team.`, channel);
-                        reject(new Error("User is already on a team."));
+                        commands.service.queue(`Sorry, ${user}, but you don't have a pending invitation to ${name}.`, channel);
+                        reject(new Error("User does not have an invitation to accept."));
                         return;
                     }
 
-                    Db.userAcceptDeniedUntil(user).then((deniedUntil) => {
+                    Db.joinTeamDeniedUntil(user).then((deniedUntil) => {
                         if (deniedUntil) {
                             commands.service.queue(`Sorry, ${user}, but you have accepted an invitation in the past 28 days.  You will be able to join a new team on ${deniedUntil.toUTCString()}`, channel);
                             reject(new Error("User not allowed to accept an invite."));
@@ -1234,15 +1244,9 @@ class Commands {
                                 return;
                             }
 
-                            if (!message) {
+                            if (!confirm) {
                                 commands.service.queue(`${user}, are you sure you want to join **${team.name}**?  Type \`!accept confirm\` to confirm.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
                                 resolve(true);
-                                return;
-                            }
-
-                            if (message !== "confirm") {
-                                commands.service.queue(`Sorry, ${user}, but you must type \`!accept confirm\` to confirm that you wish to accept the invitation to **${team.name}**.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
-                                resolve(false);
                                 return;
                             }
 
@@ -1294,36 +1298,44 @@ class Commands {
         const commands = this;
 
         return new Promise((resolve, reject) => {
-            Db.getTeamByUser(user).then((team) => {
+            Db.getTeam(user).then((team) => {
                 if (team) {
                     commands.service.queue(`Sorry, ${user}, but you can't leave a team when you aren't on one!`, channel);
                     reject(new Error("User is not on a team."));
                     return;
                 }
 
-                if (!message) {
-                    commands.service.queue(`${user}, are you sure you want to leave **${team.name}**?  Type \`!accept confirm\` to confirm.  Note that you will not be able to rejoin this team for 28 days.`, channel);
-                    resolve(true);
-                    return;
-                }
+                Discord.userIsFounder(user).then((isFounder) => {
+                    if (isFounder) {
+                        commands.service.queue(`Sorry, ${user}, but you are the team founder.  You must either \`!disband\` the team or choose another teammate to \`!makefounder\`.`, channel);
+                        reject(new Error("User is the team founder."));
+                        return;
+                    }
 
-                if (message !== "confirm") {
-                    commands.service.queue(`Sorry, ${user}, but you must type \`!accept confirm\` to confirm that you wish to leave **${team.name}**.  Note that you will not be able to rejoin this team for 28 days.`, channel);
-                    resolve(false);
-                    return;
-                }
-
-                Db.removeUserFromTeam(user, team).then(() => {
-                    Discord.removeUserFromTeam(user, team).then(() => {
-                        commands.service.queue(`${user}, you have left **${team.name}**.`, user);
+                    if (!message) {
+                        commands.service.queue(`${user}, are you sure you want to leave **${team.name}**?  Type \`!accept confirm\` to confirm.  Note that you will not be able to rejoin this team for 28 days.`, channel);
                         resolve(true);
+                        return;
+                    }
+
+                    if (message !== "confirm") {
+                        commands.service.queue(`Sorry, ${user}, but you must type \`!accept confirm\` to confirm that you wish to leave **${team.name}**.  Note that you will not be able to rejoin this team for 28 days.`, channel);
+                        resolve(false);
+                        return;
+                    }
+
+                    Db.removeUserFromTeam(user, team).then(() => {
+                        Discord.removeUserFromTeam(user, team).then(() => {
+                            commands.service.queue(`${user}, you have left **${team.name}**.`, user);
+                            resolve(true);
+                        }).catch((err) => {
+                            commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                            reject(new Exception("There was a critical Discord error removing a user from a team.  Please resolve this manually as soon as possible.", err));
+                        });
                     }).catch((err) => {
                         commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                        reject(new Exception("There was a critical Discord error removing a user from a team.  Please resolve this manually as soon as possible.", err));
+                        reject(new Exception("There was a database error removing a user from a team.", err));
                     });
-                }).catch((err) => {
-                    commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                    reject(new Exception("There was a database error removing a user from a team.", err));
                 });
             }).catch((err) => {
                 commands.service.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
@@ -1360,12 +1372,12 @@ class Commands {
                 if (idConfirmParse.test(message)) {
                     const {1: userId, 2: confirmed} = idConfirmParse.exec(message);
 
-                    player = Discord.findGuildUserById(userId);
+                    player = Discord.findGuildMemberById(userId);
                     confirm = confirmed;
                 } else {
                     const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
 
-                    player = Discord.findGuildUserByDisplayName(name);
+                    player = Discord.findGuildMemberByDisplayName(name);
                     confirm = confirmed;
                 }
 
@@ -1375,7 +1387,13 @@ class Commands {
                     return;
                 }
 
-                Db.userCanRemoveUser(user, player).then((removable) => {
+                if (player.id === user.id) {
+                    commands.service.queue(`Sorry, ${user}, you can't remove yourself with this command.  If you wish to leave the server, use the \`!leave\` command.`, channel);
+                    reject(new Error("User cannot remove themselves."));
+                    return;
+                }
+
+                Db.canRemovePlayer(user, player).then((removable) => {
                     if (!removable) {
                         commands.service.queue(`Sorry, ${user}, but ${player.displayName} is not a player you can remove.`, channel);
                         reject(new Error("User is not removable."));
@@ -1388,8 +1406,8 @@ class Commands {
                         return;
                     }
 
-                    Db.userRemoveUserFromTeam(user, player).then(() => {
-                        Discord.userRemoveUserFromTeam(user, player).then(() => {
+                    Db.removePlayer(user, player).then(() => {
+                        Discord.removePlayer(user, player).then(() => {
                             commands.service.queue(`${user}, you have removed ${player.displayName}.`, user);
                             resolve(true);
                         }).catch((err) => {
@@ -1410,6 +1428,8 @@ class Commands {
             });
         });
     }
+
+    // !makefounder
 
     // !challenge
     // !clock
