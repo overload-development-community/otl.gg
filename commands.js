@@ -929,8 +929,8 @@ class Commands {
                             return;
                         }
 
-                        Db.reinstateTeam(team).then(() => {
-                            Discord.reinstateTeam(team).then(() => {
+                        Db.reinstateTeam(user, team).then(() => {
+                            Discord.reinstateTeam(user, team).then(() => {
                                 commands.service.queue(`Congratulations, ${user}!  Your team has been reinstated!  You may now visit #team-${team.tag.toLowerCase()} for team chat, and #team-${team.tag.toLowerCase()}-captains for private chat with your team captains as well as system notifications for your team.`, user);
                                 resolve(true);
                             }).catch((err) => {

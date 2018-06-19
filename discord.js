@@ -83,6 +83,8 @@ class Discord {
         discord.addListener("message", (message) => {
             Discord.message(message.author, message.channel, message.content);
         });
+
+        // TODO: If someone leaves the server, remove them from the league accordingly.  If they are a team founder, notify administration to assign a new founder.
     }
 
     //                                      #
@@ -267,69 +269,6 @@ class Discord {
         return otlGuild.channels.find("name", name);
     }
 
-    //   #    #             #  ###         ##          ###         #  #
-    //  # #                 #  #  #         #          #  #        ## #
-    //  #    ##    ###    ###  #  #   ##    #     ##   ###   #  #  ## #   ###  # #    ##
-    // ###    #    #  #  #  #  ###   #  #   #    # ##  #  #  #  #  # ##  #  #  ####  # ##
-    //  #     #    #  #  #  #  # #   #  #   #    ##    #  #   # #  # ##  # ##  #  #  ##
-    //  #    ###   #  #   ###  #  #   ##   ###    ##   ###     #   #  #   # #  #  #   ##
-    //                                                        #
-    /**
-     * Finds a Discord role by its name.
-     * @param {string} name The name of the role.
-     * @returns {Role} The Discord Role.
-     */
-    static findRoleByName(name) {
-        return otlGuild.roles.find("name", name);
-    }
-
-    //                          #          ###         ##
-    //                          #          #  #         #
-    //  ##   ###    ##    ###  ###    ##   #  #   ##    #     ##
-    // #     #  #  # ##  #  #   #    # ##  ###   #  #   #    # ##
-    // #     #     ##    # ##   #    ##    # #   #  #   #    ##
-    //  ##   #      ##    # #    ##   ##   #  #   ##   ###    ##
-    /**
-     * Creates a role.
-     * @param {object} data The role data.
-     * @returns {Promise} A promise that resolves when the role has been created.
-     */
-    static createRole(data) {
-        return otlGuild.createRole(data);
-    }
-
-    //          #     #  #  #                     ###         ###         ##
-    //          #     #  #  #                      #          #  #         #
-    //  ###   ###   ###  #  #   ###    ##   ###    #     ##   #  #   ##    #     ##
-    // #  #  #  #  #  #  #  #  ##     # ##  #  #   #    #  #  ###   #  #   #    # ##
-    // # ##  #  #  #  #  #  #    ##   ##    #      #    #  #  # #   #  #   #    ##
-    //  # #   ###   ###   ##   ###     ##   #      #     ##   #  #   ##   ###    ##
-    /**
-     * Adds a user to a role.
-     * @param {User} user The user to add to the role.
-     * @param {Role} role The role to add the user to.
-     * @returns {Promise} A promise that resolves when the user has been added to the role.
-     */
-    static addUserToRole(user, role) {
-        return otlGuild.member(user).addRole(role);
-    }
-
-    //                                     #  #                     ####                    ###         ##
-    //                                     #  #                     #                       #  #         #
-    // ###    ##   # #    ##   # #    ##   #  #   ###    ##   ###   ###   ###    ##   # #   #  #   ##    #     ##
-    // #  #  # ##  ####  #  #  # #   # ##  #  #  ##     # ##  #  #  #     #  #  #  #  ####  ###   #  #   #    # ##
-    // #     ##    #  #  #  #  # #   ##    #  #    ##   ##    #     #     #     #  #  #  #  # #   #  #   #    ##
-    // #      ##   #  #   ##    #     ##    ##   ###     ##   #     #     #      ##   #  #  #  #   ##   ###    ##
-    /**
-     * Removes a user from a role.
-     * @param {User} user The user to remove from the role.
-     * @param {Role} role The role to remove the user to.
-     * @returns {Promise} A promise that resolves when the user has been removed from the role.
-     */
-    static removeUserFromRole(user, role) {
-        return otlGuild.member(user).removeRole(role);
-    }
-
     //              #    ###                     ###         ##          ####                     ##          #    ##       #  #  #              #
     //              #     #                      #  #         #          #                       #  #               #       #  ####              #
     //  ###   ##   ###    #     ##    ###  # #   #  #   ##    #     ##   ###   ###    ##   # #   #     #  #  ##     #     ###  ####   ##   # #   ###    ##   ###
@@ -444,15 +383,15 @@ class Discord {
                 return;
             }
 
-            guildCaptain.addRole(captainRole).then(() => {
-                const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
-                    captainChannel = otlGuild.channels.find("name", captainChannelName);
+            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
 
-                if (!captainChannel) {
-                    reject(new Error("Captain's channel does not exist for the team."));
-                    return;
-                }
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
 
+            guildCaptain.addRole(captainRole, `${guildMember.displayName} added ${guildCaptain.displayName} as a captain.`).then(() => {
                 captainChannel.overwritePermissions(guildCaptain, [
                     {
                         id: guildCaptain.id,
@@ -491,7 +430,7 @@ class Discord {
                 return;
             }
 
-            guildMember.addRole(teamRole).then(resolve).catch(reject);
+            guildMember.addRole(teamRole, `${guildMember.displayName} accepted their invitation to ${team.name}.`).then(resolve).catch(reject);
         });
     }
 
@@ -517,7 +456,7 @@ class Discord {
                 return;
             }
 
-            const channel = Discord.findChannelByName(`new-team-${user.id}`);
+            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
 
             if (!channel) {
                 reject(new Error("Channel does not exist."));
@@ -552,7 +491,7 @@ class Discord {
                 return;
             }
 
-            const channel = Discord.findChannelByName(`new-team-${user.id}`);
+            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
 
             if (!channel) {
                 reject(new Error("Channel does not exist."));
@@ -578,14 +517,21 @@ class Discord {
      */
     static cancelCreateTeam(user) {
         return new Promise((resolve, reject) => {
-            const channel = Discord.findChannelByName(`new-team-${user.id}`);
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
 
             if (!channel) {
                 reject(new Error("Channel does not exist."));
                 return;
             }
 
-            channel.delete().then(resolve).catch(reject);
+            channel.delete(`${guildMember.displayName} cancelled team creation.`).then(resolve).catch(reject);
         });
     }
 
@@ -806,29 +752,29 @@ class Discord {
                 return;
             }
 
-            channel.delete().then(() => {
-                captainChannel.delete().then(() => {
-                    category.delete().then(() => {
+            channel.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
+                captainChannel.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
+                    category.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
                         const queue = new Queue();
 
                         teamRole.members.forEach((member) => {
                             queue.push(() => {
                                 if (captainRole.members.find("id", member.id)) {
-                                    return member.removeRole(captainRole);
+                                    return member.removeRole(captainRole, `${guildMember.displayName} disbanded ${name}.`);
                                 }
 
                                 return true;
                             });
                             queue.push(() => {
                                 if (founderRole.members.find("id", member.id)) {
-                                    return member.removeRole(founderRole);
+                                    return member.removeRole(founderRole, `${guildMember.displayName} disbanded ${name}.`);
                                 }
 
                                 return true;
                             });
                         });
 
-                        queue.push(() => teamRole.delete());
+                        queue.push(() => teamRole.delete(`${guildMember.displayName} disbanded ${name}.`));
 
                         queue.promise.then(resolve).catch(reject);
                     }).catch(reject);
@@ -886,12 +832,245 @@ class Discord {
         });
     }
 
+    //                      #        ###          ##                      #          ###
+    //                      #         #          #  #                     #           #
+    // ###    ##    ###   ###  #  #   #     ##   #     ###    ##    ###  ###    ##    #     ##    ###  # #
+    // #  #  # ##  #  #  #  #  #  #   #    #  #  #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
+    // #     ##    # ##  #  #   # #   #    #  #  #  #  #     ##    # ##   #    ##     #    ##    # ##  #  #
+    // #      ##    # #   ###    #    #     ##    ##   #      ##    # #    ##   ##    #     ##    # #  #  #
+    //                          #
+    /**
+     * Checks if a user is ready to create a team.
+     * @param {User} user The user to check.
+     * @returns {Promise<bool, string, string>} Returns a promise that includes whether the user is ready to create their team, the team name, and the team tag.
+     */
+    static readyToCreateTeam(user) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
+
+            if (!channel) {
+                reject(new Error("Channel does not exist."));
+                return;
+            }
+
+            const {1: team, 2: tag} = newTeamTopicParse.exec(channel.topic);
+
+            if (team && team !== "(unset)" && tag && tag !== "(unset)") {
+                resolve(true, team, tag);
+            } else {
+                resolve(false);
+            }
+        });
+    }
+
+    //              #                  #           #          ###
+    //                                 #           #           #
+    // ###    ##   ##    ###    ###   ###    ###  ###    ##    #     ##    ###  # #
+    // #  #  # ##   #    #  #  ##      #    #  #   #    # ##   #    # ##  #  #  ####
+    // #     ##     #    #  #    ##    #    # ##   #    ##     #    ##    # ##  #  #
+    // #      ##   ###   #  #  ###      ##   # #    ##   ##    #     ##    # #  #  #
+    /**
+     * Reinstates an existing team to the league.
+     * @param {User} user The user reinstating the team.
+     * @param {object} team The team to reinstate.
+     * @returns {Promise} A promise that resolves when the team is reinstated.
+     */
+    static reinstateTeam(user, team) {
+        return Discord.createTeam(user, team.name, team.tag);
+    }
+
+    //                                      ##                #           #
+    //                                     #  #               #
+    // ###    ##   # #    ##   # #    ##   #      ###  ###   ###    ###  ##    ###
+    // #  #  # ##  ####  #  #  # #   # ##  #     #  #  #  #   #    #  #   #    #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##  #  #   #    # ##   #    #  #
+    // #      ##   #  #   ##    #     ##    ##    # #  ###     ##   # #  ###   #  #
+    //                                                 #
+    /**
+     * Removes a captain from a team.
+     * @param {User} user The user removing the captain.
+     * @param {User} captain The captain to remove.
+     * @returns {Promise} A promise that resolves when the captain has been removed.
+     */
+    static removeCaptain(user, captain) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const guildCaptain = otlGuild.member(captain);
+
+            if (!guildCaptain) {
+                reject(new Error("Captain does not exist on server."));
+                return;
+            }
+
+            if (!founderRole.members.find("id", guildMember.id)) {
+                reject(new Error("User is not a founder."));
+                return;
+            }
+
+            const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
+
+            if (!teamRole) {
+                reject(new Error("User is not on a team."));
+                return;
+            }
+
+            if (!teamRole.members.find("id", guildCaptain.id)) {
+                reject(new Error("Users are not on the same team."));
+                return;
+            }
+
+            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            guildCaptain.removeRole(captainRole, `${guildMember.displayName} removed ${guildCaptain.displayName} as a captain.`).then(() => {
+                captainChannel.overwritePermissions(guildCaptain, [
+                    {
+                        id: guildCaptain.id,
+                        deny: ["VIEW_CHANNEL"]
+                    }
+                ], `${guildMember.displayName} removed ${guildCaptain.displayName} as a captain.`).then(resolve).catch(reject);
+            }).catch(reject);
+        });
+    }
+
+    //                                     #  #                     ####                    ###
+    //                                     #  #                     #                        #
+    // ###    ##   # #    ##   # #    ##   #  #   ###    ##   ###   ###   ###    ##   # #    #     ##    ###  # #
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  ##     # ##  #  #  #     #  #  #  #  ####   #    # ##  #  #  ####
+    // #     ##    #  #  #  #  # #   ##    #  #    ##   ##    #     #     #     #  #  #  #   #    ##    # ##  #  #
+    // #      ##   #  #   ##    #     ##    ##   ###     ##   #     #     #      ##   #  #   #     ##    # #  #  #
+    /**
+     * Removes a user from a team.
+     * @param {User} user The user to remove.
+     * @param {object} team The team to remove the user from.
+     * @returns {Promise} A promise that resolves when the user is removed.
+     */
+    static removeUserFromTeam(user, team) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+
+            if (!teamRole) {
+                reject(new Error("Team does not exist."));
+                return;
+            }
+
+            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            guildMember.removeRole(captainRole, `${guildMember.displayName} left the team.`).then(() => {
+                captainChannel.overwritePermissions(guildMember, [
+                    {
+                        id: guildMember.id,
+                        deny: ["VIEW_CHANNEL"]
+                    }
+                ], `${guildMember.displayName} left the team.`).then(() => {
+                    guildMember.removeRole(teamRole, `${guildMember.displayName} left the team.`).then(resolve).catch(reject);
+                }).catch(reject);
+            }).catch(reject);
+        });
+    }
+
+    //                                     ###   ##
+    //                                     #  #   #
+    // ###    ##   # #    ##   # #    ##   #  #   #     ###  #  #   ##   ###
+    // #  #  # ##  ####  #  #  # #   # ##  ###    #    #  #  #  #  # ##  #  #
+    // #     ##    #  #  #  #  # #   ##    #      #    # ##   # #  ##    #
+    // #      ##   #  #   ##    #     ##   #     ###    # #    #    ##   #
+    //                                                        #
+    /**
+     * Removes a player from a team, whether they are a player on the team, someone who has been invited, or someone who has requested to join.
+     * @param {User} user The user removing the player.
+     * @param {User} player The player to remove.
+     * @returns {Promise} A promise that resolves when the player has been removed.
+     */
+    static removePlayer(user, player) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const guildPlayer = otlGuild.member(player);
+
+            if (!guildPlayer) {
+                reject(new Error("Player does not exist on server."));
+                return;
+            }
+
+            if (!founderRole.members.find("id", guildMember.id)) {
+                reject(new Error("User is not a founder."));
+                return;
+            }
+
+            const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
+
+            if (!teamRole) {
+                reject(new Error("User is not on a team."));
+                return;
+            }
+
+            if (teamRole.members.find("id", guildPlayer.id)) {
+                const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+                    captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+                if (!captainChannel) {
+                    reject(new Error("Captain's channel does not exist for the team."));
+                    return;
+                }
+
+                guildPlayer.removeRole(captainRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
+                    captainChannel.overwritePermissions(guildPlayer, [
+                        {
+                            id: guildPlayer.id,
+                            deny: ["VIEW_CHANNEL"]
+                        }
+                    ], `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
+                        guildPlayer.removeRole(teamRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
+                            resolve();
+                        }).catch(reject);
+                    }).catch(reject);
+                }).catch(reject);
+            } else {
+                resolve();
+            }
+
+            Discord.updateUserTeam(user);
+        });
+    }
+
     /*
-    static readyToCreateTeam(user)
-    static reinstateTeam(team)
-    static removeCaptain(user, captain)
-    static removeUserFromTeam(user, team)
-    static removePlayer(user, player)
     static requestTeam(user, team)
     static startCreateTeam(user)
     static teamNameExists(name)
