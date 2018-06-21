@@ -434,6 +434,28 @@ class Discord {
         });
     }
 
+    //                   ##          #  #                    #  #
+    //                    #          #  #                    ####
+    //  ###  ###   ###    #    #  #  ####   ##   # #    ##   ####   ###  ###
+    // #  #  #  #  #  #   #    #  #  #  #  #  #  ####  # ##  #  #  #  #  #  #
+    // # ##  #  #  #  #   #     # #  #  #  #  #  #  #  ##    #  #  # ##  #  #
+    //  # #  ###   ###   ###     #   #  #   ##   #  #   ##   #  #   # #  ###
+    //       #     #            #                                        #
+    /**
+     * Applies a home map for a team.
+     * @param {User} user The user updating the home map.
+     * @param {number} number The number of the home map.
+     * @param {string} map The new home map.
+     * @returns {Promise} A promise that resolves when the home map has been updated.
+     */
+    static applyHomeMap(user, number, map) {
+        return new Promise((resolve) => {
+            Discord.updateUserTeam(user);
+
+            resolve();
+        });
+    }
+
     //                   ##          ###                     #  #
     //                    #           #                      ## #
     //  ###  ###   ###    #    #  #   #     ##    ###  # #   ## #   ###  # #    ##
@@ -1070,15 +1092,188 @@ class Discord {
         });
     }
 
-    /*
-    static requestTeam(user, team)
-    static startCreateTeam(user)
-    static teamNameExists(name)
-    static userIsCaptainOrFounder(user)
-    static userIsFounder(user)
-    static userIsStartingTeam(user)
-    static usersAreOnTheSameTeam(user1, user2)
-    */
+    //                                       #    ###
+    //                                       #     #
+    // ###    ##    ###  #  #   ##    ###   ###    #     ##    ###  # #
+    // #  #  # ##  #  #  #  #  # ##  ##      #     #    # ##  #  #  ####
+    // #     ##    #  #  #  #  ##      ##    #     #    ##    # ##  #  #
+    // #      ##    ###   ###   ##   ###      ##   #     ##    # #  #  #
+    //                #
+    /**
+     * Creates a request for a user to join a team.
+     * @param {User} user The user making the request.
+     * @param {object} team The team being requested to join.
+     * @returns {Promise} A promise that resolves when the request has been processed.
+     */
+    static requestTeam(user, team) {
+        return new Promise((resolve) => {
+            Discord.updateTeam(team);
+
+            resolve();
+        });
+    }
+
+    //         #                 #     ##                      #          ###
+    //         #                 #    #  #                     #           #
+    //  ###   ###    ###  ###   ###   #     ###    ##    ###  ###    ##    #     ##    ###  # #
+    // ##      #    #  #  #  #   #    #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
+    //   ##    #    # ##  #      #    #  #  #     ##    # ##   #    ##     #    ##    # ##  #  #
+    // ###      ##   # #  #       ##   ##   #      ##    # #    ##   ##    #     ##    # #  #  #
+    /**
+     * Starts the process of creating a team for a user.
+     * @param {User} user The user creating the team.
+     * @returns {Promise} A promise that resolves when the process of starting to create a team is complete.
+     */
+    static startCreateTeam(user) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
+
+            if (teamRole) {
+                reject(new Error("User is already on a team."));
+                return;
+            }
+
+            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
+
+            if (!channel) {
+                reject(new Error("Channel already exists."));
+                return;
+            }
+
+            otlGuild.createChannel(channel, "text", [
+                {
+                    id: otlGuild.id,
+                    deny: ["VIEW_CHANNEL"]
+                }, {
+                    id: user.id,
+                    allow: ["VIEW_CHANNEL"]
+                }
+            ], `${guildMember.displayName} has started the process of creating a team.`).then(resolve).catch(reject);
+        });
+    }
+
+    //  #                      #  #                    ####         #            #
+    //  #                      ## #                    #                         #
+    // ###    ##    ###  # #   ## #   ###  # #    ##   ###   #  #  ##     ###   ###    ###
+    //  #    # ##  #  #  ####  # ##  #  #  ####  # ##  #      ##    #    ##      #    ##
+    //  #    ##    # ##  #  #  # ##  # ##  #  #  ##    #      ##    #      ##    #      ##
+    //   ##   ##    # #  #  #  #  #   # #  #  #   ##   ####  #  #  ###   ###      ##  ###
+    /**
+     * Determines whether a team name exists.
+     * @param {string} name The team name to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the team name exists.
+     */
+    static teamNameExists(name) {
+        return new Promise((resolve) => {
+            resolve(!!otlGuild.roles.find("name", `Team: ${name}`));
+        });
+    }
+
+    //                          ###           ##                #           #           ##         ####                       #
+    //                           #           #  #               #                      #  #        #                          #
+    // #  #   ###    ##   ###    #     ###   #      ###  ###   ###    ###  ##    ###   #  #  ###   ###    ##   #  #  ###    ###   ##   ###
+    // #  #  ##     # ##  #  #   #    ##     #     #  #  #  #   #    #  #   #    #  #  #  #  #  #  #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #  #    ##   ##    #      #      ##   #  #  # ##  #  #   #    # ##   #    #  #  #  #  #     #     #  #  #  #  #  #  #  #  ##    #
+    //  ###  ###     ##   #     ###   ###     ##    # #  ###     ##   # #  ###   #  #   ##   #     #      ##    ###  #  #   ###   ##   #
+    //                                                   #
+    /**
+     * Determines whether the user is a captain or a founder.
+     * @param {User} user The user to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the user is a captain or a founder.
+     */
+    static userIsCaptainOrFounder(user) {
+        return new Promise((resolve) => {
+            resolve(!!founderRole.members.find("id", user.id) || !!captainRole.members.find("id", user.id));
+        });
+    }
+
+    //                          ###          ####                       #
+    //                           #           #                          #
+    // #  #   ###    ##   ###    #     ###   ###    ##   #  #  ###    ###   ##   ###
+    // #  #  ##     # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #  #    ##   ##    #      #      ##   #     #  #  #  #  #  #  #  #  ##    #
+    //  ###  ###     ##   #     ###   ###    #      ##    ###  #  #   ###   ##   #
+    /**
+     * Determines whether the user is a founder.
+     * @param {User} user The user to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the user is a founder.
+     */
+    static userIsFounder(user) {
+        return new Promise((resolve) => {
+            resolve(!!founderRole.members.find("id", user.id));
+        });
+    }
+
+    //                          ###           ##    #                 #     #                ###
+    //                           #           #  #   #                 #                       #
+    // #  #   ###    ##   ###    #     ###    #    ###    ###  ###   ###   ##    ###    ###   #     ##    ###  # #
+    // #  #  ##     # ##  #  #   #    ##       #    #    #  #  #  #   #     #    #  #  #  #   #    # ##  #  #  ####
+    // #  #    ##   ##    #      #      ##   #  #   #    # ##  #      #     #    #  #   ##    #    ##    # ##  #  #
+    //  ###  ###     ##   #     ###   ###     ##     ##   # #  #       ##  ###   #  #  #      #     ##    # #  #  #
+    //                                                                                  ###
+    /**
+     * Determines whether the user is starting a team.
+     * @param {User} user The user to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the user is starting a team.
+     */
+    static userIsStartingTeam(user) {
+        return new Promise((resolve) => {
+            resolve(!!otlGuild.channels.find(`new-user-${user.id}`));
+        });
+    }
+
+    //                                  ##                ##         ###   #            ##                     ###
+    //                                 #  #              #  #         #    #           #  #                     #
+    // #  #   ###    ##   ###    ###   #  #  ###    ##   #  #  ###    #    ###    ##    #     ###  # #    ##    #     ##    ###  # #
+    // #  #  ##     # ##  #  #  ##     ####  #  #  # ##  #  #  #  #   #    #  #  # ##    #   #  #  ####  # ##   #    # ##  #  #  ####
+    // #  #    ##   ##    #       ##   #  #  #     ##    #  #  #  #   #    #  #  ##    #  #  # ##  #  #  ##     #    ##    # ##  #  #
+    //  ###  ###     ##   #     ###    #  #  #      ##    ##   #  #   #    #  #   ##    ##    # #  #  #   ##    #     ##    # #  #  #
+    /**
+     * Determines whether two users are on the same team.
+     * @param {User} user1 The first user to check.
+     * @param {User} user2 The second user to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether both users are on the same team.
+     */
+    static usersAreOnTheSameTeam(user1, user2) {
+        return new Promise((resolve, reject) => {
+            const guildMember1 = otlGuild.member(user1);
+
+            if (!guildMember1) {
+                reject(new Error("User 1 does not exist on server."));
+                return;
+            }
+
+            const guildMember2 = otlGuild.member(user2);
+
+            if (!guildMember2) {
+                reject(new Error("User 2 does not exist on server."));
+                return;
+            }
+
+            const team1Role = Discord.getTeamRoleFromGuildMember(guildMember1);
+
+            if (!team1Role) {
+                resolve(false);
+                return;
+            }
+
+            const team2Role = Discord.getTeamRoleFromGuildMember(guildMember2);
+
+            if (!team2Role) {
+                resolve(false);
+                return;
+            }
+
+            resolve(team1Role.id === team2Role.id);
+        });
+    }
 }
 
 module.exports = Discord;

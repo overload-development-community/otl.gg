@@ -1002,7 +1002,7 @@ class Commands {
                     }
 
                     Db.applyHomeMap(user, number, map).then(() => {
-                        Discord.updateUserTeam(user);
+                        Discord.applyHomeMap(user, number, map);
                         commands.service.queue(`${user}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
                         resolve(true);
                     }).catch((err) => {
