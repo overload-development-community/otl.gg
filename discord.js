@@ -14,7 +14,8 @@ let readied = false,
 
     captainRole,
     founderRole,
-    otlGuild;
+    otlGuild,
+    rosterUpdatesChannel;
 
 //  ####     #                                    #
 //   #  #                                         #
@@ -74,6 +75,8 @@ class Discord {
 
             captainRole = otlGuild.roles.find("name", "Captain");
             founderRole = otlGuild.roles.find("name", "Founder");
+
+            rosterUpdatesChannel = otlGuild.channels.find("name", "roster-updates");
         });
 
         discord.on("disconnect", (ev) => {
@@ -167,7 +170,7 @@ class Discord {
      * @returns {Promise} A promise that resolves when the message is sent.
      */
     static queue(message, channel) {
-        channel.send(
+        return channel.send(
             "",
             {
                 embed: {
@@ -203,7 +206,7 @@ class Discord {
             });
         }
 
-        channel.send("", message);
+        return channel.send("", message);
     }
 
     //  #            ##
@@ -383,7 +386,8 @@ class Discord {
                 return;
             }
 
-            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
                 captainChannel = otlGuild.channels.find("name", captainChannelName);
 
             if (!captainChannel) {
@@ -391,13 +395,46 @@ class Discord {
                 return;
             }
 
-            guildCaptain.addRole(captainRole, `${guildMember.displayName} added ${guildCaptain.displayName} as a captain.`).then(() => {
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+
+            if (!channel) {
+                reject(new Error("Team's channel does not exist."));
+                return;
+            }
+
+            guildCaptain.addRole(captainRole, `${guildMember.displayName} added ${guildCaptain.displayName} as a captain of ${teamName}.`).then(() => {
                 captainChannel.overwritePermissions(guildCaptain, [
                     {
                         id: guildCaptain.id,
                         allow: ["VIEW_CHANNEL"]
                     }
-                ], `${guildMember.displayName} added ${guildCaptain.displayName} as a captain.`).then(resolve).catch(reject);
+                ], `${guildMember.displayName} added ${guildCaptain.displayName} as a captain of ${teamName}.`).then(() => {
+                    Discord.updateUserTeam(user);
+                    Discord.queue(`${guildCaptain}, you have been added as a captain of **${teamName}**!  You now have access to your team's captain's channel, #${captainChannelName}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
+                    Discord.queue(`@everyone Welcome **${guildCaptain}** as the newest team captain!`, captainChannel);
+                    Discord.queue(`**${guildCaptain}** is now a team captain!`, channel);
+                    Discord.richQueue({
+                        embed: {
+                            title: teamName,
+                            description: "Leadership Update",
+                            color: 0x008000,
+                            timestamp: new Date(),
+                            fields: [
+                                {
+                                    name: "Captain Added",
+                                    value: `${guildCaptain}`
+                                }
+                            ],
+                            footer: {
+                                text: `added by ${guildMember.displayName}`,
+                                icon_url: Discord.icon // eslint-disable-line camelcase
+                            }
+                        }
+                    }, rosterUpdatesChannel);
+
+                    resolve();
+                }).catch(reject);
             }).catch(reject);
         });
     }
@@ -430,7 +467,49 @@ class Discord {
                 return;
             }
 
-            guildMember.addRole(teamRole, `${guildMember.displayName} accepted their invitation to ${team.name}.`).then(resolve).catch(reject);
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+
+            if (!channel) {
+                reject(new Error("Team's channel does not exist."));
+                return;
+            }
+
+            guildMember.addRole(teamRole, `${guildMember.displayName} accepted their invitation to ${team.name}.`).then(() => {
+                Discord.updateUserTeam(user);
+                Discord.queue(`${guildMember}, you are now a member of **${teamName}**!  You now have access to your team's channel, #${channelName}.`, user);
+                Discord.queue(`@everyone **${guildMember}** has accepted your invitation to join the team!`, captainChannel);
+                Discord.queue(`**${guildMember}** has joined the team!`, channel);
+                Discord.richQueue({
+                    embed: {
+                        title: teamName,
+                        description: "Player Added",
+                        color: 0x00FF00,
+                        timestamp: new Date(),
+                        fields: [
+                            {
+                                name: "Player Added",
+                                value: `${guildMember}`
+                            }
+                        ],
+                        footer: {
+                            text: "added by accepted invitation",
+                            icon_url: Discord.icon // eslint-disable-line camelcase
+                        }
+                    }
+                }, rosterUpdatesChannel);
+
+                resolve();
+            }).catch(reject);
         });
     }
 
@@ -449,8 +528,38 @@ class Discord {
      * @returns {Promise} A promise that resolves when the home map has been updated.
      */
     static applyHomeMap(user, number, map) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
+
+            if (!teamRole) {
+                reject(new Error("User is not on a team."));
+                return;
+            }
+
+            if (!captainRole.members.find("id", user.id) && !founderRole.members.find("id", user.id)) {
+                reject(new Error("User is not a captain or a founder."));
+                return;
+            }
+
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
             Discord.updateUserTeam(user);
+
+            Discord.queue(`${guildMember} has changed home map number ${number} to ${map}.`, captainChannel);
 
             resolve();
         });
@@ -618,6 +727,11 @@ class Discord {
                 return;
             }
 
+            if (!founderRole.members.find("id", user.id)) {
+                reject(new Error("User is not a founder."));
+                return;
+            }
+
             teamRole.setColor(color, `${guildMember.displayName} updated the team color.`).then(resolve).catch(reject);
         });
     }
@@ -708,7 +822,95 @@ class Discord {
                                     allow: ["VIEW_CHANNEL"]
                                 }
                             ], `${guildMember.displayName} created the team ${name}.`).then((captainChannel) => {
-                                captainChannel.setParent(category).then(resolve).catch(reject);
+                                captainChannel.setParent(category).then(() => {
+                                    Discord.richQueue({
+                                        embed: {
+                                            title: `${name} (${tag})`,
+                                            description: "New Team",
+                                            color: 0x0000FF,
+                                            timestamp: new Date(),
+                                            fields: [
+                                                {
+                                                    name: "Founder Added",
+                                                    value: `${guildMember}`
+                                                }
+                                            ],
+                                            footer: {
+                                                text: `created by ${guildMember.displayName}`,
+                                                icon_url: Discord.icon // eslint-disable-line camelcase
+                                            }
+                                        }
+                                    }, rosterUpdatesChannel);
+
+                                    Discord.richQueue({
+                                        embed: {
+                                            title: "Founder commands",
+                                            color: 0x00FF00,
+                                            timestamp: new Date(),
+                                            fields: [
+                                                {
+                                                    name: "!color ([light|dark]) [red|orange|yellow|green|indigo|blue|purple]",
+                                                    value: "Set the color for display in Discord."
+                                                },
+                                                {
+                                                    name: "!addcaptain <teammate>",
+                                                    value: "Makes a teammate a captain."
+                                                },
+                                                {
+                                                    name: "!removecaptain <captain>",
+                                                    value: "Removes a captain.  Does not remove them from the team."
+                                                },
+                                                {
+                                                    name: "!disband",
+                                                    value: "Disbands the team."
+                                                },
+                                                {
+                                                    name: "!makefounder <teammate>",
+                                                    value: "Replace yourself with another teammate."
+                                                }
+                                            ]
+                                        }
+                                    }, captainChannel).then((msg1) => {
+                                        msg1.pin().then(() => {
+                                            Discord.richQueue({
+                                                embed: {
+                                                    title: "Captain commands",
+                                                    color: 0x00FF00,
+                                                    timestamp: new Date(),
+                                                    fields: [
+                                                        {
+                                                            name: "!home [1|2|3] <map>",
+                                                            value: "Set a home map.  You must set all 3 home maps before you can send or receive challenges."
+                                                        },
+                                                        {
+                                                            name: "!invite <pilot>",
+                                                            value: "Invite a pilot to join your team."
+                                                        },
+                                                        {
+                                                            name: "!remove <pilot>",
+                                                            value: "Removes a pilot from the team, or revokes a pilot's invitation, or removes a pilot's request to join the team."
+                                                        },
+                                                        {
+                                                            name: "!challenge <team>",
+                                                            value: "Challenge a team to a match."
+                                                        }
+                                                    ]
+                                                }
+                                            }, captainChannel).then((msg2) => {
+                                                msg2.pin().then(() => {
+                                                    const newChannel = otlGuild.channels.find("name", `new-team-${user.id}`);
+
+                                                    if (!newChannel) {
+                                                        resolve();
+                                                        return;
+                                                    }
+
+                                                    newChannel.delete(`${guildMember.displayName} created the team ${name}.`).then(resolve).catch(reject);
+                                                }).catch(reject);
+                                            }).catch(reject);
+                                        }).catch(reject);
+                                    }).catch(reject);
+                                }).catch(reject);
                             }).catch(reject);
                         }).catch(reject);
                     }).catch(reject);
@@ -777,9 +979,12 @@ class Discord {
             channel.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
                 captainChannel.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
                     category.delete(`${guildMember.displayName} disbanded ${name}.`).then(() => {
-                        const queue = new Queue();
+                        const queue = new Queue(),
+                            memberList = [];
 
                         teamRole.members.forEach((member) => {
+                            memberList.push(`${member}`);
+
                             queue.push(() => {
                                 if (captainRole.members.find("id", member.id)) {
                                     return member.removeRole(captainRole, `${guildMember.displayName} disbanded ${name}.`);
@@ -794,9 +999,30 @@ class Discord {
 
                                 return true;
                             });
+
+                            queue.push(() => Discord.queue(`Your team ${name} has been disbanded.`, member));
                         });
 
                         queue.push(() => teamRole.delete(`${guildMember.displayName} disbanded ${name}.`));
+
+                        queue.push(() => Discord.richQueue({
+                            embed: {
+                                title: `${name}`,
+                                description: "Team Disbanded",
+                                color: 0xFF00FF,
+                                timestamp: new Date(),
+                                fields: [
+                                    {
+                                        name: "Players Removed",
+                                        value: `${memberList.join(", ")}`
+                                    }
+                                ],
+                                footer: {
+                                    text: `disbanded by ${guildMember.displayName}`,
+                                    icon_url: Discord.icon // eslint-disable-line camelcase
+                                }
+                            }
+                        }, rosterUpdatesChannel));
 
                         queue.promise.then(resolve).catch(reject);
                     }).catch(reject);
@@ -849,6 +1075,8 @@ class Discord {
             const teamName = Discord.getTeamFromTeamRole(teamRole);
 
             Discord.queue(`${player.displayName}, you have been invited to join **${teamName}** by ${user.displayName}.  You can accept this invitation by responding with \`!accept ${teamName}\`.`, player);
+
+            Discord.updateUserTeam(user);
 
             resolve();
         });
@@ -954,11 +1182,20 @@ class Discord {
                 return;
             }
 
-            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
                 captainChannel = otlGuild.channels.find("name", captainChannelName);
 
             if (!captainChannel) {
                 reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+
+            if (!channel) {
+                reject(new Error("Team's channel does not exist."));
                 return;
             }
 
@@ -968,55 +1205,30 @@ class Discord {
                         id: guildCaptain.id,
                         deny: ["VIEW_CHANNEL"]
                     }
-                ], `${guildMember.displayName} removed ${guildCaptain.displayName} as a captain.`).then(resolve).catch(reject);
-            }).catch(reject);
-        });
-    }
+                ], `${guildMember.displayName} removed ${guildCaptain.displayName} as a captain.`).then(() => {
+                    Discord.queue(`${guildCaptain}, you are no longer a captain of **${teamName}**.`, captain);
+                    Discord.queue(`${guildCaptain.displayName} is no longer a team captain.`, captainChannel);
+                    Discord.queue(`${guildCaptain.displayName} is no longer a team captain.`, channel);
+                    Discord.richQueue({
+                        embed: {
+                            title: teamName,
+                            description: "Leadership Update",
+                            color: 0x800000,
+                            timestamp: new Date(),
+                            fields: [
+                                {
+                                    name: "Captain Removed",
+                                    value: `${guildCaptain}`
+                                }
+                            ],
+                            footer: {
+                                text: `removed by ${guildMember.displayName}`,
+                                icon_url: Discord.icon // eslint-disable-line camelcase
+                            }
+                        }
+                    }, rosterUpdatesChannel);
 
-    //                                     #  #                     ####                    ###
-    //                                     #  #                     #                        #
-    // ###    ##   # #    ##   # #    ##   #  #   ###    ##   ###   ###   ###    ##   # #    #     ##    ###  # #
-    // #  #  # ##  ####  #  #  # #   # ##  #  #  ##     # ##  #  #  #     #  #  #  #  ####   #    # ##  #  #  ####
-    // #     ##    #  #  #  #  # #   ##    #  #    ##   ##    #     #     #     #  #  #  #   #    ##    # ##  #  #
-    // #      ##   #  #   ##    #     ##    ##   ###     ##   #     #     #      ##   #  #   #     ##    # #  #  #
-    /**
-     * Removes a user from a team.
-     * @param {User} user The user to remove.
-     * @param {object} team The team to remove the user from.
-     * @returns {Promise} A promise that resolves when the user is removed.
-     */
-    static removeUserFromTeam(user, team) {
-        return new Promise((resolve, reject) => {
-            const guildMember = otlGuild.member(user);
-
-            if (!guildMember) {
-                reject(new Error("User does not exist on server."));
-                return;
-            }
-
-            const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
-
-            if (!teamRole) {
-                reject(new Error("Team does not exist."));
-                return;
-            }
-
-            const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
-                captainChannel = otlGuild.channels.find("name", captainChannelName);
-
-            if (!captainChannel) {
-                reject(new Error("Captain's channel does not exist for the team."));
-                return;
-            }
-
-            guildMember.removeRole(captainRole, `${guildMember.displayName} left the team.`).then(() => {
-                captainChannel.overwritePermissions(guildMember, [
-                    {
-                        id: guildMember.id,
-                        deny: ["VIEW_CHANNEL"]
-                    }
-                ], `${guildMember.displayName} left the team.`).then(() => {
-                    guildMember.removeRole(teamRole, `${guildMember.displayName} left the team.`).then(resolve).catch(reject);
+                    resolve();
                 }).catch(reject);
             }).catch(reject);
         });
@@ -1063,15 +1275,24 @@ class Discord {
                 return;
             }
 
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+
+            if (!channel) {
+                reject(new Error("Team's channel does not exist."));
+                return;
+            }
+
             if (teamRole.members.find("id", guildPlayer.id)) {
-                const captainChannelName = `captains-${Discord.getTeamFromTeamRole(teamRole).toLowerCase().repalce(/ /g, "-")}`,
-                    captainChannel = otlGuild.channels.find("name", captainChannelName);
-
-                if (!captainChannel) {
-                    reject(new Error("Captain's channel does not exist for the team."));
-                    return;
-                }
-
                 guildPlayer.removeRole(captainRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
                     captainChannel.overwritePermissions(guildPlayer, [
                         {
@@ -1080,15 +1301,121 @@ class Discord {
                         }
                     ], `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
                         guildPlayer.removeRole(teamRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`).then(() => {
+                            Discord.queue(`${guildPlayer}, you have been removed from **${teamName}** by ${guildMember.displayName}.`, player);
+                            Discord.queue(`${guildPlayer.displayName} has been removed from the team by ${guildMember.displayName}.`, captainChannel);
+                            Discord.queue(`${guildPlayer.displayName} has been removed from the team by ${guildMember.displayName}.`, channel);
+
+                            Discord.richQueue({
+                                embed: {
+                                    title: teamName,
+                                    description: "Player Removed",
+                                    color: 0xFF0000,
+                                    timestamp: new Date(),
+                                    fields: [
+                                        {
+                                            name: "Player Removed",
+                                            value: `${guildMember}`
+                                        }
+                                    ],
+                                    footer: {
+                                        text: `removed by ${guildMember.displayName}`,
+                                        icon_url: Discord.icon // eslint-disable-line camelcase
+                                    }
+                                }
+                            }, rosterUpdatesChannel);
+
                             resolve();
                         }).catch(reject);
                     }).catch(reject);
                 }).catch(reject);
             } else {
+                Discord.queue(`${guildPlayer.displayName} declined to invite ${guildMember.displayName}.`, captainChannel);
+
                 resolve();
             }
 
             Discord.updateUserTeam(user);
+        });
+    }
+
+    //                                     #  #                     ####                    ###
+    //                                     #  #                     #                        #
+    // ###    ##   # #    ##   # #    ##   #  #   ###    ##   ###   ###   ###    ##   # #    #     ##    ###  # #
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  ##     # ##  #  #  #     #  #  #  #  ####   #    # ##  #  #  ####
+    // #     ##    #  #  #  #  # #   ##    #  #    ##   ##    #     #     #     #  #  #  #   #    ##    # ##  #  #
+    // #      ##   #  #   ##    #     ##    ##   ###     ##   #     #     #      ##   #  #   #     ##    # #  #  #
+    /**
+     * Removes a user from a team.
+     * @param {User} user The user to remove.
+     * @param {object} team The team to remove the user from.
+     * @returns {Promise} A promise that resolves when the user is removed.
+     */
+    static removeUserFromTeam(user, team) {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+
+            if (!teamRole) {
+                reject(new Error("Team does not exist."));
+                return;
+            }
+
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+
+            if (!channel) {
+                reject(new Error("Team's channel does not exist."));
+                return;
+            }
+
+            guildMember.removeRole(captainRole, `${guildMember.displayName} left the team.`).then(() => {
+                captainChannel.overwritePermissions(guildMember, [
+                    {
+                        id: guildMember.id,
+                        deny: ["VIEW_CHANNEL"]
+                    }
+                ], `${guildMember.displayName} left the team.`).then(() => {
+                    guildMember.removeRole(teamRole, `${guildMember.displayName} left the team.`).then(() => {
+                        Discord.queue(`${guildMember.displayName} has left the team.`, captainChannel);
+                        Discord.queue(`${guildMember.displayName} has left the team.`, channel);
+                        Discord.richQueue({
+                            embed: {
+                                title: teamName,
+                                description: "Player Left",
+                                color: 0xFF0000,
+                                timestamp: new Date(),
+                                fields: [
+                                    {
+                                        name: "Player Left",
+                                        value: `${guildMember}`
+                                    }
+                                ],
+                                footer: {
+                                    text: "player left",
+                                    icon_url: Discord.icon // eslint-disable-line camelcase
+                                }
+                            }
+                        }, rosterUpdatesChannel);
+
+                        resolve();
+                    }).catch(reject);
+                }).catch(reject);
+            }).catch(reject);
         });
     }
 
@@ -1106,7 +1433,32 @@ class Discord {
      * @returns {Promise} A promise that resolves when the request has been processed.
      */
     static requestTeam(user, team) {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
+            const guildMember = otlGuild.member(user);
+
+            if (!guildMember) {
+                reject(new Error("User does not exist on server."));
+                return;
+            }
+
+            const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+
+            if (!teamRole) {
+                reject(new Error("Team does not exist."));
+                return;
+            }
+
+            const teamName = Discord.getTeamFromTeamRole(teamRole),
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+
+            if (!captainChannel) {
+                reject(new Error("Captain's channel does not exist for the team."));
+                return;
+            }
+
+            Discord.queue(`@everyone, ${guildMember.displayName} has requested to join the team.`, captainChannel);
+
             Discord.updateTeam(team);
 
             resolve();
@@ -1140,14 +1492,15 @@ class Discord {
                 return;
             }
 
-            const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
+            const channelName = `new-team-${user.id}`,
+                existingChannel = otlGuild.channels.find("name", channelName);
 
-            if (!channel) {
+            if (existingChannel) {
                 reject(new Error("Channel already exists."));
                 return;
             }
 
-            otlGuild.createChannel(channel, "text", [
+            otlGuild.createChannel(channelName, "text", [
                 {
                     id: otlGuild.id,
                     deny: ["VIEW_CHANNEL"]
@@ -1155,7 +1508,37 @@ class Discord {
                     id: user.id,
                     allow: ["VIEW_CHANNEL"]
                 }
-            ], `${guildMember.displayName} has started the process of creating a team.`).then(resolve).catch(reject);
+            ], `${guildMember.displayName} has started the process of creating a team.`).then((channel) => {
+                channel.setTopic("Team Name: (Unset)\r\nTeam Tag: (unset)", `${guildMember.displayName} has started the process of creating a team.`).then(() => {
+                    Discord.richQueue({
+                        embed: {
+                            title: "Team creation commands",
+                            color: 0x00FF00,
+                            timestamp: new Date(),
+                            fields: [
+                                {
+                                    name: "!name <name>",
+                                    value: "Set your team's name.  Required before you complete team creation."
+                                },
+                                {
+                                    name: "!tag <tag>",
+                                    value: "Sets your tame tag, which is up to five letters or numbers that is considered to be a short form of your team name.  Required before you complete team creation."
+                                },
+                                {
+                                    name: "!cancel",
+                                    value: "Cancels team creation."
+                                },
+                                {
+                                    name: "!complete",
+                                    value: "Completes the team creation process and creates your team on the OTL."
+                                }
+                            ]
+                        }
+                    }, channel).then((msg) => {
+                        msg.pin().then(resolve).catch(reject);
+                    }).catch(reject);
+                }).catch(reject);
+            }).catch(reject);
         });
     }
 

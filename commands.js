@@ -182,7 +182,7 @@ class Commands {
 
                 Db.getTeam(user).then((team) => {
                     if (team) {
-                        commands.service.queue(`Sorry, ${user}, but you are already on team **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                        commands.service.queue(`Sorry, ${user}, but you are already on **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                         reject(new Error("User is already on a team."));
                         return;
                     }
@@ -904,7 +904,7 @@ class Commands {
 
             Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
-                    commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you are already on **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
                     return;
                 }
@@ -1040,7 +1040,7 @@ class Commands {
         return new Promise((resolve, reject) => {
             Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
-                    commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you are already on **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
                     return;
                 }
@@ -1210,7 +1210,7 @@ class Commands {
         return new Promise((resolve, reject) => {
             Db.getTeam(user).then((currentTeam) => {
                 if (currentTeam) {
-                    commands.service.queue(`Sorry, ${user}, but you are already on team **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+                    commands.service.queue(`Sorry, ${user}, but you are already on **${currentTeam.name}**!  Visit your team channel at #${currentTeam.channelName.toLowerCase()} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
                     reject(new Error("User is already on a team."));
                     return;
                 }
