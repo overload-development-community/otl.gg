@@ -388,7 +388,6 @@ class Discord {
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
-
         if (!teamRole) {
             throw new Error("User is not on a team.");
         }
@@ -738,6 +737,10 @@ class Discord {
             mentionable: false
         }, `${guildMember.displayName} created the team ${name}.`);
 
+        await guildMember.addRole(founderRole, `${guildMember.displayName} created the team ${name}.`);
+
+        await guildMember.addRole(teamRole, `${guildMember.displayName} created the team ${name}.`);
+
         const category = await otlGuild.createChannel(name, "category", [
             {
                 id: otlGuild.id,
@@ -976,6 +979,88 @@ class Discord {
         await Discord.queue(`${player.displayName}, you have been invited to join **${teamName}** by ${user.displayName}.  You can accept this invitation by responding with \`!accept ${teamName}\`.`, player);
 
         Discord.updateUserTeam(user);
+    }
+
+    //             #           ####                       #
+    //             #           #                          #
+    // # #    ###  # #    ##   ###    ##   #  #  ###    ###   ##   ###
+    // ####  #  #  ##    # ##  #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #  #  # ##  # #   ##    #     #  #  #  #  #  #  #  #  ##    #
+    // #  #   # #  #  #   ##   #      ##    ###  #  #   ###   ##   #
+    /**
+     * Transfers the team's founder from one player to another.
+     * @param {User} user The user who is the current founder.
+     * @param {User} player The user becoming the founder.
+     * @returns {Promise} A promise that resolves when the founder has been transferred.
+     */
+    static async makeFounder(user, player) {
+        const guildMember = otlGuild.member(user);
+        if (!guildMember) {
+            throw new Error("User does not exist on server.");
+        }
+
+        const guildPlayer = otlGuild.member(player);
+        if (!guildPlayer) {
+            throw new Error("Player does not exist on server.");
+        }
+
+        if (!founderRole.members.find("id", guildMember.id)) {
+            throw new Error("User is not a founder.");
+        }
+
+        const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
+        if (!teamRole) {
+            throw new Error("User is not on a team.");
+        }
+
+        if (!teamRole.members.find("id", guildPlayer.id)) {
+            throw new Error("Users are not on the same team.");
+        }
+
+        const teamName = Discord.getTeamFromTeamRole(teamRole),
+            captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+            captainChannel = otlGuild.channels.find("name", captainChannelName);
+        if (!captainChannel) {
+            throw new Error("Captain's channel does not exist for the team.");
+        }
+
+        const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+            channel = otlGuild.channels.find("name", channelName);
+        if (!channel) {
+            throw new Error("Team's channel does not exist.");
+        }
+
+        await guildMember.removeRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+        await guildMember.addRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+
+        await guildPlayer.addRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+        await guildPlayer.removeRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+
+        await Discord.queue(`${guildPlayer}, you are now the founder of **${teamName}**!`, guildPlayer);
+        await Discord.queue(`${guildPlayer.displayName} is now the team founder!`, captainChannel);
+        await Discord.queue(`${guildPlayer.displayName} is now the team founder!`, channel);
+        await Discord.richQueue({
+            embed: {
+                title: teamName,
+                description: "Leadership Update",
+                color: 0x800000,
+                timestamp: new Date(),
+                fields: [
+                    {
+                        name: "Old Founder",
+                        value: `${guildMember}`
+                    },
+                    {
+                        name: "New Founder",
+                        value: `${guildPlayer}`
+                    }
+                ],
+                footer: {
+                    text: `changed by ${guildMember.displayName}`,
+                    icon_url: Discord.icon // eslint-disable-line camelcase
+                }
+            }
+        }, rosterUpdatesChannel);
     }
 
     //                      #        ###          ##                      #          ###
