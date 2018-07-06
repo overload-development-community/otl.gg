@@ -16,6 +16,33 @@ class Database {
     static getHomesForDiscordId(discordId) {
         return db.query("SELECT Home FROM tblHome WHERE DiscordID = @discordId", {discordId: {type: Db.VARCHAR(50), value: discordId}}).then((data) => data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Home));
     }
+
+    // addCaptain
+    // addUserToTeam
+    // applyHomeMap
+    // canBeCaptain
+    // canRemovePilot
+    // createTeam
+    // disbandTeam
+    // getTeam
+    // getTeamByTagOrName
+    // getTeamHomeMaps
+    // getTeamPilotAndInvitedCount
+    // invitePilotToTeam
+    // joinTeamDeniedUntil
+    // makeFounder
+    // reinstateTeam
+    // removeCaptain
+    // removePilot
+    // removeUserFromTeam
+    // requestTeam
+    // teamNameOrTagExists
+    // teamTagExists
+    // userBannedFromTeamUntil
+    // userHasAlreadyRequstedTeam
+    // userIsInvitedToTeam
+    // userTeamHasInvitedPilot
+    // userWasPreviousCaptainOrFounderOfTeam
 }
 
 module.exports = Database;

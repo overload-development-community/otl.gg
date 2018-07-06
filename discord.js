@@ -83,7 +83,126 @@ class Discord {
             Discord.message(message.author, message.channel, message.content);
         });
 
-        // TODO: If someone leaves the server, remove them from the league accordingly.  If they are a team founder, notify administration to assign a new founder.
+        discord.addListener("guildMemberRemoved", async (guildMember) => {
+            let team;
+            try {
+                team = await Db.getTeam(guildMember);
+            } catch (err) {
+                Log.exception(`There was a database error getting a team for a user.  Please remove ${guildMember.displayName} manually.`, err);
+                return;
+            }
+
+            if (!team) {
+                return;
+            }
+
+            if (team.isFounder) {
+                Log.exception(`${guildMember.displayName} has left the server, but was the founder of ${team.name}.  Please resolve team ownership manually.`);
+            }
+
+            const teamName = team.name,
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+            if (!captainChannel) {
+                Log.exception(`Captain's channel does not exist for the team.  Please remove ${guildMember.displayName} manually.`);
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+            if (!channel) {
+                Log.exception(`Team's channel does not exist.  Please remove ${guildMember.displayName} manually.`);
+                return;
+            }
+
+            try {
+                await Db.removeUserFromTeam(guildMember, team);
+            } catch (err) {
+                Log.exception(`There was a database error removing ${guildMember.displayName} from ${team.name}.  Please remove ${guildMember.displayName} manually.`, err);
+                return;
+            }
+
+            await Discord.updateTeam(team);
+
+            try {
+                await captainChannel.overwritePermissions(guildMember, [
+                    {
+                        id: guildMember.id,
+                        deny: ["VIEW_CHANNEL"]
+                    }
+                ], `${guildMember.displayName} left the team.`);
+            } finally {}
+
+            await Discord.queue(`${guildMember.displayName} has left the team.`, captainChannel);
+            await Discord.queue(`${guildMember.displayName} has left the team.`, channel);
+
+            await Discord.richQueue({
+                embed: {
+                    title: teamName,
+                    description: "Pilot Left",
+                    color: 0xFF0000,
+                    timestamp: new Date(),
+                    fields: [
+                        {
+                            name: "Pilot Left",
+                            value: `${guildMember.displayName}`
+                        }
+                    ],
+                    footer: {
+                        text: "pilot left server",
+                        "icon_url": Discord.icon
+                    }
+                }
+            }, rosterUpdatesChannel);
+        });
+
+        discord.addListener("guildMemberUpdate", async (oldUser, newUser) => {
+            try {
+                await Db.updateName(oldUser.id, newUser.displayName);
+            } catch (err) {
+                Log.exception(`There was a database error changing ${oldUser.displayName}'s name to ${newUser.displayName}.  Please change this manually.`, err);
+                return;
+            }
+
+            const teamRole = Discord.getTeamRoleFromGuildMember(newUser);
+
+            if (!teamRole) {
+                return;
+            }
+
+            const teamName = Discord.getTeamFromTeamRole(teamRole);
+
+            if (!teamName) {
+                return;
+            }
+
+            await Discord.richQueue({
+                embed: {
+                    title: teamName,
+                    description: "Pilot Name Change",
+                    color: 0xFFFF00,
+                    timestamp: new Date(),
+                    fields: [
+                        {
+                            name: "Old Name",
+                            value: `${oldUser.displayName}`,
+                            inline: true
+                        },
+                        {
+                            name: "New Name",
+                            value: `${newUser.displayName}`,
+                            inline: true
+                        }
+                    ],
+                    footer: {
+                        text: "pilot changed name",
+                        "icon_url": Discord.icon
+                    }
+                }
+            }, rosterUpdatesChannel);
+
+            Discord.updateUserTeam(newUser);
+        });
     }
 
     //                                      #
@@ -178,7 +297,7 @@ class Discord {
                         description: message,
                         timestamp: new Date(),
                         color: 0x16F6F8,
-                        footer: {icon_url: Discord.icon} // eslint-disable-line camelcase
+                        footer: {"icon_url": Discord.icon}
                     }
                 }
             );
@@ -346,14 +465,11 @@ class Discord {
             team = Db.getTeam(user);
         } catch (err) {
             Log.exception("There was a database error getting a team for a user.", err);
+            return;
         }
 
         if (team) {
-            try {
-                await Discord.updateTeam(team);
-            } catch (err) {
-                Log.exception("There was an error while updating a team.", err);
-            }
+            await Discord.updateTeam(team);
         }
     }
 
@@ -437,7 +553,7 @@ class Discord {
                 ],
                 footer: {
                     text: `added by ${guildMember.displayName}`,
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -489,18 +605,18 @@ class Discord {
         await Discord.richQueue({
             embed: {
                 title: teamName,
-                description: "Player Added",
+                description: "Pilot Added",
                 color: 0x00FF00,
                 timestamp: new Date(),
                 fields: [
                     {
-                        name: "Player Added",
+                        name: "Pilot Added",
                         value: `${guildMember}`
                     }
                 ],
                 footer: {
                     text: "added by accepted invitation",
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -784,7 +900,7 @@ class Discord {
                 ],
                 footer: {
                     text: `created by ${guildMember.displayName}`,
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -930,40 +1046,39 @@ class Discord {
                 timestamp: new Date(),
                 fields: [
                     {
-                        name: "Players Removed",
+                        name: "Pilots Removed",
                         value: `${memberList.join(", ")}`
                     }
                 ],
                 footer: {
                     text: `disbanded by ${guildMember.displayName}`,
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
     }
 
-    //  #                 #     #          ###   ##                            ###         ###
-    //                          #          #  #   #                             #           #
-    // ##    ###   # #   ##    ###    ##   #  #   #     ###  #  #   ##   ###    #     ##    #     ##    ###  # #
-    //  #    #  #  # #    #     #    # ##  ###    #    #  #  #  #  # ##  #  #   #    #  #   #    # ##  #  #  ####
-    //  #    #  #  # #    #     #    ##    #      #    # ##   # #  ##    #      #    #  #   #    ##    # ##  #  #
-    // ###   #  #   #    ###     ##   ##   #     ###    # #    #    ##   #      #     ##    #     ##    # #  #  #
-    //                                                        #
+    //  #                 #     #          ###    #    ##           #    ###         ###
+    //                          #          #  #         #           #     #           #
+    // ##    ###   # #   ##    ###    ##   #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
+    //  #    #  #  # #    #     #    # ##  ###    #     #    #  #   #     #    #  #   #    # ##  #  #  ####
+    //  #    #  #  # #    #     #    ##    #      #     #    #  #   #     #    #  #   #    ##    # ##  #  #
+    // ###   #  #   #    ###     ##   ##   #     ###   ###    ##     ##   #     ##    #     ##    # #  #  #
     /**
-     * Invites a player to a team.
-     * @param {User} user The user inviting the player.
-     * @param {User} player The player being invited.
-     * @returns {Promise} A promise that resolves when the player has been invited.
+     * Invites a pilot to a team.
+     * @param {User} user The user inviting the pilot.
+     * @param {User} pilot The pilot being invited.
+     * @returns {Promise} A promise that resolves when the pilot has been invited.
      */
-    static async invitePlayerToTeam(user, player) {
+    static async invitePilotToTeam(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
             throw new Error("User does not exist on server.");
         }
 
-        const playerMember = otlGuild.member(player);
-        if (!playerMember) {
-            throw new Error("Player does not exist on server.");
+        const pilotMember = otlGuild.member(pilot);
+        if (!pilotMember) {
+            throw new Error("Pilot does not exist on server.");
         }
 
         if (!founderRole.members.find("id", guildMember.id) && !captainRole.members.find("id", guildMember.id)) {
@@ -976,7 +1091,7 @@ class Discord {
         }
 
         const teamName = Discord.getTeamFromTeamRole(teamRole);
-        await Discord.queue(`${player.displayName}, you have been invited to join **${teamName}** by ${user.displayName}.  You can accept this invitation by responding with \`!accept ${teamName}\`.`, player);
+        await Discord.queue(`${pilot.displayName}, you have been invited to join **${teamName}** by ${user.displayName}.  You can accept this invitation by responding with \`!accept ${teamName}\`.`, pilot);
 
         Discord.updateUserTeam(user);
     }
@@ -988,20 +1103,20 @@ class Discord {
     // #  #  # ##  # #   ##    #     #  #  #  #  #  #  #  #  ##    #
     // #  #   # #  #  #   ##   #      ##    ###  #  #   ###   ##   #
     /**
-     * Transfers the team's founder from one player to another.
+     * Transfers the team's founder from one pilot to another.
      * @param {User} user The user who is the current founder.
-     * @param {User} player The user becoming the founder.
+     * @param {User} pilot The user becoming the founder.
      * @returns {Promise} A promise that resolves when the founder has been transferred.
      */
-    static async makeFounder(user, player) {
+    static async makeFounder(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
             throw new Error("User does not exist on server.");
         }
 
-        const guildPlayer = otlGuild.member(player);
-        if (!guildPlayer) {
-            throw new Error("Player does not exist on server.");
+        const guildPilot = otlGuild.member(pilot);
+        if (!guildPilot) {
+            throw new Error("Pilot does not exist on server.");
         }
 
         if (!founderRole.members.find("id", guildMember.id)) {
@@ -1013,7 +1128,7 @@ class Discord {
             throw new Error("User is not on a team.");
         }
 
-        if (!teamRole.members.find("id", guildPlayer.id)) {
+        if (!teamRole.members.find("id", guildPilot.id)) {
             throw new Error("Users are not on the same team.");
         }
 
@@ -1030,15 +1145,15 @@ class Discord {
             throw new Error("Team's channel does not exist.");
         }
 
-        await guildMember.removeRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
-        await guildMember.addRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+        await guildMember.removeRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPilot.displayName}.`);
+        await guildMember.addRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPilot.displayName}.`);
 
-        await guildPlayer.addRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
-        await guildPlayer.removeRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPlayer.displayName}.`);
+        await guildPilot.addRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPilot.displayName}.`);
+        await guildPilot.removeRole(captainRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPilot.displayName}.`);
 
-        await Discord.queue(`${guildPlayer}, you are now the founder of **${teamName}**!`, guildPlayer);
-        await Discord.queue(`${guildPlayer.displayName} is now the team founder!`, captainChannel);
-        await Discord.queue(`${guildPlayer.displayName} is now the team founder!`, channel);
+        await Discord.queue(`${guildPilot}, you are now the founder of **${teamName}**!`, guildPilot);
+        await Discord.queue(`${guildPilot.displayName} is now the team founder!`, captainChannel);
+        await Discord.queue(`${guildPilot.displayName} is now the team founder!`, channel);
         await Discord.richQueue({
             embed: {
                 title: teamName,
@@ -1048,16 +1163,18 @@ class Discord {
                 fields: [
                     {
                         name: "Old Founder",
-                        value: `${guildMember}`
+                        value: `${guildMember}`,
+                        inline: true
                     },
                     {
                         name: "New Founder",
-                        value: `${guildPlayer}`
+                        value: `${guildPilot}`,
+                        inline: true
                     }
                 ],
                 footer: {
                     text: `changed by ${guildMember.displayName}`,
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1186,34 +1303,33 @@ class Discord {
                 ],
                 footer: {
                     text: `removed by ${guildMember.displayName}`,
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
     }
 
-    //                                     ###   ##
-    //                                     #  #   #
-    // ###    ##   # #    ##   # #    ##   #  #   #     ###  #  #   ##   ###
-    // #  #  # ##  ####  #  #  # #   # ##  ###    #    #  #  #  #  # ##  #  #
-    // #     ##    #  #  #  #  # #   ##    #      #    # ##   # #  ##    #
-    // #      ##   #  #   ##    #     ##   #     ###    # #    #    ##   #
-    //                                                        #
+    //                                     ###    #    ##           #
+    //                                     #  #         #           #
+    // ###    ##   # #    ##   # #    ##   #  #  ##     #     ##   ###
+    // #  #  # ##  ####  #  #  # #   # ##  ###    #     #    #  #   #
+    // #     ##    #  #  #  #  # #   ##    #      #     #    #  #   #
+    // #      ##   #  #   ##    #     ##   #     ###   ###    ##     ##
     /**
-     * Removes a player from a team, whether they are a player on the team, someone who has been invited, or someone who has requested to join.
-     * @param {User} user The user removing the player.
-     * @param {User} player The player to remove.
-     * @returns {Promise} A promise that resolves when the player has been removed.
+     * Removes a pilot from a team, whether they are a pilot on the team, someone who has been invited, or someone who has requested to join.
+     * @param {User} user The user removing the pilot.
+     * @param {User} pilot The pilot to remove.
+     * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
-    static async removePlayer(user, player) {
+    static async removePilot(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
             throw new Error("User does not exist on server.");
         }
 
-        const guildPlayer = otlGuild.member(player);
-        if (!guildPlayer) {
-            throw new Error("Player does not exist on server.");
+        const guildPilot = otlGuild.member(pilot);
+        if (!guildPilot) {
+            throw new Error("Pilot does not exist on server.");
         }
 
         if (!founderRole.members.find("id", guildMember.id)) {
@@ -1238,42 +1354,42 @@ class Discord {
             throw new Error("Team's channel does not exist.");
         }
 
-        if (teamRole.members.find("id", guildPlayer.id)) {
-            await guildPlayer.removeRole(captainRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`);
+        if (teamRole.members.find("id", guildPilot.id)) {
+            await guildPilot.removeRole(captainRole, `${guildMember.displayName} removed ${guildPilot.displayName} from the team.`);
 
-            await captainChannel.overwritePermissions(guildPlayer, [
+            await captainChannel.overwritePermissions(guildPilot, [
                 {
-                    id: guildPlayer.id,
+                    id: guildPilot.id,
                     deny: ["VIEW_CHANNEL"]
                 }
-            ], `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`);
+            ], `${guildMember.displayName} removed ${guildPilot.displayName} from the team.`);
 
-            await guildPlayer.removeRole(teamRole, `${guildMember.displayName} removed ${guildPlayer.displayName} from the team.`);
+            await guildPilot.removeRole(teamRole, `${guildMember.displayName} removed ${guildPilot.displayName} from the team.`);
 
-            await Discord.queue(`${guildPlayer}, you have been removed from **${teamName}** by ${guildMember.displayName}.`, player);
-            await Discord.queue(`${guildPlayer.displayName} has been removed from the team by ${guildMember.displayName}.`, captainChannel);
-            await Discord.queue(`${guildPlayer.displayName} has been removed from the team by ${guildMember.displayName}.`, channel);
+            await Discord.queue(`${guildPilot}, you have been removed from **${teamName}** by ${guildMember.displayName}.`, pilot);
+            await Discord.queue(`${guildPilot.displayName} has been removed from the team by ${guildMember.displayName}.`, captainChannel);
+            await Discord.queue(`${guildPilot.displayName} has been removed from the team by ${guildMember.displayName}.`, channel);
 
             await Discord.richQueue({
                 embed: {
                     title: teamName,
-                    description: "Player Removed",
+                    description: "Pilot Removed",
                     color: 0xFF0000,
                     timestamp: new Date(),
                     fields: [
                         {
-                            name: "Player Removed",
+                            name: "Pilot Removed",
                             value: `${guildMember}`
                         }
                     ],
                     footer: {
                         text: `removed by ${guildMember.displayName}`,
-                        icon_url: Discord.icon // eslint-disable-line camelcase
+                        "icon_url": Discord.icon
                     }
                 }
             }, rosterUpdatesChannel);
         } else {
-            await Discord.queue(`${guildPlayer.displayName} declined to invite ${guildMember.displayName}.`, captainChannel);
+            await Discord.queue(`${guildMember.displayName} declined to invite ${guildPilot.displayName}.`, captainChannel);
         }
 
         Discord.updateUserTeam(user);
@@ -1332,18 +1448,18 @@ class Discord {
         await Discord.richQueue({
             embed: {
                 title: teamName,
-                description: "Player Left",
+                description: "Pilot Left",
                 color: 0xFF0000,
                 timestamp: new Date(),
                 fields: [
                     {
-                        name: "Player Left",
+                        name: "Pilot Left",
                         value: `${guildMember}`
                     }
                 ],
                 footer: {
-                    text: "player left",
-                    icon_url: Discord.icon // eslint-disable-line camelcase
+                    text: "pilot left team",
+                    "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1382,7 +1498,7 @@ class Discord {
 
         await Discord.queue(`@everyone, ${guildMember.displayName} has requested to join the team.`, captainChannel);
 
-        Discord.updateTeam(team);
+        await Discord.updateTeam(team);
     }
 
     //         #                 #     ##                      #          ###

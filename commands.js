@@ -388,7 +388,7 @@ class Commands {
 
         let teamNameExists, tagNameExists;
         try {
-            [teamNameExists, tagNameExists] = await Db.teamNameOrTagNameExists(name, tag);
+            [teamNameExists, tagNameExists] = await Db.teamNameOrTagExists(name, tag);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error checking if the team name exists.", err);
@@ -652,7 +652,7 @@ class Commands {
         }
 
         if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${user}, but due to past penalties, ${captain.displayName} is not a player you can add as a captain.`, channel);
+            await Discord.queue(`Sorry, ${user}, but due to past penalties, ${captain.displayName} is not a pilot you can add as a captain.`, channel);
             throw new Error("User is not able to become a captain.");
         }
 
@@ -806,7 +806,7 @@ class Commands {
     // #  #  # ##  # #   ##    #     #  #  #  #  #  #  #  #  ##    #
     // #  #   # #  #  #   ##   #      ##    ###  #  #   ###   ##   #
     /**
-     * Transfers team founder to another player.
+     * Transfers team founder to another pilot.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
@@ -824,82 +824,82 @@ class Commands {
             return false;
         }
 
-        let player, confirm;
+        let pilot, confirm;
         if (idConfirmParse.test(message)) {
             const {1: userId, 2: confirmed} = idConfirmParse.exec(message);
 
-            player = Discord.findGuildMemberById(userId);
+            pilot = Discord.findGuildMemberById(userId);
             confirm = confirmed;
         } else {
             const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
 
-            player = Discord.findGuildMemberByDisplayName(name);
+            pilot = Discord.findGuildMemberByDisplayName(name);
             confirm = confirmed;
         }
 
-        if (!player) {
+        if (!pilot) {
             await Discord.queue(`Sorry, ${user}, but I can't find ${message} on this server.  You must mention the pilot you wish to make founder.`, channel);
             throw new Error("User not found.");
         }
 
-        if (player.id === user.id) {
+        if (pilot.id === user.id) {
             await Discord.queue(`Sorry, ${user}, you can't make yourself the team's founder, you already *are* the founder!`, channel);
             throw new Error("User already the team's founder.");
         }
 
         let sameTeam;
         try {
-            sameTeam = Discord.usersAreOnTheSameTeam(user, player);
+            sameTeam = Discord.usersAreOnTheSameTeam(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a Discord error checking whether two users are on the same team.", err);
         }
 
         if (!sameTeam) {
-            await Discord.queue(`Sorry, ${user}, but ${player.displayName} isn't on your team!`, channel);
+            await Discord.queue(`Sorry, ${user}, but ${pilot.displayName} isn't on your team!`, channel);
             throw new Error("Users are not on the same team.");
         }
 
         const captainCount = Discord.captainCountOnUserTeam(user),
-            playerIsCaptain = Discord.userIsCaptainOrFounder(user);
-        if (captainCount === 2 || playerIsCaptain) {
-            await Discord.queue(`Sorry, ${user}, but this action would increase your team's captain count to 3.  You must remove an existing captain with the \`!removecaptain\` command before making ${player.displayName} the team's founder.`, channel);
+            pilotIsCaptain = Discord.userIsCaptainOrFounder(pilot);
+        if (captainCount === 2 || pilotIsCaptain) {
+            await Discord.queue(`Sorry, ${user}, but this action would increase your team's captain count to 3.  You must remove an existing captain with the \`!removecaptain\` command before making ${pilot.displayName} the team's founder.`, channel);
             throw new Error("Captain count limit reached.");
         }
 
         let canBeCaptain;
         try {
-            canBeCaptain = await Db.canBeCaptain(player);
+            canBeCaptain = await Db.canBeCaptain(pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error checking if a user can become a captain.", err);
         }
 
         if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${user}, but due to past penalties, ${player.displayName} is not a player you can make the team's founder.`, channel);
+            await Discord.queue(`Sorry, ${user}, but due to past penalties, ${pilot.displayName} is not a pilot you can make the team's founder.`, channel);
             throw new Error("User is not able to become the team's founder.");
         }
 
         if (!confirm) {
-            await Discord.queue(`${user}, are you sure you want to make ${player.displayName} your team's founder?  Type \`!makefounder ${player.displayName} confirm\` to confirm.`, channel);
+            await Discord.queue(`${user}, are you sure you want to make ${pilot.displayName} your team's founder?  Type \`!makefounder ${pilot.displayName} confirm\` to confirm.`, channel);
             return true;
         }
 
         try {
-            await Db.makeFounder(user, player);
+            await Db.makeFounder(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error transfering a team founder to another user.", err);
         }
 
         try {
-            await Discord.makeFounder(user, player);
+            await Discord.makeFounder(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a critical Discord error transfering a team founder to another user.  Please resolve this manually as soon as possible.", err);
         }
 
-        await Discord.queue(`${user}, you have transferred team ownership to ${player.displayName}.  You remain a team captain.`, user);
+        await Discord.queue(`${user}, you have transferred team ownership to ${pilot.displayName}.  You remain a team captain.`, user);
         return true;
     }
 
@@ -1128,7 +1128,7 @@ class Commands {
             hasRequested = await Db.userHasAlreadyRequestedTeam(user, team);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a database error checking if a player has already requested to join a team.", err);
+            throw new Exception("There was a database error checking if a user has already requested to join a team.", err);
         }
 
         if (hasRequested) {
@@ -1161,7 +1161,7 @@ class Commands {
     //  #    #  #  # #    #     #    ##
     // ###   #  #   #    ###     ##   ##
     /**
-     * Invites a player to a team.
+     * Invites a pilot to a team.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
@@ -1174,74 +1174,74 @@ class Commands {
             throw new Error("User is not a founder or captain.");
         }
 
-        let playerCount;
+        let pilotCount;
         try {
-            playerCount = await Db.getTeamPlayerAndInvitedCount(user);
+            pilotCount = await Db.getTeamPilotAndInvitedCount(user);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a database error getting the number of players on and invited to a user's team.", err);
+            throw new Exception("There was a database error getting the number of pilots on and invited to a user's team.", err);
         }
 
-        if (playerCount >= 8) {
-            await Discord.queue(`Sorry, ${user}, but there is a maximum of 8 pilots per roster, and your team currently has ${playerCount}.`, channel);
+        if (pilotCount >= 8) {
+            await Discord.queue(`Sorry, ${user}, but there is a maximum of 8 pilots per roster, and your team currently has ${pilotCount}.`, channel);
             throw new Error("Roster is full.");
         }
 
-        let player;
+        let pilot;
         if (idParse.test(message)) {
             const {1: userId} = idParse.exec(message);
 
-            player = Discord.findGuildMemberById(userId);
+            pilot = Discord.findGuildMemberById(userId);
         } else {
-            player = Discord.findGuildMemberByDisplayName(message);
+            pilot = Discord.findGuildMemberByDisplayName(message);
         }
 
-        if (!player) {
+        if (!pilot) {
             await Discord.queue(`Sorry, ${user}, but I can't find ${message} on this server.  You must mention the pilot you wish to invite.`, channel);
             throw new Error("User not found.");
         }
 
         let invited;
         try {
-            invited = await Db.userTeamHasInvitedPlayer(user, player);
+            invited = await Db.userTeamHasInvitedPilot(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a database error checking if a player was already invited to a team.", err);
+            throw new Exception("There was a database error checking if a pilot was already invited to a team.", err);
         }
 
         if (invited) {
-            await Discord.queue(`Sorry, ${user}, but to prevent abuse you can only invite a pilot to your team once.  If ${player.displayName} has not responded yet, ask them to \`!accept\` the invitation.`, channel);
-            throw new Error("Player already invited.");
+            await Discord.queue(`Sorry, ${user}, but to prevent abuse you can only invite a pilot to your team once.  If ${pilot.displayName} has not responded yet, ask them to \`!accept\` the invitation.`, channel);
+            throw new Error("Pilot already invited.");
         }
 
         let team;
         try {
-            team = await Db.getTeam(player);
+            team = await Db.getTeam(pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error getting the current team the user is on.", err);
         }
 
         if (team) {
-            await Discord.queue(`Sorry, ${user}, but ${player.displayName} is already on another team!`, channel);
-            throw new Error("Player already on another team.");
+            await Discord.queue(`Sorry, ${user}, but ${pilot.displayName} is already on another team!`, channel);
+            throw new Error("Pilot already on another team.");
         }
 
         try {
-            await Db.invitePlayerToTeam(user, player);
+            await Db.invitePilotToTeam(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a database error inviting a player to a team.", err);
+            throw new Exception("There was a database error inviting a pilot to a team.", err);
         }
 
         try {
-            await Discord.invitePlayerToTeam(user, player);
+            await Discord.invitePilotToTeam(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a critical Discord error inviting a player to a team.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error inviting a pilot to a team.  Please resolve this manually as soon as possible.", err);
         }
 
-        await Discord.queue(`${user}, ${player.displayName} has been invited to your team.`, channel);
+        await Discord.queue(`${user}, ${pilot.displayName} has been invited to your team.`, channel);
         return true;
     }
 
@@ -1408,7 +1408,7 @@ class Commands {
     // #      ##   #  #   ##    #     ##
 
     /**
-     * Removes a player from a team, rejects a player requesting to join the team, or revokes an invitation to join the team.
+     * Removes a pilot from a team, rejects a pilot requesting to join the team, or revokes an invitation to join the team.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
@@ -1421,62 +1421,62 @@ class Commands {
             throw new Error("User is not a founder or captain.");
         }
 
-        let player, confirm;
+        let pilot, confirm;
         if (idConfirmParse.test(message)) {
             const {1: userId, 2: confirmed} = idConfirmParse.exec(message);
 
-            player = Discord.findGuildMemberById(userId);
+            pilot = Discord.findGuildMemberById(userId);
             confirm = confirmed;
         } else {
             const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
 
-            player = Discord.findGuildMemberByDisplayName(name);
+            pilot = Discord.findGuildMemberByDisplayName(name);
             confirm = confirmed;
         }
 
-        if (!player) {
+        if (!pilot) {
             await Discord.queue(`Sorry, ${user}, but I can't find ${message} on this server.  You must mention the pilot you wish to remove.`, channel);
             throw new Error("User not found.");
         }
 
-        if (player.id === user.id) {
+        if (pilot.id === user.id) {
             await Discord.queue(`Sorry, ${user}, you can't remove yourself with this command.  If you wish to leave the server, use the \`!leave\` command.`, channel);
             throw new Error("User cannot remove themselves.");
         }
 
         let removable;
         try {
-            removable = await Db.canRemovePlayer(user, player);
+            removable = await Db.canRemovePilot(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error checking if a user can remove another user.", err);
         }
 
         if (!removable) {
-            await Discord.queue(`Sorry, ${user}, but ${player.displayName} is not a player you can remove.`, channel);
+            await Discord.queue(`Sorry, ${user}, but ${pilot.displayName} is not a pilot you can remove.`, channel);
             throw new Error("User is not removable.");
         }
 
         if (!confirm) {
-            await Discord.queue(`${user}, are you sure you want to remove ${player.displayName}?  Type \`!remove ${player.displayName} confirm\` to confirm.`, channel);
+            await Discord.queue(`${user}, are you sure you want to remove ${pilot.displayName}?  Type \`!remove ${pilot.displayName} confirm\` to confirm.`, channel);
             return true;
         }
 
         try {
-            await Db.removePlayer(user, player);
+            await Db.removePilot(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error removing a user from a team.", err);
         }
 
         try {
-            await Discord.removePlayer(user, player);
+            await Discord.removePilot(user, pilot);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a critical Discord error removing a user from a team.  Please resolve this manually as soon as possible.", err);
         }
 
-        await Discord.queue(`${user}, you have removed ${player.displayName}.`, user);
+        await Discord.queue(`${user}, you have removed ${pilot.displayName}.`, user);
         return true;
     }
 
@@ -1497,10 +1497,10 @@ class Commands {
     // !rename
     // !retag
     // !replacefounder
-    // !removeplayer
+    // !removepilot
     // !forcereport
     // !adjudicate
-    // !playerstat
+    // !pilotstat
     // !voidgame
 }
 
