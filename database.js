@@ -24,9 +24,11 @@ class Database {
     // canRemovePilot
     // createTeam
     // disbandTeam
+    // getRequestedOrInvitedTeams
     // getTeam
     // getTeamByTagOrName
     // getTeamHomeMaps
+    // getTeamInfo
     // getTeamPilotAndInvitedCount
     // invitePilotToTeam
     // joinTeamDeniedUntil
@@ -38,6 +40,7 @@ class Database {
     // requestTeam
     // teamNameOrTagExists
     // teamTagExists
+    // updateName
     // userBannedFromTeamUntil
     // userHasAlreadyRequstedTeam
     // userIsInvitedToTeam

@@ -93,6 +93,23 @@ class Discord {
             }
 
             if (!team) {
+                let requestedTeams;
+                try {
+                    requestedTeams = await Db.getRequestedOrInvitedTeams(guildMember);
+                } catch (err) {
+                    Log.exception(`There was a database error getting a user's team invites and requests.  Please remove ${guildMember.displayName} manually.`, err);
+                    return;
+                }
+
+                requestedTeams.forEach(async (requestedTeam) => {
+                    try {
+                        await Db.removeUserFromTeam(guildMember, requestedTeam);
+                    } catch (err) {
+                        Log.exception(`There was a database error removing a user from a team invite or request.  Please remove ${guildMember.displayName} from ${requestedTeam.name} manually.`, err);
+                    }
+
+                    await Discord.updateTeam(requestedTeam);
+                });
                 return;
             }
 
@@ -167,6 +184,17 @@ class Discord {
             const teamRole = Discord.getTeamRoleFromGuildMember(newUser);
 
             if (!teamRole) {
+                let requestedTeams;
+                try {
+                    requestedTeams = await Db.getRequestedOrInvitedTeams(newUser);
+                } catch (err) {
+                    Log.exception(`There was a database error getting a user's team invites and requests.  Please update ${newUser.displayName} manually.`, err);
+                    return;
+                }
+
+                requestedTeams.forEach(async (requestedTeam) => {
+                    await Discord.updateTeam(requestedTeam);
+                });
                 return;
             }
 
@@ -444,7 +472,71 @@ class Discord {
      * @returns {void}
      */
     static async updateTeam(team) {
-        // TODO: Update the team and captain channel topics.
+        try {
+            const teamName = team.name,
+                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find("name", captainChannelName);
+            if (!captainChannel) {
+                Log.exception(`Captain's channel does not exist for the team.  Please update ${team.name} manually.`);
+                return;
+            }
+
+            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find("name", channelName);
+            if (!channel) {
+                Log.exception(`Team's channel does not exist.  Please update ${team.name} manually.`);
+                return;
+            }
+
+            let teamInfo;
+            try {
+                teamInfo = await Db.getTeamInfo(team.id);
+            } catch (err) {
+                Log.exception(`There was a database error retrieving team information for ${team.name}.  Please update ${team.name} manually.`, err);
+                return;
+            }
+
+            let topic = `${team.name}\nhttp://overloadteamsleague.org/team/${team.tag}\n\nRoster:`;
+
+            teamInfo.members.forEach((member) => {
+                topic += `\n${member.name}`;
+                if (member.role) {
+                    topic += ` - ${member.role}`;
+                }
+            });
+
+            let channelTopic = topic,
+                captainChannelTopic = topic;
+
+            if (teamInfo.upcomingMatches && teamInfo.upcomingMatches.length > 0) {
+                channelTopic += "\n\nUpcoming matches:";
+                teamInfo.upcomingMatches.forEach((match) => {
+                    channelTopic += `\n${match.opponent} - ${match.date} - ${match.time}`;
+                    if (match.map) {
+                        channelTopic += ` - ${match.map}`;
+                    }
+                });
+            }
+
+            if (teamInfo.recentMatches && teamInfo.recentMatches.length > 0) {
+                channelTopic += "\n\nRecentMatches:";
+                teamInfo.recentMatches.forEach((match) => {
+                    channelTopic += `\n${match.result} - ${match.score}-${match.opponentScore} - ${match.opponent} - ${match.map}`;
+                });
+            }
+
+            if (teamInfo.recruits && teamInfo.recruits.length > 0) {
+                captainChannelTopic += "\n\nRecruits:";
+                teamInfo.recruits.forEach((recruit) => {
+                    captainChannelTopic += `\n${recruit.name} - ${recruit.date}`;
+                });
+            }
+
+            await channel.setTopic(channelTopic, "Team topic update requested.");
+            await captainChannel.setTopic(captainChannelTopic, "Team topic update requested.");
+        } catch (err) {
+            Log.exception(`There was an error updating team information for ${team.name}.  Please update ${team.name} manually.`, err);
+        }
     }
 
     //                #         #          #  #                      #

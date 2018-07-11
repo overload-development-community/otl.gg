@@ -1337,6 +1337,25 @@ class Commands {
             throw new Exception("There was a critical Discord error adding a user to a team.  Please resolve this manually as soon as possible.", err);
         }
 
+        let requestedTeams;
+        try {
+            requestedTeams = await Db.getRequestedOrInvitedTeams(user);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw new Exception("There was a critical database error getting a user's team invites and requests.  Please resolve this manually as soon as possible.", err);
+        }
+
+        requestedTeams.forEach(async (requestedTeam) => {
+            try {
+                await Db.removeUserFromTeam(user, requestedTeam);
+            } catch (err) {
+                await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw new Exception("There was a critical database removing a user's team invite or request.  Please resolve this manually as soon as possible.", err);
+            }
+
+            await Discord.updateTeam(requestedTeam);
+        });
+
         await Discord.queue(`${user}, you are now a member of **${team.name}**!  Visit your team channel at #${team.channelName.toLowerCase()} to talk with your teammates.  Best of luck flying in the OTL!`, channel);
         return true;
     }
