@@ -175,7 +175,7 @@ class Discord {
 
         discord.addListener("guildMemberUpdate", async (oldUser, newUser) => {
             try {
-                await Db.updateName(oldUser.id, newUser.displayName);
+                await Db.updateName(newUser);
             } catch (err) {
                 Log.exception(`There was a database error changing ${oldUser.displayName}'s name to ${newUser.displayName}.  Please change this manually.`, err);
                 return;
@@ -198,7 +198,7 @@ class Discord {
                 return;
             }
 
-            const teamName = Discord.getTeamFromTeamRole(teamRole);
+            const teamName = Discord.getTeamNameFromTeamRole(teamRole);
 
             if (!teamName) {
                 return;
@@ -439,19 +439,19 @@ class Discord {
         return member.roles.find((r) => r.name.startsWith("Team: "));
     }
 
-    //              #    ###                     ####                    ###                     ###         ##
-    //              #     #                      #                        #                      #  #         #
-    //  ###   ##   ###    #     ##    ###  # #   ###   ###    ##   # #    #     ##    ###  # #   #  #   ##    #     ##
-    // #  #  # ##   #     #    # ##  #  #  ####  #     #  #  #  #  ####   #    # ##  #  #  ####  ###   #  #   #    # ##
-    //  ##   ##     #     #    ##    # ##  #  #  #     #     #  #  #  #   #    ##    # ##  #  #  # #   #  #   #    ##
-    // #      ##     ##   #     ##    # #  #  #  #     #      ##   #  #   #     ##    # #  #  #  #  #   ##   ###    ##
+    //              #    ###                     #  #                    ####                    ###                     ###         ##
+    //              #     #                      ## #                    #                        #                      #  #         #
+    //  ###   ##   ###    #     ##    ###  # #   ## #   ###  # #    ##   ###   ###    ##   # #    #     ##    ###  # #   #  #   ##    #     ##
+    // #  #  # ##   #     #    # ##  #  #  ####  # ##  #  #  ####  # ##  #     #  #  #  #  ####   #    # ##  #  #  ####  ###   #  #   #    # ##
+    //  ##   ##     #     #    ##    # ##  #  #  # ##  # ##  #  #  ##    #     #     #  #  #  #   #    ##    # ##  #  #  # #   #  #   #    ##
+    // #      ##     ##   #     ##    # #  #  #  #  #   # #  #  #   ##   #     #      ##   #  #   #     ##    # #  #  #  #  #   ##   ###    ##
     //  ###
     /**
      * Gets the team name from the team role.
      * @param {Role} role The team role.
      * @returns {string} The name of the team.
      */
-    static getTeamFromTeamRole(role) {
+    static getTeamNameFromTeamRole(role) {
         if (!teamMatch.test(role.name)) {
             return null;
         }
@@ -490,7 +490,7 @@ class Discord {
 
             let teamInfo;
             try {
-                teamInfo = await Db.getTeamInfo(team.id);
+                teamInfo = await Db.getTeamInfo(team);
             } catch (err) {
                 Log.exception(`There was a database error retrieving team information for ${team.name}.  Please update ${team.name} manually.`, err);
                 return;
@@ -525,10 +525,17 @@ class Discord {
                 });
             }
 
-            if (teamInfo.recruits && teamInfo.recruits.length > 0) {
-                captainChannelTopic += "\n\nRecruits:";
-                teamInfo.recruits.forEach((recruit) => {
-                    captainChannelTopic += `\n${recruit.name} - ${recruit.date}`;
+            if (teamInfo.requests && teamInfo.requests.length > 0) {
+                captainChannelTopic += "\n\nRequests:";
+                teamInfo.requests.forEach((request) => {
+                    captainChannelTopic += `\n${request.name} - ${request.date}`;
+                });
+            }
+
+            if (teamInfo.invites && teamInfo.invites.length > 0) {
+                captainChannelTopic += "\n\nInvites:";
+                teamInfo.invites.forEach((invite) => {
+                    captainChannelTopic += `\n${invite.name} - ${invite.date}`;
                 });
             }
 
@@ -604,7 +611,7 @@ class Discord {
             throw new Error("Users are not on the same team.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -674,7 +681,7 @@ class Discord {
             throw new Error("Team does not exist.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -743,7 +750,7 @@ class Discord {
             throw new Error("User is not a captain or a founder.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -1089,7 +1096,7 @@ class Discord {
             throw new Error("User is already on a team.");
         }
 
-        const name = Discord.getTeamFromTeamRole(teamRole),
+        const name = Discord.getTeamNameFromTeamRole(teamRole),
             channelName = `team-${name.toLowerCase().replace(/ /g, "-")}`,
             channel = otlGuild.channels.find("name", channelName);
 
@@ -1182,7 +1189,7 @@ class Discord {
             throw new Error("User is not on a team.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole);
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole);
         await Discord.queue(`${pilot.displayName}, you have been invited to join **${teamName}** by ${user.displayName}.  You can accept this invitation by responding with \`!accept ${teamName}\`.`, pilot);
 
         Discord.updateUserTeam(user);
@@ -1224,7 +1231,7 @@ class Discord {
             throw new Error("Users are not on the same team.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -1356,7 +1363,7 @@ class Discord {
             throw new Error("Users are not on the same team.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -1433,7 +1440,7 @@ class Discord {
             throw new Error("User is not on a team.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -1510,7 +1517,7 @@ class Discord {
             throw new Error("Team does not exist.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
@@ -1581,7 +1588,7 @@ class Discord {
             throw new Error("Team does not exist.");
         }
 
-        const teamName = Discord.getTeamFromTeamRole(teamRole),
+        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
             captainChannel = otlGuild.channels.find("name", captainChannelName);
         if (!captainChannel) {
