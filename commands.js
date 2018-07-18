@@ -5,6 +5,7 @@ const Db = require("./database"),
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     idParse = /^<@!?([0-9]+)>$/,
     idConfirmParse = /^<@!?([0-9]+)>(?: (confirm))?$/,
+    idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+)(?: (confirm))?$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
@@ -38,26 +39,39 @@ class Commands {
         }
     }
 
-    //                               ###                      #
-    //                               #  #
-    //  ##   #  #  ###    ##   ###   #  #  ###    ##   # #   ##     ###    ##
-    // #  #  #  #  #  #  # ##  #  #  ###   #  #  #  #  ####   #    ##     # ##
-    // #  #  ####  #  #  ##    #     #     #     #  #  #  #   #      ##   ##
-    //  ##   ####  #  #   ##   #     #     #      ##   #  #  ###   ###     ##
+    //         #                ##           #
+    //                           #           #
+    //  ###   ##    # #   #  #   #     ###  ###    ##
+    // ##      #    ####  #  #   #    #  #   #    # ##
+    //   ##    #    #  #  #  #   #    # ##   #    ##
+    // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
-     * A promise that only proceeds if the user is the owner.
-     * @param {User} user The user to check.
-     * @param {function} fx The function to run with the promise.
-     * @returns {Promise} A promise that resolves if the user is the owner.
+     * Simulates other users making a command.
+     * @param {User} user The user initiating the command.
+     * @param {TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
-    static async ownerPromise(user, fx) {
+    async simulate(user, channel, message) {
         if (typeof user === "string" || !Discord.isOwner(user)) {
             throw new Error("Owner permission required to perform this command.");
         }
 
-        if (fx) {
-            await fx();
+        if (!idMessageParse.test(message)) {
+            return false;
         }
+
+        const {1: userId, 2: command, 3: newMessage} = idMessageParse.exec(message);
+        if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) === -1) {
+            return false;
+        }
+
+        const newUser = Discord.findGuildMemberById(userId);
+        if (!newUser) {
+            throw new Error(`Sorry, ${user}, but I don't recognize that user.`);
+        }
+
+        return await this[command](newUser, channel, newMessage) || void 0;
     }
 
     // #           ##
