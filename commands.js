@@ -60,25 +60,26 @@ class Commands {
         }
     }
 
-    //             #             #     #
-    //             #                   #
-    // #  #   ##   ###    ###   ##    ###    ##
-    // #  #  # ##  #  #  ##      #     #    # ##
-    // ####  ##    #  #    ##    #     #    ##
-    // ####   ##   ###   ###    ###     ##   ##
+    // #           ##
+    // #            #
+    // ###    ##    #    ###
+    // #  #  # ##   #    #  #
+    // #  #  ##     #    #  #
+    // #  #   ##   ###   ###
+    //                   #
     /**
-     * Replies with OTL's Website URL.
+     * Replies with a URL to the bot's help page.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
      * @returns {Promise} A promise that resolves when the command completes.
      */
-    async website(user, channel, message) {
+    async help(user, channel, message) {
         if (message) {
             return false;
         }
 
-        await Discord.queue("Visit http://overloadteamsleague.org for standings, stats, and more!", channel);
+        await Discord.queue(`${user}, see the documentation at https://github.com/roncli/otl-bot/blob/master/README.md.`, channel);
 
         return true;
     }
@@ -106,26 +107,25 @@ class Commands {
         return true;
     }
 
-    // #           ##
-    // #            #
-    // ###    ##    #    ###
-    // #  #  # ##   #    #  #
-    // #  #  ##     #    #  #
-    // #  #   ##   ###   ###
-    //                   #
+    //             #             #     #
+    //             #                   #
+    // #  #   ##   ###    ###   ##    ###    ##
+    // #  #  # ##  #  #  ##      #     #    # ##
+    // ####  ##    #  #    ##    #     #    ##
+    // ####   ##   ###   ###    ###     ##   ##
     /**
-     * Replies with a URL to the bot's help page.
+     * Replies with OTL's Website URL.
      * @param {User} user The user initiating the command.
      * @param {TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
      * @returns {Promise} A promise that resolves when the command completes.
      */
-    async help(user, channel, message) {
+    async website(user, channel, message) {
         if (message) {
             return false;
         }
 
-        await Discord.queue(`${user}, see the documentation at http://overloadteamsleague.org/bot.`, channel);
+        await Discord.queue("Website pending!", channel);
 
         return true;
     }
@@ -928,6 +928,12 @@ class Commands {
             return false;
         }
 
+        const isStarting = Discord.userIsStartingTeam(user);
+        if (isStarting) {
+            await Discord.queue(`Sorry, ${user}, but you are already in the process of starting a team!  Visit #new-team-${user.id} to get started, or \`!cancel\` to cancel your new team creation and try this command again.`, channel);
+            throw new Error("User is already in the process of starting a team.");
+        }
+
         let currentTeam;
         try {
             currentTeam = await Db.getTeam(user);
@@ -1099,6 +1105,12 @@ class Commands {
             throw new Error("User is not on the server.");
         }
 
+        const isStarting = Discord.userIsStartingTeam(user);
+        if (isStarting) {
+            await Discord.queue(`Sorry, ${user}, but you are already in the process of starting a team!  Visit #new-team-${user.id} to get started, or \`!cancel\` to cancel your new team creation and try this command again.`, channel);
+            throw new Error("User is already in the process of starting a team.");
+        }
+
         let currentTeam;
         try {
             currentTeam = await Db.getTeam(user);
@@ -1213,6 +1225,12 @@ class Commands {
             throw new Error("User not found.");
         }
 
+        const isStarting = Discord.userIsStartingTeam(guildPilot);
+        if (isStarting) {
+            await Discord.queue(`Sorry, ${user}, but ${guildPilot.displayName} is current in the process of starting a team.`, channel);
+            throw new Error("Pilot is already in the process of starting a team.");
+        }
+
         let invited;
         try {
             invited = await Db.teamHasInvitedPilot(user, guildPilot);
@@ -1276,6 +1294,12 @@ class Commands {
         if (!guildMember) {
             await Discord.queue(`Sorry, ${user}, but you are not part of the OTL!`, channel);
             throw new Error("User is not on the server.");
+        }
+
+        const isStarting = Discord.userIsStartingTeam(user);
+        if (isStarting) {
+            await Discord.queue(`Sorry, ${user}, but you are already in the process of starting a team!  Visit #new-team-${user.id} to get started, or \`!cancel\` to cancel your new team creation and try this command again.`, channel);
+            throw new Error("User is already in the process of starting a team.");
         }
 
         let currentTeam;

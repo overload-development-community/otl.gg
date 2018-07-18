@@ -173,22 +173,22 @@ class Discord {
             }, rosterUpdatesChannel);
         });
 
-        discord.addListener("guildMemberUpdate", async (oldUser, newUser) => {
+        discord.addListener("guildMemberUpdate", async (oldGuildMember, newGuildMember) => {
             try {
-                await Db.updateName(newUser);
+                await Db.updateName(newGuildMember);
             } catch (err) {
-                Log.exception(`There was a database error changing ${oldUser.displayName}'s name to ${newUser.displayName}.  Please change this manually.`, err);
+                Log.exception(`There was a database error changing ${oldGuildMember.displayName}'s name to ${newGuildMember.displayName}.  Please change this manually.`, err);
                 return;
             }
 
-            const teamRole = Discord.getTeamRoleFromGuildMember(newUser);
+            const teamRole = Discord.getTeamRoleFromGuildMember(newGuildMember);
 
             if (!teamRole) {
                 let requestedTeams;
                 try {
-                    requestedTeams = await Db.getRequestedOrInvitedTeams(newUser);
+                    requestedTeams = await Db.getRequestedOrInvitedTeams(newGuildMember);
                 } catch (err) {
-                    Log.exception(`There was a database error getting a user's team invites and requests.  Please update ${newUser.displayName} manually.`, err);
+                    Log.exception(`There was a database error getting a user's team invites and requests.  Please update ${newGuildMember.displayName} manually.`, err);
                     return;
                 }
 
@@ -213,12 +213,12 @@ class Discord {
                     fields: [
                         {
                             name: "Old Name",
-                            value: `${oldUser.displayName}`,
+                            value: `${oldGuildMember.displayName}`,
                             inline: true
                         },
                         {
                             name: "New Name",
-                            value: `${newUser.displayName}`,
+                            value: `${newGuildMember.displayName}`,
                             inline: true
                         }
                     ],
@@ -229,7 +229,7 @@ class Discord {
                 }
             }, rosterUpdatesChannel);
 
-            Discord.updateUserTeam(newUser);
+            Discord.updateUserTeam(newGuildMember);
         });
     }
 
