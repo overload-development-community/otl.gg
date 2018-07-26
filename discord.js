@@ -63,7 +63,7 @@ class Discord {
         discord.addListener("ready", () => {
             Log.log("Connected to Discord.");
 
-            otlGuild = discord.guilds.find("name", "Overload Teams League");
+            otlGuild = discord.guilds.find("name", settings.guild);
 
             if (!readied) {
                 readied = true;

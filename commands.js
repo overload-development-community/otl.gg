@@ -116,7 +116,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}`, channel);
+        await Discord.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}.  Project is open source, visit https://github.com/roncli/otl-bot.`, channel);
 
         return true;
     }
@@ -1241,7 +1241,7 @@ class Commands {
 
         const isStarting = Discord.userIsStartingTeam(guildPilot);
         if (isStarting) {
-            await Discord.queue(`Sorry, ${user}, but ${guildPilot.displayName} is current in the process of starting a team.`, channel);
+            await Discord.queue(`Sorry, ${user}, but ${guildPilot.displayName} is currently in the process of starting a team.`, channel);
             throw new Error("Pilot is already in the process of starting a team.");
         }
 
@@ -1535,6 +1535,13 @@ class Commands {
         if (pilot.id === user.id) {
             await Discord.queue(`Sorry, ${user}, you can't remove yourself with this command.  If you wish to leave the server, use the \`!leave\` command.`, channel);
             throw new Error("User cannot remove themselves.");
+        }
+
+        const isFounder = Discord.userIsFounder(user),
+            pilotIsCaptain = Discord.userIsCaptainOrFounder(pilot);
+        if (!isFounder && pilotIsCaptain) {
+            await Discord.queue(`Sorry, ${user}, but you must be the founder to remove this player.`, channel);
+            throw new Error("User cannot remove a captain.");
         }
 
         let removable;
