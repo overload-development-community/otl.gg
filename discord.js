@@ -279,22 +279,23 @@ class Discord {
     /**
      * Parses a message.
      * @param {User} user The user who sent the message.
+     * @param {Channel} channel The channel the message was sent on.
      * @param {string} text The text of the message.
      * @returns {void}
      */
-    static async message(user, text) {
+    static async message(user, channel, text) {
         const matches = messageParse.exec(text);
 
         if (matches) {
             if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(matches[1]) !== -1) {
                 let success;
                 try {
-                    success = await Discord.commands[matches[1]](user, matches[2]);
+                    success = await Discord.commands[matches[1]](user, channel, matches[2]);
                 } catch (err) {
                     if (err.innerError) {
                         Log.exception(err.message, err.innerError);
                     } else {
-                        Log.warning(err);
+                        Log.warning(`${user}: ${text}\n${err}`);
                     }
                 }
 

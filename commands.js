@@ -68,7 +68,7 @@ class Commands {
 
         const newUser = Discord.findGuildMemberById(userId);
         if (!newUser) {
-            throw new Error(`Sorry, ${user}, but I don't recognize that user.`);
+            throw new Error("User does not exist.");
         }
 
         return await this[command](newUser, channel, newMessage) || void 0;

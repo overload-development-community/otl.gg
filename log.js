@@ -47,14 +47,14 @@ class Log {
     //                                      ###
     /**
      * Logs a warning.
-     * @param {*} obj The object to log.
+     * @param {string} message The string to log.
      * @returns {void}
      */
-    static warning(obj) {
+    static warning(message) {
         queue.push({
             type: "warning",
             date: new Date(),
-            obj
+            message
         });
         Log.output();
     }
