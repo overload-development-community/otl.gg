@@ -2,12 +2,12 @@ const DiscordJs = require("discord.js"),
 
     Commands = require("./commands"),
     Db = require("./database"),
+    Exception = require("./exception"),
     Log = require("./log"),
     settings = require("./settings"),
 
     discord = new DiscordJs.Client(settings.discord),
     messageParse = /^!([^ ]+)(?: +(.+[^ ]))? *$/,
-    newTeamTopicParse = /^Team Name: (.+)$(?:\r\n|\r|\n)^Team Tag: (.+)$/m,
     teamMatch = /^Team: (.+)$/;
 
 let readied = false,
@@ -26,6 +26,7 @@ let readied = false,
 //  ####    ###   ####    ###    ###   #       ## #
 /**
  * A static class that handles all Discord.js interctions.
+ * TODO: Add/remove voice channels when creating/removing a team.
  */
 class Discord {
     //  #
@@ -63,16 +64,16 @@ class Discord {
         discord.addListener("ready", () => {
             Log.log("Connected to Discord.");
 
-            otlGuild = discord.guilds.find("name", settings.guild);
+            otlGuild = discord.guilds.find((g) => g.name === settings.guild);
 
             if (!readied) {
                 readied = true;
             }
 
-            captainRole = otlGuild.roles.find("name", "Captain");
-            founderRole = otlGuild.roles.find("name", "Founder");
+            captainRole = otlGuild.roles.find((r) => r.name === "Captain");
+            founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
-            rosterUpdatesChannel = otlGuild.channels.find("name", "roster-updates");
+            rosterUpdatesChannel = otlGuild.channels.find((c) => c.name === "roster-updates");
         });
 
         discord.on("disconnect", (ev) => {
@@ -119,14 +120,14 @@ class Discord {
 
             const teamName = team.name,
                 captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-                captainChannel = otlGuild.channels.find("name", captainChannelName);
+                captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
             if (!captainChannel) {
                 Log.exception(`Captain's channel does not exist for the team.  Please remove ${guildMember.displayName} manually.`);
                 return;
             }
 
             const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-                channel = otlGuild.channels.find("name", channelName);
+                channel = otlGuild.channels.find((c) => c.name === channelName);
             if (!channel) {
                 Log.exception(`Team's channel does not exist.  Please remove ${guildMember.displayName} manually.`);
                 return;
@@ -166,14 +167,18 @@ class Discord {
                         }
                     ],
                     footer: {
-                        text: "pilot left server",
-                        "icon_url": Discord.icon
+                        text: "pilot left server"
+                        // "icon_url": Discord.icon
                     }
                 }
             }, rosterUpdatesChannel);
         });
 
         discord.addListener("guildMemberUpdate", async (oldGuildMember, newGuildMember) => {
+            if (oldGuildMember.displayName === newGuildMember.displayName) {
+                return;
+            }
+
             try {
                 await Db.updateName(newGuildMember);
             } catch (err) {
@@ -223,8 +228,8 @@ class Discord {
                         }
                     ],
                     footer: {
-                        text: "pilot changed name",
-                        "icon_url": Discord.icon
+                        text: "pilot changed name"
+                        // "icon_url": Discord.icon
                     }
                 }
             }, rosterUpdatesChannel);
@@ -284,24 +289,29 @@ class Discord {
      * @returns {void}
      */
     static async message(user, channel, text) {
-        const matches = messageParse.exec(text);
+        if (!messageParse.test(text)) {
+            return;
+        }
 
-        if (matches) {
-            if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(matches[1]) !== -1) {
-                let success;
-                try {
-                    success = await Discord.commands[matches[1]](user, channel, matches[2]);
-                } catch (err) {
+        const {1: command, 2: message} = messageParse.exec(text);
+        if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
+            let success;
+            try {
+                success = await Discord.commands[command](user, channel, message);
+            } catch (err) {
+                if (err instanceof Exception) {
                     if (err.innerError) {
                         Log.exception(err.message, err.innerError);
                     } else {
                         Log.warning(`${user}: ${text}\n${err}`);
                     }
+                } else {
+                    Log.exception(void 0, err);
                 }
+            }
 
-                if (success) {
-                    Log.log(`${user}: ${text}`);
-                }
+            if (success) {
+                Log.log(`${user}: ${text}`);
             }
         }
     }
@@ -315,22 +325,24 @@ class Discord {
      * Queues a message to be sent.
      * @param {string} message The message to be sent.
      * @param {Channel} channel The channel to send the message to.
-     * @returns {Promise} A promise that resolves when the message is sent.
+     * @returns {Promise<Message|undefined>} A promise that resolves with the sent message.
      */
     static async queue(message, channel) {
+        let msg;
         try {
-            await channel.send(
+            msg = await channel.send(
                 "",
                 {
                     embed: {
                         description: message,
                         timestamp: new Date(),
-                        color: 0x16F6F8,
-                        footer: {"icon_url": Discord.icon}
+                        color: 0x16F6F8
+                        // footer: {"icon_url": Discord.icon}
                     }
                 }
             );
         } finally {}
+        return msg;
     }
 
     //        #          #      ##
@@ -344,21 +356,22 @@ class Discord {
      * Queues a rich embed message to be sent.
      * @param {object} message The message to be sent.
      * @param {Channel} channel The channel to send the message to.
-     * @returns {Promise} A promise that resolves when the message is sent.
+     * @returns {Promise<Message|undefined>} A promise that resolves with the sent message.
      */
     static async richQueue(message, channel) {
         if (message.embed && message.embed.fields) {
             message.embed.fields.forEach((field) => {
                 if (field.value && field.value.length > 1024) {
                     field.value = field.value.substring(0, 1024);
-                    console.log(message);
                 }
             });
         }
 
+        let msg;
         try {
-            await channel.send("", message);
+            msg = await channel.send("", message);
         } finally {}
+        return msg;
     }
 
     //  #            ##
@@ -389,7 +402,7 @@ class Discord {
      * @returns {GuildMember} The guild member.
      */
     static findGuildMemberById(id) {
-        return otlGuild.members.find("id", id);
+        return otlGuild.members.find((m) => m.id === id);
     }
 
     //   #    #             #   ##          #    ##       #  #  #              #                 ###         ###    #                 ##                #  #
@@ -405,7 +418,7 @@ class Discord {
      * @returns {GuildMember} The guild member.
      */
     static findGuildMemberByDisplayName(displayName) {
-        return otlGuild.members.find("displayName", displayName);
+        return otlGuild.members.find((m) => m.displayName === displayName);
     }
 
     //   #    #             #   ##   #                             ##    ###         #  #
@@ -421,7 +434,7 @@ class Discord {
      * @returns {Channel} The Discord channel.
      */
     static findChannelByName(name) {
-        return otlGuild.channels.find("name", name);
+        return otlGuild.channels.find((c) => c.name === name);
     }
 
     //              #    ###                     ###         ##          ####                     ##          #    ##       #  #  #              #
@@ -474,16 +487,16 @@ class Discord {
      */
     static async updateTeam(team) {
         try {
-            const teamName = team.name,
-                captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-                captainChannel = otlGuild.channels.find("name", captainChannelName);
+            const teamTag = team.tag,
+                captainChannelName = `captains-${teamTag.toLowerCase().replace(/ /g, "-")}`,
+                captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
             if (!captainChannel) {
                 Log.exception(`Captain's channel does not exist for the team.  Please update ${team.name} manually.`);
                 return;
             }
 
-            const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-                channel = otlGuild.channels.find("name", channelName);
+            const channelName = `team-${teamTag.toLowerCase().replace(/ /g, "-")}`,
+                channel = otlGuild.channels.find((c) => c.name === channelName);
             if (!channel) {
                 Log.exception(`Team's channel does not exist.  Please update ${team.name} manually.`);
                 return;
@@ -508,6 +521,13 @@ class Discord {
 
             let channelTopic = topic,
                 captainChannelTopic = topic;
+
+            if (teamInfo.homes && teamInfo.homes.length > 0) {
+                channelTopic += "\n\nHome Maps:";
+                teamInfo.homes.forEach((home) => {
+                    channelTopic += `\n${home}`;
+                });
+            }
 
             if (teamInfo.upcomingMatches && teamInfo.upcomingMatches.length > 0) {
                 channelTopic += "\n\nUpcoming matches:";
@@ -541,7 +561,9 @@ class Discord {
             }
 
             await channel.setTopic(channelTopic, "Team topic update requested.");
+            channel.topic = channelTopic;
             await captainChannel.setTopic(captainChannelTopic, "Team topic update requested.");
+            captainChannel.topic = captainChannelTopic;
         } catch (err) {
             Log.exception(`There was an error updating team information for ${team.name}.  Please update ${team.name} manually.`, err);
         }
@@ -562,7 +584,7 @@ class Discord {
     static async updateUserTeam(user) {
         let team;
         try {
-            team = Db.getTeam(user);
+            team = await Db.getTeam(user);
         } catch (err) {
             Log.exception("There was a database error getting a team for a user.", err);
             return;
@@ -590,39 +612,39 @@ class Discord {
         const guildMember = otlGuild.member(user);
 
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const guildCaptain = otlGuild.member(captain);
 
         if (!guildCaptain) {
-            throw new Error("Captain does not exist on server.");
+            throw new Exception("Captain does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
-        if (!teamRole.members.find("id", guildCaptain.id)) {
-            throw new Error("Users are not on the same team.");
+        if (!teamRole.members.find((m) => m.id === guildCaptain.id)) {
+            throw new Exception("Users are not on the same team.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
         await guildCaptain.addRole(captainRole, `${guildMember.displayName} added ${guildCaptain.displayName} as a captain of ${teamName}.`);
@@ -636,7 +658,7 @@ class Discord {
 
         Discord.updateUserTeam(user);
 
-        await Discord.queue(`${guildCaptain}, you have been added as a captain of **${teamName}**!  You now have access to your team's captain's channel, #${captainChannelName}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
+        await Discord.queue(`${guildCaptain}, you have been added as a captain of **${teamName}**!  You now have access to your team's captain's channel, ${captainChannel}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
         await Discord.queue(`@everyone Welcome **${guildCaptain}** as the newest team captain!`, captainChannel);
         await Discord.queue(`**${guildCaptain}** is now a team captain!`, channel);
         await Discord.richQueue({
@@ -652,8 +674,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: `added by ${guildMember.displayName}`,
-                    "icon_url": Discord.icon
+                    text: `added by ${guildMember.displayName}`
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -674,32 +696,32 @@ class Discord {
     static async addUserToTeam(user, team) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+        const teamRole = otlGuild.roles.find((r) => r.name === `Team: ${team.name}`);
         if (!teamRole) {
-            throw new Error("Team does not exist.");
+            throw new Exception("Team does not exist.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
         await guildMember.addRole(teamRole, `${guildMember.displayName} accepted their invitation to ${team.name}.`);
 
         Discord.updateUserTeam(user);
 
-        await Discord.queue(`${guildMember}, you are now a member of **${teamName}**!  You now have access to your team's channel, #${channelName}.`, user);
+        await Discord.queue(`${guildMember}, you are now a member of **${teamName}**!  You now have access to your team's channel, ${channel}.`, user);
         await Discord.queue(`@everyone **${guildMember}** has accepted your invitation to join the team!`, captainChannel);
         await Discord.queue(`**${guildMember}** has joined the team!`, channel);
         await Discord.richQueue({
@@ -715,8 +737,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: "added by accepted invitation",
-                    "icon_url": Discord.icon
+                    text: "added by accepted invitation"
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -739,85 +761,58 @@ class Discord {
     static async applyHomeMap(user, number, map) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
-        if (!teamRole) {
-            throw new Error("User is not on a team.");
+        const team = await Db.getTeam(user);
+        if (!team) {
+            throw new Exception("User is not on a team.");
         }
 
-        if (!captainRole.members.find("id", user.id) && !founderRole.members.find("id", user.id)) {
-            throw new Error("User is not a captain or a founder.");
+        if (!captainRole.members.find((m) => m.id === user.id) && !founderRole.members.find((m) => m.id === user.id)) {
+            throw new Exception("User is not a captain or a founder.");
         }
 
-        const teamName = Discord.getTeamNameFromTeamRole(teamRole),
-            captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
-        if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+        const teamTag = team.tag,
+            guildChannelName = `team-${teamTag.toLowerCase().replace(/ /g, "-")}`,
+            guildChannel = otlGuild.channels.find((c) => c.name === guildChannelName);
+        if (!guildChannel) {
+            throw new Exception("Guild channel does not exist for the team.");
         }
 
         Discord.updateUserTeam(user);
 
-        await Discord.queue(`${guildMember} has changed home map number ${number} to ${map}.`, captainChannel);
+        await Discord.queue(`${guildMember} has changed home map number ${number} to ${map}.`, guildChannel);
     }
 
-    //                   ##          ###                     #  #
-    //                    #           #                      ## #
-    //  ###  ###   ###    #    #  #   #     ##    ###  # #   ## #   ###  # #    ##
-    // #  #  #  #  #  #   #    #  #   #    # ##  #  #  ####  # ##  #  #  ####  # ##
-    // # ##  #  #  #  #   #     # #   #    ##    # ##  #  #  # ##  # ##  #  #  ##
-    //  # #  ###   ###   ###     #    #     ##    # #  #  #  #  #   # #  #  #   ##
-    //       #     #            #
+    //                   ##          ###                     #  #                     ##            #  ###
+    //                    #           #                      ## #                    #  #           #   #
+    //  ###  ###   ###    #    #  #   #     ##    ###  # #   ## #   ###  # #    ##   #  #  ###    ###   #     ###   ###
+    // #  #  #  #  #  #   #    #  #   #    # ##  #  #  ####  # ##  #  #  ####  # ##  ####  #  #  #  #   #    #  #  #  #
+    // # ##  #  #  #  #   #     # #   #    ##    # ##  #  #  # ##  # ##  #  #  ##    #  #  #  #  #  #   #    # ##   ##
+    //  # #  ###   ###   ###     #    #     ##    # #  #  #  #  #   # #  #  #   ##   #  #  #  #   ###   #     # #  #
+    //       #     #            #                                                                                   ###
     /**
-     * Applies a team name to a team being created.
-     * @param {User} user The user applying the team name.
-     * @param {string} name The team name to apply.
-     * @returns {Promise} A promise that resolves when the team name has been applied.
-     */
-    static async applyTeamName(user, name) {
-        const guildMember = otlGuild.member(user);
-        if (!guildMember) {
-            throw new Error("User does not exist on server.");
-        }
-
-        const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
-        if (!channel) {
-            throw new Error("Channel does not exist.");
-        }
-
-        const {2: tag} = newTeamTopicParse.exec(channel.topic);
-
-        await channel.setTopic(`Team Name: ${name}\r\nTeam Tag: ${tag || "(unset)"}`, `${guildMember.displayName} updated the team name.`);
-    }
-
-    //                   ##          ###                     ###
-    //                    #           #                       #
-    //  ###  ###   ###    #    #  #   #     ##    ###  # #    #     ###   ###
-    // #  #  #  #  #  #   #    #  #   #    # ##  #  #  ####   #    #  #  #  #
-    // # ##  #  #  #  #   #     # #   #    ##    # ##  #  #   #    # ##   ##
-    //  # #  ###   ###   ###     #    #     ##    # #  #  #   #     # #  #
-    //       #     #            #                                         ###
-    /**
-     * Applies a team tag to a team being created.
+     * Applies the team name and tag to a team being created.
      * @param {User} user The user applying the team tag.
+     * @param {string} name The team name to apply.
      * @param {string} tag The team tag to apply.
-     * @returns {Promise} A promise that resolves when the team tag has been applied.
+     * @returns {Promise} A promise that resolves when the team name and tag have been applied.
      */
-    static async applyTeamTag(user, tag) {
+    static async applyTeamNameAndTag(user, name, tag) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
+        const channel = otlGuild.channels.find((c) => c.name === `new-team-${user.id}`);
         if (!channel) {
-            throw new Error("Channel does not exist.");
+            throw new Exception("Channel does not exist.");
         }
 
-        const {1: name} = newTeamTopicParse.exec(channel.topic);
-        await channel.setTopic(`Team Name: ${name || "(unset)"}\r\nTeam Tag: ${tag}`, `${guildMember.displayName} updated the tag name.`);
+        const topic = `Team Name: ${name || "(unset)"}\r\nTeam Tag: ${tag || "unset"}`;
+        await channel.setTopic(topic, `${guildMember.displayName} updated the team info.`);
+        channel.topic = topic;
     }
 
     //                               ##     ##                      #          ###
@@ -834,12 +829,12 @@ class Discord {
     static async cancelCreateTeam(user) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
+        const channel = otlGuild.channels.find((c) => c.name === `new-team-${user.id}`);
         if (!channel) {
-            throw new Error("Channel does not exist.");
+            throw new Exception("Channel does not exist.");
         }
 
         await channel.delete(`${guildMember.displayName} cancelled team creation.`);
@@ -860,15 +855,15 @@ class Discord {
     static captainCountOnUserTeam(user) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
-        return teamRole.members.filter((m) => captainRole.members.find("id", m.id)).length;
+        return teamRole.members.filter((tm) => captainRole.members.find((cm) => cm.id === tm.id)).length;
     }
 
     //       #                             ###                      ##         ##
@@ -887,16 +882,16 @@ class Discord {
     static async changeTeamColor(user, color) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
-        if (!founderRole.members.find("id", user.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === user.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         await teamRole.setColor(color, `${guildMember.displayName} updated the team color.`);
@@ -913,39 +908,40 @@ class Discord {
      * @param {User} user The user creating the team.
      * @param {string} name The team name.
      * @param {string} tag The team tag.
-     * @returns {Promise} A promise that resolves when the team is created.
+     * @param {bool} [reinstating] Whether the team is being reinstated rather than created.
+     * @returns {Promise<{guildChannel: GuildChannel, captianChannel: GuildChannel}>} A promise that resolves with the new channels created for the team.
      */
-    static async createTeam(user, name, tag) {
+    static async createTeam(user, name, tag, reinstating) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const currentTeamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (currentTeamRole) {
-            throw new Error("User is already on a team.");
+            throw new Exception("User is already on a team.");
         }
 
-        const existingRole = otlGuild.roles.find("name", `Team: ${name}`);
+        const existingRole = otlGuild.roles.find((r) => r.name === `Team: ${name}`);
         if (existingRole) {
-            throw new Error("Team role already exists.");
+            throw new Exception("Team role already exists.");
         }
 
-        const existingCategory = otlGuild.channels.find("name", name);
+        const existingCategory = otlGuild.channels.find((c) => c.name === name);
         if (existingCategory) {
-            throw new Error("Team category already exists.");
+            throw new Exception("Team category already exists.");
         }
 
         const channelName = `team-${name.toLowerCase().replace(/ /g, "-")}`,
-            existingChannel = otlGuild.channels.find("name", channelName);
+            existingChannel = otlGuild.channels.find((c) => c.name === channelName);
         if (existingChannel) {
-            throw new Error("Team channel already exists.");
+            throw new Exception("Team channel already exists.");
         }
 
         const captainChannelName = `captains-${name.toLowerCase().replace(/ /g, "-")}`,
-            existingCaptainChannel = otlGuild.channels.find("name", captainChannelName);
+            existingCaptainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (existingCaptainChannel) {
-            throw new Error("Captain channel already exists.");
+            throw new Exception("Captain channel already exists.");
         }
 
         const teamRole = await otlGuild.createRole({
@@ -967,16 +963,21 @@ class Discord {
             }
         ], `${guildMember.displayName} created the team ${name}.`);
 
-        const channel = await otlGuild.createChannel(name, "text", [], `${guildMember.displayName} created the team ${name}.`);
-
-        await channel.setParent(category);
-
-        const captainChannel = await otlGuild.createChannel(name, "text", [
+        const guildChannel = await otlGuild.createChannel(`team-${tag}`, "text", [
             {
                 id: otlGuild.id,
                 deny: ["VIEW_CHANNEL"]
             }, {
                 id: teamRole.id,
+                allow: ["VIEW_CHANNEL"]
+            }
+        ], `${guildMember.displayName} created the team ${name}.`);
+
+        await guildChannel.setParent(category);
+
+        const captainChannel = await otlGuild.createChannel(`captains-${tag}`, "text", [
+            {
+                id: otlGuild.id,
                 deny: ["VIEW_CHANNEL"]
             }, {
                 id: user.id,
@@ -989,7 +990,7 @@ class Discord {
         await Discord.richQueue({
             embed: {
                 title: `${name} (${tag})`,
-                description: "New Team",
+                description: reinstating ? "Team Reinstating" : "New Team",
                 color: 0x0000FF,
                 timestamp: new Date(),
                 fields: [
@@ -999,8 +1000,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: `created by ${guildMember.displayName}`,
-                    "icon_url": Discord.icon
+                    text: `created by ${guildMember.displayName}`
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1035,7 +1036,9 @@ class Discord {
             }
         }, captainChannel);
 
-        await msg1.pin();
+        if (msg1) {
+            await msg1.pin();
+        }
 
         const msg2 = await Discord.richQueue({
             embed: {
@@ -1063,12 +1066,16 @@ class Discord {
             }
         }, captainChannel);
 
-        await msg2.pin();
+        if (msg2) {
+            await msg2.pin();
+        }
 
-        const newChannel = otlGuild.channels.find("name", `new-team-${user.id}`);
+        const newChannel = otlGuild.channels.find((c) => c.name === `new-team-${user.id}`);
         if (newChannel) {
             await newChannel.delete(`${guildMember.displayName} created the team ${name}.`);
         }
+
+        return {guildChannel, captainChannel};
     }
 
     //    #   #           #                    #  ###
@@ -1080,67 +1087,68 @@ class Discord {
     /**
      * Disbands a team.
      * @param {User} user The user to disband a team for.
+     * @param {object} team The team to disband.
      * @returns {Promise} A promise that resolves when the team is disbanded.
      */
-    static async disbandTeam(user) {
+    static async disbandTeam(user, team) {
+        console.log(team);
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is already on a team.");
+            throw new Exception("User is already on a team.");
         }
 
-        const name = Discord.getTeamNameFromTeamRole(teamRole),
-            channelName = `team-${name.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+        const channelName = `team-${team.tag.toLowerCase().replace(/ /g, "-")}`,
+            channel = otlGuild.channels.find((c) => c.name === channelName);
 
         if (!channel) {
-            throw new Error("Team channel does not exists.");
+            throw new Exception("Team channel does not exists.");
         }
 
-        const captainChannelName = `captains-${name.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+        const captainChannelName = `captains-${team.tag.toLowerCase().replace(/ /g, "-")}`,
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain channel does not exists.");
+            throw new Exception("Captain channel does not exists.");
         }
 
-        const category = otlGuild.channels.find("name", name);
+        const category = otlGuild.channels.find((c) => c.name === team.name);
         if (!category) {
-            throw new Error("Team category does not exists.");
+            throw new Exception("Team category does not exists.");
         }
 
-        await channel.delete(`${guildMember.displayName} disbanded ${name}.`);
-        await captainChannel.delete(`${guildMember.displayName} disbanded ${name}.`);
-        await category.delete(`${guildMember.displayName} disbanded ${name}.`);
+        await channel.delete(`${guildMember.displayName} disbanded ${team.name}.`);
+        await captainChannel.delete(`${guildMember.displayName} disbanded ${team.name}.`);
+        await category.delete(`${guildMember.displayName} disbanded ${team.name}.`);
 
         const memberList = [];
 
         teamRole.members.forEach(async (member) => {
             memberList.push(`${member}`);
 
-            if (captainRole.members.find("id", member.id)) {
-                await member.removeRole(captainRole, `${guildMember.displayName} disbanded ${name}.`);
+            if (captainRole.members.find((m) => m.id === member.id)) {
+                await member.removeRole(captainRole, `${guildMember.displayName} disbanded ${team.name}.`);
             }
 
-            if (founderRole.members.find("id", member.id)) {
-                await member.removeRole(founderRole, `${guildMember.displayName} disbanded ${name}.`);
+            if (founderRole.members.find((m) => m.id === member.id)) {
+                await member.removeRole(founderRole, `${guildMember.displayName} disbanded ${team.name}.`);
             }
 
-            await Discord.queue(`Your team ${name} has been disbanded.`, member);
+            await Discord.queue(`Your team ${team.name} has been disbanded.`, member);
         });
 
-        await teamRole.delete(`${guildMember.displayName} disbanded ${name}.`);
+        await teamRole.delete(`${guildMember.displayName} disbanded ${team.name}.`);
 
         await Discord.richQueue({
             embed: {
-                title: `${name}`,
+                title: `${team.name}`,
                 description: "Team Disbanded",
                 color: 0xFF00FF,
                 timestamp: new Date(),
@@ -1151,8 +1159,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: `disbanded by ${guildMember.displayName}`,
-                    "icon_url": Discord.icon
+                    text: `disbanded by ${guildMember.displayName}`
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1173,21 +1181,21 @@ class Discord {
     static async invitePilotToTeam(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const pilotMember = otlGuild.member(pilot);
         if (!pilotMember) {
-            throw new Error("Pilot does not exist on server.");
+            throw new Exception("Pilot does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id) && !captainRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder or captain.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id) && !captainRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder or captain.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole);
@@ -1211,38 +1219,38 @@ class Discord {
     static async makeFounder(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const guildPilot = otlGuild.member(pilot);
         if (!guildPilot) {
-            throw new Error("Pilot does not exist on server.");
+            throw new Exception("Pilot does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
-        if (!teamRole.members.find("id", guildPilot.id)) {
-            throw new Error("Users are not on the same team.");
+        if (!teamRole.members.find((m) => m.id === guildPilot.id)) {
+            throw new Exception("Users are not on the same team.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
         await guildMember.removeRole(founderRole, `${guildMember.displayName} transferred founder of team ${teamName} to ${guildPilot.displayName}.`);
@@ -1273,42 +1281,11 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: `changed by ${guildMember.displayName}`,
-                    "icon_url": Discord.icon
+                    text: `changed by ${guildMember.displayName}`
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
-    }
-
-    //                      #        ###          ##                      #          ###
-    //                      #         #          #  #                     #           #
-    // ###    ##    ###   ###  #  #   #     ##   #     ###    ##    ###  ###    ##    #     ##    ###  # #
-    // #  #  # ##  #  #  #  #  #  #   #    #  #  #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
-    // #     ##    # ##  #  #   # #   #    #  #  #  #  #     ##    # ##   #    ##     #    ##    # ##  #  #
-    // #      ##    # #   ###    #    #     ##    ##   #      ##    # #    ##   ##    #     ##    # #  #  #
-    //                          #
-    /**
-     * Checks if a user is ready to create a team.
-     * @param {User} user The user to check.
-     * @returns {[bool, string, string]} Returns whether the user is ready to create their team, the team name, and the team tag.
-     */
-    static readyToCreateTeam(user) {
-        const guildMember = otlGuild.member(user);
-        if (!guildMember) {
-            throw new Error("User does not exist on server.");
-        }
-
-        const channel = otlGuild.channels.find("name", `new-team-${user.id}`);
-        if (!channel) {
-            throw new Error("Channel does not exist.");
-        }
-
-        const {1: team, 2: tag} = newTeamTopicParse.exec(channel.topic);
-        if (team && team !== "(unset)" && tag && tag !== "(unset)") {
-            return [true, team, tag];
-        }
-
-        return [false];
     }
 
     //              #                  #           #          ###
@@ -1321,10 +1298,10 @@ class Discord {
      * Reinstates an existing team to the league.
      * @param {User} user The user reinstating the team.
      * @param {object} team The team to reinstate.
-     * @returns {Promise} A promise that resolves when the team is reinstated.
+     * @returns {Promise<{guildChannel: GuildChannel, captianChannel: GuildChannel}>} A promise that resolves with the new channels created for the team.
      */
     static reinstateTeam(user, team) {
-        return Discord.createTeam(user, team.name, team.tag);
+        return Discord.createTeam(user, team.name, team.tag, true);
     }
 
     //                                      ##                #           #
@@ -1343,38 +1320,38 @@ class Discord {
     static async removeCaptain(user, captain) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const guildCaptain = otlGuild.member(captain);
         if (!guildCaptain) {
-            throw new Error("Captain does not exist on server.");
+            throw new Exception("Captain does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
-        if (!teamRole.members.find("id", guildCaptain.id)) {
-            throw new Error("Users are not on the same team.");
+        if (!teamRole.members.find((m) => m.id === guildCaptain.id)) {
+            throw new Exception("Users are not on the same team.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
         await guildCaptain.removeRole(captainRole, `${guildMember.displayName} removed ${guildCaptain.displayName} as a captain.`);
@@ -1402,8 +1379,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: `removed by ${guildMember.displayName}`,
-                    "icon_url": Discord.icon
+                    text: `removed by ${guildMember.displayName}`
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1424,37 +1401,37 @@ class Discord {
     static async removePilot(user, pilot) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const guildPilot = otlGuild.member(pilot);
         if (!guildPilot) {
-            throw new Error("Pilot does not exist on server.");
+            throw new Exception("Pilot does not exist on server.");
         }
 
-        if (!founderRole.members.find("id", guildMember.id)) {
-            throw new Error("User is not a founder.");
+        if (!founderRole.members.find((m) => m.id === guildMember.id)) {
+            throw new Exception("User is not a founder.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (!teamRole) {
-            throw new Error("User is not on a team.");
+            throw new Exception("User is not on a team.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
-        if (teamRole.members.find("id", guildPilot.id)) {
+        if (teamRole.members.find((m) => m.id === guildPilot.id)) {
             await guildPilot.removeRole(captainRole, `${guildMember.displayName} removed ${guildPilot.displayName} from the team.`);
 
             await captainChannel.overwritePermissions(guildPilot, [
@@ -1483,8 +1460,8 @@ class Discord {
                         }
                     ],
                     footer: {
-                        text: `removed by ${guildMember.displayName}`,
-                        "icon_url": Discord.icon
+                        text: `removed by ${guildMember.displayName}`
+                        // "icon_url": Discord.icon
                     }
                 }
             }, rosterUpdatesChannel);
@@ -1510,25 +1487,25 @@ class Discord {
     static async removeUserFromTeam(user, team) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+        const teamRole = otlGuild.roles.find((r) => r.name === `Team: ${team.name}`);
         if (!teamRole) {
-            throw new Error("Team does not exist.");
+            throw new Exception("Team does not exist.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         const channelName = `${teamName.toLowerCase().replace(/ /g, "-")}`,
-            channel = otlGuild.channels.find("name", channelName);
+            channel = otlGuild.channels.find((c) => c.name === channelName);
         if (!channel) {
-            throw new Error("Team's channel does not exist.");
+            throw new Exception("Team's channel does not exist.");
         }
 
         await guildMember.removeRole(captainRole, `${guildMember.displayName} left the team.`);
@@ -1558,8 +1535,8 @@ class Discord {
                     }
                 ],
                 footer: {
-                    text: "pilot left team",
-                    "icon_url": Discord.icon
+                    text: "pilot left team"
+                    // "icon_url": Discord.icon
                 }
             }
         }, rosterUpdatesChannel);
@@ -1581,19 +1558,19 @@ class Discord {
     static async requestTeam(user, team) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
-        const teamRole = otlGuild.roles.find("name", `Team: ${team.name}`);
+        const teamRole = otlGuild.roles.find((r) => r.name === `Team: ${team.name}`);
         if (!teamRole) {
-            throw new Error("Team does not exist.");
+            throw new Exception("Team does not exist.");
         }
 
         const teamName = Discord.getTeamNameFromTeamRole(teamRole),
             captainChannelName = `captains-${teamName.toLowerCase().replace(/ /g, "-")}`,
-            captainChannel = otlGuild.channels.find("name", captainChannelName);
+            captainChannel = otlGuild.channels.find((c) => c.name === captainChannelName);
         if (!captainChannel) {
-            throw new Error("Captain's channel does not exist for the team.");
+            throw new Exception("Captain's channel does not exist for the team.");
         }
 
         await Discord.queue(`@everyone, ${guildMember.displayName} has requested to join the team.`, captainChannel);
@@ -1610,23 +1587,23 @@ class Discord {
     /**
      * Starts the process of creating a team for a user.
      * @param {User} user The user creating the team.
-     * @returns {Promise} A promise that resolves when the process of starting to create a team is complete.
+     * @returns {Promise<GuildChannel>} A promise that resolves with the new channel created for the user.
      */
     static async startCreateTeam(user) {
         const guildMember = otlGuild.member(user);
         if (!guildMember) {
-            throw new Error("User does not exist on server.");
+            throw new Exception("User does not exist on server.");
         }
 
         const teamRole = Discord.getTeamRoleFromGuildMember(guildMember);
         if (teamRole) {
-            throw new Error("User is already on a team.");
+            throw new Exception("User is already on a team.");
         }
 
         const channelName = `new-team-${user.id}`,
-            existingChannel = otlGuild.channels.find("name", channelName);
+            existingChannel = otlGuild.channels.find((c) => c.name === channelName);
         if (existingChannel) {
-            throw new Error("Channel already exists.");
+            throw new Exception("Channel already exists.");
         }
 
         const channel = await otlGuild.createChannel(channelName, "text", [
@@ -1639,7 +1616,8 @@ class Discord {
             }
         ], `${guildMember.displayName} has started the process of creating a team.`);
 
-        await channel.setTopic("Team Name: (Unset)\r\nTeam Tag: (unset)", `${guildMember.displayName} has started the process of creating a team.`);
+        await channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${guildMember.displayName} has started the process of creating a team.`);
+        channel.topic = "Team Name: (unset)\r\nTeam Tag: (unset)";
 
         const msg = await Discord.richQueue({
             embed: {
@@ -1667,7 +1645,11 @@ class Discord {
             }
         }, channel);
 
-        await msg.pin();
+        if (msg) {
+            await msg.pin();
+        }
+
+        return channel;
     }
 
     //  #                      #  #                    ####         #            #
@@ -1682,7 +1664,7 @@ class Discord {
      * @returns {boolean} A promise that resolves with whether the team name exists.
      */
     static teamNameExists(name) {
-        return !!otlGuild.roles.find("name", `Team: ${name}`);
+        return !!otlGuild.roles.find((r) => r.name === `Team: ${name}`);
     }
 
     //                          ###           ##                #           #           ##         ####                       #
@@ -1698,7 +1680,7 @@ class Discord {
      * @returns {boolean} A promise that resolves with whether the user is a captain or a founder.
      */
     static userIsCaptainOrFounder(user) {
-        return !!founderRole.members.find("id", user.id) || !!captainRole.members.find("id", user.id);
+        return !!founderRole.members.find((m) => m.id === user.id) || !!captainRole.members.find((m) => m.id === user.id);
     }
 
     //                          ###          ####                       #
@@ -1713,7 +1695,7 @@ class Discord {
      * @returns {boolean} A promise that resolves with whether the user is a founder.
      */
     static userIsFounder(user) {
-        return !!founderRole.members.find("id", user.id);
+        return !!founderRole.members.find((m) => m.id === user.id);
     }
 
     //                          ###           ##    #                 #     #                ###
@@ -1726,10 +1708,26 @@ class Discord {
     /**
      * Determines whether the user is starting a team.
      * @param {User} user The user to check.
-     * @returns {boolean} A promise that resolves with whether the user is starting a team.
+     * @returns {boolean} Whether the user is starting a team.
      */
     static userIsStartingTeam(user) {
-        return !!otlGuild.channels.find(`new-user-${user.id}`);
+        return !!otlGuild.channels.find((c) => c.name === `new-team-${user.id}`);
+    }
+
+    //                           ##    #                 #     #                ###                      ##   #                             ##
+    //                          #  #   #                 #                       #                      #  #  #                              #
+    // #  #   ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###   #     ##    ###  # #   #     ###    ###  ###   ###    ##    #
+    // #  #  ##     # ##  #  #    #    #    #  #  #  #   #     #    #  #  #  #   #    # ##  #  #  ####  #     #  #  #  #  #  #  #  #  # ##   #
+    // #  #    ##   ##    #     #  #   #    # ##  #      #     #    #  #   ##    #    ##    # ##  #  #  #  #  #  #  # ##  #  #  #  #  ##     #
+    //  ###  ###     ##   #      ##     ##   # #  #       ##  ###   #  #  #      #     ##    # #  #  #   ##   #  #   # #  #  #  #  #   ##   ###
+    //                                                                     ###
+    /**
+     * Retrieves the user's starting team channel, if they have one.
+     * @param {User} user The user to check.
+     * @returns {GuildChannel|undefined} The user's starting team channel, or undefined if they have none.
+     */
+    static userStartingTeamChannel(user) {
+        return otlGuild.channels.find((c) => c.name === `new-team-${user.id}`);
     }
 
     //                                  ##                ##         ###   #            ##                     ###
@@ -1748,12 +1746,12 @@ class Discord {
     static usersAreOnTheSameTeam(user1, user2) {
         const guildMember1 = otlGuild.member(user1);
         if (!guildMember1) {
-            throw new Error("User 1 does not exist on server.");
+            throw new Exception("User 1 does not exist on server.");
         }
 
         const guildMember2 = otlGuild.member(user2);
         if (!guildMember2) {
-            throw new Error("User 2 does not exist on server.");
+            throw new Exception("User 2 does not exist on server.");
         }
 
         const team1Role = Discord.getTeamRoleFromGuildMember(guildMember1);

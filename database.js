@@ -38,7 +38,7 @@ class Database {
                 USING (VALUES (@teamId, @captainId)) AS v (TeamId, DiscordId)
                 ON ch.TeamId = v.TeamId AND ch.DiscordId = v.DiscordId
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId)
+                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId);
         `, {captainId: {type: Db.VARCHAR(24), value: captain.id}, userId: {type: Db.VARCHAR(24), value: user.id}});
     }
 
@@ -91,12 +91,54 @@ class Database {
             WHEN MATCHED THEN
                 UPDATE SET Map = v.Map
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, Number, Map) VALUES (v.TeamId, v.Number, v.Map)
+                INSERT (TeamId, Number, Map) VALUES (v.TeamId, v.Number, v.Map);
         `, {
             userId: {type: Db.VARCHAR(24), value: user.id},
             number: {type: Db.INT, value: number},
             map: {type: Db.VARCHAR(100), value: map}
         });
+    }
+
+    //                   ##          ###                     #  #
+    //                    #           #                      ## #
+    //  ###  ###   ###    #    #  #   #     ##    ###  # #   ## #   ###  # #    ##
+    // #  #  #  #  #  #   #    #  #   #    # ##  #  #  ####  # ##  #  #  ####  # ##
+    // # ##  #  #  #  #   #     # #   #    ##    # ##  #  #  # ##  # ##  #  #  ##
+    //  # #  ###   ###   ###     #    #     ##    # #  #  #  #  #   # #  #  #   ##
+    //       #     #            #
+    /**
+     * Applies a team name to a team being created and returns the team name and tag.
+     * @param {User} user The user creating the team.
+     * @param {string} name The name of the team.
+     * @returns {Promise<{name: string, tag: string}>} A promise that resolves with the name and tag of the team.
+     */
+    static async applyTeamName(user, name) {
+        const data = await db.query(`
+            UPDATE tblNewTeam SET Name = @name WHERE DiscordID = @userId
+            SELECT Name, Tag FROM tblNewTeam WHERE DiscordID = @userId
+        `, {name: {type: Db.VARCHAR(25), value: name}, userId: {type: Db.VARCHAR(24), value: user.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag} || {};
+    }
+
+    //                   ##          ###                     ###
+    //                    #           #                       #
+    //  ###  ###   ###    #    #  #   #     ##    ###  # #    #     ###   ###
+    // #  #  #  #  #  #   #    #  #   #    # ##  #  #  ####   #    #  #  #  #
+    // # ##  #  #  #  #   #     # #   #    ##    # ##  #  #   #    # ##   ##
+    //  # #  ###   ###   ###     #    #     ##    # #  #  #   #     # #  #
+    //       #     #            #                                         ###
+    /**
+     * Applies a team tag to a team being created and returns the team name and tag.
+     * @param {User} user The user creating the team.
+     * @param {string} tag The tag of the team.
+     * @returns {Promise<{name: string, tag: string}>} A promise that resolves with the name and tag of the team.
+     */
+    static async applyTeamTag(user, tag) {
+        const data = await db.query(`
+            UPDATE tblNewTeam SET Tag = @tag WHERE DiscordID = @userId
+            SELECT Name, Tag FROM tblNewTeam WHERE DiscordID = @userId
+        `, {tag: {type: Db.VARCHAR(25), value: tag}, userId: {type: Db.VARCHAR(24), value: user.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag} || {};
     }
 
     // #                                #  ####                    ###                     #  #         #     #    ##
@@ -129,7 +171,7 @@ class Database {
      * @returns {Promise<boolean>} A promise that resolves with whether the user can be a captain.
      */
     static async canBeCaptain(user) {
-        const data = await db.quer("SELECT TOP 1 1 FROM tblLeadershipPenalty WHERE DiscordId = @userId", {userId: {type: Db.VARCHAR(24), value: user.id}});
+        const data = await db.query("SELECT TOP 1 1 FROM tblLeadershipPenalty WHERE DiscordId = @userId", {userId: {type: Db.VARCHAR(24), value: user.id}});
         return !(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
 
@@ -161,6 +203,21 @@ class Database {
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
 
+    //                               ##     ##                      #          ###
+    //                                #    #  #                     #           #
+    //  ##    ###  ###    ##    ##    #    #     ###    ##    ###  ###    ##    #     ##    ###  # #
+    // #     #  #  #  #  #     # ##   #    #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
+    // #     # ##  #  #  #     ##     #    #  #  #     ##    # ##   #    ##     #    ##    # ##  #  #
+    //  ##    # #  #  #   ##    ##   ###    ##   #      ##    # #    ##   ##    #     ##    # #  #  #
+    /**
+     * Cancels the creation of a new team for a user.
+     * @param {User} user The user to cancel team creation for.
+     * @returns {Promise} A promise that resolves when team creation is cancelled.
+     */
+    static async cancelCreateTeam(user) {
+        await db.query("DELETE FROM tblNewTeam WHERE DiscordId = @userId", {userId: {type: Db.VARCHAR(24), value: user.id}});
+    }
+
     //                          #          ###
     //                          #           #
     //  ##   ###    ##    ###  ###    ##    #     ##    ###  # #
@@ -188,16 +245,17 @@ class Database {
                 USING (VALUES (@teamId, @userId)) AS v (TeamId, DiscordId)
                 ON ch.TeamId = v.TeamId AND ch.DiscordId = v.DiscordId
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId)
+                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId);
 
             DELETE FROM tblJoinBan WHERE DiscordId = @userId
             INSERT INTO tblJoinBan (DiscordId) VALUES (@userId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND DiscordId = @userId
+            DELETE FROM tblNewTeam WHERE DiscordId = @userId
         `, {
             teamName: {type: Db.VARCHAR(25), value: name},
             tag: {type: Db.VARCHAR(5), value: tag},
-            userId: {type: db.VARCHAR(24), value: guildMember.id},
-            userName: {type: db.VARCHAR(64), value: guildMember.displayName}
+            userId: {type: Db.VARCHAR(24), value: guildMember.id},
+            userName: {type: Db.VARCHAR(64), value: guildMember.displayName}
         });
     }
 
@@ -243,6 +301,23 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded} || void 0;
     }
 
+    //              #    #  #              ###
+    //              #    ## #               #
+    //  ###   ##   ###   ## #   ##   #  #   #     ##    ###  # #
+    // #  #  # ##   #    # ##  # ##  #  #   #    # ##  #  #  ####
+    //  ##   ##     #    # ##  ##    ####   #    ##    # ##  #  #
+    // #      ##     ##  #  #   ##   ####   #     ##    # #  #  #
+    //  ###
+    /**
+     * Gets new team data for the user.
+     * @param {User} user The user to get the new team for.
+     * @returns {Promise<{name: string?, tag: string?}>} A promise that resolves with the new team's name and tag.
+     */
+    static async getNewTeam(user) {
+        const data = await db.query("SELECT Name, Tag FROM tblNewTeam WHERE DiscordId = @userId", {userId: {type: Db.VARCHAR(24), value: user.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag} || {};
+    }
+
     //              #    ###                                   #             #   ##         ###                #     #             #  ###
     //              #    #  #                                  #             #  #  #         #                       #             #   #
     //  ###   ##   ###   #  #   ##    ###  #  #   ##    ###   ###    ##    ###  #  #  ###    #    ###   # #   ##    ###    ##    ###   #     ##    ###  # #    ###
@@ -273,7 +348,7 @@ class Database {
      * @returns {Promise<{id: number, name: string, tag: string, isFounder: boolean}|void>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getTeam(user) {
-        const data = await db.query("SELECT TeamId, Name, Tag, CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE Founder = 1 AND DiscordId = @userId) IsFounder THEN 1 ELSE 0 END FROM tblTeam WHERE TeamId IN (SELECT TeamId FROM tblRoster WHERE DiscordId = @userId)", {userId: {type: Db.VARCHAR(24), value: user.id}});
+        const data = await db.query("SELECT TeamId, Name, Tag, CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE Founder = 1 AND DiscordId = @userId) THEN 1 ELSE 0 END IsFounder FROM tblTeam WHERE TeamId IN (SELECT TeamId FROM tblRoster WHERE DiscordId = @userId)", {userId: {type: Db.VARCHAR(24), value: user.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, isFounder: !!data.recordsets[0][0].IsFounder} || void 0;
     }
 
@@ -310,10 +385,12 @@ class Database {
     /**
      * Gets a team's info.
      * @param {object} team The team to get the info for.
-     * @returns {Promise<{members: [{name: string, role: string}], requests: [{name: string, date: Date}], invites: [{name: string, date: Date}]}>} A promise that resolves with the team's info.
+     * @returns {Promise<{homes: [string], members: [{name: string, role: string}], requests: [{name: string, date: Date}], invites: [{name: string, date: Date}]}>} A promise that resolves with the team's info.
      */
     static async getTeamInfo(team) {
         const data = await db.query(`
+            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+
             SELECT Name, Captain, Founder FROM tblRoster WHERE TeamId = @teamId ORDER BY CASE WHEN Founder = 1 THEN 0 WHEN Captain = 1 THEN 1 ELSE 2 END, Name
 
             SELECT Name, DateRequested FROM tblRequest WHERE TeamId = @teamId ORDER BY DateRequested
@@ -321,9 +398,10 @@ class Database {
             SELECT Name, DateInvited FROM tblInvite WHERE TeamId = @teamId ORDER BY DateInvited
         `, {teamId: {type: Db.VARCHAR(24), value: team.id}});
         return {
-            members: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({name: row.Name, role: row.Captain ? "Captain" : row.Founder ? "Founder" : void 0})) || [],
-            requests: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({name: row.Name, date: row.DateRequested})) || [],
-            invites: data && data.recordsets && data.recordsets[2] && data.recordsets[2].map((row) => ({name: row.Name, date: row.DateInvited})) || []
+            homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [],
+            members: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({name: row.Name, role: row.Captain ? "Captain" : row.Founder ? "Founder" : void 0})) || [],
+            requests: data && data.recordsets && data.recordsets[2] && data.recordsets[2].map((row) => ({name: row.Name, date: row.DateRequested})) || [],
+            invites: data && data.recordsets && data.recordsets[3] && data.recordsets[3].map((row) => ({name: row.Name, date: row.DateInvited})) || []
         };
     }
 
@@ -445,7 +523,7 @@ class Database {
                 USING (VALUES (@teamId, @pilotId)) AS v (TeamId, DiscordId)
                 ON ch.TeamId = v.TeamId AND ch.DiscordId = v.DiscordId
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId)
+                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId);
         `, {
             userId: {type: Db.VARCHAR(24), value: user.id},
             pilotId: {type: Db.VARCHAR(24), value: pilot.id}
@@ -460,11 +538,11 @@ class Database {
     // #      ##   ###   #  #  ###      ##   # #    ##   ##    #     ##    # #  #  #
     /**
      * Reinstates a team with the user as its founder.
-     * @param {User} user The user reinstating the team.
+     * @param {GuildMember} guildMember The user reinstating the team.
      * @param {object} team The team to reinstate.
      * @returns {Promise} A promise that resolves when the team is reinstated.
      */
-    static async reinstateTeam(user, team) {
+    static async reinstateTeam(guildMember, team) {
         await db.query(`
             UPDATE tblTeam SET Disbanded = 0 WHERE TeamId = @teamId
 
@@ -474,7 +552,8 @@ class Database {
             INSERT INTO tblJoinBan (DiscordId) VALUES (@userId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND DiscordId = @userId
         `, {
-            userId: {type: Db.VARCHAR(24), value: user.id},
+            userId: {type: Db.VARCHAR(24), value: guildMember.id},
+            userName: {type: Db.VARCHAR(64), value: guildMember.displayName},
             teamId: {type: Db.INT, value: team.id}
         });
     }
@@ -577,6 +656,21 @@ class Database {
      */
     static async requestTeam(guildMember, team) {
         await db.query("INSERT INTO tblRequest (TeamId, DiscordId, Name) VALUES (@teamId, @userId, @userName)", {teamId: {type: Db.INT, value: team.id}, userId: {type: Db.VARCHAR(24), value: guildMember.id}, userName: {type: Db.VARCHAR(64), value: guildMember.displayName}});
+    }
+
+    //         #                 #     ##                      #          ###
+    //         #                 #    #  #                     #           #
+    //  ###   ###    ###  ###   ###   #     ###    ##    ###  ###    ##    #     ##    ###  # #
+    // ##      #    #  #  #  #   #    #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
+    //   ##    #    # ##  #      #    #  #  #     ##    # ##   #    ##     #    ##    # ##  #  #
+    // ###      ##   # #  #       ##   ##   #      ##    # #    ##   ##    #     ##    # #  #  #
+    /**
+     * Begins the process of creating a new team for the user.
+     * @param {User} user The user creating a new team.
+     * @returns {Promise} A promise that resolves when the process of creating a new team for the user has begun.
+     */
+    static async startCreateTeam(user) {
+        await db.query("INSERT INTO tblNewTeam (DiscordId) VALUES (@userId)", {userId: {type: Db.VARCHAR(24), value: user.id}});
     }
 
     //  #                      #  #               ###                #     #             #  ###    #    ##           #

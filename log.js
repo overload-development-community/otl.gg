@@ -106,7 +106,7 @@ class Log {
                 const message = {
                     embed: {
                         color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : log.type === "exception" ? 0xFF0000 : 0x16F6F8,
-                        footer: {"icon_url": Discord.icon},
+                        // footer: {"icon_url": Discord.icon},
                         fields: [],
                         timestamp: log.date
                     }
