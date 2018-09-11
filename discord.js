@@ -7,7 +7,7 @@ const DiscordJs = require("discord.js"),
     settings = require("./settings"),
 
     discord = new DiscordJs.Client(settings.discord),
-    messageParse = /^!([^ ]+)(?: +(.+[^ ]))? *$/,
+    messageParse = /^!([^ ]+)(?: +(.*[^ ]))? *$/,
     teamMatch = /^Team: (.+)$/;
 
 let readied = false,
