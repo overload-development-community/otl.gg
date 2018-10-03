@@ -4,10 +4,10 @@ const Db = require("./database"),
 
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     idParse = /^<@!?([0-9]+)>$/,
-    idConfirmParse = /^<@!?([0-9]+)>(?: (confirm))?$/,
+    idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
     mapMatch = /^([123]) (.+)$/,
-    nameConfirmParse = /^@?(.+)(?: (confirm))?$/,
+    nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/;
 
@@ -66,7 +66,7 @@ class Commands {
             return false;
         }
 
-        const newUser = Discord.findGuildMemberById(userId);
+        const newUser = await Discord.findUserById(userId);
         if (!newUser) {
             throw new Exception("User does not exist.");
         }
@@ -161,6 +161,12 @@ class Commands {
         if (message) {
             await Discord.queue(`Sorry, ${user}, but this command does not take any parameters.  Use \`!createteam\` by itself to begin the process of creating a team.`, channel);
             return false;
+        }
+
+        const guildMember = Discord.findGuildMemberById(user.id);
+        if (!guildMember) {
+            await Discord.queue(`Sorry, ${user}, but you are not part of the OTL!`, channel);
+            throw new Exception("User is not on the server.");
         }
 
         const currentChannel = Discord.userStartingTeamChannel(user);
@@ -937,7 +943,7 @@ class Commands {
 
         const captainCount = Discord.captainCountOnUserTeam(user),
             pilotIsCaptain = Discord.userIsCaptainOrFounder(pilot);
-        if (captainCount === 2 || pilotIsCaptain) {
+        if (captainCount === 2 && !pilotIsCaptain) {
             await Discord.queue(`Sorry, ${user}, but this action would increase your team's captain count to 3.  You must remove an existing captain with the \`!removecaptain\` command before making ${pilot.displayName} the team's founder.`, channel);
             throw new Exception("Captain count limit reached.");
         }
@@ -958,6 +964,11 @@ class Commands {
         if (!confirm) {
             await Discord.queue(`${user}, are you sure you want to make ${pilot.displayName} your team's founder?  Type \`!makefounder ${pilot.displayName} confirm\` to confirm.`, channel);
             return true;
+        }
+
+        if (confirm !== "confirm") {
+            await Discord.queue(`Sorry, ${user}, but you must type \`!makefounder ${pilot.displayName} confirm\` to confirm that you wish to transfer team ownership.`, channel);
+            return false;
         }
 
         try {
@@ -1228,7 +1239,7 @@ class Commands {
 
         let hasRequested;
         try {
-            hasRequested = await Db.hasAlreadyRequestedTeam(user, team);
+            hasRequested = await Db.hasRequestedTeam(user, team);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error checking if a user has already requested to join a team.", err);
@@ -1239,8 +1250,21 @@ class Commands {
             throw new Exception("Request already exists.");
         }
 
+        let hasBeenInvited;
         try {
-            await Db.requestTeam(user, team);
+            hasBeenInvited = await Db.hasBeenInvitedToTeam(user, team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw new Exception("There was a database error checking if a user has already requested to join a team.", err);
+        }
+
+        if (hasBeenInvited) {
+            await Discord.queue(`Sorry, ${user}, but you have already been invited to this team.  Type \`!accept ${team.tag.toLowerCase()}\` to join **${team.name}**.`, channel);
+            throw new Exception("Invitation exists, request not necessary.");
+        }
+
+        try {
+            await Db.requestTeam(guildMember, team);
         } catch (err) {
             await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
             throw new Exception("There was a database error requesting to join a team.", err);
@@ -1464,8 +1488,21 @@ class Commands {
         }
 
         if (!confirm) {
-            await Discord.queue(`${user}, are you sure you want to join **${team.name}**?  Type \`!accept confirm\` to confirm.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
+            await Discord.queue(`${user}, are you sure you want to join **${team.name}**?  Type \`!accept ${team.tag.toUpperCase()} confirm\` to confirm.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
             return true;
+        }
+
+        if (confirm !== "confirm") {
+            await Discord.queue(`Sorry, ${user}, but you must type \`!accept ${team.tag.toUpperCase()} confirm\` to confirm that you wish to join this team.`, channel);
+            return false;
+        }
+
+        let requestedTeams;
+        try {
+            requestedTeams = await Db.getRequestedOrInvitedTeams(user);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw new Exception("There was a critical database error getting a user's team invites and requests.  Please resolve this manually as soon as possible.", err);
         }
 
         try {
@@ -1482,22 +1519,7 @@ class Commands {
             throw new Exception("There was a critical Discord error adding a user to a team.  Please resolve this manually as soon as possible.", err);
         }
 
-        let requestedTeams;
-        try {
-            requestedTeams = await Db.getRequestedOrInvitedTeams(user);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a critical database error getting a user's team invites and requests.  Please resolve this manually as soon as possible.", err);
-        }
-
         requestedTeams.forEach(async (requestedTeam) => {
-            try {
-                await Db.removeUserFromTeam(user, requestedTeam);
-            } catch (err) {
-                await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-                throw new Exception("There was a critical database removing a user's team invite or request.  Please resolve this manually as soon as possible.", err);
-            }
-
             await Discord.updateTeam(requestedTeam);
         });
 
@@ -1528,7 +1550,7 @@ class Commands {
             throw new Exception("There was a database error getting the current team the user is on.", err);
         }
 
-        if (team) {
+        if (!team) {
             await Discord.queue(`Sorry, ${user}, but you can't leave a team when you aren't on one!`, channel);
             throw new Exception("User is not on a team.");
         }
@@ -1635,6 +1657,11 @@ class Commands {
         if (!confirm) {
             await Discord.queue(`${user}, are you sure you want to remove ${pilot.displayName}?  Type \`!remove ${pilot.displayName} confirm\` to confirm.`, channel);
             return true;
+        }
+
+        if (confirm !== "confirm") {
+            await Discord.queue(`Sorry, ${user}, but you must type \`!remove ${pilot.displayName} confirm\` to confirm that you wish to remove this pilot.`, channel);
+            return false;
         }
 
         try {

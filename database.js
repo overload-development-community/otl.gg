@@ -430,20 +430,37 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 
-    // #                   ##   ##                         #        ###                                   #             #  ###
-    // #                  #  #   #                         #        #  #                                  #             #   #
-    // ###    ###   ###   #  #   #    ###    ##    ###   ###  #  #  #  #   ##    ###  #  #   ##    ###   ###    ##    ###   #     ##    ###  # #
-    // #  #  #  #  ##     ####   #    #  #  # ##  #  #  #  #  #  #  ###   # ##  #  #  #  #  # ##  ##      #    # ##  #  #   #    # ##  #  #  ####
-    // #  #  # ##    ##   #  #   #    #     ##    # ##  #  #   # #  # #   ##    #  #  #  #  ##      ##    #    ##    #  #   #    ##    # ##  #  #
-    // #  #   # #  ###    #  #  ###   #      ##    # #   ###    #   #  #   ##    ###   ###   ##   ###      ##   ##    ###   #     ##    # #  #  #
-    //                                                         #                   #
+    // #                  ###                     ###                #     #             #  ###         ###
+    // #                  #  #                     #                       #             #   #           #
+    // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #
+    // #  #  #  #  ##     #  #  # ##  # ##  #  #   #    #  #  # #    #     #    # ##  #  #   #    #  #   #    # ##  #  #  ####
+    // #  #  # ##    ##   #  #  ##    ##    #  #   #    #  #  # #    #     #    ##    #  #   #    #  #   #    ##    # ##  #  #
+    // #  #   # #  ###    ###    ##    ##   #  #  ###   #  #   #    ###     ##   ##    ###   #     ##    #     ##    # #  #  #
     /**
-     * Checks if a user has already requested a team.
+     * Checks if a user has been invited to a team.
      * @param {User} user The user to check.
      * @param {object} team The team to check.
-     * @returns {Promise<boolean>} A promise that resolves with whether the user has already requested a team.
+     * @returns {Promise<boolean>} A promise that resolves with whether the user has been invited to a team.
      */
-    static async hasAlreadyRequestedTeam(user, team) {
+    static async hasBeenInvitedToTeam(user, team) {
+        const data = await db.query("SELECT InviteId FROM tblInvite WHERE DiscordId = @userId AND TeamId = @teamId", {userId: {type: Db.VARCHAR(24), value: user.id}, teamId: {type: Db.INT, value: team.id}});
+        return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
+    }
+
+    // #                  ###                                   #             #  ###
+    // #                  #  #                                  #             #   #
+    // ###    ###   ###   #  #   ##    ###  #  #   ##    ###   ###    ##    ###   #     ##    ###  # #
+    // #  #  #  #  ##     ###   # ##  #  #  #  #  # ##  ##      #    # ##  #  #   #    # ##  #  #  ####
+    // #  #  # ##    ##   # #   ##    #  #  #  #  ##      ##    #    ##    #  #   #    ##    # ##  #  #
+    // #  #   # #  ###    #  #   ##    ###   ###   ##   ###      ##   ##    ###   #     ##    # #  #  #
+    //                                   #
+    /**
+     * Checks if a user has requested a team.
+     * @param {User} user The user to check.
+     * @param {object} team The team to check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the user has requested a team.
+     */
+    static async hasRequestedTeam(user, team) {
         const data = await db.query("SELECT RequestId FROM tblRequest WHERE DiscordId = @userId AND TeamId = @teamId", {userId: {type: Db.VARCHAR(24), value: user.id}, teamId: {type: Db.INT, value: team.id}});
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
@@ -461,7 +478,14 @@ class Database {
      * @returns {Promise} A promise that resolves when the pilot is invited to the user's team.
      */
     static async invitePilotToTeam(user, guildPilot) {
-        await db.query("INSERT INTO tblInvite (TeamId, DiscordId, Name) SELECT TeamId, @pilotId, @pilotName FROM tblRoster WHERE DiscordId = @userId", {userId: {type: Db.VARCHAR(24), value: user.id}, pilotId: {type: Db.VARCHAR(24), value: guildPilot.id}, pilotName: {type: Db.VARCHAR(64), value: guildPilot.displayName}});
+        await db.query(`
+            DECLARE @teamId INT
+
+            SELECT @teamId = TeamId FROM tblRoster WHERE DiscordId = @userId
+
+            DELETE FROM tblRequest WHERE TeamId = @teamId AND DiscordId = @pilotId
+            INSERT INTO tblInvite (TeamId, DiscordId, Name) VALUES (@teamId, @pilotId, @pilotName)
+        `, {userId: {type: Db.VARCHAR(24), value: user.id}, pilotId: {type: Db.VARCHAR(24), value: guildPilot.id}, pilotName: {type: Db.VARCHAR(64), value: guildPilot.displayName}});
     }
 
     //  #           ###                #     #             #  ###         ###
@@ -577,7 +601,7 @@ class Database {
 
             SELECT @teamId = TeamId FROM tblRoster WHERE DiscordId = @userId
 
-            UPDATE tblRoster SET Captain = 1 WHERE DiscordId = @captainId AND TeamId = @teamId
+            UPDATE tblRoster SET Captain = 0 WHERE DiscordId = @captainId AND TeamId = @teamId
         `, {
             userId: {type: Db.VARCHAR(24), value: user.id},
             captainId: {type: Db.VARCHAR(24), value: captain.id}
