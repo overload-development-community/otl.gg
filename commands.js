@@ -841,6 +841,19 @@ class Commands {
             throw new Exception("User is not a founder.");
         }
 
+        let team;
+        try {
+            team = await Db.getTeam(user);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw new Exception("There was a database error disbanding a team.", err);
+        }
+
+        if (team.locked) {
+            await Discord.queue(`Sorry, ${user}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
+            throw new Exception("Team rosters are locked.");
+        }
+
         if (!message) {
             await Discord.queue(`${user}, are you sure you want to disband your team?  There is no undoing this action!  Type \`!disband confirm\` to confirm.`, channel);
             return true;
@@ -849,14 +862,6 @@ class Commands {
         if (message !== "confirm") {
             await Discord.queue(`Sorry, ${user}, but you must type \`!disband confirm\` to confirm that you wish to disband your team.`, channel);
             return false;
-        }
-
-        let team;
-        try {
-            team = await Db.getTeam(user);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw new Exception("There was a database error disbanding a team.", err);
         }
 
         try {
@@ -1448,6 +1453,11 @@ class Commands {
             throw new Exception("Team is disbanded.");
         }
 
+        if (team.locked) {
+            await Discord.queue(`Sorry, ${user}, but that team's roster is locked for the playoffs.  Roster changes will become available when that team is no longer participating.`, channel);
+            throw new Exception("Team rosters are locked.");
+        }
+
         let isInvited;
         try {
             isInvited = await Db.isInvitedToTeam(user, team);
@@ -1555,6 +1565,11 @@ class Commands {
             throw new Exception("User is not on a team.");
         }
 
+        if (team.locked) {
+            await Discord.queue(`Sorry, ${user}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
+            throw new Exception("Team rosters are locked.");
+        }
+
         const isFounder = Discord.userIsFounder(user);
         if (isFounder) {
             await Discord.queue(`Sorry, ${user}, but you are the team founder.  You must either \`!disband\` the team or choose another teammate to \`!makefounder\`.`, channel);
@@ -1606,6 +1621,19 @@ class Commands {
         if (!isCaptain) {
             await Discord.queue(`Sorry, ${user}, but you must be a team captain or founder to use this command.`, channel);
             throw new Exception("User is not a founder or captain.");
+        }
+
+        let team;
+        try {
+            team = await Db.getTeam(user);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${user}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw new Exception("There was a database error getting the current team the user is on.", err);
+        }
+
+        if (team.locked) {
+            await Discord.queue(`Sorry, ${user}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
+            throw new Exception("Team rosters are locked.");
         }
 
         let pilot, confirm;
@@ -1682,28 +1710,375 @@ class Commands {
         return true;
     }
 
-    // !challenge
-    // !clock
-    // !pickmap
-    // !suggestmap
-    // !confirmmap
-    // !suggestserver
-    // !confirmserver
-    // !suggestteamsize
-    // !confirmteamsize
-    // !suggesttime
-    // !confirmtime
-    // !report
-    // !confirm
+    // !settimezone <timezone>
+    /*
+     * Player must be part of the OTL.
+     * Timezone must be valid.
+     *
+     * Success:
+     * 1) Write timezone to the database
+     * 2) Post confirmation
+     */
 
-    // !rename
-    // !retag
-    // !replacefounder
-    // !removepilot
-    // !forcereport
-    // !adjudicate
-    // !pilotstat
-    // !voidgame
+    // !challenge <team> <confirm>
+    /*
+     * Player must be a captain or founder of a team.
+     * Team must have 3 home maps picked.
+     * Challenged team must exist and be active.
+     * Must not already have a challenge against the challenged team.
+     * Challenged team must have 2 or more pilots.
+     * Challenged team must have 3 home maps picked.
+     * Must confirm.
+     *
+     * Success:
+     * 1) Write challenge to database
+     * 2) Create chat room and apply appropriate permissions
+     * 3) Set topic
+     * 4) Set pinned post
+     */
+
+    // !clock <team> <confirm>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Team must not have their roster locked. (This means the team is participating in a tournament.)
+     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
+     * Team must not already have put the challenged team on the clock this season.
+     * Team must not already have put any team on the clock in the past 28 days.
+     * Team must not have two challenges on the clock.
+     * Challenged team must not have two challenges on the clock.
+     * Must confirm.
+     *
+     * Success:
+     * 1) Write clock to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !pickmap <team> <a|b|c>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Team must be the away team for picking the map.
+     * Map must not have already been picked.
+     *
+     * Success:
+     * 1) Write picked map to the database.
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !suggestmap <team> <map>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Penalty must not be active.
+     * Map must be valid from map list.
+     * Map must not have already been picked.
+     *
+     * Success:
+     * 1) Write suggested map to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !confirmmap <team>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Map must not have already been picked.
+     * Suggested map must have already been picked by the other team.
+     *
+     * Success:
+     * 1) Write confirmed map to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !suggestneutralserver <team>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Penalty must not be active.
+     * Team must be the server home team.
+     * Neutral server must not have already been suggested.
+     *
+     * Success:
+     * 1) Write suggested neutral server to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !confirmneutralserver <team>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Neutral server must have already been suggested by the other team.
+     *
+     * Success:
+     * 1) Write confirmed neutral server to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !suggestteamsize <team> <2|3|4>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     *
+     * Success:
+     * 1) Write suggested team size to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !confirmteamsize <team>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Team size must have already been suggested by the other team.
+     *
+     * Success:
+     * 1) Write confirmed team size to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !suggesttime <team> <time>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     *
+     * Success:
+     * 1) Write suggested time to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !confirmtime <team>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Time must have already been suggested by the other team.
+     *
+     * Success:
+     * 1) Write confirmed time to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !report <team> <score1> <score2>
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * All challenge parameters must be confirmed.
+     *
+     * Success:
+     * 1) Write reported score to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !confirm
+    /*
+     * Player must be a captain or founder of a team.
+     * Challenge must exist against challenged team.
+     * Score must have already been reported by the other team.
+     *
+     * Success:
+     * 1) Write confirmed score to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     * 4) Alert administrator
+     */
+
+    // !rename <team> <name>
+    /*
+     * Player must be an admin.
+     * Team name must not already exist.
+     *
+     * Success:
+     * 1) Update team name in database
+     * 2) Update channel category
+     * 3) Update challenges
+     * 4) Announce in team channel
+     */
+
+    // !retag <team> <tag>
+    /*
+     * Player must be an admin.
+     * Team tag must not already exist.
+     *
+     * Success:
+     * 1) Update team tag in database
+     * 2) Update channel category
+     * 3) Update challenges
+     * 4) Announce in team channel
+     */
+
+    // !replacefounder <team> <newfounder>
+    /*
+     * Player must be an admin.
+     * Ensure this doesn't put players over 3 captains.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update team topics
+     * 3) Update founder permissions
+     * 4) Announce in team channel
+     * 5) Announce in roster changes
+     */
+
+    // !ejectcaptain <captain>
+    /*
+     * Player must be an admin.
+     * Captain must be a captain of a team.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update team topics
+     * 3) Update captain permissions
+     * 4) Announce in team channel
+     * 5) Announce in roster changes
+     */
+
+    // !ejectpilot <pilot>
+    /*
+     * Player must be an admin.
+     * Pilot must be on a team.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update team topics
+     * 3) Update pilot permissions
+     * 4) Announce in team channel
+     * 5) Announce in roster changes
+     */
+
+    // !forcemap <team1> <team2> <a|b|c|map choice>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Map must be valid from map list.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !forceneutralserver <team1> <team2>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !forceteamsize <team1> <team2> <2|3|4>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !forcetime <team1> <team2> <time>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !forcereport <team1> <team2> <score1> <score2>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * All challenge parameters must be confirmed.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !adjudicate <team1> <team2> <cancel|extend|penalize> <team1|team2|both> <reason>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Either agreed challenge time must have passed, or a challenge on the clock has expired.
+     *
+     * Success (Cancel)
+     * 1) Remove channel
+     * 2) Set match to cancelled in the database
+     * 3) Announce to both teams.
+     *
+     * Success (Extend)
+     * 1) If challenge is on the clock, set deadline to 14 days from today.
+     * 2) Announce to both teams.
+     *
+     * Success (Penalize)
+     * 1) If 1st offense, assess penalty in database, with a 3 game penalty given.
+     * 2) If 2nd offense, disband offending teams and blacklist leadership.
+     */
+
+    // !pilotstat <team1> <team2> <player> <K> <A> <D>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Challenge must have been reported and confirmed, or force reported.
+     *
+     * Success:
+     * 1) Write stat to the database.
+     * 2) Confirm with admin.
+     */
+
+    // !voidgame <team1> <team2> <#> <reason> <confirm>
+    /*
+     * Player must be an admin.
+     * Must confirm.
+     *
+     * Success (Teams only)
+     * 1) List games between the two teams.
+     *
+     * Success (With game number)
+     * 1) Void game in database
+     * 2) Announce to both teams.
+     * 3) Post to match results.
+     */
+
+    // !closegame <team1> <team2>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Challenge must have been reported and confirmed, or force reported.
+     * Sufficient stats must have been added to the game.
+     *
+     * Success:
+     * Record match as official in the database.
+     * Announce in #match-results
+     * Close challenge channel
+     */
+
+    // Disband
+    /*
+     * Remove all challenges
+     */
+
+    // Automation
+    /*
+     * Alert administrator when 28 days have passed since a challenge was issued.
+     */
 }
 
 module.exports = Commands;

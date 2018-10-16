@@ -348,8 +348,8 @@ class Database {
      * @returns {Promise<{id: number, name: string, tag: string, isFounder: boolean}|void>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getTeam(user) {
-        const data = await db.query("SELECT TeamId, Name, Tag, CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE Founder = 1 AND DiscordId = @userId) THEN 1 ELSE 0 END IsFounder FROM tblTeam WHERE TeamId IN (SELECT TeamId FROM tblRoster WHERE DiscordId = @userId)", {userId: {type: Db.VARCHAR(24), value: user.id}});
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, isFounder: !!data.recordsets[0][0].IsFounder} || void 0;
+        const data = await db.query("SELECT TeamId, Name, Tag, CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE Founder = 1 AND DiscordId = @userId) THEN 1 ELSE 0 END IsFounder, Locked FROM tblTeam WHERE TeamId IN (SELECT TeamId FROM tblRoster WHERE DiscordId = @userId)", {userId: {type: Db.VARCHAR(24), value: user.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, isFounder: !!data.recordsets[0][0].IsFounder, locked: !!data.recordsets[0][0].Locked} || void 0;
     }
 
     //              #    ###                     #  #                    #  #
