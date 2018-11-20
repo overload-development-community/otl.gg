@@ -2,6 +2,9 @@ const util = require("util"),
 
     queue = [];
 
+/**
+ * @type {typeof import("./discord")}
+ */
 let Discord;
 
 //  #
@@ -105,8 +108,8 @@ class Log {
             queue.forEach((log) => {
                 const message = {
                     embed: {
-                        color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : log.type === "exception" ? 0xFF0000 : 0x16F6F8,
-                        // footer: {"icon_url": Discord.icon},
+                        color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
+                        // TODO: footer: {"icon_url": Discord.icon},
                         fields: [],
                         timestamp: log.date
                     }

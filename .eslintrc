@@ -82,6 +82,7 @@
         "prefer-promise-reject-errors": [
             "error", {"allowEmptyReject": true}
         ],
+        "require-unicode-regexp": "off",
         "sort-keys": "off",
         "sort-vars": "off",
         "space-before-function-paren": "off",
