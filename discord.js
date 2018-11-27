@@ -331,7 +331,11 @@ class Discord {
 
         let msg;
         try {
-            msg = await channel.sendEmbed(embed);
+            msg = await channel.send("", embed);
+
+            if (msg instanceof Array) {
+                msg = msg[0];
+            }
         } finally {}
         return msg;
     }

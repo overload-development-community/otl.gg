@@ -234,9 +234,12 @@ class Database {
 
             SELECT @teamId = TeamId FROM tblRoster WHERE PlayerId = @playerId
 
-            SELECT RosterId FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
-            UNION SELECT RequestId FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
-            UNION SELECT InviteId FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
+            SELECT TOP 1 1
+            FROM (
+                SELECT RosterId FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
+                UNION SELECT RequestId FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
+                UNION SELECT InviteId FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
+            ) a
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             pilotId: {type: Db.VARCHAR(24), value: pilot.id}
@@ -539,7 +542,7 @@ class Database {
          * @type {{recordsets: [{}[]]}}
          */
         const data = await db.query(`
-            SELECT i.InviteId
+            SELECT TOP 1 1
             FROM tblInvite i
             INNER JOIN tblPlayer p ON i.PlayerId = p.PlayerId
             WHERE p.DiscordId = @discordId
@@ -570,7 +573,7 @@ class Database {
          * @type {{recordsets: [{}[]]}}
          */
         const data = await db.query(`
-            SELECT r.RequestId
+            SELECT TOP 1 1
             FROM tblRequest r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             WHERE p.DiscordId = @discordId
@@ -590,20 +593,31 @@ class Database {
     // ###   #  #   #    ###     ##   ##   #     ###   ###    ##     ##   #     ##    #     ##    # #  #  #
     /**
      * Invites a pilot to the pilot's team.
-     * @param {DiscordJs.GuildMember} member The pilot whos team to invite the pilot to.
-     * @param {DiscordJs.GuildMember} pilot The pilot to invite to the team.
+     * @param {Team} team The pilot whos team to invite the pilot to.
+     * @param {DiscordJs.GuildMember} member The pilot to invite to the team.
      * @returns {Promise} A promise that resolves when the pilot is invited to the pilot's team.
      */
-    static async invitePilotToTeam(member, pilot) {
-        // TODO: Add pilot to tblPlayer
+    static async invitePilotToTeam(team, member) {
         await db.query(`
-            DECLARE @teamId INT
+            DECLARE @playerId INT
 
-            SELECT @teamId = TeamId FROM tblRoster WHERE DiscordId = @discordId
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            DELETE FROM tblRequest WHERE TeamId = @teamId AND DiscordId = @pilotId
-            INSERT INTO tblInvite (TeamId, DiscordId, Name) VALUES (@teamId, @pilotId, @pilotName)
-        `, {discordId: {type: Db.VARCHAR(24), value: member.id}, pilotId: {type: Db.VARCHAR(24), value: pilot.id}, pilotName: {type: Db.VARCHAR(64), value: pilot.displayName}});
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
+            INSERT INTO tblInvite (TeamId, PlayerId) VALUES (@teamId, @playerId)
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(64), value: member.displayName},
+            teamId: {type: Db.INT, value: team.id}
+        });
     }
 
     //   #          #          ###                     ###                #             #  #  #         #     #    ##
@@ -623,7 +637,12 @@ class Database {
         /**
          * @type {{recordsets: [{DateExpires: Date}[]]}}
          */
-        const data = await db.query("SELECT DateExpires FROM tblJoinBan WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        const data = await db.query(`
+            SELECT jb.DateExpires
+            FROM tblJoinBan jb
+            INNER JOIN tblPlayer p ON jb.PlayerId = p.PlayerId
+            WHERE p.DiscordId = @discordId
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateExpires && data.recordsets[0][0].DateExpires > new Date() && data.recordsets[0][0].DateExpires || void 0;
     }
 
@@ -635,27 +654,32 @@ class Database {
     // #  #   # #  #  #   ##   #      ##    ###  #  #   ###   ##   #
     /**
      * Transfers ownership of a team from one pilot to another.
+     * @param {Team} team The team to transfer ownership for.
      * @param {DiscordJs.GuildMember} member The pilot to transfer ownership from.
      * @param {DiscordJs.GuildMember} pilot The pilot to transfer ownership to.
      * @returns {Promise} A promise that resolves when ownership has been transferred.
      */
-    static async makeFounder(member, pilot) {
+    static async makeFounder(team, member, pilot) {
         await db.query(`
-            DECLARE @teamId INT
+            DECLARE @playerId INT
+            DECLARE @pilotPlayerId INT
 
-            SELECT @teamId = TeamId FROM tblRoster WHERE DiscordId = @discordId
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            UPDATE tblRoster SET Founder = 0, Captain = 1 WHERE TeamId = @teamId AND DiscordId = @discordId
-            UPDATE tblRoster SET Founder = 1, Captain = 0 WHERE TeamId = @teamId AND DiscordId = @pilotId
+            SELECT @pilotPlayerId = PlayerId FROM tblPlayer WHERE DiscordId = @pilotId
+
+            UPDATE tblRoster SET Founder = 0, Captain = 1 WHERE TeamId = @teamId AND PlayerId = @playerId
+            UPDATE tblRoster SET Founder = 1, Captain = 0 WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
 
             MERGE tblCaptainHistory ch
-                USING (VALUES (@teamId, @pilotId)) AS v (TeamId, DiscordId)
-                ON ch.TeamId = v.TeamId AND ch.DiscordId = v.DiscordId
+                USING (VALUES (@teamId, @pilotPlayerId)) AS v (TeamId, PlayerId)
+                ON ch.TeamId = v.TeamId AND ch.PlayerId = v.PlayerId
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, DiscordId) VALUES (v.TeamId, v.DiscordId);
+                INSERT (TeamId, PlayerId) VALUES (v.TeamId, v.PlayerId);
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
-            pilotId: {type: Db.VARCHAR(24), value: pilot.id}
+            pilotId: {type: Db.VARCHAR(24), value: pilot.id},
+            teamId: {type: Db.INT, value: team.id}
         });
     }
 
@@ -673,16 +697,19 @@ class Database {
      */
     static async reinstateTeam(member, team) {
         await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
             UPDATE tblTeam SET Disbanded = 0 WHERE TeamId = @teamId
 
-            INSERT INTO tblRoster (TeamId, DiscordId, Name, Founder) VALUES (@teamId, @discordId, @name, 1)
+            INSERT INTO tblRoster (TeamId, PlayerId, Founder) VALUES (@teamId, @playerId, 1)
 
-            DELETE FROM tblJoinBan WHERE DiscordId = @discordId
-            INSERT INTO tblJoinBan (DiscordId) VALUES (@discordId)
-            DELETE FROM tblTeamBan WHERE TeamId = @teamId AND DiscordId = @discordId
+            DELETE FROM tblJoinBan WHERE PlayerId = @playerId
+            INSERT INTO tblJoinBan (PlayerId) VALUES (@playerId)
+            DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
-            name: {type: Db.VARCHAR(64), value: member.displayName},
             teamId: {type: Db.INT, value: team.id}
         });
     }
@@ -696,20 +723,20 @@ class Database {
     //                                                 #
     /**
      * Removes a pilot as captain from the pilot's team.
-     * @param {DiscordJs.GuildMember} member The pilot removing the captain.
-     * @param {DiscordJs.GuildMember} captain The captain to remove.
+     * @param {Team} team The team the captain is on.
+     * @param {DiscordJs.GuildMember} member The captain to remove.
      * @returns {Promise} A promise that resolves when the captain has been removed.
      */
-    static async removeCaptain(member, captain) {
+    static async removeCaptain(team, member) {
         await db.query(`
-            DECLARE @teamId INT
+            DECLARE @playerId INT
 
-            SELECT @teamId = TeamId FROM tblRoster WHERE DiscordId = @discordId
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            UPDATE tblRoster SET Captain = 0 WHERE DiscordId = @captainId AND TeamId = @teamId
+            UPDATE tblRoster SET Captain = 0 WHERE PlayerId = @playerId AND TeamId = @teamId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
-            captainId: {type: Db.VARCHAR(24), value: captain.id}
+            teamId: {type: Db.INT, value: team.id}
         });
     }
 
@@ -721,26 +748,30 @@ class Database {
     // #      ##   #  #   ##    #     ##   #     ###   ###    ##     ##  #     #      ##   #  #   #     ##    # #  #  #
     /**
      * Removes a pilot from a team, whether they are on the roster, requested, or invited.
-     * @param {DiscordJs.GuildMember} pilot The pilot to remove.
+     * @param {DiscordJs.GuildMember} member The pilot to remove.
      * @param {Team} team The team to remove the pilot from.
      * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
-    static async removePilotFromTeam(pilot, team) {
+    static async removePilotFromTeam(member, team) {
         // TODO: Remove from tblJoinBan and tblTeamBan if they did not play a game for this team.
         await db.query(`
-            IF EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE TeamId = @teamId AND DiscordId = @pilotId)
-            BEGIN
-                DELETE FROM tblRoster WHERE TeamId = @teamId AND DiscordId = @pilotId
+            DECLARE @playerId INT
 
-                DELETE FROM tblTeamBan WHERE TeamId = @teamId AND DiscordId = @pilotId
-                INSERT INTO tblTeamBan (TeamId, DiscordId) VALUES (@teamId, @pilotId)
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId)
+            BEGIN
+                DELETE FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId
+
+                DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+                INSERT INTO tblTeamBan (TeamId, PlayerId) VALUES (@teamId, @playerId)
             END
 
-            DELETE FROM tblRequest WHERE TeamId = @teamId AND DiscordId = @pilotId
-            DELETE FROM tblInvite WHERE TeamId = @teamId AND DiscordId = @pilotId
+            DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
+            DELETE FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @playerId
         `, {
             teamId: {type: Db.INT, value: team.id},
-            pilotId: {type: Db.VARCHAR(24), value: pilot.id}
+            discordId: {type: Db.VARCHAR(24), value: member.id}
         });
     }
 
@@ -758,7 +789,26 @@ class Database {
      * @returns {Promise} A promise that resolves when the request has been made.
      */
     static async requestTeam(member, team) {
-        await db.query("INSERT INTO tblRequest (TeamId, DiscordId, Name) VALUES (@teamId, @discordId, @name)", {teamId: {type: Db.INT, value: team.id}, discordId: {type: Db.VARCHAR(24), value: member.id}, name: {type: Db.VARCHAR(64), value: member.displayName}});
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            INSERT INTO tblRequest (TeamId, PlayerId)
+            VALUES (@teamId, @playerId)
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(64), value: member.displayName},
+            teamId: {type: Db.INT, value: team.id}
+        });
     }
 
     //         #                 #     ##                      #          ###
@@ -773,7 +823,24 @@ class Database {
      * @returns {Promise} A promise that resolves when the process of creating a new team for the pilot has begun.
      */
     static async startCreateTeam(member) {
-        await db.query("INSERT INTO tblNewTeam (DiscordId) VALUES (@discordId)", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            INSERT INTO tblNewTeam (DiscordId) VALUES (@discordId)
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(64), value: member.displayName}
+        });
     }
 
     //                #         #          #  #
@@ -789,11 +856,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the name has been updated.
      */
     static async updateName(member) {
-        await db.query(`
-            UPDATE tblRoster SET Name = @name WHERE DiscordId = @discordId
-            UPDATE tblRequest SET Name = @name WHERE DiscordId = @discordId
-            UPDATE tblInvite SET Name = @name WHERE DiscordId = @discordId
-        `, {
+        await db.query("UPDATE tblPlayer SET Name = @name WHERE DiscordId = @discordId", {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName}
         });
@@ -817,7 +880,16 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query("SELECT HistoryId FROM tblCaptainHistory WHERE DiscordId = @discordId AND TeamId = @teamId", {discordId: {type: Db.VARCHAR(24), value: member.id}, teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            SELECT TOP 1 1
+            FROM tblCaptainHistory
+            WHERE DiscordId = @discordId
+                AND TeamId = @teamId
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}, teamId: {type: Db.INT, value: team.id}});
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
 

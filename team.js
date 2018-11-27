@@ -588,7 +588,7 @@ class Team {
      */
     async invitePilot(fromMember, toMember) {
         try {
-            await Db.invitePilotToTeam(fromMember, toMember);
+            await Db.invitePilotToTeam(this, toMember);
         } catch (err) {
             throw new Exception("There was a database error inviting a pilot to a team.", err);
         }
@@ -612,7 +612,7 @@ class Team {
      */
     async makeFounder(member, pilot) {
         try {
-            await Db.makeFounder(member, pilot);
+            await Db.makeFounder(this, member, pilot);
         } catch (err) {
             throw new Exception("There was a database error transfering a team founder to another pilot.", err);
         }
@@ -774,7 +774,7 @@ class Team {
      */
     async removeCaptain(member, captain) {
         try {
-            await Db.removeCaptain(member, captain);
+            await Db.removeCaptain(this, captain);
         } catch (err) {
             throw new Exception("There was a database error removing a captain.", err);
         }
