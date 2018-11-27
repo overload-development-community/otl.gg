@@ -20,7 +20,7 @@ class Exception extends Error {
     /**
      * A constructor that creates the exception.
      * @param {string} message The message of the exception.
-     * @param {object} err The error object to include.
+     * @param {Error} err The error object to include.
      */
     constructor(message, err) {
         super(message);

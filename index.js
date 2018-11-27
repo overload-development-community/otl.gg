@@ -25,6 +25,6 @@ const Discord = require("./discord"),
     Discord.connect();
 }());
 
-process.on("unhandledRejection", (err) => {
-    Log.exception("Unhandled promise rejection caught.", err);
+process.on("unhandledRejection", (reason) => {
+    Log.exception("Unhandled promise rejection caught.", reason);
 });
