@@ -1,6 +1,16 @@
+/**
+ * @typedef {(import("ws").CloseEvent)} CloseEvent
+ * @typedef {{type: string, date: Date, obj?: Error|CloseEvent, message?: string}} LogItem
+ */
+
 const util = require("util"),
 
-    queue = [];
+    DiscordJs = require("discord.js");
+
+/**
+ * @type {LogItem[]}
+ */
+const queue = [];
 
 /**
  * @type {typeof import("./discord")}
@@ -29,14 +39,14 @@ class Log {
     //              ###
     /**
      * Logs a message.
-     * @param {*} obj The object to log.
+     * @param {string} message The message to log.
      * @returns {void}
      */
-    static log(obj) {
+    static log(message) {
         queue.push({
             type: "log",
             date: new Date(),
-            obj
+            message
         });
         Log.output();
     }
@@ -72,7 +82,7 @@ class Log {
     /**
      * Logs an exception.
      * @param {string} message The message describing the error.
-     * @param {*} obj The object to log.
+     * @param {Error|CloseEvent} [obj] The object to log.
      * @returns {void}
      */
     static exception(message, obj) {
@@ -102,31 +112,26 @@ class Log {
         }
 
         if (Discord.isConnected()) {
-            const logChannel = Discord.findChannelByName("otlbot-log"),
-                errorChannel = Discord.findChannelByName("otlbot-errors");
 
             queue.forEach((log) => {
-                const message = {
-                    embed: {
-                        color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
-                        // TODO: footer: {"icon_url": Discord.icon},
-                        fields: [],
-                        timestamp: log.date
-                    }
-                };
+                const message = new DiscordJs.RichEmbed({
+                    color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
+                    fields: [],
+                    timestamp: log.date
+                });
 
                 if (log.message) {
-                    ({message: message.embed.description} = log);
+                    message.setDescription(log.message);
                 }
 
                 if (log.obj) {
-                    message.embed.fields.push({
+                    message.fields.push({
                         name: "Message",
                         value: util.inspect(log.obj)
                     });
                 }
 
-                Discord.richQueue(message, log.type === "exception" ? errorChannel : logChannel);
+                Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
             });
 
             queue.splice(0, queue.length);

@@ -82,6 +82,15 @@
         "prefer-promise-reject-errors": [
             "error", {"allowEmptyReject": true}
         ],
+        "require-jsdoc": ["error", {
+            "require": {
+                "FunctionDeclaration": true,
+                "MethodDefinition": true,
+                "ClassDeclaration": true,
+                "ArrowFunctionExpression": true,
+                "FunctionExpression": true
+            }
+        }],
         "require-unicode-regexp": "off",
         "sort-keys": "off",
         "sort-vars": "off",
