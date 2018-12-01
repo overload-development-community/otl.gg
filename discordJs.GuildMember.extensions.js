@@ -1,10 +1,18 @@
 const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
-    Discord = require("./discord"),
     Exception = require("./exception"),
     NewTeam = require("./newTeam"),
     Team = require("./team");
+
+/**
+ * @type {typeof import("./discord")}
+ */
+let Discord;
+
+setTimeout(() => {
+    Discord = require("./discord");
+}, 0);
 
 // #                                #  ####                    ###                     #  #         #     #    ##
 // #                                #  #                        #                      #  #         #           #
@@ -17,7 +25,7 @@ const DiscordJs = require("discord.js"),
  * @param {Team} team The team to check.
  * @returns {Promise<Date>} A promise that resolves with the date and time the pilot is banned from the team until.  Returns nothing if the pilot is not banned.
  */
-DiscordJs.GuildMember.prototype.bannedFromTeamUntil = async (team) => {
+DiscordJs.GuildMember.prototype.bannedFromTeamUntil = async function(team) {
     try {
         return await Db.bannedFromTeamUntil(this, team);
     } catch (err) {
@@ -36,7 +44,7 @@ DiscordJs.GuildMember.prototype.bannedFromTeamUntil = async (team) => {
  * Returns whether the pilot can be a captain.
  * @returns {Promise<boolean>} A promise that resolves with whether the pilot can be a captain.
  */
-DiscordJs.GuildMember.prototype.canBeCaptain = async () => {
+DiscordJs.GuildMember.prototype.canBeCaptain = async function() {
     try {
         return await Db.canBeCaptain(this);
     } catch (err) {
@@ -55,7 +63,7 @@ DiscordJs.GuildMember.prototype.canBeCaptain = async () => {
  * @param {DiscordJs.GuildMember} pilot The pilot to check.
  * @returns {Promise<boolean>} A promise that resolves with whether the pilot can remove another pilot from their team.
  */
-DiscordJs.GuildMember.prototype.canRemovePilot = async (pilot) => {
+DiscordJs.GuildMember.prototype.canRemovePilot = async function(pilot) {
     try {
         return await Db.canRemovePilot(this, pilot);
     } catch (err) {
@@ -74,7 +82,7 @@ DiscordJs.GuildMember.prototype.canRemovePilot = async (pilot) => {
  * Gets the teams that the pilot has requested or has been invited to.
  * @returns {Promise<Team[]>} A promise that resolves with the teams that the pilot has requested or has been invited to.
  */
-DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async () => {
+DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
     let teams;
     try {
         teams = await Db.getRequestedOrInvitedTeams(this);
@@ -96,7 +104,7 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async () => {
  * @param {Team} team The team to check.
  * @returns {Promise<boolean>} A promise that resolves with whether the pilot has been invited to the team.
  */
-DiscordJs.GuildMember.prototype.hasBeenInvitedToTeam = async (team) => {
+DiscordJs.GuildMember.prototype.hasBeenInvitedToTeam = async function(team) {
     try {
         return await Db.hasBeenInvitedToTeam(this, team);
     } catch (err) {
@@ -116,7 +124,7 @@ DiscordJs.GuildMember.prototype.hasBeenInvitedToTeam = async (team) => {
  * @param {Team} team The team requested.
  * @returns {Promise<boolean>} A promise that resolves with whether the pilot has requested the team.
  */
-DiscordJs.GuildMember.prototype.hasRequestedTeam = async (team) => {
+DiscordJs.GuildMember.prototype.hasRequestedTeam = async function(team) {
     try {
         return await Db.hasRequestedTeam(this, team);
     } catch (err) {
@@ -135,7 +143,9 @@ DiscordJs.GuildMember.prototype.hasRequestedTeam = async (team) => {
  * Returns whether the pilot is a captain or a founder.
  * @returns {boolean} Whether the pilot is a captain or a founder.
  */
-DiscordJs.GuildMember.prototype.isCaptainOrFounder = () => !!Discord.founderRole.members.find((m) => m.id === this.id) || !!Discord.captainRole.members.find((m) => m.id === this.id);
+DiscordJs.GuildMember.prototype.isCaptainOrFounder = function() {
+    return !!Discord.founderRole.members.find((m) => m.id === this.id) || !!Discord.captainRole.members.find((m) => m.id === this.id);
+}
 
 //  #           ####                       #
 //              #                          #
@@ -147,7 +157,9 @@ DiscordJs.GuildMember.prototype.isCaptainOrFounder = () => !!Discord.founderRole
  * Returns whether the pilot is a founder.
  * @returns {boolean} Whether the pilot is a founder.
  */
-DiscordJs.GuildMember.prototype.isFounder = () => !!Discord.founderRole.members.find((m) => m.id === this.id);
+DiscordJs.GuildMember.prototype.isFounder = function() {
+    return !!Discord.founderRole.members.find((m) => m.id === this.id);
+}
 
 //   #          #          ###                     ###                #             #  #  #         #     #    ##
 //                          #                      #  #                             #  #  #         #           #
@@ -160,7 +172,7 @@ DiscordJs.GuildMember.prototype.isFounder = () => !!Discord.founderRole.members.
  * Returns the date and time which the pilot is banned from joining teams.
  * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from joining teams.  Returns nothing if the pilot is not banned.
  */
-DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async () => {
+DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async function() {
     try {
         return await Db.joinTeamDeniedUntil(this);
     } catch (err) {
@@ -178,7 +190,7 @@ DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async () => {
  * Performs the required actions when a pilot leaves the Discord server.
  * @returns {Promise} A promise that resolves when a pilot leaves Discord.
  */
-DiscordJs.GuildMember.prototype.leftDiscord = async () => {
+DiscordJs.GuildMember.prototype.leftDiscord = async function() {
     let team;
     try {
         team = await Team.getByPilot(this);
@@ -189,12 +201,12 @@ DiscordJs.GuildMember.prototype.leftDiscord = async () => {
     if (!team) {
         let requestedTeams;
         try {
-            requestedTeams = await this.getRequestedOrInvitedTeams();
+            requestedTeams = await Db.getRequestedOrInvitedTeams(this);
         } catch (err) {
             throw new Exception(`There was a database error getting a pilot's team invites and requests.  Please remove ${this.displayName} manually.`, err);
         }
 
-        for (const requestedTeam of requestedTeams) {
+        for (const requestedTeam of requestedTeams.map((t) => new Team(t))) {
             try {
                 await requestedTeam.pilotLeft(this);
             } catch (err) {
@@ -220,7 +232,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async () => {
                 {"VIEW_CHANNEL": null},
                 `${this.displayName} left the team.`
             );
-        } finally {}
+        } catch {}
 
         await Discord.queue(`${this.displayName} has left the team.`, captainsChannel);
     }
@@ -271,7 +283,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async () => {
  * @param {Team} team The team to request joining.
  * @returns {Promise} A promise that resolves when the request to join the team has been sent.
  */
-DiscordJs.GuildMember.prototype.requestTeam = async (team) => {
+DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
     try {
         await await Db.requestTeam(this, team);
     } catch (err) {
@@ -284,7 +296,7 @@ DiscordJs.GuildMember.prototype.requestTeam = async (team) => {
             throw new Error("Captain's channel does not exist for the team.");
         }
 
-        await Discord.queue(`@everyone, ${this.displayName} has requested to join the team.`, captainsChannel);
+        await Discord.queue(`${this.displayName} has requested to join the team.`, captainsChannel);
 
         await team.updateChannels();
     } catch (err) {
@@ -304,7 +316,7 @@ DiscordJs.GuildMember.prototype.requestTeam = async (team) => {
  * @param {DiscordJs.GuildMember} oldMember The pilot with their previous name.
  * @returns {Promise} A promise that resolves when the pilot's name is updated.
  */
-DiscordJs.GuildMember.prototype.updateName = async (oldMember) => {
+DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
     try {
         await Db.updateName(this);
     } catch (err) {
@@ -364,7 +376,7 @@ DiscordJs.GuildMember.prototype.updateName = async (oldMember) => {
  * @param {Team} team The team to check.
  * @returns {Promise<boolean>} A promise that resolves with whether the pilot was a captain or founder previously.
  */
-DiscordJs.GuildMember.prototype.wasPreviousCaptainOrFounderOfTeam = async (team) => {
+DiscordJs.GuildMember.prototype.wasPreviousCaptainOrFounderOfTeam = async function(team) {
     try {
         return await Db.wasPreviousCaptainOrFounderOfTeam(this, team);
     } catch (err) {

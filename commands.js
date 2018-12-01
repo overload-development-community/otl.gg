@@ -22,6 +22,10 @@ const pjson = require("./package.json"),
  */
 let Discord;
 
+setTimeout(() => {
+    Discord = require("./discord");
+}, 0);
+
 //   ###                                          #
 //  #   #                                         #
 //  #       ###   ## #   ## #    ###   # ##    ## #   ###
@@ -33,21 +37,6 @@ let Discord;
  * A class that handles commands given by chat.
  */
 class Commands {
-    //                           #                       #
-    //                           #                       #
-    //  ##    ##   ###    ###   ###   ###   #  #   ##   ###    ##   ###
-    // #     #  #  #  #  ##      #    #  #  #  #  #      #    #  #  #  #
-    // #     #  #  #  #    ##    #    #     #  #  #      #    #  #  #
-    //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
-    /**
-     * Initializes the class.
-     */
-    constructor() {
-        if (!Discord) {
-            Discord = require("./discord");
-        }
-    }
-
     //         #                ##           #
     //                           #           #
     //  ###   ##    # #   #  #   #     ###  ###    ##
@@ -759,7 +748,7 @@ class Commands {
         }
 
         if (!team.role.members.find((m) => m.id === captain.id)) {
-            await Discord.queue(`Sorry, ${member}, but you can only add a captain if they are on your team.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you can only remove a captain if they are on your team.`, channel);
             throw new Warning("Pilots are not on the same team.");
         }
 
@@ -952,7 +941,6 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async reinstate(member, channel, message) {
-        // TODO: Needs to be confirmed.
         if (!message) {
             await Discord.queue("You must include the name of the team you wish to reinstate.", channel);
             return false;
@@ -984,9 +972,10 @@ class Commands {
             throw new Warning("Pilot is already on a team.");
         }
 
+        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
         let team;
         try {
-            team = await Team.getByNameOrTag(message);
+            team = await Team.getByNameOrTag(name);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1039,6 +1028,11 @@ class Commands {
         if (deniedUntil) {
             await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to reinstate this team on ${deniedUntil.toUTCString()}`, channel);
             throw new Warning("Pilot not allowed to create a new team.");
+        }
+
+        if (!confirm) {
+            await Discord.queue(`${member}, are you sure you wish to reinstate this team?  Type \`!reinstate ${name} confirm\` to confirm that you wish to reinstate this team.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
+            return true;
         }
 
         try {
@@ -1177,7 +1171,7 @@ class Commands {
         }
 
         if (!team) {
-            await Discord.queue(`Sorry, ${member}, but I have no record of that team ever existing.`, channel);
+            await Discord.queue(`Sorry, ${member}, but I can't find a team by that name.`, channel);
             throw new Warning("Team does not exist.");
         }
 
@@ -1251,7 +1245,7 @@ class Commands {
             throw err;
         }
 
-        if (team) {
+        if (!team) {
             await Discord.queue(`Sorry, ${member}, but you are not on a team.`, channel);
             throw new Warning("Pilot already on another team.");
         }
@@ -1523,12 +1517,12 @@ class Commands {
         }
 
         if (!message) {
-            await Discord.queue(`${member}, are you sure you want to leave **${team.name}**?  Type \`!accept confirm\` to confirm.  Note that you will not be able to rejoin this team for 28 days.`, channel);
+            await Discord.queue(`${member}, are you sure you want to leave **${team.name}**?  Type \`!leave confirm\` to confirm.  Note that you will not be able to rejoin this team for 28 days.`, channel);
             return true;
         }
 
         if (message !== "confirm") {
-            await Discord.queue(`Sorry, ${member}, but you must type \`!accept confirm\` to confirm that you wish to leave **${team.name}**.  Note that you will not be able to rejoin this team for 28 days.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must type \`!leave confirm\` to confirm that you wish to leave **${team.name}**.  Note that you will not be able to rejoin this team for 28 days.`, channel);
             return false;
         }
 
@@ -1573,6 +1567,11 @@ class Commands {
         if (team.locked) {
             await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
             throw new Warning("Team rosters are locked.");
+        }
+
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To remove a pilot, you must mention them as part of the \`!remove\` command.`, channel);
+            return false;
         }
 
         /**

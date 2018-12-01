@@ -3,10 +3,19 @@
  */
 
 const DiscordJs = require("discord.js"),
+
     Db = require("./database"),
-    Discord = require("./discord"),
     Exception = require("./exception"),
     Team = require("./team");
+
+/**
+ * @type {typeof import("./discord")}
+ */
+let Discord;
+
+setTimeout(() => {
+    Discord = require("./discord");
+}, 0);
 
 //  #   #                #####
 //  #   #                  #

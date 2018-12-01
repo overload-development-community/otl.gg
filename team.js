@@ -6,9 +6,17 @@
 const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
-    Discord = require("./discord"),
     Exception = require("./exception"),
     Log = require("./log");
+
+/**
+ * @type {typeof import("./discord")}
+ */
+let Discord;
+
+setTimeout(() => {
+    Discord = require("./discord");
+}, 0);
 
 //  #####
 //    #
@@ -293,7 +301,7 @@ class Team {
             await this.updateChannels();
 
             await Discord.queue(`${captain}, you have been added as a captain of **${this.name}**!  You now have access to your team's captain's channel, ${captainsChannel}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
-            await Discord.queue(`@everyone Welcome **${captain}** as the newest team captain!`, captainsChannel);
+            await Discord.queue(`Welcome **${captain}** as the newest team captain!`, captainsChannel);
             await Discord.queue(`**${captain}** is now a team captain!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
@@ -351,7 +359,7 @@ class Team {
             await this.updateChannels();
 
             await Discord.queue(`${member}, you are now a member of **${this.name}**!  You now have access to your team's channel, ${teamChannel}.`, member);
-            await Discord.queue(`@everyone **${member}** has accepted your invitation to join the team!`, captainsChannel);
+            await Discord.queue(`**${member}** has accepted your invitation to join the team!`, captainsChannel);
             await Discord.queue(`**${member}** has joined the team!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
@@ -751,12 +759,18 @@ class Team {
      */
     async reinstate(member) {
         try {
+            await Db.reinstateTeam(member, this);
+        } catch (err) {
+            throw new Exception("There was a database error reinstating a team.", err);
+        }
+
+        this.founder = member;
+
+        try {
             await this.setup(member, true);
         } catch (err) {
             throw new Exception("There was a critical Discord error reinstating a team.  Please resolve this manually as soon as possible.", err);
         }
-
-        this.founder = member;
     }
 
     //                                      ##                #           #
@@ -848,7 +862,7 @@ class Team {
      */
     async removePilot(member, pilot) {
         try {
-            await Db.removePilotFromTeam(member, this);
+            await Db.removePilotFromTeam(pilot, this);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot from a team.", err);
         }
@@ -918,17 +932,6 @@ class Team {
      * @returns {Promise} A promise that resolves when the team is setup on Discord.
      */
     async setup(founder, reinstating) {
-        let currentTeam;
-        try {
-            currentTeam = await Team.getByPilot(founder);
-        } catch (err) {
-            throw err;
-        }
-
-        if (currentTeam) {
-            throw new Error("Pilot is already on a team.");
-        }
-
         const existingRole = Discord.findRoleByName(`Team: ${this.name}`);
         if (existingRole) {
             throw new Error("Team role already exists.");
@@ -1107,6 +1110,8 @@ class Team {
         if (msg2) {
             await msg2.pin();
         }
+
+        await this.updateChannels();
     }
 
     //                #         #           ##   #                             ##

@@ -225,7 +225,7 @@ class Database {
          */
         const data = await db.query(`
             DECLARE @playerId INT
-            DECALRE @pilotPlayerId INT
+            DECLARE @pilotPlayerId INT
             DECLARE @teamId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -485,11 +485,24 @@ class Database {
         const data = await db.query(`
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
 
-            SELECT Name, Captain, Founder FROM tblRoster WHERE TeamId = @teamId ORDER BY CASE WHEN Founder = 1 THEN 0 WHEN Captain = 1 THEN 1 ELSE 2 END, Name
+            SELECT p.Name, r.Captain, r.Founder
+            FROM tblRoster r
+            INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
+            WHERE r.TeamId = @teamId
+            ORDER BY CASE WHEN r.Founder = 1 THEN 0 WHEN r.Captain = 1 THEN 1 ELSE 2 END,
+                p.Name
 
-            SELECT Name, DateRequested FROM tblRequest WHERE TeamId = @teamId ORDER BY DateRequested
+            SELECT p.Name, r.DateRequested
+            FROM tblRequest r
+            INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
+            WHERE r.TeamId = @teamId
+            ORDER BY r.DateRequested
 
-            SELECT Name, DateInvited FROM tblInvite WHERE TeamId = @teamId ORDER BY DateInvited
+            SELECT p.Name, i.DateInvited
+            FROM tblInvite i
+            INNER JOIN tblPlayer p ON i.PlayerId = p.PlayerId
+            WHERE i.TeamId = @teamId
+            ORDER BY i.DateInvited
         `, {teamId: {type: Db.INT, value: team.id}});
         return {
             homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [],
@@ -820,10 +833,14 @@ class Database {
     /**
      * Begins the process of creating a new team for the pilot.
      * @param {DiscordJs.GuildMember} member The pilot creating a new team.
-     * @returns {Promise} A promise that resolves when the process of creating a new team for the pilot has begun.
+     * @returns {Promise<{id: number, member: DiscordJs.GuildMember}>} A promise that resolves when the process of creating a new team for the pilot has begun.
      */
     static async startCreateTeam(member) {
-        await db.query(`
+
+        /**
+         * @type {{recordsets: [{NewTeamId: number}[]]}}
+         */
+        const data = await db.query(`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -836,11 +853,14 @@ class Database {
                 SET @playerId = SCOPE_IDENTITY()
             END
 
-            INSERT INTO tblNewTeam (DiscordId) VALUES (@discordId)
+            INSERT INTO tblNewTeam (PlayerId) VALUES (@playerId)
+
+            SELECT SCOPE_IDENTITY() NewTeamId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName}
         });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].NewTeamId, member} || void 0;
     }
 
     //                #         #          #  #
@@ -887,7 +907,7 @@ class Database {
 
             SELECT TOP 1 1
             FROM tblCaptainHistory
-            WHERE DiscordId = @discordId
+            WHERE PlayerId = @playerId
                 AND TeamId = @teamId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}, teamId: {type: Db.INT, value: team.id}});
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);

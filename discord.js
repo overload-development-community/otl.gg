@@ -249,7 +249,7 @@ class Discord {
                 if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
                     let success;
                     try {
-                        success = await commands[command](member, args, channel);
+                        success = await commands[command](member, channel, args);
                     } catch (err) {
                         if (err instanceof Warning) {
                             Log.warning(`${member}: ${text}\n${err}`);
@@ -293,7 +293,7 @@ class Discord {
                 description: message,
                 timestamp: new Date()
             }), channel);
-        } finally {}
+        } catch {}
         return msg;
     }
 
@@ -336,7 +336,7 @@ class Discord {
             if (msg instanceof Array) {
                 msg = msg[0];
             }
-        } finally {}
+        } catch {}
         return msg;
     }
 
