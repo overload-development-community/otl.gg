@@ -9,6 +9,7 @@ declare module 'discord.js' {
         canBeCaptain(): Promise<boolean>;
         canRemovePilot(pilot: GuildMember): Promise<boolean>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
+        getTimezone(): Promise<string>;
         hasBeenInvitedToTeam(team: Team): Promise<boolean>;
         hasRequestedTeam(team: Team): Promise<boolean>;
         isCaptainOrFounder(): boolean;
@@ -16,6 +17,7 @@ declare module 'discord.js' {
         joinTeamDeniedUntil(): Promise<Date>;
         leftDiscord(): Promise<void>;
         requestTeam(team: Team): Promise<void>;
+        setTimezone(timezone: string): Promise<void>;
         updateName(oldMember: GuildMember): Promise<void>;
         wasPreviousCaptainOrFounderOfTeam(team: Team): Promise<boolean>;
     }

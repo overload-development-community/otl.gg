@@ -1,4 +1,7 @@
-const Discord = require("./discord"),
+const tz = require("timezone-js"),
+    tzdata = require("tzdata"),
+
+    Discord = require("./discord"),
     Log = require("./log");
 
 //         #                 #
@@ -13,6 +16,9 @@ const Discord = require("./discord"),
  */
 (function startup() {
     Log.log("Starting up...");
+
+    tz.timezone.loadingScheme = tz.timezone.loadingSchemes.MANUAL_LOAD;
+    tz.timezone.loadZoneDataFromObject(tzdata);
 
     if (process.platform === "win32") {
         process.title = "Overload Teams League";

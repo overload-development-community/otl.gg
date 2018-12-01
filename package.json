@@ -19,10 +19,13 @@
     },
     "dependencies": {
         "discord.js": "11.4.2",
-        "node-database": "roncli/node-database#v1.0.2"
+        "node-database": "roncli/node-database#v1.0.2",
+        "timezone-js": "0.4.13",
+        "tzdata": "1.0.13"
     },
     "devDependencies": {
-        "@types/node": "10.12.9"
+        "@types/node": "10.12.9",
+        "@types/timezone-js": "0.0.29"
     },
     "engines": {
         "node": ">=10.0.0"

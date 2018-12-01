@@ -93,6 +93,25 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
     return teams.map((t) => new Team(t));
 };
 
+//              #    ###    #
+//              #     #
+//  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+// #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+//  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+// #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+//  ###
+/**
+ * Gets a pilot's time zone.
+ * @returns {Promise<string>} A promise that resolves with the pilot's time zone.
+ */
+DiscordJs.GuildMember.prototype.getTimezone = async function() {
+    try {
+        return await Db.getTimezone(this) || "America/Los_Angeles";
+    } catch (err) {
+        return "America/Los_Angeles";
+    }
+};
+
 // #                  ###                     ###                #     #             #  ###         ###
 // #                  #  #                     #                       #             #   #           #
 // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #
@@ -145,7 +164,7 @@ DiscordJs.GuildMember.prototype.hasRequestedTeam = async function(team) {
  */
 DiscordJs.GuildMember.prototype.isCaptainOrFounder = function() {
     return !!Discord.founderRole.members.find((m) => m.id === this.id) || !!Discord.captainRole.members.find((m) => m.id === this.id);
-}
+};
 
 //  #           ####                       #
 //              #                          #
@@ -159,7 +178,7 @@ DiscordJs.GuildMember.prototype.isCaptainOrFounder = function() {
  */
 DiscordJs.GuildMember.prototype.isFounder = function() {
     return !!Discord.founderRole.members.find((m) => m.id === this.id);
-}
+};
 
 //   #          #          ###                     ###                #             #  #  #         #     #    ##
 //                          #                      #  #                             #  #  #         #           #
@@ -285,7 +304,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
  */
 DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
     try {
-        await await Db.requestTeam(this, team);
+        await Db.requestTeam(this, team);
     } catch (err) {
         throw new Exception("There was a database error requesting to join a team.", err);
     }
@@ -301,6 +320,25 @@ DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
         await team.updateChannels();
     } catch (err) {
         throw new Exception("There was a critical Discord error requesting to join a team.  Please resolve this manually as soon as possible.", err);
+    }
+};
+
+//               #    ###    #
+//               #     #
+//  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+// ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+//   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+// ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+/**
+ * Sets a pilot's time zone.
+ * @param {string} timezone The time zone to set.
+ * @returns {Promise} A promise that resolves when the time zone has been set.
+ */
+DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
+    try {
+        await Db.setTimezone(this, timezone);
+    } catch (err) {
+        throw new Exception("There was a database error setting a pilot's time zone.", err);
     }
 };
 

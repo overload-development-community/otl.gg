@@ -537,6 +537,27 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 
+    //              #    ###    #
+    //              #     #
+    //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+    // #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+    //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+    // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    //  ###
+    /**
+     * Gets a pilot's time zone.
+     * @param {DiscordJs.GuildMember} member The pilot to get the time zone for.
+     * @returns {Promise<string>} The pilot's time zone.
+     */
+    static async getTimezone(member) {
+
+        /**
+         * @type {{recordsets: [{Timezone: string}[]]}}
+         */
+        const data = await db.query("SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
+    }
+
     // #                  ###                     ###                #     #             #  ###         ###
     // #                  #  #                     #                       #             #   #           #
     // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #
@@ -821,6 +842,40 @@ class Database {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName},
             teamId: {type: Db.INT, value: team.id}
+        });
+    }
+
+    //               #    ###    #
+    //               #     #
+    //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+    // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+    //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+    // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    /**
+     * Sets a pilot's time zone.
+     * @param {DiscordJs.GuildMember} member The pilot to set the time zone for.
+     * @param {string} timezone The time zone to set.
+     * @returns {Promise} A promise that resolves when the time zone is set.
+     */
+    static async setTimezone(member, timezone) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            UPDATE tblPlayer SET Timezone = @timezone WHERE PlayerId = @playerId
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(24), value: member.displayName},
+            timezone: {type: Db.VARCHAR(50), value: timezone}
         });
     }
 

@@ -3,7 +3,10 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const pjson = require("./package.json"),
+const tz = require("timezone-js"),
+    tzdata = require("tzdata"),
+
+    pjson = require("./package.json"),
     NewTeam = require("./newTeam"),
     Team = require("./team"),
     Warning = require("./warning"),
@@ -209,7 +212,7 @@ class Commands {
         }
 
         if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to create a new team on ${deniedUntil.toUTCString()}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to create a new team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
             throw new Warning("Pilot not allowed to create a new team.");
         }
 
@@ -1026,7 +1029,7 @@ class Commands {
         }
 
         if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to reinstate this team on ${deniedUntil.toUTCString()}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to reinstate this team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
             throw new Warning("Pilot not allowed to create a new team.");
         }
 
@@ -1427,7 +1430,7 @@ class Commands {
         }
 
         if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to join a new team on ${deniedUntil.toUTCString()}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to join a new team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
             throw new Warning("Pilot not allowed to accept an invite.");
         }
 
@@ -1440,7 +1443,7 @@ class Commands {
         }
 
         if (bannedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You will be able to join this team again on ${bannedUntil.toUTCString()}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You will be able to join this team again on ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
             throw new Warning("Pilot not allowed to accept an invite from this team.");
         }
 
@@ -1541,7 +1544,6 @@ class Commands {
     // #  #  # ##  ####  #  #  # #   # ##
     // #     ##    #  #  #  #  # #   ##
     // #      ##   #  #   ##    #     ##
-
     /**
      * Removes a pilot from a team, rejects a pilot requesting to join the team, or revokes an invitation to join the team.
      * @param {DiscordJs.GuildMember} member The user initiating the command.
@@ -1645,15 +1647,48 @@ class Commands {
         return true;
     }
 
-    // !settimezone <timezone>
-    /*
-     * Player must be part of the OTL.
-     * Timezone must be valid.
-     *
-     * Success:
-     * 1) Write timezone to the database
-     * 2) Post confirmation
+    //  #     #
+    //  #
+    // ###   ##    # #    ##   ####   ##   ###    ##
+    //  #     #    ####  # ##    #   #  #  #  #  # ##
+    //  #     #    #  #  ##     #    #  #  #  #  ##
+    //   ##  ###   #  #   ##   ####   ##   #  #   ##
+    /**
+     * Sets a pilot's time zone.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async timezone(member, channel, message) {
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify a time zone with this command.`, channel);
+            return false;
+        }
+
+        if (!tzdata.zones[message]) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        let time;
+        try {
+            time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit"});
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        try {
+            await member.setTimezone(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your time zone has been set to ${message}, where the current local time is ${time}.`, channel);
+        return true;
+    }
 
     // !challenge <team> <confirm>
     /*
