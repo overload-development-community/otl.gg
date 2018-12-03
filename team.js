@@ -84,6 +84,29 @@ class Team {
         return team;
     }
 
+    //              #    ###         ###      #
+    //              #    #  #         #       #
+    //  ###   ##   ###   ###   #  #   #     ###
+    // #  #  # ##   #    #  #  #  #   #    #  #
+    //  ##   ##     #    #  #   # #   #    #  #
+    // #      ##     ##  ###     #   ###    ###
+    //  ###                     #
+    /**
+     * Gets a team by its Team ID.
+     * @param {number} id The team ID.
+     * @returns {Promise<Team>} A promise that resolves with the team.
+     */
+    static async getById(id) {
+        let data;
+        try {
+            data = await Db.getTeamById(id);
+        } catch (err) {
+            throw new Exception("There was a database error getting a team by pilot.", err);
+        }
+
+        return data ? new Team(data) : void 0;
+    }
+
     //              #    ###         ###    #    ##           #
     //              #    #  #        #  #         #           #
     //  ###   ##   ###   ###   #  #  #  #  ##     #     ##   ###
@@ -94,12 +117,12 @@ class Team {
     /**
      * Gets a team by its pilot.
      * @param {DiscordJs.GuildMember} pilot The pilot to get the team for.
-     * @returns {Promise<Team>} The pilot's team.
+     * @returns {Promise<Team>} A promise that resolves with the team.
      */
     static async getByPilot(pilot) {
         let data;
         try {
-            data = await Db.getTeam(pilot);
+            data = await Db.getTeamByPilot(pilot);
         } catch (err) {
             throw new Exception("There was a database error getting a team by pilot.", err);
         }
@@ -117,7 +140,7 @@ class Team {
     /**
      * Gets a team by its name or tag.
      * @param {string} name The name or tag.
-     * @returns {Promise<Team>} The team.
+     * @returns {Promise<Team>} A promise that resolves with the team.
      */
     static async getByNameOrTag(name) {
         let data;
@@ -173,7 +196,22 @@ class Team {
      * @returns {DiscordJs.TextChannel} The team's captains channel.
      */
     get captainsChannel() {
-        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(`captains-${this.tag.toLowerCase().replace(/ /g, "-")}`)); // eslint-disable-line no-extra-parens
+        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(this.captainsChannelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //                    #           #                  ##   #                             ##    #  #
+    //                    #                             #  #  #                              #    ## #
+    //  ##    ###  ###   ###    ###  ##    ###    ###   #     ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    // #     #  #  #  #   #    #  #   #    #  #  ##     #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    // #     # ##  #  #   #    # ##   #    #  #    ##   #  #  #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //  ##    # #  ###     ##   # #  ###   #  #  ###     ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    //             #
+    /**
+     * Gets the team's captains channel name.
+     * @returns {string} The team's captains channel name.
+     */
+    get captainsChannelName() {
+        return `captains-${this.tag.toLowerCase().replace(/ /g, "-")}`;
     }
 
     //                    #           #                 #  #         #                 ##   #                             ##
@@ -188,7 +226,22 @@ class Team {
      * @returns {DiscordJs.VoiceChannel} The team's captains voice channel.
      */
     get captainsVoiceChannel() {
-        return /** @type {DiscordJs.VoiceChannel} */ (Discord.findChannelByName(`Captains ${this.tag}`)); // eslint-disable-line no-extra-parens
+        return /** @type {DiscordJs.VoiceChannel} */ (Discord.findChannelByName(this.captainsVoiceChannelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //                    #           #                 #  #         #                 ##   #                             ##    #  #
+    //                    #                             #  #                          #  #  #                              #    ## #
+    //  ##    ###  ###   ###    ###  ##    ###    ###   #  #   ##   ##     ##    ##   #     ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    // #     #  #  #  #   #    #  #   #    #  #  ##     #  #  #  #   #    #     # ##  #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    // #     # ##  #  #   #    # ##   #    #  #    ##    ##   #  #   #    #     ##    #  #  #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //  ##    # #  ###     ##   # #  ###   #  #  ###     ##    ##   ###    ##    ##    ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    //             #
+    /**
+     * Gets the team's captains voice channel name.
+     * @returns {string} The team's captains voice channel name.
+     */
+    get captainsVoiceChannelName() {
+        return `Captains ${this.tag}`;
     }
 
     //              #                                   ##   #                             ##
@@ -217,7 +270,21 @@ class Team {
      * @returns {DiscordJs.TextChannel} The team's channel.
      */
     get teamChannel() {
-        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(`team-${this.tag.toLowerCase().replace(/ /g, "-")}`)); // eslint-disable-line no-extra-parens
+        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(this.teamChannelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //  #                       ##   #                             ##    #  #
+    //  #                      #  #  #                              #    ## #
+    // ###    ##    ###  # #   #     ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    //  #    # ##  #  #  ####  #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    //  #    ##    # ##  #  #  #  #  #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //   ##   ##    # #  #  #   ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    /**
+     * Getws the team's channel name.
+     * @returns {string} The team's channel name.
+     */
+    get teamChannelName() {
+        return `team-${this.tag.toLowerCase().replace(/ /g, "-")}`;
     }
 
     //  #                      #  #         #                 ##   #                             ##
@@ -227,11 +294,25 @@ class Team {
     //  #    ##    # ##  #  #   ##   #  #   #    #     ##    #  #  #  #  # ##  #  #  #  #  ##     #
     //   ##   ##    # #  #  #   ##    ##   ###    ##    ##    ##   #  #   # #  #  #  #  #   ##   ###
     /**
-     * Gets the team's guild voice channel.
+     * Gets the team's voice channel.
      * @returns {DiscordJs.VoiceChannel} The team's voice channel.
      */
     get teamVoiceChannel() {
-        return /** @type {DiscordJs.VoiceChannel} */ (Discord.findChannelByName(`Team ${this.tag}`)); // eslint-disable-line no-extra-parens
+        return /** @type {DiscordJs.VoiceChannel} */ (Discord.findChannelByName(this.teamVoiceChannelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //  #                      #  #         #                 ##   #                             ##    #  #
+    //  #                      #  #                          #  #  #                              #    ## #
+    // ###    ##    ###  # #   #  #   ##   ##     ##    ##   #     ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    //  #    # ##  #  #  ####  #  #  #  #   #    #     # ##  #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    //  #    ##    # ##  #  #   ##   #  #   #    #     ##    #  #  #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //   ##   ##    # #  #  #   ##    ##   ###    ##    ##    ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    /**
+     * Gets the team's voice channel name.
+     * @returns {string} The team's voice channel name.
+     */
+    get teamVoiceChannelName() {
+        return `Team ${this.tag}`;
     }
 
     //             ##
@@ -245,7 +326,21 @@ class Team {
      * @returns {DiscordJs.Role} The team's role.
      */
     get role() {
-        return Discord.findRoleByName(`Team: ${this.name}`);
+        return Discord.findRoleByName(this.roleName);
+    }
+
+    //             ##          #  #
+    //              #          ## #
+    // ###    ##    #     ##   ## #   ###  # #    ##
+    // #  #  #  #   #    # ##  # ##  #  #  ####  # ##
+    // #     #  #   #    ##    # ##  # ##  #  #  ##
+    // #      ##   ###    ##   #  #   # #  #  #   ##
+    /**
+     * Gets the team's role name.
+     * @returns {string} The team's role name.
+     */
+    get roleName() {
+        return `Team: ${this.name}`;
     }
 
     //          #     #   ##                #           #
@@ -578,7 +673,26 @@ class Team {
         try {
             return await Db.getTeamPilotAndInvitedCount(this);
         } catch (err) {
-            throw new Exception("There was a database error getting the number of pilots on and invited to a pilot's team.", err);
+            throw new Exception("There was a database error getting the number of pilots on and invited to a team.", err);
+        }
+    }
+
+    //              #    ###    #    ##           #     ##                      #
+    //              #    #  #         #           #    #  #                     #
+    //  ###   ##   ###   #  #  ##     #     ##   ###   #      ##   #  #  ###   ###
+    // #  #  # ##   #    ###    #     #    #  #   #    #     #  #  #  #  #  #   #
+    //  ##   ##     #    #      #     #    #  #   #    #  #  #  #  #  #  #  #   #
+    // #      ##     ##  #     ###   ###    ##     ##   ##    ##    ###  #  #    ##
+    //  ###
+    /**
+     * Gets the number of pilots on the team.
+     * @returns {Promise<number>} A promise that resolves with the total number of pilots on the team.
+     */
+    async getPilotCount() {
+        try {
+            return await Db.getTeamPilotCount(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the number of pilots on a team.", err);
         }
     }
 
@@ -932,42 +1046,32 @@ class Team {
      * @returns {Promise} A promise that resolves when the team is setup on Discord.
      */
     async setup(founder, reinstating) {
-        const existingRole = Discord.findRoleByName(`Team: ${this.name}`);
-        if (existingRole) {
+        if (this.role) {
             throw new Error("Team role already exists.");
         }
 
-        const existingCategory = Discord.findChannelByName(this.name);
-        if (existingCategory) {
+        if (this.categoryChannel) {
             throw new Error("Team category already exists.");
         }
 
-        const channelName = `team-${this.tag.toLowerCase().replace(/ /g, "-")}`,
-            existingChannel = Discord.findChannelByName(channelName);
-        if (existingChannel) {
+        if (this.teamChannel) {
             throw new Error("Team channel already exists.");
         }
 
-        const captainsChannelName = `captains-${this.tag.toLowerCase().replace(/ /g, "-")}`,
-            existingCaptainsChannel = Discord.findChannelByName(captainsChannelName);
-        if (existingCaptainsChannel) {
+        if (this.captainsChannel) {
             throw new Error("Captains channel already exists.");
         }
 
-        const voiceChannelName = `Team ${this.tag}`,
-            existingVoiceChannel = Discord.findChannelByName(voiceChannelName);
-        if (existingVoiceChannel) {
+        if (this.teamVoiceChannel) {
             throw new Error("Team voice channel already exists.");
         }
 
-        const voiceCaptainsChannelName = `Captains ${this.tag}`,
-            existingVoiceCaptainsChannel = Discord.findChannelByName(voiceCaptainsChannelName);
-        if (existingVoiceCaptainsChannel) {
+        if (this.captainsVoiceChannel) {
             throw new Error("Captains voice channel already exists.");
         }
 
         const teamRole = await Discord.createRole({
-            name: `Team: ${this.name}`,
+            name: this.roleName,
             mentionable: false
         }, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
@@ -985,7 +1089,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        const teamChannel = await Discord.createChannel(channelName, "text", [
+        const teamChannel = await Discord.createChannel(this.teamChannelName, "text", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -997,7 +1101,7 @@ class Team {
 
         await teamChannel.setParent(category);
 
-        const captainsChannel = await Discord.createChannel(captainsChannelName, "text", [
+        const captainsChannel = await Discord.createChannel(this.captainsChannelName, "text", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1009,7 +1113,7 @@ class Team {
 
         await captainsChannel.setParent(category);
 
-        const teamVoiceChannel = await Discord.createChannel(voiceChannelName, "voice", [
+        const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, "voice", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1022,7 +1126,7 @@ class Team {
         await teamVoiceChannel.setParent(category);
         await teamVoiceChannel.edit({bitrate: 64000});
 
-        const captainsVoiceChannel = await Discord.createChannel(voiceCaptainsChannelName, "voice", [
+        const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, "voice", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1198,10 +1302,7 @@ class Team {
             }
 
             await teamChannel.setTopic(channelTopic, "Team topic update requested.");
-            teamChannel.topic = channelTopic;
-
             await captainsChannel.setTopic(captainsChannelTopic, "Team topic update requested.");
-            captainsChannel.topic = captainsChannelTopic;
         } catch (err) {
             Log.exception(`There was an error updating team information for ${this.name}.  Please update ${this.name} manually.`, err);
         }

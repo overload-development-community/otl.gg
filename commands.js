@@ -6,6 +6,7 @@
 const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
+    Challenge = require("./challenge"),
     pjson = require("./package.json"),
     NewTeam = require("./newTeam"),
     Team = require("./team"),
@@ -1690,27 +1691,149 @@ class Commands {
         return true;
     }
 
-    // !challenge <team> <confirm>
-    /*
-     * Player must be a captain or founder of a team.
-     * Team must have 3 home maps picked.
-     * Challenged team must exist and be active.
-     * Must not already have a challenge against the challenged team.
-     * Both teams must have 2 or more pilots.
-     * Challenged team must have 3 home maps picked.
-     * Must confirm.
-     *
-     * Success:
-     * 1) Write challenge to database
-     * 2) Create chat room and apply appropriate permissions
-     * 3) Set topic
-     * 4) Set pinned post
+    //       #           ##    ##
+    //       #            #     #
+    //  ##   ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                            ###
+    /**
+     * Issues a challenge to another team.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async challenge(member, channel, message) {
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
 
-    // !clock <team> <confirm>
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify the team you wish to challenge with this command.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        let pilotCount;
+        try {
+            pilotCount = await team.getPilotCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (pilotCount < 2) {
+            await Discord.queue(`Sorry, ${member}, but your team must have 2 or more pilots to challenge another team.  \`!invite\` some pilots to your team!`, channel);
+            throw new Warning("Team only has one member.");
+        }
+
+        let homeMaps;
+        try {
+            homeMaps = await team.getHomeMaps();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (homeMaps.length !== 3) {
+            await Discord.queue(`Sorry, ${member}, but your team must have 3 home maps set before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
+            throw new Warning("Team does not have 3 home maps set.");
+        }
+
+        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
+        let opponent;
+        try {
+            opponent = await Team.getByNameOrTag(name);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!opponent) {
+            await Discord.queue(`Sorry, ${member}, but I have no record of that team ever existing.`, channel);
+            throw new Warning("Team does not exist.");
+        }
+
+        if (opponent.disbandTeam) {
+            await Discord.queue(`Sorry, ${member}, but that team is disbanded.`, channel);
+            throw new Warning("Team is disbanded.");
+        }
+
+        let opponentHomeMaps;
+        try {
+            opponentHomeMaps = await opponent.getHomeMaps();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (opponentHomeMaps.length !== 3) {
+            await Discord.queue(`Sorry, ${member}, but your opponents must have 3 home maps set before you can challenge them.`, channel);
+            throw new Warning("Opponent does not have 3 home maps set.");
+        }
+
+        let opponentPilotCount;
+        try {
+            opponentPilotCount = await opponent.getPilotCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (opponentPilotCount < 2) {
+            await Discord.queue(`Sorry, ${member}, but your opponents must have 2 or more pilots to be challenged.`, channel);
+            throw new Warning("Opponent only has one member.");
+        }
+
+        let existingChallenge;
+        try {
+            existingChallenge = await Challenge.getByTeams(team, opponent);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (existingChallenge) {
+            await Discord.queue(`Sorry, ${member}, but there is already a pending challenge between these two teams!  Visit ${existingChallenge.channel} for more information about this match.`, channel);
+            throw new Warning("Challenge already exists.");
+        }
+
+        if (!confirm) {
+            await Discord.queue(`${member}, are you sure you wish to challenge **${opponent.name}**?  Type \`!challenge ${name} confirm\` to confirm.`, channel);
+            return true;
+        }
+
+        let challenge;
+        try {
+            challenge = await Challenge.create(team, opponent);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your challenge to **${opponent.name}** has been issued!  Visit ${challenge.channel} for match discussion and to set the parameters for your match.`, channel);
+        return true;
+    }
+
+    // !clock <confirm>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Team must not have their roster locked. (This means the team is participating in a tournament.)
      * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
      * Team must not already have put the challenged team on the clock this season.
@@ -1726,8 +1849,8 @@ class Commands {
 
     // !pickmap <team> <a|b|c>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Team must be the away team for picking the map.
      * Map must not have already been picked.
      *
@@ -1739,8 +1862,8 @@ class Commands {
 
     // !suggestmap <team> <map>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Penalty must not be active.
      * Map must be valid from map list.
      * Map must not have already been picked.
@@ -1753,8 +1876,8 @@ class Commands {
 
     // !confirmmap <team>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Map must not have already been picked.
      * Suggested map must have already been picked by the other team.
      *
@@ -1766,8 +1889,8 @@ class Commands {
 
     // !suggestneutralserver <team>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Penalty must not be active.
      * Neutral server must not have already been suggested.
      *
@@ -1779,8 +1902,8 @@ class Commands {
 
     // !confirmneutralserver <team>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Neutral server must have already been suggested by the other team.
      *
      * Success:
@@ -1791,8 +1914,8 @@ class Commands {
 
     // !suggestteamsize <team> <2|3|4>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      *
      * Success:
      * 1) Write suggested team size to the database
@@ -1802,8 +1925,8 @@ class Commands {
 
     // !confirmteamsize <team>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Team size must have already been suggested by the other team.
      *
      * Success:
@@ -1814,8 +1937,8 @@ class Commands {
 
     // !suggesttime <team> <time>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      *
      * Success:
      * 1) Write suggested time to the database
@@ -1825,8 +1948,8 @@ class Commands {
 
     // !confirmtime <team>
     /*
+     * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
      * Time must have already been suggested by the other team.
      *
      * Success:
@@ -1834,6 +1957,13 @@ class Commands {
      * 2) Update topic
      * 3) Announce in channel
      */
+
+    // !streaming <URL>
+    /*
+     * Must be issued in a challenge channel.
+     */
+
+    // !notstreaming
 
     // !report <team> <score1> <score2>
     /*
@@ -1923,6 +2053,33 @@ class Commands {
      * 5) Announce in roster changes
      */
 
+    // !creatematch <team1> <team2>
+    /*
+     * Player must be an admin.
+     * A challenge between the two teams must not exist.
+     * Both teams must have 3 home maps picked.
+     * Both team musts exist and be active.
+     * Both teams must have 2 or more pilots.
+     *
+     * Success:
+     * 1) Write challenge to database
+     * 2) Create chat room and apply appropriate permissions
+     * 3) Set topic
+     * 4) Set pinned post
+     */
+
+    // !forcehometeam <team1> <team2> <hometeam>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Home team must be one of the teams.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update team topics
+     * 3) Announce in team channel
+     */
+
     // !forcemap <team1> <team2> <a|b|c|map choice>
     /*
      * Player must be an admin.
@@ -1936,6 +2093,29 @@ class Commands {
      */
 
     // !forceneutralserver <team1> <team2>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !forcehomeserver <team1> <team2> <hometeam>
+    /*
+     * Player must be an admin.
+     * Teams must be involved in a challenge.
+     * Home team must be one of the teams.
+     *
+     * Success:
+     * 1) Update database
+     * 2) Update challenge topic
+     * 3) Announce in challenge channel
+     */
+
+    // !lockhomes <team1> <team2>
     /*
      * Player must be an admin.
      * Teams must be involved in a challenge.
@@ -1992,12 +2172,15 @@ class Commands {
      * 3) Announce to both teams.
      *
      * Success (Extend)
-     * 1) If challenge is on the clock, set deadline to 14 days from today.
-     * 2) Announce to both teams.
+     * 1) Clear agreed upon date.
+     * 2) If challenge is on the clock, set deadline to 14 days from today.
+     * 3) Announce to both teams.
      *
      * Success (Penalize)
-     * 1) If 1st offense, assess penalty in database, with a 3 game penalty given.
-     * 2) If 2nd offense, disband offending teams and blacklist leadership.
+     * 1) Remove channel.
+     * 2) Set match to cancelled in the database.
+     * 3) If 1st offense, assess penalty in database, with a 3 game penalty given. If 2nd offense, disband offending teams and blacklist leadership.
+     * 4) Announce to both teams.
      */
 
     // !pilotstat <team1> <team2> <player> <K> <A> <D>
@@ -2050,7 +2233,7 @@ class Commands {
 
     // Streamers
     /*
-     * Allow streamers to braodcast their game, and other streamers to pick up those broadcasts and commentate on them.
+     * Allow streamers to broadcast their game, and other streamers to pick up those broadcasts and commentate on them.
      */
 }
 

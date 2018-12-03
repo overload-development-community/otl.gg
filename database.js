@@ -1,4 +1,5 @@
 /**
+ * @typedef {{id?: number, challengingTeamId: number, challengedTeamId: number}} ChallengeData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("./newTeam")} NewTeam
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
@@ -262,6 +263,108 @@ class Database {
         await db.query("DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId", {newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
+    //                          #           ##   #           ##    ##
+    //                          #          #  #  #            #     #
+    //  ##   ###    ##    ###  ###    ##   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  # ##  #  #   #    # ##  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #     ##    # ##   #    ##    #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   #      ##    # #    ##   ##    ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                ###
+    /**
+     * Creates a challenge between two teams.
+     * @param {Team} team1 The first team.
+     * @param {Team} team2 The second team.
+     * @returns {Promise<{id: number, orangeTeam: Team, blueTeam: Team, homeMapTeam: Team, homeServerTeam: Team, team1Penalized: boolean, team2Penalized: boolean}>} A promise that resolves with the challenge ID.
+     */
+    static async createChallenge(team1, team2) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, HomeServerTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
+         */
+        const data = await db.query(`
+            DECLARE @OrangeTeamId INT
+            DECLARE @BlueTeamId INT
+            DECLARE @HomeMapTeamId INT
+            DECLARE @HomeServerTeamId INT
+            DECLARE @Team1Penalized BIT
+            DECLARE @Team2Penalized BIT
+            DECLARE @ChallengeId INT
+
+            SELECT
+                @OrangeTeamId = CASE WHEN Team1Orange < Team2Orange THEN @team1Id WHEN Team1Orange > Team2Orange THEN @team2Id WHEN @colorSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @BlueTeamId = CASE WHEN Team1Orange > Team2Orange THEN @team1Id WHEN Team1Orange < Team2Orange THEN @team2Id WHEN @colorSeed >= 0.5 THEN @team1Id ELSE @team2Id END,
+                @HomeMapTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeMap < Team2HomeMap THEN @team1Id WHEN Team1HomeMap > Team2HomeMap THEN @team2Id WHEN @mapSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @HomeServerTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeServer < Team2HomeServer THEN @team1Id WHEN Team1HomeServer > Team2HomeServer THEN @team2Id WHEN @ServerSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @Team1Penalized = CASE WHEN Team1Penalties > 0 THEN 1 ELSE 0 END,
+                @Team2Penalized = CASE WHEN Team2Penalties > 0 THEN 1 ELSE 0 END
+            FROM (
+                SELECT ISNULL(SUM(CASE WHEN OrangeTeamId = @team1Id THEN 1 ELSE 0 END), 0) Team1Orange,
+                    ISNULL(SUM(CASE WHEN OrangeTeamId = @team2Id THEN 1 ELSE 0 END), 0) Team2Orange,
+                    ISNULL(SUM(CASE WHEN UsingHomeMapTeam = 1 AND ChallengingTeamPenalized = ChallengedTeamPenalized AND HomeMapTeamId = @team1Id THEN 1 ELSE 0 END), 0) Team1HomeMap,
+                    ISNULL(SUM(CASE WHEN UsingHomeMapTeam = 1 AND ChallengingTeamPenalized = ChallengedTeamPenalized AND HomeMapTeamId = @team2Id THEN 1 ELSE 0 END), 0) Team2HomeMap,
+                    ISNULL(SUM(CASE WHEN UsingHomeServerTeam = 1 AND ChallengingTeamPenalized = ChallengedTeamPenalized AND HomeServerTeamId = @team1Id THEN 1 ELSE 0 END), 0) Team1HomeServer,
+                    ISNULL(SUM(CASE WHEN UsingHomeServerTeam = 1 AND ChallengingTeamPenalized = ChallengedTeamPenalized AND HomeServerTeamId = @team2Id THEN 1 ELSE 0 END), 0) Team2HomeServer,
+                    ISNULL((SELECT PenaltiesRemaining FROM tblTeamPenalty WHERE TeamId = @team1Id), 0) Team1Penalties,
+                    ISNULL((SELECT PenaltiesRemaining FROM tblTeamPenalty WHERE TeamId = @team2Id), 0) Team2Penalties
+                FROM tblChallenge
+                WHERE ((ChallengingTeamId = @team1Id AND ChallengedTeamId = @team2Id) OR (ChallengingTeamId = @team2Id AND ChallengedTeamId = @team1Id))
+                    AND DateConfirmed IS NOT NULL
+                    AND DateVoided IS NULL
+            ) a
+
+            INSERT INTO tblChallenge (
+                ChallengingTeamId,
+                ChallengedTeamId,
+                OrangeTeamId,
+                BlueTeamId,
+                HomeMapTeamId,
+                HomeServerTeamId,
+                ChallengingTeamPenalized,
+                ChallengedTeamPenalized
+            ) VALUES (
+                @team1Id,
+                @team2Id,
+                @OrangeTeamId,
+                @BlueTeamId,
+                @HomeMapTeamId,
+                @HomeServerTeamId,
+                @Team1Penalized,
+                @Team2Penalized
+            )
+
+            SET @ChallengeId = SCOPE_IDENTITY()
+
+            INSERT INTO tblChallengeMap (ChallengeId, Number, Map)
+            SELECT @ChallengeId, Number, Map
+            FROM tblTeamHome
+            WHERE TeamId = @HomeMapTeamId
+
+            SELECT
+                @ChallengeId ChallengeId,
+                @OrangeTeamId OrangeTeamId,
+                @BlueTeamId BlueTeamId,
+                @HomeMapTeamId HomeMapTeamId,
+                @HomeServerTeamId HomeServerTeamId,
+                @Team1Penalized Team1Penalized,
+                @Team2Penalized Team2Penalized
+        `, {
+            team1Id: {type: Db.INT, value: team1.id},
+            team2Id: {type: Db.INT, value: team2.id},
+            colorSeed: {type: Db.FLOAT, value: Math.random()},
+            mapSeed: {type: Db.FLOAT, value: Math.random()},
+            serverSeed: {type: Db.FLOAT, value: Math.random()}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
+            id: data.recordsets[0][0].ChallengeId,
+            orangeTeam: data.recordsets[0][0].OrangeTeamId === team1.id ? team1 : team2,
+            blueTeam: data.recordsets[0][0].BlueTeamId === team1.id ? team1 : team2,
+            homeMapTeam: data.recordsets[0][0].HomeMapTeamId === team1.id ? team1 : team2,
+            homeServerTeam: data.recordsets[0][0].HomeServerTeamId === team1.id ? team1 : team2,
+            team1Penalized: data.recordsets[0][0].Team1Penalized,
+            team2Penalized: data.recordsets[0][0].Team2Penalized
+        } || void 0;
+    }
+
     //                          #          ###
     //                          #           #
     //  ##   ###    ##    ###  ###    ##    #     ##    ###  # #
@@ -356,6 +459,38 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded, locked: !!data.recordsets[0][0].Locked} || void 0;
     }
 
+    //              #     ##   #           ##    ##                            ###         ###
+    //              #    #  #  #            #     #                            #  #         #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   ###   #  #   #     ##    ###  # #    ###
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #   #    # ##  #  #  ####  ##
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #   # #   #    ##    # ##  #  #    ##
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###     #    #     ##    # #  #  #  ###
+    //  ###                                                         ###               #
+    /**
+     * Gets a challenge between two teams.
+     * @param {Team} team1 The first team.
+     * @param {Team} team2 The second team.
+     * @returns {Promise<ChallengeData>} A promise that resolves with the challenge data.
+     */
+    static async getChallengeByTeams(team1, team2) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
+            FROM tblChallenge
+            WHERE ((ChallengingTeamId = @team1Id AND ChallengedTeamId = @team2Id) OR (ChallengingTeamId = @team2Id AND ChallengedTeamId = @team1Id))
+                AND DateConfirmed IS NULL
+                AND DateClosed IS NULL
+                AND DateVoided IS NULL
+        `, {
+            team1Id: {type: Db.INT, value: team1.id},
+            team2Id: {type: Db.INT, value: team2.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].ChallengeId, challengingTeamId: data.recordsets[0][0].ChallengingTeamId, challengedTeamId: data.recordsets[0][0].ChallengedTeamId} || void 0;
+    }
+
     //              #    #  #              ###
     //              #    ## #               #
     //  ###   ##   ###   ## #   ##   #  #   #     ##    ###  # #
@@ -415,19 +550,44 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.TeamId, name: row.Name, tag: row.Tag})) || void 0;
     }
 
-    //              #    ###
-    //              #     #
-    //  ###   ##   ###    #     ##    ###  # #
-    // #  #  # ##   #     #    # ##  #  #  ####
-    //  ##   ##     #     #    ##    # ##  #  #
-    // #      ##     ##   #     ##    # #  #  #
-    //  ###
+    //              #    ###                     ###         ###      #
+    //              #     #                      #  #         #       #
+    //  ###   ##   ###    #     ##    ###  # #   ###   #  #   #     ###
+    // #  #  # ##   #     #    # ##  #  #  ####  #  #  #  #   #    #  #
+    //  ##   ##     #     #    ##    # ##  #  #  #  #   # #   #    #  #
+    // #      ##     ##   #     ##    # #  #  #  ###     #   ###    ###
+    //  ###                                             #
+    /**
+     * Gets the team by the team ID.
+     * @param {number} id The Team ID.
+     * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
+     */
+    static async getTeamById(id) {
+
+        /**
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Locked: boolean}[]]}}
+         */
+        const data = await db.query(`
+            SELECT TeamId, Name, Tag, Locked
+            FROM tblTeam
+            WHERE TeamId = @teamId
+        `, {teamId: {type: Db.INT, value: id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, locked: !!data.recordsets[0][0].Locked} || void 0;
+    }
+
+    //              #    ###                     ###         ###    #    ##           #
+    //              #     #                      #  #        #  #         #           #
+    //  ###   ##   ###    #     ##    ###  # #   ###   #  #  #  #  ##     #     ##   ###
+    // #  #  # ##   #     #    # ##  #  #  ####  #  #  #  #  ###    #     #    #  #   #
+    //  ##   ##     #     #    ##    # ##  #  #  #  #   # #  #      #     #    #  #   #
+    // #      ##     ##   #     ##    # #  #  #  ###     #   #     ###   ###    ##     ##
+    //  ###                                             #
     /**
      * Gets the team for the pilot.
      * @param {DiscordJs.GuildMember} member The pilot to get the team for.
      * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
-    static async getTeam(member) {
+    static async getTeamByPilot(member) {
 
         /**
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, IsFounder: boolean, Locked: boolean}[]]}}
@@ -461,7 +621,7 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await db.query("SELECT Map FROM tblTeamHome WHERE TeamId = @teamId", {teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query("SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number", {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
@@ -534,6 +694,27 @@ class Database {
                 (SELECT COUNT(*) FROM tblRoster WHERE TeamId = @teamId) +
                 (SELECT COUNT(*) FROM tblInvite WHERE TeamId = @teamId) Members
         `, {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
+    }
+
+    //              #    ###                     ###    #    ##           #     ##                      #
+    //              #     #                      #  #         #           #    #  #                     #
+    //  ###   ##   ###    #     ##    ###  # #   #  #  ##     #     ##   ###   #      ##   #  #  ###   ###
+    // #  #  # ##   #     #    # ##  #  #  ####  ###    #     #    #  #   #    #     #  #  #  #  #  #   #
+    //  ##   ##     #     #    ##    # ##  #  #  #      #     #    #  #   #    #  #  #  #  #  #  #  #   #
+    // #      ##     ##   #     ##    # #  #  #  #     ###   ###    ##     ##   ##    ##    ###  #  #    ##
+    //  ###
+    /**
+     * Gets the number of pilots on a team.
+     * @param {Team} team The team to check.
+     * @returns {Promise<number>} A promise that resolves with the number of pilots on a team.
+     */
+    static async getTeamPilotCount(team) {
+
+        /**
+         * @type {{recordsets: [{Members: number}[]]}}
+         */
+        const data = await db.query("SELECT COUNT(*) Members FROM tblRoster WHERE TeamId = @teamId", {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 

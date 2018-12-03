@@ -1,3 +1,7 @@
+DROP TABLE dbo.tblStats
+DROP TABLE dbo.tblChallengeHome
+DROP TABLE dbo.tblChallenge
+DROP TABLE dbo.tblTeamPenalty
 DROP TABLE dbo.tblTeamHome
 DROP TABLE dbo.tblTeamBan
 DROP TABLE dbo.tblRosterHistory
@@ -92,7 +96,7 @@ CREATE TABLE dbo.tblRosterHistory (
     TeamId INT NOT NULL CONSTRAINT FK_tblRosterHistory_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
     DateJoined DATETIME NOT NULL CONSTRAINT DF_tblRosterHistory_DateJoined DEFAULT (getutcdate()),
     DateLeft DATETIME NULL,
-    PRIMARY KEY (RosterId ASC)
+    PRIMARY KEY (HistoryId ASC)
 )
 
 CREATE TABLE dbo.tblTeamBan (
@@ -109,4 +113,68 @@ CREATE TABLE dbo.tblTeamHome (
     Number INT NOT NULL,
     Map VARCHAR(100) NOT NULL,
     PRIMARY KEY (HomeId ASC)
+)
+
+CREATE TABLE dbo.tblTeamPenalty (
+    PenaltyId INT IDENTITY(1, 1) NOT NULL,
+    TeamId INT NOT NULL CONSTRAINT FK_tblTeamPenalty_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
+    PenaltiesRemaining INT NOT NULL CONSTRAINT DF_tblTeamPenalty_PenaltiesRemaining DEFAULT (3),
+    DatePenalized DATETIME NOT NULL CONSTRAINT DF_tblTeamPenalty_DatePenalized DEFAULT (getutcdate()),
+    PRIMARY KEY (PenaltyId ASC)
+)
+
+CREATE TABLE dbo.tblChallenge (
+    ChallengeId INT IDENTITY(1, 1) NOT NULL,
+    ChallengingTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_ChallengingTeamId_tblTeam_TeamId FOREIGN KEY (ChallengingTeamId) REFERENCES dbo.tblTeam (TeamId),
+    ChallengedTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_ChallengedTeamId_tblTeam_TeamId FOREIGN KEY (ChallengedTeamId) REFERENCES dbo.tblTeam (TeamId),
+    OrangeTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_OrangeTeamId_tblTeam_TeamId FOREIGN KEY (OrangeTeamId) REFERENCES dbo.tblTeam (TeamId),
+    BlueTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_BlueTeamId_tblTeam_TeamId FOREIGN KEY (BlueTeamId) REFERENCES dbo.tblTeam (TeamId),
+    Map VARCHAR(100) NULL,
+    TeamSize INT NULL,
+    MatchTime DATETIME NULL,
+    HomeMapTeamId INT NULL CONSTRAINT FK_tblChallenge_HomeMapTeamId_tblTeam_TeamId FOREIGN KEY (HomeMapTeamId) REFERENCES dbo.tblTeam (TeamId),
+    HomeServerTeamId INT NULL CONSTRAINT FK_tblChallenge_HomeServerTeamId_tblTeam_TeamId FOREIGN KEY (HomeServerTeamId) REFERENCES dbo.tblTeam (TeamId),
+    AdminCreated BIT NOT NULL CONSTRAINT DF_tblChallenge_AdminCreated DEFAULT(0),
+    HomesLocked BIT NOT NULL CONSTRAINT DF_tblChallenge_HomesLocked DEFAULT(1),
+    UsingHomeMapTeam BIT NOT NULL CONSTRAINT DF_tblChallenge_UsingHomeMapTeam DEFAULT(1),
+    UsingHomeServerTeam BIT NOT NULL CONSTRAINT DF_tblChallenge_UsingHomeServerTeam DEFAULT(1),
+    ChallengingTeamPenalized BIT NOT NULL,
+    ChallengedTeamPenalized BIT NOT NULL,
+    SuggestedMap VARCHAR(100) NULL,
+    SuggestedMapTeamId INT NULL CONSTRAINT FK_tblChallenge_SuggestedMapTeamId_tblTeam_TeamId FOREIGN KEY (SuggestedMapTeamId) REFERENCES dbo.tblTeam (TeamId),
+    SuggestedNeutralServerTeamId INT NULL CONSTRAINT FK_tblChallenge_SuggestedNeutralServerTeamId_tblTeam_TeamId FOREIGN KEY (SuggestedNeutralServerTeamId) REFERENCES dbo.tblTeam (TeamId),
+    SuggestedTeamSize INT NULL,
+    SuggestedTeamSizeTeamId INT NULL CONSTRAINT FK_tblChallenge_SuggestedTeamSizeTeamId_tblTeam_TeamId FOREIGN KEY (SuggestedTeamSizeTeamId) REFERENCES dbo.tblTeam (TeamId),
+    SuggestedTime DATETIME NULL,
+    SuggestedTimeTeamId INT NULL CONSTRAINT FK_tblChallenge_SuggestedTimeTeamId_tblTeam_TeamId FOREIGN KEY (SuggestedTimeTeamId) REFERENCES dbo.tblTeam (TeamId),
+    ReportingTeamId INT NULL CONSTRAINT FK_tblChallenge_ReportingTeamId_tblTeam_TeamId FOREIGN KEY (ReportingTeamId) REFERENCES dbo.tblTeam (TeamId),
+    ChallengingTeamScore INT NULL,
+    ChallengedTeamScore INT NULL,
+    DateAdded DATETIME NOT NULL CONSTRAINT DF_tblChallenge_DateAdded DEFAULT(getutcdate()),
+    DateClocked DATETIME NULL,
+    DateClockDeadline DATETIME NULL,
+    DateClockDeadlineNotified DATETIME NULL,
+    DateReported DATETIME NULL,
+    DateConfirmed DATETIME NULL,
+    DateClosed DATETIME NULL,
+    DateVoided DATETIME NULL,
+    PRIMARY KEY (ChallengeId ASC)
+)
+
+CREATE TABLE dbo.tblChallengeHome (
+    HomeId INT IDENTITY(1, 1) NOT NULL,
+    ChallengeId INT NOT NULL CONSTRAINT FK_tblChallengeHome_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
+    Number INT NOT NULL,
+    Map VARCHAR(100) NOT NULL
+)
+
+CREATE TABLE dbo.tblStats (
+    StatId INT IDENTITY(1, 1) NOT NULL,
+    ChallengeId INT NOT NULL CONSTRAINT FK_tblStat_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
+    TeamId INT NOT NULL CONSTRAINT FK_tblStat_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
+    PlayerId INT NOT NULL CONSTRAINT FK_tblStat_PlayerId_tblPlayer_PlayerId FOREIGN KEY (PlayerId) REFERENCES dbo.tblPlayer (PlayerId),
+    Kills INT NOT NULL,
+    Assists INT NOT NULL,
+    Deaths INT NOT NULL,
+    PRIMARY KEY (StatId ASC)
 )

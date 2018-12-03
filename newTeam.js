@@ -78,13 +78,11 @@ class NewTeam {
                 throw new Error("Pilot is already on a team.");
             }
 
-            const channelName = `new-team-${member.id}`,
-                existingChannel = Discord.findChannelByName(channelName);
-            if (existingChannel) {
+            if (newTeam.channel) {
                 throw new Error("Channel already exists.");
             }
 
-            await Discord.createChannel(channelName, "text", [
+            await Discord.createChannel(newTeam.channelName, "text", [
                 {
                     id: Discord.id,
                     deny: ["VIEW_CHANNEL"]
@@ -95,7 +93,6 @@ class NewTeam {
             ], `${member.displayName} has started the process of creating a team.`);
 
             await newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`);
-            newTeam.channel.topic = "Team Name: (unset)\r\nTeam Tag: (unset)";
 
             const msg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Team creation commands",
@@ -162,9 +159,24 @@ class NewTeam {
     //  ##   #  #   # #  #  #  #  #   ##   ###
     /**
      * Gets the new team creation channel.
+     * @returns {DiscordJs.TextChannel} The new team creation channel.
      */
     get channel() {
-        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(`new-team-${this.member.id}`)); // eslint-disable-line no-extra-parens
+        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(this.channelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //       #                             ##    #  #
+    //       #                              #    ## #
+    //  ##   ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    // #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    // #     #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //  ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    /**
+     * Gets the new team creation channel name.
+     * @returns {string} The new team creation channel name.
+     */
+    get channelName() {
+        return `new-team-${this.member.id}`;
     }
 
     //    #        ##           #
@@ -262,7 +274,6 @@ class NewTeam {
         const topic = `Team Name: ${this.name || "(unset)"}\r\nTeam Tag: ${this.tag || "(unset)"}`;
 
         await this.channel.setTopic(topic, `${this.member.displayName} updated the team info.`);
-        this.channel.topic = topic;
     }
 }
 
