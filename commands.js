@@ -1830,30 +1830,90 @@ class Commands {
         return true;
     }
 
-    // !clock <confirm>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Team must not have their roster locked. (This means the team is participating in a tournament.)
-     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
-     * Team must not already have put the challenged team on the clock this season.
-     * Team must not already have put any team on the clock in the past 28 days.
-     * Both teams must not have two challenges on the clock.
-     * Must confirm.
-     *
-     * Success:
-     * 1) Write clock to the database
-     * 2) Update topic
-     * 3) Announce in channel
+    //        #          #
+    //                   #
+    // ###   ##     ##   # #   # #    ###  ###
+    // #  #   #    #     ##    ####  #  #  #  #
+    // #  #   #    #     # #   #  #  # ##  #  #
+    // ###   ###    ##   #  #  #  #   # #  ###
+    // #                                   #
+    /**
+     * Picks a map for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async pickmap(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.homeMapTeam.id === team.id) {
+            await Discord.queue(`Sorry, ${member}, but your team is the home team.  Your opponents must pick the map from your list of home maps.`, channel);
+            throw new Warning("Wrong team.");
+        }
+
+        if (challenge.details.map) {
+            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${info.map}**.`, channel);
+            throw new Warning("Map already set.");
+        }
+
+        if (!message || ["a", "b", "c"].indexOf(message.toLowerCase()) === -1) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`pickmap a\`, \`pickmap b\`, or \`pickmap c\`.`, channel);
+            throw new Warning("Missing map selection.");
+        }
+        
+        try {
+            await challenge.pickMap(message.charCodeAt(0) - 96);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !pickmap <team> <a|b|c>
     /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Team must be the away team for picking the map.
-     * Map must not have already been picked.
-     *
      * Success:
      * 1) Write picked map to the database.
      * 2) Update topic
@@ -1954,6 +2014,23 @@ class Commands {
      *
      * Success:
      * 1) Write confirmed time to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
+
+    // !clock <confirm>
+    /*
+     * Must be issued in a challenge channel.
+     * Player must be a captain or founder of a team.
+     * Team must not have their roster locked. (This means the team is participating in a tournament.)
+     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
+     * Team must not already have put the challenged team on the clock this season.
+     * Team must not already have put any team on the clock in the past 28 days.
+     * Both teams must not have two challenges on the clock.
+     * Must confirm.
+     *
+     * Success:
+     * 1) Write clock to the database
      * 2) Update topic
      * 3) Announce in channel
      */

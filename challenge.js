@@ -6,8 +6,9 @@ const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
     Exception = require("./exception"),
-    Log = require("./log"),
-    Team = require("./team");
+    Team = require("./team"),
+
+    channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -212,6 +213,50 @@ class Challenge {
         return challenge;
     }
 
+    //              #    ###          ##   #                             ##
+    //              #    #  #        #  #  #                              #
+    //  ###   ##   ###   ###   #  #  #     ###    ###  ###   ###    ##    #
+    // #  #  # ##   #    #  #  #  #  #     #  #  #  #  #  #  #  #  # ##   #
+    //  ##   ##     #    #  #   # #  #  #  #  #  # ##  #  #  #  #  ##     #
+    // #      ##     ##  ###     #    ##   #  #   # #  #  #  #  #   ##   ###
+    //  ###                     #
+    /**
+     * Gets a challenge by its channel.
+     * @param {DiscordJs.TextChannel} channel The channel.
+     * @returns {Promise<Challenge>} The challenge.
+     */
+    static async getByChannel(channel) {
+        if (!channelParse.test(channel.name)) {
+            return void 0;
+        }
+
+        const {1: challengingTeamTag, 2: challengedTeamTag, 3: id} = channelParse.exec(channel.name);
+
+        let challengingTeam;
+        try {
+            challengingTeam = await Team.getByNameOrTag(challengingTeamTag);
+        } catch (err) {
+            throw new Exception("There was a database error getting the challenging team.", err);
+        }
+
+        if (!challengingTeam) {
+            return void 0;
+        }
+
+        let challengedTeam;
+        try {
+            challengedTeam = await Team.getByNameOrTag(challengedTeamTag);
+        } catch (err) {
+            throw new Exception("There was a database error getting the challenged team.", err);
+        }
+
+        if (!challengedTeam) {
+            return void 0;
+        }
+
+        return new Challenge({id: +id, challengingTeam, challengedTeam});
+    }
+
     //              #    ###         ###
     //              #    #  #         #
     //  ###   ##   ###   ###   #  #   #     ##    ###  # #    ###
@@ -262,6 +307,50 @@ class Challenge {
      */
     get channelName() {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
+    }
+
+    // ##                   #  ###          #           #    ##
+    //  #                   #  #  #         #                 #
+    //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
+    //  #    #  #  #  #  #  #  #  #  # ##   #    #  #   #     #    ##
+    //  #    #  #  # ##  #  #  #  #  ##     #    # ##   #     #      ##
+    // ###    ##    # #   ###  ###    ##     ##   # #  ###   ###   ###
+    /**
+     * Loads the details for the challenge.
+     * @returns {Promise} A promise that resolves when the details are loaded.
+     */
+    async loadDetails() {
+        try {
+            this.details = Db.challengeDetails(this.id);
+        } catch (err) {
+            throw new Exception("There was a database error picking a map.", err);
+        }
+    }
+
+    //        #          #     #  #
+    //                   #     ####
+    // ###   ##     ##   # #   ####   ###  ###
+    // #  #   #    #     ##    #  #  #  #  #  #
+    // #  #   #    #     # #   #  #  # ##  #  #
+    // ###   ###    ##   #  #  #  #   # #  ###
+    // #                                   #
+    /**
+     * Picks the map for the challenge from the list of home maps.
+     * @param {number} number The number of the map.
+     * @returns {Promise} A promise that resolves when the picked map has been saved.
+     */
+    async pickMap(number) {
+        try {
+            Db.pickmapForChallenge(this.id, number);
+        } catch (err) {
+            throw new Exception("There was a database error picking a map.", err);
+        }
+
+        try {
+
+        } catch (err) {
+            throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 }
 
