@@ -3,6 +3,7 @@ const DiscordJs = require("discord.js"),
     Db = require("./database"),
     Exception = require("./exception"),
     NewTeam = require("./newTeam"),
+    settings = require("./settings"),
     Team = require("./team");
 
 /**
@@ -106,9 +107,9 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
  */
 DiscordJs.GuildMember.prototype.getTimezone = async function() {
     try {
-        return await Db.getTimezone(this) || "America/Los_Angeles";
+        return await Db.getTimezone(this) || settings.defaultTimezone;
     } catch (err) {
-        return "America/Los_Angeles";
+        return settings.defaultTimezone;
     }
 };
 

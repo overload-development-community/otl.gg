@@ -7,7 +7,8 @@ const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
     Exception = require("./exception"),
-    Log = require("./log");
+    Log = require("./log"),
+    settings = require("./settings");
 
 /**
  * @type {typeof import("./discord")}
@@ -1273,7 +1274,7 @@ class Team {
             if (teamInfo.upcomingMatches && teamInfo.upcomingMatches.length > 0) {
                 channelTopic += "\n\nUpcoming matches:";
                 teamInfo.upcomingMatches.forEach((match) => {
-                    channelTopic += `\n${match.opponent} - ${match.date.toLocaleTimeString("en-us", {timeZone: "GMT", hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    channelTopic += `\n${match.opponent} - ${match.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                     if (match.map) {
                         channelTopic += ` - ${match.map}`;
                     }
@@ -1290,14 +1291,14 @@ class Team {
             if (teamInfo.requests && teamInfo.requests.length > 0) {
                 captainsChannelTopic += "\n\nRequests:";
                 teamInfo.requests.forEach((request) => {
-                    captainsChannelTopic += `\n${request.name} - ${request.date.toLocaleTimeString("en-us", {timeZone: "GMT", hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    captainsChannelTopic += `\n${request.name} - ${request.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                 });
             }
 
             if (teamInfo.invites && teamInfo.invites.length > 0) {
                 captainsChannelTopic += "\n\nInvites:";
                 teamInfo.invites.forEach((invite) => {
-                    captainsChannelTopic += `\n${invite.name} - ${invite.date.toLocaleTimeString("en-us", {timeZone: "GMT", hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    captainsChannelTopic += `\n${invite.name} - ${invite.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                 });
             }
 

@@ -1,4 +1,5 @@
 /**
+ * @typedef {import("./challenge")} Challenge
  * @typedef {{id?: number, challengingTeamId: number, challengedTeamId: number}} ChallengeData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("./newTeam")} NewTeam
@@ -263,6 +264,22 @@ class Database {
         await db.query("DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId", {newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
+    //                     #    #                #  #              ####               ##   #           ##    ##
+    //                    # #                    ####              #                 #  #  #            #     #
+    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #  ###   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                       #                                                                  ###
+    /**
+     * Confirms a suggested neutral map for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
+     */
+    static async confirmMapForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET Map = SuggestedMap WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //                          #           ##   #           ##    ##
     //                          #          #  #  #            #     #
     //  ##   ###    ##    ###  ###    ##   #     ###    ###   #     #     ##   ###    ###   ##
@@ -331,6 +348,11 @@ class Database {
                 @Team1Penalized,
                 @Team2Penalized
             )
+
+            UPDATE tblTeamPenalty
+            SET PenaltiesRemaining = PenaltiesRemaining - 1
+            WHERE (TeamId = @team1Id OR TeamId = @team2Id)
+                AND PenaltiesRemaining > 0
 
             SET @ChallengeId = SCOPE_IDENTITY()
 
@@ -489,6 +511,97 @@ class Database {
             team2Id: {type: Db.INT, value: team2.id}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].ChallengeId, challengingTeamId: data.recordsets[0][0].ChallengingTeamId, challengedTeamId: data.recordsets[0][0].ChallengedTeamId} || void 0;
+    }
+
+    //              #     ##   #           ##    ##                            ###          #           #    ##
+    //              #    #  #  #            #     #                            #  #         #                 #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   #  #   ##   ###    ###  ##     #     ###
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  # ##   #    #  #   #     #    ##
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  ##     #    # ##   #     #      ##
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ##     ##   # #  ###   ###   ###
+    //  ###                                                         ###
+    /**
+     * Gets the details of a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, dateAdded: Date, dateClocked: Date, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     */
+    static async getChallengeDetails(challenge) {
+
+        /**
+         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         */
+        const data = await db.query(`
+            SELECT
+                OrangeTeamId,
+                BlueTeamId,
+                Map,
+                TeamSize,
+                MatchTime,
+                HomeMapTeamId,
+                HomeServerTeamId,
+                AdminCreated,
+                HomesLocked,
+                UsingHomeMapTeam,
+                UsingHomeServerTeam,
+                ChallengingTeamPenalized,
+                ChallengedTeamPenalized,
+                SuggestedMap,
+                SuggestedMapTeamId,
+                SuggestedNeutralServerTeamId,
+                SuggestedTeamSize,
+                SuggestedTeamSizeTeamId,
+                SuggestedTime,
+                SuggestedTimeTeamId,
+                ReportingTeamId,
+                ChallengingTeamScore,
+                ChallengedTeamScore,
+                DateAdded,
+                DateClocked,
+                DateClockDeadline,
+                DateClockDeadlineNotified,
+                DateReported,
+                DateConfirmed,
+                DateClosed,
+                DateVoided
+            FROM tblChallenge
+            WHERE ChallengeId = @challengeId
+
+            SELECT Map FROM tblChallengeHome WHERE ChallengeId = @challengeId ORDER BY Number
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
+            orangeTeamId: data.recordsets[0][0].OrangeTeamId,
+            blueTeamId: data.recordsets[0][0].BlueTeamId,
+            map: data.recordsets[0][0].Map,
+            teamSize: data.recordsets[0][0].TeamSize,
+            matchTime: data.recordsets[0][0].MatchTime,
+            homeMapTeamId: data.recordsets[0][0].HomeMapTeamId,
+            homeServerTeamId: data.recordsets[0][0].HomeServerTeamId,
+            adminCreated: data.recordsets[0][0].AdminCreated,
+            homesLocked: data.recordsets[0][0].HomesLocked,
+            usingHomeMapTeam: data.recordsets[0][0].UsingHomeMapTeam,
+            usingHomeServerTeam: data.recordsets[0][0].UsingHomeServerTeam,
+            challengingTeamPenalized: data.recordsets[0][0].ChallengingTeamPenalized,
+            challengedTeamPenalized: data.recordsets[0][0].ChallengedTeamPenalized,
+            suggestedMap: data.recordsets[0][0].SuggestedMap,
+            suggestedMapTeamId: data.recordsets[0][0].SuggestedMapTeamId,
+            suggestedNeutralServerTeamId: data.recordsets[0][0].SuggestedNeutralServerTeamId,
+            suggestedTeamSize: data.recordsets[0][0].SuggestedTeamSize,
+            suggestedTeamSizeTeamId: data.recordsets[0][0].SuggestedTeamSizeTeamId,
+            suggestedTime: data.recordsets[0][0].SuggestedTime,
+            suggestedTimeTeamId: data.recordsets[0][0].SuggestedTimeTeamId,
+            reportingTeamId: data.recordsets[0][0].ReportingTeamId,
+            challengingTeamScore: data.recordsets[0][0].ChallengingTeamScore,
+            challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
+            dateAdded: data.recordsets[0][0].DateAdded,
+            dateClocked: data.recordsets[0][0].DateClocked,
+            dateClockDeadline: data.recordsets[0][0].DateClockDeadline,
+            dateClockDeadlineNotified: data.recordsets[0][0].DateClockDeadlineNotified,
+            dateReported: data.recordsets[0][0].DateReported,
+            dateConfirmed: data.recordsets[0][0].DateConfirmed,
+            dateClosed: data.recordsets[0][0].DateClosed,
+            dateVoided: data.recordsets[0][0].DateVoided,
+            homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
+        } || void 0;
     }
 
     //              #    #  #              ###
@@ -898,6 +1011,40 @@ class Database {
         });
     }
 
+    //        #          #     #  #              ####               ##   #           ##    ##
+    //                   #     ####              #                 #  #  #            #     #
+    // ###   ##     ##   # #   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #   #    #     ##    #  #  #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #   #    #     # #   #  #  # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###   ###    ##   #  #  #  #   # #  ###   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    // #                                   #                                                                  ###
+    /**
+     * Picks the map for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {number} number The number of the map, 1, 2, or 3.
+     * @returns {Promise<string>} A promise that resolves with the name of the map that was picked.
+     */
+    static async pickMapForChallenge(challenge, number) {
+
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await Db.query(`
+            UPDATE c
+            SET Map = ch.Map
+            FROM tblChallenge c
+            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId
+            WHERE c.ChallengeId = @challengeId
+                AND ch.Number = @number
+
+            SELECT Map FROM tblChallenge WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            number: {type: Db.INT, value: number}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
+    }
+
     //              #                  #           #          ###
     //                                 #           #           #
     // ###    ##   ##    ###    ###   ###    ###  ###    ##    #     ##    ###  # #
@@ -968,7 +1115,6 @@ class Database {
      * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
     static async removePilotFromTeam(member, team) {
-        // TODO: Remove from tblJoinBan and tblTeamBan if they did not play a game for this team.
         await db.query(`
             DECLARE @playerId INT
 
@@ -976,10 +1122,27 @@ class Database {
 
             IF EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId)
             BEGIN
-                DELETE FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId
+                IF EXISTS (
+                    SELECT TOP 1 1
+                    FROM tblStats s
+                    INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+                    INNER JOIN tblRoster r ON s.PlayerId = r.PlayerId
+                    WHERE s.PlayerId = @playerId
+                        AND CAST(c.MatchTime AS DATE) >= CAST(r.DateAdded AS DATE)
+                )
+                BEGIN
+                    DELETE FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId
 
-                DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
-                INSERT INTO tblTeamBan (TeamId, PlayerId) VALUES (@teamId, @playerId)
+                    DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+                    INSERT INTO tblTeamBan (TeamId, PlayerId) VALUES (@teamId, @playerId)
+                END
+                ELSE
+                BEGIN
+                    DELETE FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId
+
+                    DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+                    DELETE FROM tblJoinBan WHERE PlayerId = @playerId
+                END
             END
 
             DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
@@ -1099,6 +1262,28 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].NewTeamId, member} || void 0;
     }
 
+    //                                        #    #  #              ####               ##   #           ##    ##
+    //                                        #    ####              #                 #  #  #            #     #
+    //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ###  #     #      ##   ###      ##  #  #   # #  ###   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //               ###   ###                                 #                                                                  ###
+    /**
+     * Suggests a map for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @param {string} map The suggested map.
+     * @returns {Promise} A promise that resolves when the map has been suggested.
+     */
+    static async suggestMapForChallenge(challenge, team, map) {
+        await Db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedTeamId = @teamId WHERE ChallengeId = @challengeId", {
+            map: {type: Db.VARCHAR(100), value: map},
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //                #         #          #  #
     //                #         #          ## #
     // #  #  ###    ###   ###  ###    ##   ## #   ###  # #    ##
@@ -1148,8 +1333,6 @@ class Database {
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}, teamId: {type: Db.INT, value: team.id}});
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
-
-    // TODO: Roster History!
 }
 
 module.exports = Database;

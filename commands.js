@@ -1893,15 +1893,15 @@ class Commands {
         }
 
         if (challenge.details.map) {
-            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${info.map}**.`, channel);
+            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
             throw new Warning("Map already set.");
         }
 
         if (!message || ["a", "b", "c"].indexOf(message.toLowerCase()) === -1) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`pickmap a\`, \`pickmap b\`, or \`pickmap c\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`!pickmap a\`, \`!pickmap b\`, or \`!pickmap c\`.`, channel);
             throw new Warning("Missing map selection.");
         }
-        
+
         try {
             await challenge.pickMap(message.charCodeAt(0) - 96);
         } catch (err) {
@@ -1912,27 +1912,174 @@ class Commands {
         return true;
     }
 
-    // !pickmap <team> <a|b|c>
-    /*
-     * Success:
-     * 1) Write picked map to the database.
-     * 2) Update topic
-     * 3) Announce in channel
+    //                                        #
+    //                                        #
+    //  ###   #  #   ###   ###   ##    ###   ###   # #    ###  ###
+    // ##     #  #  #  #  #  #  # ##  ##      #    ####  #  #  #  #
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #
+    // ###     ###  #     #      ##   ###      ##  #  #   # #  ###
+    //               ###   ###                                 #
+    /**
+     * Suggests a neutral map for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async suggestmap(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
-    // !suggestmap <team> <map>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Penalty must not be active.
-     * Map must be valid from map list.
-     * Map must not have already been picked.
-     *
-     * Success:
-     * 1) Write suggested map to the database
-     * 2) Update topic
-     * 3) Announce in channel
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a neutral map, use the \`!suggestmap\` command with the map you want to suggest.`, channel);
+            throw new Warning("Missing map selection.");
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but a neutral map may not be agreed to in a match created by an admin.`, channel);
+            throw new Warning("Map is locked by admin.");
+        }
+
+        if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
+            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a map cannot be suggested.`, channel);
+            throw new Warning("Map has already been set.");
+        }
+
+        if (challenge.details.map) {
+            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
+            throw new Warning("Map has already been set.");
+        }
+
+        if (challenge.details.homeMaps.indexOf(message) !== -1) {
+            await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
+            throw new Warning("Map has already been set.");
+        }
+
+        await challenge.suggestMap(team, message);
+
+        return true;
+    }
+
+    //                     #    #
+    //                    # #
+    //  ##    ##   ###    #    ##    ###   # #   # #    ###  ###
+    // #     #  #  #  #  ###    #    #  #  ####  ####  #  #  #  #
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #  ###
+    //                                                       #
+    /**
+     * Confirms a suggested neutral map for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async confirmmap(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmmap\` by itself to confirm a suggested neutral map.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.map) {
+            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
+            throw new Warning("Map has already been set.");
+        }
+
+        if (!challenge.details.suggestedMap || challenge.details.suggestedMap.length === 0) {
+            await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral map for this match yet!  Use the \`!suggestmap\` command to do so.`, channel);
+            throw new Warning("No map suggested yet.");
+        }
+
+        if (challenge.details.suggestedMapTeam.id === team.id) {
+            await Discord.queue(`Sorry, ${member}, but your team suggested this map, the other team must confirm.`, channel);
+            throw new Warning("Can't confirm own suggestion.");
+        }
+
+        await challenge.confirmMap();
+
+        return true;
+    }
 
     // !confirmmap <team>
     /*
@@ -2296,6 +2443,18 @@ class Commands {
      * Record match as official in the database.
      * Announce in #match-results
      * Close challenge channel
+     */
+
+    // !teamtimezone <timezone>
+    /*
+     * Player must be a founder.
+     * Timezone must be valid.
+     *
+     * Success:
+     * Write timezone to database
+     * Update team timezone
+     * Update team's channel topics
+     * Update team's challenge channel topics
      */
 
     // Disband

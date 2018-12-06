@@ -7,6 +7,7 @@ const DiscordJs = require("discord.js"),
     Db = require("./database"),
     Exception = require("./exception"),
     Team = require("./team"),
+    settings = require("./settings"),
 
     channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/;
 
@@ -309,6 +310,39 @@ class Challenge {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
     }
 
+    //                     #    #                #  #
+    //                    # #                    ####
+    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
+    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #  #  #
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #  ###
+    //                                                       #
+    /**
+     * Confirms a neutral map suggestion.
+     * @returns {Promise} A promise that resolves when a neutral map has been confirmed.
+     */
+    async confirmMap() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.confirmMapForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a suggested neutral map for a challenge.", err);
+        }
+
+        this.details.map = this.details.suggestedMap;
+
+        try {
+            await Discord.queue(`The map for this match has been set to the neutral map of **${this.details.map}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -320,11 +354,47 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the details are loaded.
      */
     async loadDetails() {
+        let details;
         try {
-            this.details = Db.challengeDetails(this.id);
+            details = await Db.getChallengeDetails(this);
         } catch (err) {
-            throw new Exception("There was a database error picking a map.", err);
+            throw new Exception("There was a database error loading details for a challenge.", err);
         }
+
+        this.details = {
+            orangeTeam: details.orangeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            blueTeam: details.blueTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            map: details.map,
+            teamSize: details.teamSize,
+            matchTime: details.matchTime,
+            homeMapTeam: details.homeMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            homeServerTeam: details.homeServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            adminCreated: details.adminCreated,
+            homesLocked: details.homesLocked,
+            usingHomeMapTeam: details.usingHomeMapTeam,
+            usingHomeServerTeam: details.usingHomeServerTeam,
+            challengingTeamPenalized: details.challengingTeamPenalized,
+            challengedTeamPenalized: details.challengedTeamPenalized,
+            suggestedMap: details.suggestedMap,
+            suggestedMapTeam: details.suggestedMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedNeutralServerTeam: details.suggestedNeutralServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedTeamSize: details.suggestedTeamSize,
+            suggestedTeamSizeTeam: details.suggestedTeamSizeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedTime: details.suggestedTime,
+            suggestedTimeTeam: details.suggestedTimeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            reportingTeam: details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            challengingTeamScore: details.challengingTeamScore,
+            challengedTeamScore: details.challengedTeamScore,
+            dateAdded: details.dateAdded,
+            dateClocked: details.dateClocked,
+            dateClockDeadline: details.dateClockDeadline,
+            dateClockDeadlineNotified: details.dateClockDeadlineNotified,
+            dateReported: details.dateReported,
+            dateConfirmed: details.dateConfirmed,
+            dateClosed: details.dateClosed,
+            dateVoided: details.dateVoided,
+            homeMaps: details.homeMaps
+        };
     }
 
     //        #          #     #  #
@@ -340,17 +410,124 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the picked map has been saved.
      */
     async pickMap(number) {
-        try {
-            Db.pickmapForChallenge(this.id, number);
-        } catch (err) {
-            throw new Exception("There was a database error picking a map.", err);
+        if (!this.details) {
+            await this.loadDetails();
         }
 
         try {
+            this.details.map = await Db.pickMapForChallenge(this, number);
+        } catch (err) {
+            throw new Exception("There was a database error picking a map for a challenge.", err);
+        }
 
+        try {
+            await Discord.queue(`The map for this match has been set to **${this.details.map}**.`, this.channel);
+
+            await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
+    }
+
+    //                                        #    #  #
+    //                                        #    ####
+    //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###
+    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  #  #  #  #
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #
+    // ###     ###  #     #      ##   ###      ##  #  #   # #  ###
+    //               ###   ###                                 #
+    /**
+     * Suggests a map for the challenge.
+     * @param {Team} team The team suggesting the map.
+     * @param {string} map The map.
+     * @returns {Promise} A promise that resolves when the map has been suggested.
+     */
+    async suggestMap(team, map) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestMapForChallenge(this, team, map);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a map for a challenge.", err);
+        }
+
+        this.details.suggestedMap = map;
+        this.details.suggestedMapTeam = team;
+
+        try {
+            await Discord.queue(`**${team.name}** is suggesting to play a neutral map, **${map}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmmap\` to agree to this suggestion.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                #         #          ###                #
+    //                #         #           #
+    // #  #  ###    ###   ###  ###    ##    #     ##   ###   ##     ##
+    // #  #  #  #  #  #  #  #   #    # ##   #    #  #  #  #   #    #
+    // #  #  #  #  #  #  # ##   #    ##     #    #  #  #  #   #    #
+    //  ###  ###    ###   # #    ##   ##    #     ##   ###   ###    ##
+    //       #                                         #
+    /**
+     * Updates the topic of the channel with the latest challenge data.
+     * @returns {Promise} A promise that resolves when the topic is updated.
+     */
+    async updateTopic() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        let topic = `${this.challengingTeam.name} vs ${this.challengedTeam.name}`;
+
+        if (this.details.dateClockDeadline) {
+            topic = `${topic}\n\nClock Deadline: ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+        }
+
+        topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
+
+        topic = `${topic}\n\nHome Map Team: ${this.details.usingHomeMapTeam ? this.details.homeMapTeam.tag : "Neutral"}`;
+
+        if (this.details.map) {
+            topic = `${topic}\nChosen Map: ${this.details.map}`;
+        } else if (this.details.suggestedMap) {
+            topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
+        }
+
+        topic = `${topic}\n\nHome Server Team: ${this.details.usingHomeServerTeam ? this.details.homeServerTeam.tag : "Neutral"}`;
+
+        if (this.details.suggestedNeutralServerTeam) {
+            topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam}`;
+        }
+
+        if (this.details.teamSize) {
+            topic = `${topic}\n\nTeam Size: ${this.details.teamSize}v${this.details.teamSize}`;
+            if (this.details.suggestedTeamSize) {
+                topic = `${topic}\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
+            }
+        } else if (this.details.suggestedTeamSize) {
+            topic = `${topic}\n\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
+        }
+
+        if (this.details.matchTime) {
+            topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+            if (this.details.suggestedTime) {
+                topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+            }
+        } else if (this.details.suggestedTime) {
+            topic = `${topic}\n\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+        }
+
+        if (this.details.dateReported && !this.details.dateConfirmed) {
+            topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}, reported by ${this.details.reportingTeam.tag}`;
+        } else if (this.details.dateConfirmed) {
+            topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}`;
+        }
+
+        await this.channel.setTopic(topic);
     }
 }
 
