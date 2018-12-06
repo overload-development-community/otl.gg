@@ -376,6 +376,40 @@ class Challenge {
         }
     }
 
+    //                     #    #                ###                      ##    #
+    //                    # #                     #                      #  #
+    //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##
+    // #     #  #  #  #  ###    #    #  #  ####   #    # ##  #  #  ####    #    #      #   # ##
+    // #     #  #  #  #   #     #    #     #  #   #    ##    # ##  #  #  #  #   #     #    ##
+    //  ##    ##   #  #   #    ###   #     #  #   #     ##    # #  #  #   ##   ###   ####   ##
+    /**
+     * Confirms a team size suggestion.
+     * @returns {Promise} A promise that resolves when a team size has been confirmed.
+     */
+    async confirmTeamSize() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.confirmTeamSizeForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a suggested team size for a challenge.", err);
+        }
+
+        this.details.teamSize = this.details.suggestedTeamSize;
+        this.details.suggestedTeamSize = void 0;
+        this.details.suggestedTeamSizeTeam = void 0;
+
+        try {
+            await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -529,6 +563,42 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                        #    ###                      ##    #
+    //                                        #     #                      #  #
+    //  ###   #  #   ###   ###   ##    ###   ###    #     ##    ###  # #    #    ##    ####   ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #    # ##  #  #  ####    #    #      #   # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #    ##    # ##  #  #  #  #   #     #    ##
+    // ###     ###  #     #      ##   ###      ##   #     ##    # #  #  #   ##   ###   ####   ##
+    //               ###   ###
+    /**
+     * Suggests a team size for the challenge.
+     * @param {Team} team The team suggesting the team size.
+     * @param {number} size The team size.
+     * @returns {Promise} A promise that resolves when the team size has been suggested.
+     */
+    async suggestTeamSize(team, size) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestTeamSizeForChallenge(this, team, size);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a team size for a challenge.", err);
+        }
+
+        this.details.suggestedTeamSize = size;
+        this.details.suggestedTeamSizeTeam = team;
+
+        try {
+            await Discord.queue(`**${team.name}** is suggesting to play a **${size}v${size}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmteamsize\` to agree to this suggestion.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

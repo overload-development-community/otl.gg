@@ -296,6 +296,22 @@ class Database {
         await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
+    //                     #    #                ###                      ##    #                ####               ##   #           ##    ##
+    //                    # #                     #                      #  #                    #                 #  #  #            #     #
+    //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  #  #  ###    #    #  #  ####   #    # ##  #  #  ####    #    #      #   # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #   #    ##    # ##  #  #  #  #   #     #    ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##    ##   #  #   #    ###   #     #  #   #     ##    # #  #  #   ##   ###   ####   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                        ###
+    /**
+     * Confirms a suggested team size for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the suggested team size has been confirmed.
+     */
+    static async confirmTeamSizeForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //                          #           ##   #           ##    ##
     //                          #          #  #  #            #     #
     //  ##   ###    ##    ###  ###    ##   #     ###    ###   #     #     ##   ###    ###   ##
@@ -1315,6 +1331,28 @@ class Database {
      */
     static async suggestNeutralServerForChallenge(challenge, team) {
         await Db.query("UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId", {
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
+    //                                        #    ###                      ##    #                ####               ##   #           ##    ##
+    //                                        #     #                      #  #                    #                 #  #  #            #     #
+    //  ###   #  #   ###   ###   ##    ###   ###    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #    # ##  #  #  ####    #    #      #   # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #    ##    # ##  #  #  #  #   #     #    ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ###  #     #      ##   ###      ##   #     ##    # #  #  #   ##   ###   ####   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //               ###   ###                                                                                                                                  ###
+    /**
+     * Suggests a team size for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @param {number} size The team size.
+     * @returns {Promise} A promise that resolves when the team size has been suggested.
+     */
+    static async suggestTeamSizeForChallenge(challenge, team, size) {
+        await Db.query("UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+            size: {type: Db.INT, value: size},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
