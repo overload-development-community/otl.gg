@@ -333,6 +333,7 @@ class Challenge {
         }
 
         this.details.map = this.details.suggestedMap;
+        this.details.usingHomeMapTeam = false;
 
         try {
             await Discord.queue(`The map for this match has been set to the neutral map of **${this.details.map}**.`, this.channel);
@@ -340,6 +341,38 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                     #    #                #  #               #                ##     ##
+    //                    # #                    ## #               #                 #    #  #
+    //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
+    // #     #  #  #  #  ###    #    #  #  ####  # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
+    // #     #  #  #  #   #     #    #     #  #  # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
+    /**
+     * Confirms a neutral server suggestion.
+     * @returns {Promise} A promise that resolves when a neutral server has been confirmed.
+     */
+    async confirmNeutralServer() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.confirmNeutralServerForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a suggested neutral server for a challenge.", err);
+        }
+
+        this.details.usingHomeServerTeam = false;
+
+        try {
+            await Discord.queue("The server for this match has been set to be neutral.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -462,6 +495,40 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                        #    #  #               #                ##     ##
+    //                                        #    ## #               #                 #    #  #
+    //  ###   #  #   ###   ###   ##    ###   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
+    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
+    //   ##   #  #   ##    ##   ##      ##    #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
+    // ###     ###  #     #      ##   ###      ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
+    //               ###   ###
+    /**
+     * Suggests a neutral server for the challenge.
+     * @param {Team} team The team suggesting the neutral server.
+     * @returns {Promise} A promise that resolves when the neutral server has been suggested.
+     */
+    async suggestNeutralServer(team) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestNeutralServerForChallenge(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a neutral server for a challenge.", err);
+        }
+
+        this.details.suggestedNeutralServerTeam = team;
+
+        try {
+            await Discord.queue(`**${team.name}** is suggesting to play a neutral server.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmneutralserver\` to agree to this suggestion.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

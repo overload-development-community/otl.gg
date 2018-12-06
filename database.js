@@ -277,7 +277,23 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
      */
     static async confirmMapForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET Map = SuggestedMap WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query("UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //                     #    #                #  #               #                ##     ##                                 ####               ##   #           ##    ##
+    //                    # #                    ## #               #                 #    #  #                                #                 #  #  #            #     #
+    //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  #  #  ###    #    #  #  ####  # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #  # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #     #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #     #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                                                      ###
+    /**
+     * Confirms a suggested neutral server for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
+     */
+    static async confirmNeutralServerForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                          #           ##   #           ##    ##
@@ -1277,8 +1293,28 @@ class Database {
      * @returns {Promise} A promise that resolves when the map has been suggested.
      */
     static async suggestMapForChallenge(challenge, team, map) {
-        await Db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await Db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId", {
             map: {type: Db.VARCHAR(100), value: map},
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
+    //                                        #    #  #               #                ##     ##                                 ####               ##   #           ##    ##
+    //                                        #    ## #               #                 #    #  #                                #                 #  #  #            #     #
+    //  ###   #  #   ###   ###   ##    ###   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #     #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ###  #     #      ##   ###      ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #     #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //               ###   ###                                                                                                                                                                ###
+    /**
+     * Suggests a neutral server for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @returns {Promise} A promise that resolves when the neutral server has been suggested.
+     */
+    static async suggestNeutralServerForChallenge(challenge, team) {
+        await Db.query("UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId", {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });

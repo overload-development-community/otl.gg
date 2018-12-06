@@ -1980,8 +1980,8 @@ class Commands {
         }
 
         if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
-            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a map cannot be suggested.`, channel);
-            throw new Warning("Map has already been set.");
+            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a neutral map cannot be suggested.`, channel);
+            throw new Warning("Penalties apply.");
         }
 
         if (challenge.details.map) {
@@ -1991,7 +1991,7 @@ class Commands {
 
         if (challenge.details.homeMaps.indexOf(message) !== -1) {
             await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
-            throw new Warning("Map has already been set.");
+            throw new Warning("Pilot suggested one of the home options.");
         }
 
         await challenge.suggestMap(team, message);
@@ -2073,7 +2073,7 @@ class Commands {
 
         if (challenge.details.suggestedMapTeam.id === team.id) {
             await Discord.queue(`Sorry, ${member}, but your team suggested this map, the other team must confirm.`, channel);
-            throw new Warning("Can't confirm own suggestion.");
+            throw new Warning("Can't confirm own neutral map suggestion.");
         }
 
         await challenge.confirmMap();
@@ -2081,45 +2081,170 @@ class Commands {
         return true;
     }
 
-    // !confirmmap <team>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Map must not have already been picked.
-     * Suggested map must have already been picked by the other team.
-     *
-     * Success:
-     * 1) Write confirmed map to the database
-     * 2) Update topic
-     * 3) Announce in channel
+    //                                        #                       #                ##
+    //                                        #                       #                 #
+    //  ###   #  #   ###   ###   ##    ###   ###   ###    ##   #  #  ###   ###    ###   #     ###    ##   ###   # #    ##   ###
+    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  # ##  #  #   #    #  #  #  #   #    ##     # ##  #  #  # #   # ##  #  #
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  ##    #  #   #    #     # ##   #      ##   ##    #     # #   ##    #
+    // ###     ###  #     #      ##   ###      ##  #  #   ##    ###    ##  #      # #  ###   ###     ##   #      #     ##   #
+    //               ###   ###
+    /**
+     * Suggests a neutral server for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async suggestneutralserver(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
-    // !suggestneutralserver <team>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Penalty must not be active.
-     * Neutral server must not have already been suggested.
-     *
-     * Success:
-     * 1) Write suggested neutral server to the database
-     * 2) Update topic
-     * 3) Announce in channel
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!suggestneutralserver\` by itself to suggest a neutral server.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but a neutral server may not be agreed to in a match created by an admin.`, channel);
+            throw new Warning("Server is locked by admin.");
+        }
+
+        if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
+            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a neutral server cannot be suggested.`, channel);
+            throw new Warning("Penalties apply.");
+        }
+
+        if (!challenge.details.usingHomeServerTeam) {
+            await Discord.queue(`Sorry, ${member}, but the server for this match has already been locked in to be neutral.`, channel);
+            throw new Warning("Neutral server has already been set.");
+        }
+
+        if (challenge.details.suggestedNeutralServerTeam) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.details.suggestedNeutralServerTeam.name}** has already suggested for this game to be played on a neutral server.  The other team must use the \`!confirmneutralserver\` command to confirm.`, channel);
+            throw new Warning("Map has already been set.");
+        }
+
+        await challenge.suggestNeutralServer(team);
+
+        return true;
+    }
+
+    //                     #    #                #  #               #                ##     ##
+    //                    # #                    ## #               #                 #    #  #
+    //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
+    // #     #  #  #  #  ###    #    #  #  ####  # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
+    // #     #  #  #  #   #     #    #     #  #  # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
+    /**
+     * Confirms a suggested neutral server for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async confirmneutralserver(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
-    // !confirmneutralserver <team>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Neutral server must have already been suggested by the other team.
-     *
-     * Success:
-     * 1) Write confirmed neutral server to the database
-     * 2) Update topic
-     * 3) Announce in channel
-     */
+        if (!challenge) {
+            return false;
+        }
 
-    // !suggestteamsize <team> <2|3|4>
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmneutralserver\` by itself to confirm a suggested neutral server.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge.details.suggestedNeutralServerTeam) {
+            await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral server for this match yet!  Use the \`!suggestneutralserver\` command to do so.`, channel);
+            throw new Warning("Neutral server not suggested yet.");
+        }
+
+        if (challenge.details.suggestedNeutralServerTeam.id === team.id) {
+            await Discord.queue(`Sorry, ${member}, but your team suggested a neutral server, the other team must confirm.`, channel);
+            throw new Warning("Can't confirm own neutral server suggestion.");
+        }
+
+        await challenge.confirmNeutralServer();
+
+        return true;
+    }
+
+    // !suggestteamsize <2|3|4>
     /*
      * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
@@ -2130,7 +2255,7 @@ class Commands {
      * 3) Announce in channel
      */
 
-    // !confirmteamsize <team>
+    // !confirmteamsize
     /*
      * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
@@ -2142,7 +2267,7 @@ class Commands {
      * 3) Announce in channel
      */
 
-    // !suggesttime <team> <time>
+    // !suggesttime <time>
     /*
      * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
@@ -2153,7 +2278,7 @@ class Commands {
      * 3) Announce in channel
      */
 
-    // !confirmtime <team>
+    // !confirmtime
     /*
      * Must be issued in a challenge channel.
      * Player must be a captain or founder of a team.
@@ -2185,11 +2310,24 @@ class Commands {
     // !streaming <URL>
     /*
      * Must be issued in a challenge channel.
+     * Must not be streaming.
+     *
+     * Success:
+     * Add stream to database.
+     * Announce in channel.
      */
 
     // !notstreaming
+    /*
+     * Must be issued in a challenge channel.
+     * Must be streaming.
+     *
+     * Success:
+     * Remove from database.
+     * Announce in channel.
+     */
 
-    // !report <team> <score1> <score2>
+    // !report <score1> <score2>
     /*
      * Player must be a captain or founder of a team.
      * Challenge must exist against challenged team.
