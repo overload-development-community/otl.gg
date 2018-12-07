@@ -2442,6 +2442,11 @@ class Commands {
             throw new Warning("Match was already reported.");
         }
 
+        if (!challenge.details.suggestedTeamSize) {
+            await Discord.queue(`Sorry, ${member}, but no one has suggested a team size for this match yet!  Use the \`!suggestteamsize\` command to do so.`, channel);
+            throw new Warning("Team size not yet suggested.");
+        }
+
         if (challenge.details.suggestedTeamSizeTeam.id === team.id) {
             await Discord.queue(`Sorry, ${member}, but your team suggested this team size, the other team must confirm.`, channel);
             throw new Warning("Can't confirm own team size suggestion.");
@@ -2452,27 +2457,208 @@ class Commands {
         return true;
     }
 
-    // !suggesttime <time>
+    //                                        #     #     #
+    //                                        #     #
+    //  ###   #  #   ###   ###   ##    ###   ###   ###   ##    # #    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
+    // ###     ###  #     #      ##   ###      ##    ##  ###   #  #   ##
+    //               ###   ###
+    /**
+     * Suggests the time for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async suggesttime(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a time, use \`!suggesttime\` along with the date and time.  Timezone defaults to Pacific time, use the \`!timezone\` command to set your own timezone.`, channel);
+            throw new Warning("Missing time.");
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but a time may not be agreed to in a match created by an admin.`, channel);
+            throw new Warning("Time is locked by admin.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already reported.");
+        }
+
+        let date;
+        try {
+            date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+            throw new Warning("Invalid date.");
+        }
+
+        if (!date) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+            throw new Warning("Invalid date.");
+        }
+
+        if (date < new Date()) {
+            await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
+            throw new Warning("Date is in the past.");
+        }
+
+        await challenge.suggestTime(team, date);
+
+        return true;
+    }
+
+    //                     #    #                 #     #
+    //                    # #                     #
+    //  ##    ##   ###    #    ##    ###   # #   ###   ##    # #    ##
+    // #     #  #  #  #  ###    #    #  #  ####   #     #    ####  # ##
+    // #     #  #  #  #   #     #    #     #  #   #     #    #  #  ##
+    //  ##    ##   #  #   #    ###   #     #  #    ##  ###   #  #   ##
+    /**
+     * Confirms a suggested time for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async confirmtime(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmtime\` by itself to confirm a suggested time.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already reported.");
+        }
+
+        if (!challenge.details.suggestedTime) {
+            await Discord.queue(`Sorry, ${member}, but no one has suggested a time for this match yet!  Use the \`!suggesttime\` command to do so.`, channel);
+            throw new Warning("Time not yet suggested.");
+        }
+
+        if (challenge.details.suggestedTimeTeam.id === team.id) {
+            await Discord.queue(`Sorry, ${member}, but your team suggested this time, the other team must confirm.`, channel);
+            throw new Warning("Can't confirm own time suggestion.");
+        }
+
+        await challenge.confirmTime();
+
+        return true;
+    }
+
+    // !matchtime
     /*
      * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
+     * Match time must have been set for the challenge.
      *
      * Success:
-     * 1) Write suggested time to the database
-     * 2) Update topic
-     * 3) Announce in channel
+     * 1) Output the match time in the user's local format.
      */
 
-    // !confirmtime
+    // !countdown
     /*
      * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Time must have already been suggested by the other team.
+     * Match time must have been set for the challenge.
      *
      * Success:
-     * 1) Write confirmed time to the database
-     * 2) Update topic
-     * 3) Announce in channel
+     * 1) Output the time until the match begins.
      */
 
     // !clock <confirm>
@@ -2613,6 +2799,17 @@ class Commands {
      * 2) Create chat room and apply appropriate permissions
      * 3) Set topic
      * 4) Set pinned post
+     */
+
+    // !unlockmatch
+    /*
+     * Player must be an admin.
+     * A challenge between the two teams must exist.
+     * Match must be locked.
+     *
+     * Success:
+     * 1) Match unlocks in database.
+     * 2) Announce in channel.
      */
 
     // !forcehometeam <team1> <team2> <hometeam>

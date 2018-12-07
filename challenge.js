@@ -9,7 +9,8 @@ const DiscordJs = require("discord.js"),
     Team = require("./team"),
     settings = require("./settings"),
 
-    channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/;
+    channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/,
+    timezoneParse = /^[1-9][0-9]*, (.*)$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -156,7 +157,7 @@ class Challenge {
                         name: "!confirmteamsize",
                         value: "Confirms a team size suggested by the other team."
                     }, {
-                        name: "!suggesttime <date> <time>",
+                        name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
                         value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
                     }, {
                         name: "!confirmtime",
@@ -410,6 +411,65 @@ class Challenge {
         }
     }
 
+    //                     #    #                ###    #
+    //                    # #                     #
+    //  ##    ##   ###    #    ##    ###   # #    #    ##    # #    ##
+    // #     #  #  #  #  ###    #    #  #  ####   #     #    ####  # ##
+    // #     #  #  #  #   #     #    #     #  #   #     #    #  #  ##
+    //  ##    ##   #  #   #    ###   #     #  #   #    ###   #  #   ##
+    /**
+     * Confirms a time suggestion.
+     * @returns {Promise} A promise that resolves when a time has been confirmed.
+     */
+    async confirmTime() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.confirmTimeForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a suggested time for a challenge.", err);
+        }
+
+        this.details.matchTime = this.details.suggestedTime;
+        this.details.suggestedTime = void 0;
+        this.details.suggestedTimeTeam = void 0;
+
+        try {
+            const times = {};
+            for (const member of this.channel.members.values()) {
+                const timezone = await member.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
+                if (a.value.getTime() !== b.value.getTime()) {
+                    return b.value.getTime() - a.value.getTime();
+                }
+
+                return a.timezone.localeCompare(b.timezone);
+            });
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                description: "The time for this match has been set.",
+                fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
+            }), this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -599,6 +659,67 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a team size for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                        #    ###    #
+    //                                        #     #
+    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
+    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##
+    //               ###   ###
+    /**
+     * Suggests a time for the challenge.
+     * @param {Team} team The team suggesting the time.
+     * @param {Date} date The time.
+     * @returns {Promise} A promise that resolves when the team size has been suggested.
+     */
+    async suggestTime(team, date) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestTimeForChallenge(this, team, date);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a time for a challenge.", err);
+        }
+
+        this.details.suggestedTime = date;
+        this.details.suggestedTimeTeam = team;
+
+        try {
+            const times = {};
+            for (const member of this.channel.members.values()) {
+                const timezone = await member.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
+                if (a.value.getTime() !== b.value.getTime()) {
+                    return b.value.getTime() - a.value.getTime();
+                }
+
+                return a.timezone.localeCompare(b.timezone);
+            });
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                description: `**${team.name}** is suggesting to play the match at the time listed below.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtime\` to agree to this suggestion.`,
+                fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
+            }), this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

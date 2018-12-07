@@ -309,7 +309,23 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested team size has been confirmed.
      */
     static async confirmTeamSizeForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query("UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //                     #    #                ###    #                ####               ##   #           ##    ##
+    //                    # #                     #                      #                 #  #  #            #     #
+    //  ##    ##   ###    #    ##    ###   # #    #    ##    # #    ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  #  #  ###    #    #  #  ####   #     #    ####  # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #   #     #    #  #  ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##    ##   #  #   #    ###   #     #  #   #    ###   #  #   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                ###
+    /**
+     * Confirms a suggested time for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the suggested time has been confirmed.
+     */
+    static async confirmTimeForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                          #           ##   #           ##    ##
@@ -1353,6 +1369,28 @@ class Database {
     static async suggestTeamSizeForChallenge(challenge, team, size) {
         await Db.query("UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId", {
             size: {type: Db.INT, value: size},
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
+    //                                        #    ###    #                ####               ##   #           ##    ##
+    //                                        #     #                      #                 #  #  #            #     #
+    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //               ###   ###                                                                                                          ###
+    /**
+     * Suggests a time for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @param {Date} date The time.
+     * @returns {Promise} A promise that resolves when the time has been suggested.
+     */
+    static async suggestTimeForChallenge(challenge, team, date) {
+        await Db.query("UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+            date: {type: Db.DATETIME, value: date},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
