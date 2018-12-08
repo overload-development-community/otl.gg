@@ -2014,7 +2014,12 @@ class Commands {
             throw new Warning("Pilot suggested one of the home options.");
         }
 
-        await challenge.suggestMap(team, message);
+        try {
+            await challenge.suggestMap(team, message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2106,7 +2111,12 @@ class Commands {
             throw new Warning("Can't confirm own neutral map suggestion.");
         }
 
-        await challenge.confirmMap();
+        try {
+            await challenge.confirmMap();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2203,7 +2213,12 @@ class Commands {
             throw new Warning("Map has already been set.");
         }
 
-        await challenge.suggestNeutralServer(team);
+        try {
+            await challenge.suggestNeutralServer(team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2289,7 +2304,12 @@ class Commands {
             throw new Warning("Can't confirm own neutral server suggestion.");
         }
 
-        await challenge.confirmNeutralServer();
+        try {
+            await challenge.confirmNeutralServer();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2366,7 +2386,12 @@ class Commands {
             throw new Warning("Match was already reported.");
         }
 
-        await challenge.suggestTeamSize(team, +message.charAt(0));
+        try {
+            await challenge.suggestTeamSize(team, +message.charAt(0));
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2452,7 +2477,12 @@ class Commands {
             throw new Warning("Can't confirm own team size suggestion.");
         }
 
-        await challenge.confirmTeamSize();
+        try {
+            await challenge.confirmTeamSize();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2552,7 +2582,12 @@ class Commands {
             throw new Warning("Date is in the past.");
         }
 
-        await challenge.suggestTime(team, date);
+        try {
+            await challenge.suggestTime(team, date);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
@@ -2638,10 +2673,180 @@ class Commands {
             throw new Warning("Can't confirm own time suggestion.");
         }
 
-        await challenge.confirmTime();
+        try {
+            await challenge.confirmTime();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
+
+    //       ##                #
+    //        #                #
+    //  ##    #     ##    ##   # #
+    // #      #    #  #  #     ##
+    // #      #    #  #  #     # #
+    //  ##   ###    ##    ##   #  #
+    /**
+     * Puts the challenge on the clock.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async clock(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateClocked) {
+            await Discord.queue(`Sorry, ${member}, but this challenge is already on the clock!`, channel);
+            throw new Warning("Match already clocked.");
+        }
+
+        if (challenge.challengingTeam.locked || challenge.challengedTeam.locked) {
+            await Discord.queue(`Sorry, ${member}, but due to tournament participation, this match cannot be clocked.`, channel);
+            throw new Warning("A team is in a tournament.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already reported.");
+        }
+
+        let nextClockDate;
+        try {
+            nextClockDate = await team.getNextClockDate();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (nextClockDate && nextClockDate > new Date()) {
+            await Discord.queue(`Sorry, ${member}, but your team cannot put another challenge on the clock until ${nextClockDate.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            throw new Warning("Team has clocked a challenge in the last 28 days.");
+        }
+
+        let challengingTeamClockCount;
+        try {
+            challengingTeamClockCount = await challenge.challengingTeam.getClockedChallengeCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challengingTeamClockCount >= 2) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.name}** already has two challenges on the clock.`, channel);
+            throw new Warning("Challenging team has the maximum number of clocked challenges.");
+        }
+
+        let challengedTeamClockCount;
+        try {
+            challengedTeamClockCount = await challenge.challengedTeam.getClockedChallengeCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challengedTeamClockCount >= 2) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.name}** already has two challenges on the clock.`, channel);
+            throw new Warning("Challenged team has the maximum number of clocked challenges.");
+        }
+
+        let alreadyClocked;
+        try {
+            alreadyClocked = await team.hasClockedThisSeason(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (alreadyClocked) {
+            await Discord.queue(`Sorry, ${member}, but your team has already put **${(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam).name}** on the clock this season.`, channel);
+            throw new Warning("Team already clocked this season.");
+        }
+
+        if (!message) {
+            await Discord.queue(`${member}, are you sure you wish to put this challenge on the clock?  This command should only be used if the opposing team is not responding to your challenge.  Note that you can only clock a challenge once every 28 days, you can only clock a team once every season, and you can have a maximum of two active challenges clocked at a time.  Use \`!clock confirm\` to confirm.`, channel);
+            return true;
+        }
+
+        if (message !== "confirm") {
+            await Discord.queue(`Sorry, ${member}, but you must type \`!clock confirm\` to confirm that you wish to put this challenge on the clock.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.clock(team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    // !clock <confirm>
+    /*
+     * Must be issued in a challenge channel.
+     * Player must be a captain or founder of a team.
+     * Team must not have their roster locked. (This means the team is participating in a tournament.)
+     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
+     * Team must not already have put the challenged team on the clock this season.
+     * Team must not already have put any team on the clock in the past 28 days.
+     * Both teams must not have two challenges on the clock.
+     * Must confirm.
+     *
+     * Success:
+     * 1) Write clock to the database
+     * 2) Update topic
+     * 3) Announce in channel
+     */
 
     // !matchtime
     /*
@@ -2661,27 +2866,20 @@ class Commands {
      * 1) Output the time until the match begins.
      */
 
-    // !clock <confirm>
+    // !deadline
     /*
      * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Team must not have their roster locked. (This means the team is participating in a tournament.)
-     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
-     * Team must not already have put the challenged team on the clock this season.
-     * Team must not already have put any team on the clock in the past 28 days.
-     * Both teams must not have two challenges on the clock.
-     * Must confirm.
+     * Clock deadline must have been set for the challenge.
      *
      * Success:
-     * 1) Write clock to the database
-     * 2) Update topic
-     * 3) Announce in channel
+     * 1) Output the deadline time in the user's local format.
      */
 
     // !streaming <URL>
     /*
      * Must be issued in a challenge channel.
      * Must not be streaming.
+     * URL must be valid.
      *
      * Success:
      * Add stream to database.
@@ -2695,6 +2893,29 @@ class Commands {
      *
      * Success:
      * Remove from database.
+     * Announce in channel.
+     */
+
+    // !cast <team1> <team2> <URL>
+    /*
+     * A challenge must exist between the two teams.
+     * Someone may not already be casting the match.
+     * URL must be valid.
+     *
+     * Success:
+     * Update database
+     * Caster gets added to the channel
+     * Announce in channel.
+     */
+
+    // !uncast
+    /*
+     * Must be issued in a challenge channel.
+     * Must be casting the match.
+     *
+     * Success:
+     * Update database.
+     * Caster gets removed from the channel
      * Announce in channel.
      */
 

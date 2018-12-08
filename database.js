@@ -264,6 +264,64 @@ class Database {
         await db.query("DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId", {newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
+    //       ##                #      ##   #           ##    ##
+    //        #                #     #  #  #            #     #
+    //  ##    #     ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #      #    #  #  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #      #    #  #  #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   ###    ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                          ###
+    /**
+     * Puts a challenge on the clock.
+     * @param {Team} team The team clocking the challenge.
+     * @param {Challenge} challenge The challenge to clock.
+     * @returns {Promise<{clocked: Date, clockDeadline: Date}>} The clocked date and the clock deadline date.
+     */
+    static async clockChallenge(team, challenge) {
+
+        /**
+         * @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}}
+         */
+        const data = await db.query(`
+            UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, UTCDATE()), ClockTeamId = @teamId WHERE ChallengeId = @challengeId
+
+            SELECT DateClocked, DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {clocked: data.recordsets[0][0].DateClocked, clockDeadline: data.recordsets[0][0].DateClockDeadline} || void 0;
+    }
+
+    //       ##                #              #   ##   #           ##    ##                             ##                      #    ####              ###
+    //        #                #              #  #  #  #            #     #                            #  #                     #    #                  #
+    //  ##    #     ##    ##   # #    ##    ###  #     ###    ###   #     #     ##   ###    ###   ##   #      ##   #  #  ###   ###   ###    ##   ###    #     ##    ###  # #
+    // #      #    #  #  #     ##    # ##  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #     #  #  #  #  #  #   #    #     #  #  #  #   #    # ##  #  #  ####
+    // #      #    #  #  #     # #   ##    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  #  #  #  #  #  #   #    #     #  #  #      #    ##    # ##  #  #
+    //  ##   ###    ##    ##   #  #   ##    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##    ##    ##    ###  #  #    ##  #      ##   #      #     ##    # #  #  #
+    //                                                                                      ###
+    /**
+     * Gets the number of clocked challenges for a team.
+     * @param {Team} team The team to check.
+     * @returns {Promise<number>} The number of clocked challenges for this team.
+     */
+    static async clockedChallengeCountForTeam(team) {
+
+        /**
+         * @type {{recordsets: [{ClockedChallenges: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT COUNT(ChallengeId) ClockedChallenges
+            FROM tblChallenge
+            WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
+                AND DateClocked IS NOT NULL
+                AND DateConfirmed IS NULL
+                AND DateClosed IS NULL
+                AND DateVoided IS NULL
+        `, {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].ClockedChallenges || 0;
+    }
+
     //                     #    #                #  #              ####               ##   #           ##    ##
     //                    # #                    ####              #                 #  #  #            #     #
     //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -571,12 +629,12 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, dateAdded: Date, dateClocked: Date, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(`
             SELECT
@@ -604,6 +662,7 @@ class Database {
                 ChallengingTeamScore,
                 ChallengedTeamScore,
                 DateAdded,
+                ClockTeamId,
                 DateClocked,
                 DateClockDeadline,
                 DateClockDeadlineNotified,
@@ -642,6 +701,7 @@ class Database {
             challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
             dateAdded: data.recordsets[0][0].DateAdded,
             dateClocked: data.recordsets[0][0].DateClocked,
+            clockTeamId: data.recordsets[0][0].ClockTeamId,
             dateClockDeadline: data.recordsets[0][0].DateClockDeadline,
             dateClockDeadlineNotified: data.recordsets[0][0].DateClockDeadlineNotified,
             dateReported: data.recordsets[0][0].DateReported,
@@ -676,6 +736,27 @@ class Database {
             WHERE p.DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].NewTeamId, member, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag} || void 0;
+    }
+
+    //              #    #  #               #     ##   ##                #     ###          #          ####              ###
+    //              #    ## #               #    #  #   #                #     #  #         #          #                  #
+    //  ###   ##   ###   ## #   ##   #  #  ###   #      #     ##    ##   # #   #  #   ###  ###    ##   ###    ##   ###    #     ##    ###  # #
+    // #  #  # ##   #    # ##  # ##   ##    #    #      #    #  #  #     ##    #  #  #  #   #    # ##  #     #  #  #  #   #    # ##  #  #  ####
+    //  ##   ##     #    # ##  ##     ##    #    #  #   #    #  #  #     # #   #  #  # ##   #    ##    #     #  #  #      #    ##    # ##  #  #
+    // #      ##     ##  #  #   ##   #  #    ##   ##   ###    ##    ##   #  #  ###    # #    ##   ##   #      ##   #      #     ##    # #  #  #
+    //  ###
+    /**
+     * Gets the next date this team can put a challenge on the clock.
+     * @param {Team} team The team to check.
+     * @returns {Promise<Date>} A promise that resolves with the next date this team can put a challenge on the clock.
+     */
+    static async getNextClockDateForTeam(team) {
+
+        /**
+         * @type {{recordsets: [{NextDate: Date}[]]}}
+         */
+        const data = await db.query("SELECT DATEADD(DAY, 28, MAX(DateClocked)) NextDate FROM tblChallenge WHERE ClockTeamId = @teamId AND DateVoided IS NULL", {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].NextDate || void 0;
     }
 
     //              #    ###                                   #             #   ##         ###                #     #             #  ###
@@ -1077,7 +1158,7 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await Db.query(`
+        const data = await db.query(`
             UPDATE c
             SET Map = ch.Map
             FROM tblChallenge c
@@ -1325,7 +1406,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the map has been suggested.
      */
     static async suggestMapForChallenge(challenge, team, map) {
-        await Db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId", {
             map: {type: Db.VARCHAR(100), value: map},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -1346,7 +1427,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the neutral server has been suggested.
      */
     static async suggestNeutralServerForChallenge(challenge, team) {
-        await Db.query("UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query("UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId", {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
@@ -1367,7 +1448,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the team size has been suggested.
      */
     static async suggestTeamSizeForChallenge(challenge, team, size) {
-        await Db.query("UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query("UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId", {
             size: {type: Db.INT, value: size},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -1389,11 +1470,42 @@ class Database {
      * @returns {Promise} A promise that resolves when the time has been suggested.
      */
     static async suggestTimeForChallenge(challenge, team, date) {
-        await Db.query("UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query("UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId", {
             date: {type: Db.DATETIME, value: date},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
+    }
+
+    //  #                      #  #                ##   ##                #              #  ###                     ###   #      #            ##
+    //  #                      #  #               #  #   #                #              #   #                       #    #                  #  #
+    // ###    ##    ###  # #   ####   ###   ###   #      #     ##    ##   # #    ##    ###   #     ##    ###  # #    #    ###   ##     ###    #     ##    ###   ###    ##   ###
+    //  #    # ##  #  #  ####  #  #  #  #  ##     #      #    #  #  #     ##    # ##  #  #   #    # ##  #  #  ####   #    #  #   #    ##       #   # ##  #  #  ##     #  #  #  #
+    //  #    ##    # ##  #  #  #  #  # ##    ##   #  #   #    #  #  #     # #   ##    #  #   #    ##    # ##  #  #   #    #  #   #      ##   #  #  ##    # ##    ##   #  #  #  #
+    //   ##   ##    # #  #  #  #  #   # #  ###     ##   ###    ##    ##   #  #   ##    ###   #     ##    # #  #  #   #    #  #  ###   ###     ##    ##    # #  ###     ##   #  #
+    /**
+     * Checks if one team has clocked another this season.
+     * @param {Team} team1 The team to check for clocking.
+     * @param {Team} team2 The team to check for being clocked.
+     * @returns {Promise<boolean>} A promise that resolves with whether a team has clocked another this season.
+     */
+    static async teamHasClockedTeamThisSeason(team1, team2) {
+
+        // TODO: Check season, not full history.
+        /**
+         * @type {{recordsets: [{HasClocked: boolean}[]]}}
+         */
+        const data = await db.query(`
+            SELECT CAST(CASE WHEN COUNT(ChallengeId) > 0 THEN 1 ELSE 0 END AS BIT) HasClocked
+            FROM tblChallenge
+            WHERE ClockTeamId = @team1Id
+                AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
+                AND Voided IS NULL
+        `, {
+            team1id: {type: Db.INT, value: team1.id},
+            team2id: {type: Db.INT, value: team2.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
     }
 
     //                #         #          #  #

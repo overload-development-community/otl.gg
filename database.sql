@@ -152,6 +152,7 @@ CREATE TABLE dbo.tblChallenge (
     ChallengedTeamScore INT NULL,
     DateAdded DATETIME NOT NULL CONSTRAINT DF_tblChallenge_DateAdded DEFAULT(getutcdate()),
     DateClocked DATETIME NULL,
+    ClockTeamId INT NULL CONSTRAINT FK_tblChallenge_ClockTeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
     DateClockDeadline DATETIME NULL,
     DateClockDeadlineNotified DATETIME NULL,
     DateReported DATETIME NULL,

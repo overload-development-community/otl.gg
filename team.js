@@ -640,6 +640,25 @@ class Team {
         }
     }
 
+    //              #     ##   ##                #              #   ##   #           ##    ##                             ##                      #
+    //              #    #  #   #                #              #  #  #  #            #     #                            #  #                     #
+    //  ###   ##   ###   #      #     ##    ##   # #    ##    ###  #     ###    ###   #     #     ##   ###    ###   ##   #      ##   #  #  ###   ###
+    // #  #  # ##   #    #      #    #  #  #     ##    # ##  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #     #  #  #  #  #  #   #
+    //  ##   ##     #    #  #   #    #  #  #     # #   ##    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  #  #  #  #  #  #   #
+    // #      ##     ##   ##   ###    ##    ##   #  #   ##    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##    ##    ##    ###  #  #    ##
+    //  ###                                                                                                   ###
+    /**
+     * Gets the number of clocked challenges for this team.
+     * @returns {Promise<number>} A promise that resolves with the number of clocked challenges.
+     */
+    async getClockedChallengeCount() {
+        try {
+            return await Db.clockedChallengeCountForTeam(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the number of clocked challenges for a team.", err);
+        }
+    }
+
     //              #    #  #                    #  #
     //              #    #  #                    ####
     //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###
@@ -656,6 +675,25 @@ class Team {
             return await Db.getTeamHomeMaps(this);
         } catch (err) {
             throw new Exception("There was a database error getting the home maps for the team the pilot is on.", err);
+        }
+    }
+
+    //              #    #  #               #     ##   ##                #     ###          #
+    //              #    ## #               #    #  #   #                #     #  #         #
+    //  ###   ##   ###   ## #   ##   #  #  ###   #      #     ##    ##   # #   #  #   ###  ###    ##
+    // #  #  # ##   #    # ##  # ##   ##    #    #      #    #  #  #     ##    #  #  #  #   #    # ##
+    //  ##   ##     #    # ##  ##     ##    #    #  #   #    #  #  #     # #   #  #  # ##   #    ##
+    // #      ##     ##  #  #   ##   #  #    ##   ##   ###    ##    ##   #  #  ###    # #    ##   ##
+    //  ###
+    /**
+     * Gets the next date that this team can put a challenge on the clock.
+     * @returns {Promise<Date>} A promise that resolves with the date the team can put a challenge on the clock.  Returns undefined if they have not clocked a challenge yet.
+     */
+    async getNextClockDate() {
+        try {
+            return await Db.getNextClockDateForTeam(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting a team's next clock date.", err);
         }
     }
 
@@ -694,6 +732,25 @@ class Team {
             return await Db.getTeamPilotCount(this);
         } catch (err) {
             throw new Exception("There was a database error getting the number of pilots on a team.", err);
+        }
+    }
+
+    // #                   ##   ##                #              #  ###   #      #            ##
+    // #                  #  #   #                #              #   #    #                  #  #
+    // ###    ###   ###   #      #     ##    ##   # #    ##    ###   #    ###   ##     ###    #     ##    ###   ###    ##   ###
+    // #  #  #  #  ##     #      #    #  #  #     ##    # ##  #  #   #    #  #   #    ##       #   # ##  #  #  ##     #  #  #  #
+    // #  #  # ##    ##   #  #   #    #  #  #     # #   ##    #  #   #    #  #   #      ##   #  #  ##    # ##    ##   #  #  #  #
+    // #  #   # #  ###     ##   ###    ##    ##   #  #   ##    ###   #    #  #  ###   ###     ##    ##    # #  ###     ##   #  #
+    /**
+     * Determines whether this team has clocked a challenge against another team this season.
+     * @param {Team} team The team to check against.
+     * @returns {Promise<Boolean>} A promise that resolves with whether this team has clocked the specified team this season.
+     */
+    async hasClockedThisSeason(team) {
+        try {
+            return await Db.teamHasClockedTeamThisSeason(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error getting whether a team has clocked another team this season.", err);
         }
     }
 

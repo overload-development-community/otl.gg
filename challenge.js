@@ -201,6 +201,33 @@ class Challenge {
                 await reportMsg.pin();
             }
 
+            const otherMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: "Challenge commands - Other",
+                timestamp: new Date(),
+                fields: [
+                    {
+                        name: "!matchtime",
+                        value: "Get the match time in your local timezone."
+                    },
+                    {
+                        name: "!countdown",
+                        value: "Get the amount of time until the match begins."
+                    },
+                    {
+                        name: "!streaming <URL>",
+                        value: "Indicate that you will be streaming this match with the specified URL."
+                    },
+                    {
+                        name: "!notstreaming",
+                        value: "Use this command if you've previously indicated that you will be streaming this match but won't be."
+                    }
+                ]
+            }), challenge.channel);
+
+            if (otherMsg) {
+                await otherMsg.pin();
+            }
+
             if (data.team1Penalized && data.team2Penalized) {
                 await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map and server selection is disabled.", challenge.channel);
             } else if (data.team1Penalized) {
@@ -309,6 +336,41 @@ class Challenge {
      */
     get channelName() {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
+    }
+
+    //       ##                #
+    //        #                #
+    //  ##    #     ##    ##   # #
+    // #      #    #  #  #     ##
+    // #      #    #  #  #     # #
+    //  ##   ###    ##    ##   #  #
+    /**
+     * Puts a challenge on the clock.
+     * @param {Team} team The team putting the challenge on the clock.
+     * @returns {Promise} A promise that resolves when the challenge is put on the clock.
+     */
+    async clock(team) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        let dates;
+        try {
+            dates = await Db.clockChallenge(team, this);
+        } catch (err) {
+            throw new Exception("There was a database error clocking a challenge.", err);
+        }
+
+        this.details.dateClocked = dates.clocked;
+        this.details.dateClockDeadline = dates.clockDeadline;
+
+        try {
+            await Discord.queue(`**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //                     #    #                #  #
@@ -503,17 +565,18 @@ class Challenge {
             challengingTeamPenalized: details.challengingTeamPenalized,
             challengedTeamPenalized: details.challengedTeamPenalized,
             suggestedMap: details.suggestedMap,
-            suggestedMapTeam: details.suggestedMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
-            suggestedNeutralServerTeam: details.suggestedNeutralServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedMapTeam: details.suggestedMapTeamId ? details.suggestedMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
+            suggestedNeutralServerTeam: details.suggestedNeutralServerTeamId ? details.suggestedNeutralServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             suggestedTeamSize: details.suggestedTeamSize,
-            suggestedTeamSizeTeam: details.suggestedTeamSizeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedTeamSizeTeam: details.suggestedTeamSizeTeamId ? details.suggestedTeamSizeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             suggestedTime: details.suggestedTime,
-            suggestedTimeTeam: details.suggestedTimeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
-            reportingTeam: details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
+            suggestedTimeTeam: details.suggestedTimeTeamId ? details.suggestedTimeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
+            reportingTeam: details.reportingTeamId ? details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             challengingTeamScore: details.challengingTeamScore,
             challengedTeamScore: details.challengedTeamScore,
             dateAdded: details.dateAdded,
             dateClocked: details.dateClocked,
+            clockTeam: details.clockTeamId ? details.clockTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             dateClockDeadline: details.dateClockDeadline,
             dateClockDeadlineNotified: details.dateClockDeadlineNotified,
             dateReported: details.dateReported,
@@ -742,7 +805,7 @@ class Challenge {
         let topic = `${this.challengingTeam.name} vs ${this.challengedTeam.name}`;
 
         if (this.details.dateClockDeadline) {
-            topic = `${topic}\n\nClock Deadline: ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+            topic = `${topic}\n\nClock Deadline: ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}\nClocked by: ${this.details.clockTeam}`;
         }
 
         topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
