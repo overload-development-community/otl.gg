@@ -214,6 +214,14 @@ class Challenge {
                         value: "Get the amount of time until the match begins."
                     },
                     {
+                        name: "!deadline",
+                        value: "Get the clock deadline time in your local timezone."
+                    },
+                    {
+                        name: "!deadlinecountdown",
+                        value: "Get the amount of time until the clock deadline."
+                    },
+                    {
                         name: "!streaming <URL>",
                         value: "Indicate that you will be streaming this match with the specified URL."
                     },

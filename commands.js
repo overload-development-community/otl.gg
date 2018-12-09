@@ -2520,7 +2520,7 @@ class Commands {
         }
 
         if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a time, use \`!suggesttime\` along with the date and time.  Timezone defaults to Pacific time, use the \`!timezone\` command to set your own timezone.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a time, use \`!suggesttime\` along with the date and time.  Timezone defaults to Pacific time, use the \`!timezone\` command to set your own time zone.`, channel);
             throw new Warning("Missing time.");
         }
 
@@ -2831,49 +2831,233 @@ class Commands {
         return true;
     }
 
-    // !clock <confirm>
-    /*
-     * Must be issued in a challenge channel.
-     * Player must be a captain or founder of a team.
-     * Team must not have their roster locked. (This means the team is participating in a tournament.)
-     * Challenged team must not have their roster locked. (This means the challenged team is participating in a tournament.)
-     * Team must not already have put the challenged team on the clock this season.
-     * Team must not already have put any team on the clock in the past 28 days.
-     * Both teams must not have two challenges on the clock.
-     * Must confirm.
-     *
-     * Success:
-     * 1) Write clock to the database
-     * 2) Update topic
-     * 3) Announce in channel
+    //              #          #      #     #
+    //              #          #      #
+    // # #    ###  ###    ##   ###   ###   ##    # #    ##
+    // ####  #  #   #    #     #  #   #     #    ####  # ##
+    // #  #  # ##   #    #     #  #   #     #    #  #  ##
+    // #  #   # #    ##   ##   #  #    ##  ###   #  #   ##
+    /**
+     * Gets the challenge's match time in the pilot's local time zone.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async matchtime(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
-    // !matchtime
-    /*
-     * Must be issued in a challenge channel.
-     * Match time must have been set for the challenge.
-     *
-     * Success:
-     * 1) Output the match time in the user's local format.
-     */
+        if (!challenge) {
+            return false;
+        }
 
-    // !countdown
-    /*
-     * Must be issued in a challenge channel.
-     * Match time must have been set for the challenge.
-     *
-     * Success:
-     * 1) Output the time until the match begins.
-     */
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!matchtime\` by itself to get the match's time in your local time zone.`, channel);
+            return false;
+        }
 
-    // !deadline
-    /*
-     * Must be issued in a challenge channel.
-     * Clock deadline must have been set for the challenge.
-     *
-     * Success:
-     * 1) Output the deadline time in the user's local format.
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.matchTime) {
+            await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
+        } else {
+            await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
+        }
+
+        return true;
+    }
+
+    //                          #       #
+    //                          #       #
+    //  ##    ##   #  #  ###   ###    ###   ##   #  #  ###
+    // #     #  #  #  #  #  #   #    #  #  #  #  #  #  #  #
+    // #     #  #  #  #  #  #   #    #  #  #  #  ####  #  #
+    //  ##    ##    ###  #  #    ##   ###   ##   ####  #  #
+    /**
+     * Gets the amount of time until the challenge begins.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async countdown(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!countdown\` by itself to get the time remaining until the match begins.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.matchTime) {
+            const difference = challenge.details.matchTime.getDate() - new Date().getDate(),
+                days = Math.abs(difference) / (24 * 60 * 60 * 1000),
+                hours = (Math.abs(difference) / (60 * 60 * 1000)) % 24,
+                minutes = (Math.abs(difference) / (60 * 1000) % 60) % 60,
+                seconds = (Math.abs(difference) / 1000) % 60;
+
+            if (difference > 0) {
+                await Discord.queue(`${member}, this match is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
+            } else {
+                await Discord.queue(`${member}, this match was scheduled to begin ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `} ago.`, channel);
+            }
+        } else {
+            await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
+        }
+
+        return true;
+    }
+
+    //    #                 #  ##     #
+    //    #                 #   #
+    //  ###   ##    ###   ###   #    ##    ###    ##
+    // #  #  # ##  #  #  #  #   #     #    #  #  # ##
+    // #  #  ##    # ##  #  #   #     #    #  #  ##
+    //  ###   ##    # #   ###  ###   ###   #  #   ##
+    /**
+     * Gets the challenge's clock deadline in the pilot's local time zone.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async deadline(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!deadline\` by itself to get the match's clock deadline in your local time zone.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateClockDeadline) {
+            await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
+        } else {
+            await Discord.queue(`${member}, this match has not yet been put on the clock.`, channel);
+        }
+
+        return true;
+    }
+
+    //    #                 #  ##     #                                         #       #
+    //    #                 #   #                                               #       #
+    //  ###   ##    ###   ###   #    ##    ###    ##    ##    ##   #  #  ###   ###    ###   ##   #  #  ###
+    // #  #  # ##  #  #  #  #   #     #    #  #  # ##  #     #  #  #  #  #  #   #    #  #  #  #  #  #  #  #
+    // #  #  ##    # ##  #  #   #     #    #  #  ##    #     #  #  #  #  #  #   #    #  #  #  #  ####  #  #
+    //  ###   ##    # #   ###  ###   ###   #  #   ##    ##    ##    ###  #  #    ##   ###   ##   ####  #  #
+    /**
+     * Gets the amount of time until the clock deadline.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async deadlinecountdown(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!deadlinecountdown\` by itself to get the time remaining until the match's clock deadline.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateClockDeadline) {
+            const difference = challenge.details.dateClockDeadline.getDate() - new Date().getDate(),
+                days = Math.abs(difference) / (24 * 60 * 60 * 1000),
+                hours = (Math.abs(difference) / (60 * 60 * 1000)) % 24,
+                minutes = (Math.abs(difference) / (60 * 1000) % 60) % 60,
+                seconds = (Math.abs(difference) / 1000) % 60;
+
+            if (difference > 0) {
+                await Discord.queue(`${member}, this match's clock deadline expires in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
+            } else {
+                await Discord.queue(`${member}, this match's clock deadline expired ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `} ago.`, channel);
+            }
+        } else {
+            await Discord.queue(`${member}, this match has not yet been put on the clock.`, channel);
+        }
+
+        return true;
+    }
 
     // !streaming <URL>
     /*
