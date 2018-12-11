@@ -5,6 +5,7 @@ declare module 'discord.js' {
      * TypeScript definitions for discordJs.GuildMember.extensions.js.
      */
     interface GuildMember {
+        addTwitchName(name: string): Promise<void>;
         bannedFromTeamUntil(team: Team): Promise<Date>;
         canBeCaptain(): Promise<boolean>;
         canRemovePilot(pilot: GuildMember): Promise<boolean>;
@@ -16,6 +17,7 @@ declare module 'discord.js' {
         isFounder(): boolean;
         joinTeamDeniedUntil(): Promise<Date>;
         leftDiscord(): Promise<void>;
+        removeTwitchName(): Promise<void>;
         requestTeam(team: Team): Promise<void>;
         setTimezone(timezone: string): Promise<void>;
         updateName(oldMember: GuildMember): Promise<void>;

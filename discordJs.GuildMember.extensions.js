@@ -15,6 +15,25 @@ setTimeout(() => {
     Discord = require("./discord");
 }, 0);
 
+//          #     #  ###          #     #          #     #  #
+//          #     #   #                 #          #     ## #
+//  ###   ###   ###   #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+// #  #  #  #  #  #   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+// # ##  #  #  #  #   #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+//  # #   ###   ###   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+/**
+ * Adds a Twitch name to the member's account.
+ * @param {string} name The Twitch name.
+ * @returns {Promise} A promise that resolves when the Twitch name has been added.
+ */
+DiscordJs.GuildMember.prototype.addTwitchName = async function(name) {
+    try {
+        return await Db.addTwitchName(this, name);
+    } catch (err) {
+        throw new Exception("There was a database error adding a Twitch name.", err);
+    }
+};
+
 // #                                #  ####                    ###                     #  #         #     #    ##
 // #                                #  #                        #                      #  #         #           #
 // ###    ###  ###   ###    ##    ###  ###   ###    ##   # #    #     ##    ###  # #   #  #  ###   ###   ##     #
@@ -288,6 +307,24 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
 
     if (team.founder.id === this.id) {
         throw new Error(`${this.displayName} has left the server, but was the founder of ${team.name}.  Please resolve team ownership manually.`);
+    }
+};
+
+//                                     ###          #     #          #     #  #
+//                                      #                 #          #     ## #
+// ###    ##   # #    ##   # #    ##    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+// #  #  # ##  ####  #  #  # #   # ##   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+// #     ##    #  #  #  #  # #   ##     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+// #      ##   #  #   ##    #     ##    #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+/**
+ * Removes a Twitch name from the member's account.
+ * @returns {Promise} A promise that resolves when the Twitch name has been added.
+ */
+DiscordJs.GuildMember.prototype.removeTwitchName = async function() {
+    try {
+        return await Db.removeTwitchName(this);
+    } catch (err) {
+        throw new Exception("There was a database error adding a Twitch name.", err);
     }
 };
 

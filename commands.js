@@ -2929,9 +2929,9 @@ class Commands {
         if (challenge.details.matchTime) {
             const difference = challenge.details.matchTime.getDate() - new Date().getDate(),
                 days = Math.abs(difference) / (24 * 60 * 60 * 1000),
-                hours = (Math.abs(difference) / (60 * 60 * 1000)) % 24,
-                minutes = (Math.abs(difference) / (60 * 1000) % 60) % 60,
-                seconds = (Math.abs(difference) / 1000) % 60;
+                hours = Math.abs(difference) / (60 * 60 * 1000) % 24,
+                minutes = Math.abs(difference) / (60 * 1000) % 60 % 60,
+                seconds = Math.abs(difference) / 1000 % 60;
 
             if (difference > 0) {
                 await Discord.queue(`${member}, this match is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
@@ -3043,9 +3043,9 @@ class Commands {
         if (challenge.details.dateClockDeadline) {
             const difference = challenge.details.dateClockDeadline.getDate() - new Date().getDate(),
                 days = Math.abs(difference) / (24 * 60 * 60 * 1000),
-                hours = (Math.abs(difference) / (60 * 60 * 1000)) % 24,
-                minutes = (Math.abs(difference) / (60 * 1000) % 60) % 60,
-                seconds = (Math.abs(difference) / 1000) % 60;
+                hours = Math.abs(difference) / (60 * 60 * 1000) % 24,
+                minutes = Math.abs(difference) / (60 * 1000) % 60 % 60,
+                seconds = Math.abs(difference) / 1000 % 60;
 
             if (difference > 0) {
                 await Discord.queue(`${member}, this match's clock deadline expires in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
@@ -3059,11 +3059,81 @@ class Commands {
         return true;
     }
 
-    // !streaming <URL>
+    //  #           #     #          #
+    //  #                 #          #
+    // ###   #  #  ##    ###    ##   ###
+    //  #    #  #   #     #    #     #  #
+    //  #    ####   #     #    #     #  #
+    //   ##  ####  ###     ##   ##   #  #
+    /**
+     * Adds a pilot's Twitch channel to their profile.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async twitch(member, channel, message) {
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To link your Twitch channel, add the name of your channel after the command, for example \`!twitch roncli\`.`, channel);
+            return false;
+        }
+
+        try {
+            await member.addTwitchName(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your Twitch channel is now linked as https://twitch.tv/${message}.  If you wish to unlik your channel, use the \`!removetwitch\` command.`, channel);
+
+        return true;
+    }
+
+    //                                      #           #     #          #
+    //                                      #                 #          #
+    // ###    ##   # #    ##   # #    ##   ###   #  #  ##    ###    ##   ###
+    // #  #  # ##  ####  #  #  # #   # ##   #    #  #   #     #    #     #  #
+    // #     ##    #  #  #  #  # #   ##     #    ####   #     #    #     #  #
+    // #      ##   #  #   ##    #     ##     ##  ####  ###     ##   ##   #  #
+    /**
+     * Removes a pilot's Twitch channel from their profile.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async removetwitch(member, channel, message) {
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!removetwitch\` by itself to unlink your Twitch channel.`, channel);
+            return false;
+        }
+
+        try {
+            await member.removeTwitchName();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your Twitch channel is now unlinked.`, channel);
+
+        return true;
+    }
+
+    // !twitch <name>
+    /*
+     * Must have a name.
+     *
+     * Success:
+     * Add URL to database.
+     * Announce in channel.
+     */
+
+    // !streaming
     /*
      * Must be issued in a challenge channel.
      * Must not be streaming.
-     * URL must be valid.
      *
      * Success:
      * Add stream to database.
@@ -3080,11 +3150,11 @@ class Commands {
      * Announce in channel.
      */
 
-    // !cast <team1> <team2> <URL>
+    // !cast <team1> <team2>
     /*
      * A challenge must exist between the two teams.
+     * There must be at least one player streaming the match.
      * Someone may not already be casting the match.
-     * URL must be valid.
      *
      * Success:
      * Update database
@@ -3200,10 +3270,21 @@ class Commands {
      * Both teams must have 2 or more pilots.
      *
      * Success:
-     * 1) Write challenge to database
+     * 1) Write locked challenge to database
      * 2) Create chat room and apply appropriate permissions
      * 3) Set topic
      * 4) Set pinned post
+     */
+
+    // !lockmatch
+    /*
+     * Player must be an admin.
+     * A challenge between the two teams must exist.
+     * Match must be unlocked.
+     *
+     * Success:
+     * 1) Match locks in database.
+     * 2) Announce in channel.
      */
 
     // !unlockmatch
@@ -3217,7 +3298,7 @@ class Commands {
      * 2) Announce in channel.
      */
 
-    // !forcehometeam <team1> <team2> <hometeam>
+    // !forcehomemapteam <team1> <team2> <hometeam>
     /*
      * Player must be an admin.
      * Teams must be involved in a challenge.
@@ -3252,22 +3333,11 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forcehomeserver <team1> <team2> <hometeam>
+    // !forcehomeserverteam <team1> <team2> <hometeam>
     /*
      * Player must be an admin.
      * Teams must be involved in a challenge.
      * Home team must be one of the teams.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
-     */
-
-    // !lockhomes <team1> <team2>
-    /*
-     * Player must be an admin.
-     * Teams must be involved in a challenge.
      *
      * Success:
      * 1) Update database
@@ -3389,12 +3459,8 @@ class Commands {
 
     // Automation
     /*
-     * Alert administrator when 28 days have passed since a challenge was issued.
-     */
-
-    // Streamers
-    /*
-     * Allow streamers to broadcast their game, and other streamers to pick up those broadcasts and commentate on them.
+     * Alert administrator when 28 days have passed since a challenge was clocked.
+     * Alert administrator when an hour has passed since a challenge was supposed to be played.
      */
 }
 

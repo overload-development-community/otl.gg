@@ -88,6 +88,39 @@ class Database {
         });
     }
 
+    //          #     #  ###          #     #          #     #  #
+    //          #     #   #                 #          #     ## #
+    //  ###   ###   ###   #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+    // #  #  #  #  #  #   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+    // # ##  #  #  #  #   #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+    //  # #   ###   ###   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+    /**
+     * Adds a pilot's Twitch name to their profile.
+     * @param {DiscordJs.GuildMember} member The pilot to update.
+     * @param {string} name The name of the Twitch channel.
+     * @returns {Promise} A promise that resolves when the Twitch name has been added to the profile.
+     */
+    static async addTwitchName(member, name) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            UPDATE tblPlayer SET TwitchName = @name WHERE PlayerId = @playerId
+        `, {
+            discordId: {type: Db.INT, value: member.id},
+            name: {type: Db.VARCHAR(64), value: name}
+        });
+    }
+
     //                   ##          #  #                    #  #
     //                    #          #  #                    ####
     //  ###  ###   ###    #    #  #  ####   ##   # #    ##   ####   ###  ###
@@ -1280,6 +1313,21 @@ class Database {
             teamId: {type: Db.INT, value: team.id},
             discordId: {type: Db.VARCHAR(24), value: member.id}
         });
+    }
+
+    //                                     ###          #     #          #     #  #
+    //                                      #                 #          #     ## #
+    // ###    ##   # #    ##   # #    ##    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+    // #  #  # ##  ####  #  #  # #   # ##   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+    // #     ##    #  #  #  #  # #   ##     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+    // #      ##   #  #   ##    #     ##    #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+    /**
+     * Removes a pilot's Twitch name from their profile.
+     * @param {DiscordJs.GuildMember} member The pilot to update.
+     * @returns {Promise} A promise that resolves when the Twitch name has been removed from the profile.
+     */
+    static async removeTwitchName(member) {
+        await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.INT, value: member.id}});
     }
 
     //                                       #    ###

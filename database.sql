@@ -19,6 +19,7 @@ CREATE TABLE dbo.tblPlayer (
     PlayerId INT IDENTITY(1, 1) NOT NULL,
     DiscordId VARCHAR(24) NOT NULL,
     Name VARCHAR(64) NOT NULL,
+    TwitchName VARCHAR(64) NULL,
     Timezone VARCHAR(50) NULL,
     DateAdded DATETIME NOT NULL CONSTRAINT DF_tblPlayer_DateAdded DEFAULT (getutcdate()),
     PRIMARY KEY (PlayerId ASC)
