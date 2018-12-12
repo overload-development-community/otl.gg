@@ -58,6 +58,32 @@ class Database {
         });
     }
 
+    //          #     #   ##                 #                ###          ##   #           ##    ##
+    //          #     #  #  #                #                 #          #  #  #            #     #
+    //  ###   ###   ###  #      ###   ###   ###    ##   ###    #     ##   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #  #     #  #  ##      #    # ##  #  #   #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // # ##  #  #  #  #  #  #  # ##    ##    #    ##    #      #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  # #   ###   ###   ##    # #  ###      ##   ##   #      #     ##    ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                               ###
+    /**
+     * Adds a caster to a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The caster.
+     * @returns {Promise} A promise that resolves when a caster is added to a challenge.
+     */
+    static async addCasterToChallenge(challenge, member) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            UPDATE tblChallenge SET CasterPlayerId = @playerId WHERE ChallengeId = @challengeId
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //          #     #  ###    #    ##           #    ###         ###
     //          #     #  #  #         #           #     #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
@@ -623,6 +649,13 @@ class Database {
         await db.query(`
             UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @teamId
 
+            DELETE FROM cs
+            FROM tblChallengeStreamer cs
+            INNER JOIN tblChallenge c ON cs.ChallengeId = c.ChallengeId
+            WHERE c.DateConfirmed IS NULL
+                AND c.DateVoided IS NULL
+                AND cs.PlayerId IN (SELECT PlayerId FROM tblRoster WHERE TeamId = @teamId)
+
             DELETE FROM tblRoster WHERE TeamId = @teamId
             DELETE FROM tblRequest WHERE TeamId = @teamId
             DELETE FROM tblInvite WHERE TeamId = @teamId
@@ -692,49 +725,51 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(`
             SELECT
-                OrangeTeamId,
-                BlueTeamId,
-                Map,
-                TeamSize,
-                MatchTime,
-                HomeMapTeamId,
-                HomeServerTeamId,
-                AdminCreated,
-                HomesLocked,
-                UsingHomeMapTeam,
-                UsingHomeServerTeam,
-                ChallengingTeamPenalized,
-                ChallengedTeamPenalized,
-                SuggestedMap,
-                SuggestedMapTeamId,
-                SuggestedNeutralServerTeamId,
-                SuggestedTeamSize,
-                SuggestedTeamSizeTeamId,
-                SuggestedTime,
-                SuggestedTimeTeamId,
-                ReportingTeamId,
-                ChallengingTeamScore,
-                ChallengedTeamScore,
-                DateAdded,
-                ClockTeamId,
-                DateClocked,
-                DateClockDeadline,
-                DateClockDeadlineNotified,
-                DateReported,
-                DateConfirmed,
-                DateClosed,
-                DateVoided
-            FROM tblChallenge
-            WHERE ChallengeId = @challengeId
+                c.OrangeTeamId,
+                c.BlueTeamId,
+                c.Map,
+                c.TeamSize,
+                c.MatchTime,
+                c.HomeMapTeamId,
+                c.HomeServerTeamId,
+                c.AdminCreated,
+                c.HomesLocked,
+                c.UsingHomeMapTeam,
+                c.UsingHomeServerTeam,
+                c.ChallengingTeamPenalized,
+                c.ChallengedTeamPenalized,
+                c.SuggestedMap,
+                c.SuggestedMapTeamId,
+                c.SuggestedNeutralServerTeamId,
+                c.SuggestedTeamSize,
+                c.SuggestedTeamSizeTeamId,
+                c.SuggestedTime,
+                c.SuggestedTimeTeamId,
+                c.ReportingTeamId,
+                c.ChallengingTeamScore,
+                c.ChallengedTeamScore,
+                c.DateAdded,
+                c.ClockTeamId,
+                p.DiscordId,
+                c.DateClocked,
+                c.DateClockDeadline,
+                c.DateClockDeadlineNotified,
+                c.DateReported,
+                c.DateConfirmed,
+                c.DateClosed,
+                c.DateVoided
+            FROM tblChallenge c
+            LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
+            WHERE c.ChallengeId = @challengeId
 
             SELECT Map FROM tblChallengeHome WHERE ChallengeId = @challengeId ORDER BY Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -765,6 +800,7 @@ class Database {
             dateAdded: data.recordsets[0][0].DateAdded,
             dateClocked: data.recordsets[0][0].DateClocked,
             clockTeamId: data.recordsets[0][0].ClockTeamId,
+            casterDiscordId: data.recordsets[0][0].DiscordId,
             dateClockDeadline: data.recordsets[0][0].DateClockDeadline,
             dateClockDeadlineNotified: data.recordsets[0][0].DateClockDeadlineNotified,
             dateReported: data.recordsets[0][0].DateReported,
@@ -1315,6 +1351,22 @@ class Database {
         });
     }
 
+    //                                      ##                 #                ####                     ##   #           ##    ##
+    //                                     #  #                #                #                       #  #  #            #     #
+    // ###    ##   # #    ##   # #    ##   #      ###   ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##  ####  #  #  # #   # ##  #     #  #  ##      #    # ##  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##    ##    #    ##    #     #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##   #  #   ##    #     ##    ##    # #  ###      ##   ##   #     #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                             ###
+    /**
+     * Removes a caster from a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when a caster is removed from a challenge.
+     */
+    static async removeCasterFromChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET CasterPlayerId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //                                     ###    #    ##           #    ####                    ###
     //                                     #  #         #           #    #                        #
     // ###    ##   # #    ##   # #    ##   #  #  ##     #     ##   ###   ###   ###    ##   # #    #     ##    ###  # #
@@ -1335,6 +1387,13 @@ class Database {
 
             IF EXISTS(SELECT TOP 1 1 FROM tblRoster WHERE TeamId = @teamId AND PlayerId = @playerId)
             BEGIN
+                DELETE FROM cs
+                FROM tblChallengeStreamer cs
+                INNER JOIN tblChallenge c ON cs.ChallengeId = c.ChallengeId
+                WHERE c.DateConfirmed IS NULL
+                    AND c.DateVoided IS NULL
+                    AND cs.PlayerId = @playerId
+
                 IF EXISTS (
                     SELECT TOP 1 1
                     FROM tblStats s

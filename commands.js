@@ -19,7 +19,8 @@ const tz = require("timezone-js"),
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
-    teamTagMatch = /^[0-9A-Z]{1,5}$/;
+    teamTagMatch = /^[0-9A-Z]{1,5}$/,
+    twoTeamMatch = /^([^ ]+) ([^ ]+)$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -3197,8 +3198,8 @@ class Commands {
         }
 
         if (!twitchName) {
-            await Discord.queue(`Sorry, ${member}, but you haven't linked your Twitch channel yet!  Use the \`!twitch\` command to link up your Twitch account.`, channel);
-            throw new Warning("Twitch account not linked.");
+            await Discord.queue(`Sorry, ${member}, but you haven't linked your Twitch channel yet!  Use the \`!twitch\` command to link your Twitch channel.`, channel);
+            throw new Warning("Twitch channel not linked.");
         }
 
         try {
@@ -3292,48 +3293,171 @@ class Commands {
         return true;
     }
 
-    // !streaming
-    /*
-     * Must be issued in a challenge channel.
-     * Must not be streaming.
-     *
-     * Success:
-     * Add stream to database.
-     * Announce in channel.
+    //                     #
+    //                     #
+    //  ##    ###   ###   ###
+    // #     #  #  ##      #
+    // #     # ##    ##    #
+    //  ##    # #  ###      ##
+    /**
+     * Indicates that a pilot will cast a race.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async cast(member, channel, message) {
+        let twitchName;
+        try {
+            twitchName = member.getTwitchName();
+        } catch (err) {
+            throw err;
+        }
 
-    // !notstreaming
-    /*
-     * Must be issued in a challenge channel.
-     * Must be streaming.
-     *
-     * Success:
-     * Remove from database.
-     * Announce in channel.
-     */
+        if (!twitchName) {
+            await Discord.queue(`Sorry, ${member}, but you must link your Twitch channel before requesting to cast a match.  Use the \`!twitch\` command to link your Twitch channel.`, channel);
+            throw new Warning("Pilot has not linked Twitch.");
+        }
 
-    // !cast <team1> <team2>
-    /*
-     * A challenge must exist between the two teams.
-     * There must be at least one player streaming the match.
-     * Someone may not already be casting the match.
-     *
-     * Success:
-     * Update database
-     * Caster gets added to the channel
-     * Announce in channel.
-     */
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To cast a match, use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
+            return false;
+        }
 
-    // !uncast
-    /*
-     * Must be issued in a challenge channel.
-     * Must be casting the match.
-     *
-     * Success:
-     * Update database.
-     * Caster gets removed from the channel
-     * Announce in channel.
+        if (!twoTeamMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
+            return false;
+        }
+
+        const {1: tag1, 2: tag2} = twoTeamMatch.exec(message);
+
+        let team1;
+        try {
+            team1 = await Team.getByNameOrTag(tag1);
+        } catch (err) {
+            throw err;
+        }
+
+        if (!team1) {
+            await Discord.queue(`Sorry, ${member}, but I do not recognize **${tag1}** as a valid team tag.`, channel);
+            throw new Warning("Invalid team tag.");
+        }
+
+        let team2;
+        try {
+            team2 = await Team.getByNameOrTag(tag1);
+        } catch (err) {
+            throw err;
+        }
+
+        if (!team2) {
+            await Discord.queue(`Sorry, ${member}, but I do not recognize **${tag2}** as a valid team tag.`, channel);
+            throw new Warning("Invalid team tag.");
+        }
+
+        let challenge;
+        try {
+            challenge = await Challenge.getByTeams(team1, team2);
+        } catch (err) {
+            throw err;
+        }
+
+        if (!challenge) {
+            await Discord.queue(`Sorry, ${member}, but I can't find an active challenge between those two teams.`, channel);
+            throw new Warning("Invalid team tag.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            throw err;
+        }
+
+        if (challenge.details.caster) {
+            await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} is already scheduled to cast this match.`, channel);
+            throw new Warning("");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
+            throw new Warning("Match has been confirmed.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        try {
+            await challenge.addCaster(member);
+        } catch (err) {
+            throw err;
+        }
+
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the players who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` in ${challenge.channel}`, channel);
+
+        return true;
+    }
+
+    //                                 #
+    //                                 #
+    // #  #  ###    ##    ###   ###   ###
+    // #  #  #  #  #     #  #  ##      #
+    // #  #  #  #  #     # ##    ##    #
+    //  ###  #  #   ##    # #  ###      ##
+    /**
+     * Indicates that a pilot will not cast a race.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async uncast(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!uncast\` by itself to indicate that you will not be casting the match.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
+            throw new Warning("Match has been confirmed.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        try {
+            await challenge.removeCaster(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, you are no longer scheduled to cast the match, and have been removed from ${challenge.channel}.`, member);
+
+        return true;
+    }
 
     // !report <score1> <score2>
     /*

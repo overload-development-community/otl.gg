@@ -346,6 +346,41 @@ class Challenge {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
     }
 
+    //          #     #   ##                 #
+    //          #     #  #  #                #
+    //  ###   ###   ###  #      ###   ###   ###    ##   ###
+    // #  #  #  #  #  #  #     #  #  ##      #    # ##  #  #
+    // # ##  #  #  #  #  #  #  # ##    ##    #    ##    #
+    //  # #   ###   ###   ##    # #  ###      ##   ##   #
+    /**
+     * Adds a caster to the challenge.
+     * @param {DiscordJs.GuildMember} member The caster.
+     * @returns {Promise} A promise that resolves when the caster has been added to the challenge.
+     */
+    async addCaster(member) {
+        try {
+            Db.addCasterToChallenge(this, member);
+        } catch (err) {
+            throw new Exception("There was a database error adding a pilot as a caster to a challenge.", err);
+        }
+
+        this.details.caster = member;
+
+        try {
+            await this.channel.overwritePermissions(
+                member,
+                {"VIEW_CHANNEL": true},
+                `${member} is scheduled to cast this match.`
+            );
+
+            await this.updateTopic();
+
+            await Discord.queue(`${member} is now scheduled to cast this match.`, this.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //          #     #   ##    #
     //          #     #  #  #   #
     //  ###   ###   ###   #    ###   ###    ##    ###  # #    ##   ###
@@ -363,6 +398,8 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a database error adding a pilot as a streamer to a challenge.", err);
         }
+
+        await this.updateTopic();
     }
 
     //       ##                #
@@ -601,6 +638,7 @@ class Challenge {
             reportingTeam: details.reportingTeamId ? details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             challengingTeamScore: details.challengingTeamScore,
             challengedTeamScore: details.challengedTeamScore,
+            caster: Discord.findGuildMemberById(details.casterDiscordId),
             dateAdded: details.dateAdded,
             dateClocked: details.dateClocked,
             clockTeam: details.clockTeamId ? details.clockTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
@@ -643,6 +681,41 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                      ##                 #
+    //                                     #  #                #
+    // ###    ##   # #    ##   # #    ##   #      ###   ###   ###    ##   ###
+    // #  #  # ##  ####  #  #  # #   # ##  #     #  #  ##      #    # ##  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##    ##    #    ##    #
+    // #      ##   #  #   ##    #     ##    ##    # #  ###      ##   ##   #
+    /**
+     * Removes a caster from the challenge.
+     * @param {DiscordJs.GuildMember} member The caster.
+     * @returns {Promise} A promise that resolves when the caster has been removed from the challenge.
+     */
+    async removeCaster(member) {
+        try {
+            Db.removeCasterFromChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error removing a pilot as a caster from a challenge.", err);
+        }
+
+        this.details.caster = void 0;
+
+        try {
+            await this.channel.overwritePermissions(
+                member,
+                {"VIEW_CHANNEL": null},
+                `${member} is no longer scheduled to cast this match.`
+            );
+
+            await this.updateTopic();
+
+            await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
