@@ -1468,6 +1468,37 @@ class Database {
         await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
     }
 
+    //                                #    #  #         #          #
+    //                                #    ####         #          #
+    // ###    ##   ###    ##   ###   ###   ####   ###  ###    ##   ###
+    // #  #  # ##  #  #  #  #  #  #   #    #  #  #  #   #    #     #  #
+    // #     ##    #  #  #  #  #      #    #  #  # ##   #    #     #  #
+    // #      ##   ###    ##   #       ##  #  #   # #    ##   ##   #  #
+    //             #
+    /**
+     * Reports a match.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} reportingTeam The reporting team.
+     * @param {number} challengingTeamScore The challenging team's score.
+     * @param {number} challengedTeamScore The challenged team's score.
+     * @returns {Promise} A promise that resolves when the match has been reported.
+     */
+    static async reportMatch(challenge, reportingTeam, challengingTeamScore, challengedTeamScore) {
+        await db.query(`
+            UPDATE tblChallenge SET
+                ReportingTeamId = @reportingTeamId,
+                ChallengingTeamScore = @challengingTeamScore,
+                ChallengedTeamScore = @challengedTeamScore,
+                DateReported = GETUTCDATE()
+            WHERE ChallengeId = @challengeId
+        `, {
+            reportingTeamId: {type: Db.INT, value: reportingTeam.id},
+            challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
+            challengedTeamScore: {type: Db.INT, value: challengedTeamScore},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //                                       #    ###
     //                                       #     #
     // ###    ##    ###  #  #   ##    ###   ###    #     ##    ###  # #

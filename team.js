@@ -403,7 +403,6 @@ class Team {
                 title: this.name,
                 description: "Leadership Update",
                 color: 0x008000,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Captain Added",
@@ -461,7 +460,6 @@ class Team {
                 title: this.name,
                 description: "Pilot Added",
                 color: 0x00FF00,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Pilot Added",
@@ -622,7 +620,6 @@ class Team {
                 title: `${this.name}`,
                 description: "Team Disbanded",
                 color: 0xFF00FF,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Pilots Removed",
@@ -833,7 +830,6 @@ class Team {
                 title: this.name,
                 description: "Leadership Update",
                 color: 0x800000,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Old Founder",
@@ -902,7 +898,6 @@ class Team {
                 title: this.name,
                 description: "Pilot Left",
                 color: 0xFF0000,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Pilot Left",
@@ -1004,7 +999,6 @@ class Team {
                 title: this.name,
                 description: "Leadership Update",
                 color: 0x800000,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "Captain Removed",
@@ -1069,7 +1063,6 @@ class Team {
                     title: this.name,
                     description: "Pilot Removed",
                     color: 0xFF0000,
-                    timestamp: new Date(),
                     fields: [
                         {
                             name: "Pilot Removed",
@@ -1201,7 +1194,6 @@ class Team {
             title: `${this.name} (${this.tag})`,
             description: reinstating ? "Team Reinstated" : "New Team",
             color: 0x0000FF,
-            timestamp: new Date(),
             fields: [
                 {
                     name: "Founder Added",
@@ -1216,7 +1208,6 @@ class Team {
         const msg1 = await Discord.richQueue(new DiscordJs.RichEmbed({
             title: "Founder commands",
             color: 0x00FF00,
-            timestamp: new Date(),
             fields: [
                 {
                     name: "!color ([light|dark]) [red|orange|yellow|green|indigo|blue|purple]",
@@ -1248,7 +1239,6 @@ class Team {
         const msg2 = await Discord.richQueue(new DiscordJs.RichEmbed({
             title: "Captain commands",
             color: 0x00FF00,
-            timestamp: new Date(),
             fields: [
                 {
                     name: "!home [1|2|3] <map>",

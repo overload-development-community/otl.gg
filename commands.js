@@ -18,6 +18,7 @@ const tz = require("timezone-js"),
     idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
+    scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/,
     twoTeamMatch = /^([^ ]+) ([^ ]+)$/;
@@ -3455,6 +3456,101 @@ class Commands {
         }
 
         await Discord.queue(`${member}, you are no longer scheduled to cast the match, and have been removed from ${challenge.channel}.`, member);
+
+        return true;
+    }
+
+    //                                #
+    //                                #
+    // ###    ##   ###    ##   ###   ###
+    // #  #  # ##  #  #  #  #  #  #   #
+    // #     ##    #  #  #  #  #      #
+    // #      ##   ###    ##   #       ##
+    //             #
+    /**
+     * Reports a match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async report(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already reported.");
+        }
+
+        if (!scoreMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            return false;
+        }
+
+        const matches = scoreMatch.exec(message);
+        let score1 = +matches[1],
+            score2 = +matches[2];
+
+        if (score2 > score1) {
+            [score1, score2] = [score2, score1];
+        }
+
+        try {
+            await challenge.reportMatch(team, score1, score2);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }

@@ -96,7 +96,6 @@ class Challenge {
                 title: "Challenge commands - Map",
                 description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps()).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
                 color: data.homeMapTeam.role.color,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "!pickmap <a|b|c>",
@@ -125,7 +124,6 @@ class Challenge {
                 title: "Challenge commands - Server",
                 description: `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two players start the match in an effort to select a specific server.`,
                 color: data.homeServerTeam.role.color,
-                timestamp: new Date(),
                 fields: []
             });
 
@@ -148,7 +146,6 @@ class Challenge {
             const optionsMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Challenge commands - Options",
                 description: "Challenges must also have a team size and scheduled time to play.",
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "!suggestteamsize <2|3|4>",
@@ -182,7 +179,6 @@ class Challenge {
             const reportMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Challenge commands - Reporting",
                 description: "Upon completion of the match, the losing team reports the game.",
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "!report <score> <score>",
@@ -203,7 +199,6 @@ class Challenge {
 
             const otherMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Challenge commands - Other",
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "!matchtime",
@@ -359,7 +354,7 @@ class Challenge {
      */
     async addCaster(member) {
         try {
-            Db.addCasterToChallenge(this, member);
+            await Db.addCasterToChallenge(this, member);
         } catch (err) {
             throw new Exception("There was a database error adding a pilot as a caster to a challenge.", err);
         }
@@ -697,7 +692,7 @@ class Challenge {
      */
     async removeCaster(member) {
         try {
-            Db.removeCasterFromChallenge(this);
+            await Db.removeCasterFromChallenge(this);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot as a caster from a challenge.", err);
         }
@@ -736,6 +731,44 @@ class Challenge {
             await Db.removeStreamerFromChallenge(this, member);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
+        }
+    }
+
+    //                                #    #  #         #          #
+    //                                #    ####         #          #
+    // ###    ##   ###    ##   ###   ###   ####   ###  ###    ##   ###
+    // #  #  # ##  #  #  #  #  #  #   #    #  #  #  #   #    #     #  #
+    // #     ##    #  #  #  #  #      #    #  #  # ##   #    #     #  #
+    // #      ##   ###    ##   #       ##  #  #   # #    ##   ##   #  #
+    //             #
+    /**
+     * Reports a completed match.
+     * @param {Team} losingTeam The losing team.
+     * @param {number} winningScore The winning score.
+     * @param {number} losingScore The losing score.
+     * @returns {Promise} A promise that resolves when the match has been reported.
+     */
+    async reportMatch(losingTeam, winningScore, losingScore) {
+        const winningTeam = losingTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam;
+        try {
+            await Db.reportMatch(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
+        } catch (err) {
+            throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
+        }
+
+        try {
+            if (winningScore === losingScore) {
+                await Discord.queue(`This match has been reported as a **tie**, ${winningScore} to ${losingScore}.  If this is correct, ${winningTeam.name} needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
+            } else {
+                await Discord.richQueue(new DiscordJs.RichEmbed({
+                    description: `This match has been reported as a win for **${winningTeam.name}** by the score of ${winningScore} to ${losingScore}.  If this is correct, ${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name} needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
+                    color: winningTeam.role.color
+                }), this.channel);
+            }
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -918,7 +951,7 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the topic is updated.
      */
     async updateTopic() {
-        // TODO: List who will be streaming the match.
+        // TODO: List who will be streaming and casting the match.
         if (!this.details) {
             await this.loadDetails();
         }

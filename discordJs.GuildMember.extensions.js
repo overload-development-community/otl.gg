@@ -312,7 +312,6 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
         title: team.name,
         description: "Pilot Left",
         color: 0xFF0000,
-        timestamp: new Date(),
         fields: [
             {
                 name: "Pilot Left",
@@ -438,7 +437,6 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
         title: team.name,
         description: "Pilot Name Change",
         color: 0xFFFF00,
-        timestamp: new Date(),
         fields: [
             {
                 name: "Old Name",

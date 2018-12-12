@@ -289,10 +289,7 @@ class Discord {
         }
 
         try {
-            msg = await Discord.richQueue(new DiscordJs.RichEmbed({
-                description: message,
-                timestamp: new Date()
-            }), channel);
+            msg = await Discord.richQueue(new DiscordJs.RichEmbed({description: message}), channel);
         } catch {}
         return msg;
     }
@@ -327,6 +324,10 @@ class Discord {
 
         if (!embed.color) {
             embed.setColor(0x16F6F8); // TODO: Update to use OTL color.
+        }
+
+        if (!embed.timestamp) {
+            embed.setTimestamp(new Date());
         }
 
         let msg;

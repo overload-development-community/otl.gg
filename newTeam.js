@@ -97,7 +97,6 @@ class NewTeam {
             const msg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Team creation commands",
                 color: 0x00FF00,
-                timestamp: new Date(),
                 fields: [
                     {
                         name: "!name <name>",
@@ -192,7 +191,7 @@ class NewTeam {
      */
     async delete(reason) {
         try {
-            Db.cancelCreateTeam(this);
+            await Db.cancelCreateTeam(this);
         } catch (err) {
             throw new Exception("There was a database error removing a new team creation record.", err);
         }
