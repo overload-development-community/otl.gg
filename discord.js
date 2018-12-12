@@ -252,18 +252,18 @@ class Discord {
                         success = await commands[command](member, channel, args);
                     } catch (err) {
                         if (err instanceof Warning) {
-                            Log.warning(`${member}: ${text}\n${err}`);
+                            Log.warning(`${channel} ${member}: ${text}\n${err}`);
                         } else if (err instanceof Exception) {
-                            Log.exception(`${member}: ${text}\n${err.message}`, err.innerError);
+                            Log.exception(`${channel} ${member}: ${text}\n${err.message}`, err.innerError);
                         } else {
-                            Log.exception(`${member}: ${text}`, err);
+                            Log.exception(`${channel} ${member}: ${text}`, err);
                         }
 
                         return;
                     }
 
                     if (success) {
-                        Log.log(`${member}: ${text}`);
+                        Log.log(`${channel} ${member}: ${text}`);
                     }
                 }
             }

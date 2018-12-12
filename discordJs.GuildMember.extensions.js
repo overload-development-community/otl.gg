@@ -132,6 +132,25 @@ DiscordJs.GuildMember.prototype.getTimezone = async function() {
     }
 };
 
+//              #    ###          #     #          #     #  #
+//              #     #                 #          #     ## #
+//  ###   ##   ###    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+// #  #  # ##   #     #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+//  ##   ##     #     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+// #      ##     ##   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+//  ###
+/**
+ * Gets a pilot's Twitch name.
+ * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
+ */
+DiscordJs.GuildMember.prototype.getTwitchName = async function() {
+    try {
+        return await Db.getTwitchName(this);
+    } catch (err) {
+        throw new Exception("There was a database error getting a pilot's Twitch name.", err);
+    }
+};
+
 // #                  ###                     ###                #     #             #  ###         ###
 // #                  #  #                     #                       #             #   #           #
 // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #

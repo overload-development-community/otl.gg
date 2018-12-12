@@ -166,7 +166,7 @@ class Challenge {
                         name: "!clock",
                         value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`
                     }, {
-                        name: "!streaming <URL>",
+                        name: "!streaming",
                         value: "Indicates that a pilot will be streaming the match live."
                     }, {
                         name: "!notstreaming",
@@ -344,6 +344,25 @@ class Challenge {
      */
     get channelName() {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
+    }
+
+    //          #     #   ##    #
+    //          #     #  #  #   #
+    //  ###   ###   ###   #    ###   ###    ##    ###  # #    ##   ###
+    // #  #  #  #  #  #    #    #    #  #  # ##  #  #  ####  # ##  #  #
+    // # ##  #  #  #  #  #  #   #    #     ##    # ##  #  #  ##    #
+    //  # #   ###   ###   ##     ##  #      ##    # #  #  #   ##   #
+    /**
+     * Indicates that a pilot will be streaming the challenge.
+     * @param {DiscordJs.GuildMember} member The pilot streaming the challenge.
+     * @returns {Promise} A promise that resolves when the pilot has been updated to be streaming the challenge.
+     */
+    async addStreamer(member) {
+        try {
+            await Db.addStreamerToChallenge(this, member);
+        } catch (err) {
+            throw new Exception("There was a database error adding a pilot as a streamer to a challenge.", err);
+        }
     }
 
     //       ##                #
@@ -627,6 +646,26 @@ class Challenge {
         }
     }
 
+    //                                      ##    #                                        ####                     ##   #           ##    ##
+    //                                     #  #   #                                        #                       #  #  #            #     #
+    // ###    ##   # #    ##   # #    ##    #    ###   ###    ##    ###  # #    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##  ####  #  #  # #   # ##    #    #    #  #  # ##  #  #  ####  # ##  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     ##    #  #  #  #  # #   ##    #  #   #    #     ##    # ##  #  #  ##    #     #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##   #  #   ##    #     ##    ##     ##  #      ##    # #  #  #   ##   #     #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                        ###
+    /**
+     * Indicates that a pilot will not be streaming the challenge.
+     * @param {DiscordJs.GuildMember} member The pilot streaming the challenge.
+     * @returns {Promise} A promise that resolves when the pilot has been updated to be streaming the challenge.
+     */
+    async removeStreamer(member) {
+        try {
+            await Db.removeStreamerFromChallenge(this, member);
+        } catch (err) {
+            throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
+        }
+    }
+
     //                                        #    #  #
     //                                        #    ####
     //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###
@@ -806,6 +845,7 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the topic is updated.
      */
     async updateTopic() {
+        // TODO: List who will be streaming the match.
         if (!this.details) {
             await this.loadDetails();
         }

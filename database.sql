@@ -1,4 +1,5 @@
 DROP TABLE dbo.tblStats
+DROP TABLE dbo.tblChallengeStreamer
 DROP TABLE dbo.tblChallengeHome
 DROP TABLE dbo.tblChallenge
 DROP TABLE dbo.tblTeamPenalty
@@ -151,6 +152,7 @@ CREATE TABLE dbo.tblChallenge (
     ReportingTeamId INT NULL CONSTRAINT FK_tblChallenge_ReportingTeamId_tblTeam_TeamId FOREIGN KEY (ReportingTeamId) REFERENCES dbo.tblTeam (TeamId),
     ChallengingTeamScore INT NULL,
     ChallengedTeamScore INT NULL,
+    CasterPlayerId INT NULL CONSTRAINT FK_tblChallenge_CasterPlayerId_tblPlayer_PlayerId FOREIGN KEY (PlayerId) REFERENCES dbo.tblPlayer (PlayerId),
     DateAdded DATETIME NOT NULL CONSTRAINT DF_tblChallenge_DateAdded DEFAULT(getutcdate()),
     DateClocked DATETIME NULL,
     ClockTeamId INT NULL CONSTRAINT FK_tblChallenge_ClockTeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
@@ -168,6 +170,13 @@ CREATE TABLE dbo.tblChallengeHome (
     ChallengeId INT NOT NULL CONSTRAINT FK_tblChallengeHome_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
     Number INT NOT NULL,
     Map VARCHAR(100) NOT NULL
+)
+
+CREATE TABLE dbo.tblChallengeStreamer (
+    StreamerId INT IDENTITY(1, 1) NOT NULL,
+    ChallengeId INT NOT NULL CONSTRAINT FK_tblChallengeStreamer_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
+    TeamId INT NOT NULL CONSTRAINT FK_tblChallengeStreamer_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
+    PRIMARY KEY (StreamerId ASC)
 )
 
 CREATE TABLE dbo.tblStats (

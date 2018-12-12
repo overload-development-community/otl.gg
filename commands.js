@@ -3121,14 +3121,176 @@ class Commands {
         return true;
     }
 
-    // !twitch <name>
-    /*
-     * Must have a name.
-     *
-     * Success:
-     * Add URL to database.
-     * Announce in channel.
+    //         #                             #
+    //         #
+    //  ###   ###   ###    ##    ###  # #   ##    ###    ###
+    // ##      #    #  #  # ##  #  #  ####   #    #  #  #  #
+    //   ##    #    #     ##    # ##  #  #   #    #  #   ##
+    // ###      ##  #      ##    # #  #  #  ###   #  #  #
+    //                                                   ###
+    /**
+     * Indicates that a pilot will be streaming their match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async streaming(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!streaming\` by itself to indicate that you will be streaming this match.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
+            throw new Warning("Match has been confirmed.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        let twitchName;
+        try {
+            twitchName = await member.getTwitchName();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!twitchName) {
+            await Discord.queue(`Sorry, ${member}, but you haven't linked your Twitch channel yet!  Use the \`!twitch\` command to link up your Twitch account.`, channel);
+            throw new Warning("Twitch account not linked.");
+        }
+
+        try {
+            await challenge.addStreamer(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}!`, channel);
+
+        return true;
+    }
+
+    //              #            #                             #
+    //              #            #
+    // ###    ##   ###    ###   ###   ###    ##    ###  # #   ##    ###    ###
+    // #  #  #  #   #    ##      #    #  #  # ##  #  #  ####   #    #  #  #  #
+    // #  #  #  #   #      ##    #    #     ##    # ##  #  #   #    #  #   ##
+    // #  #   ##     ##  ###      ##  #      ##    # #  #  #  ###   #  #  #
+    //                                                                     ###
+    /**
+     * Indicates that a pilot will not be streaming their match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async notstreaming(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            return false;
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!notstreaming\` by itself to indicate that you will not be streaming the match.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
+            throw new Warning("Match has been confirmed.");
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        try {
+            await challenge.removeStreamer(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member} is no longer streaming this match.`, channel);
+
+        return true;
+    }
 
     // !streaming
     /*

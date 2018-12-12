@@ -88,6 +88,36 @@ class Database {
         });
     }
 
+    //          #     #   ##    #                                        ###          ##   #           ##    ##
+    //          #     #  #  #   #                                         #          #  #  #            #     #
+    //  ###   ###   ###   #    ###   ###    ##    ###  # #    ##   ###    #     ##   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #    #    #    #  #  # ##  #  #  ####  # ##  #  #   #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // # ##  #  #  #  #  #  #   #    #     ##    # ##  #  #  ##    #      #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  # #   ###   ###   ##     ##  #      ##    # #  #  #   ##   #      #     ##    ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                          ###
+    /**
+     * Adds a streamer to a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The streamer to add.
+     * @returns {Promise} A promise that resolves when a streamer is added to a challenge.
+     */
+    static async addStreamerToChallenge(challenge, member) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            MERGE tblChallengeStreamer cs
+                USING (VALUES (@challengeId, @playerId)) AS v (ChallengeId, PlayerId)
+                ON cs.ChallengeId = v.ChallengeId AND cs.PlayerId = v.PlayerId
+            WHEN NOT MATCHED THEN
+                INSERT (ChallengeId, PlayerId) VALUES (v.ChallengeId, v.PlayerId);
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //          #     #  ###          #     #          #     #  #
     //          #     #   #                 #          #     ## #
     //  ###   ###   ###   #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
@@ -116,7 +146,7 @@ class Database {
 
             UPDATE tblPlayer SET TwitchName = @name WHERE PlayerId = @playerId
         `, {
-            discordId: {type: Db.INT, value: member.id},
+            discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: name}
         });
     }
@@ -1014,6 +1044,27 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
     }
 
+    //              #    ###          #     #          #     #  #
+    //              #     #                 #          #     ## #
+    //  ###   ##   ###    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+    // #  #  # ##   #     #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+    //  ##   ##     #     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+    // #      ##     ##   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+    //  ###
+    /**
+     * Gets a pilot's Twitch name.
+     * @param {DiscordJs.GuildMember} member The pilot.
+     * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
+     */
+    static async getTwitchName(member) {
+
+        /**
+         * @type {{recordsets: [{TwitchName: string}[]]}}
+         */
+        const data = await db.query("SELECT TwitchName FROM tblPlayer WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TwitchName || void 0;
+    }
+
     // #                  ###                     ###                #     #             #  ###         ###
     // #                  #  #                     #                       #             #   #           #
     // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #
@@ -1315,6 +1366,34 @@ class Database {
         });
     }
 
+    //                                      ##    #                                        ####                     ##   #           ##    ##
+    //                                     #  #   #                                        #                       #  #  #            #     #
+    // ###    ##   # #    ##   # #    ##    #    ###   ###    ##    ###  # #    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##  ####  #  #  # #   # ##    #    #    #  #  # ##  #  #  ####  # ##  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     ##    #  #  #  #  # #   ##    #  #   #    #     ##    # ##  #  #  ##    #     #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##   #  #   ##    #     ##    ##     ##  #      ##    # #  #  #   ##   #     #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                        ###
+    /**
+     * Removes a streamer from a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The streamer to remove.
+     * @returns {Promise} A promise that resolves when a streamer is removed from a challenge.
+     */
+    static async removeStreamerFromChallenge(challenge, member) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            DELETE FROM tblChallengeStreamer cs
+            WHERE ChallengeId = @challengeId
+                AND PlayerId = @playerId
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //                                     ###          #     #          #     #  #
     //                                      #                 #          #     ## #
     // ###    ##   # #    ##   # #    ##    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
@@ -1327,7 +1406,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the Twitch name has been removed from the profile.
      */
     static async removeTwitchName(member) {
-        await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.INT, value: member.id}});
+        await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
     }
 
     //                                       #    ###

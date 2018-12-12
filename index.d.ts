@@ -11,6 +11,7 @@ declare module 'discord.js' {
         canRemovePilot(pilot: GuildMember): Promise<boolean>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
         getTimezone(): Promise<string>;
+        getTwitchName(): Promise<string>;
         hasBeenInvitedToTeam(team: Team): Promise<boolean>;
         hasRequestedTeam(team: Team): Promise<boolean>;
         isCaptainOrFounder(): boolean;
