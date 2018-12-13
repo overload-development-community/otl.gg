@@ -1896,7 +1896,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (challenge.details.homeMapTeam.id === team.id) {
@@ -1993,7 +1993,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (challenge.details.adminCreated) {
@@ -2095,7 +2095,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (challenge.details.map) {
@@ -2192,7 +2192,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (challenge.details.adminCreated) {
@@ -2293,7 +2293,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (!challenge.details.suggestedNeutralServerTeam) {
@@ -2385,7 +2385,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         try {
@@ -2466,7 +2466,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (!challenge.details.suggestedTeamSize) {
@@ -2563,7 +2563,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         let date;
@@ -2662,7 +2662,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (!challenge.details.suggestedTime) {
@@ -2758,7 +2758,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         let nextClockDate;
@@ -3529,7 +3529,7 @@ class Commands {
 
         if (challenge.details.dateConfirmed) {
             await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
+            throw new Warning("Match was already confirmed.");
         }
 
         if (!scoreMatch.test(message)) {
@@ -3555,30 +3555,91 @@ class Commands {
         return true;
     }
 
-    // !report <score1> <score2>
-    /*
-     * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
-     * All challenge parameters must be confirmed.
-     *
-     * Success:
-     * 1) Write reported score to the database
-     * 2) Update topic
-     * 3) Announce in channel
+    //                     #    #
+    //                    # #
+    //  ##    ##   ###    #    ##    ###   # #
+    // #     #  #  #  #  ###    #    #  #  ####
+    // #     #  #  #  #   #     #    #     #  #
+    //  ##    ##   #  #   #    ###   #     #  #
+    /**
+     * Confirms a match report.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async confirm(member, channel, message) {
+        let challenge;
+        try {
+            challenge = await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
-    // !confirm
-    /*
-     * Player must be a captain or founder of a team.
-     * Challenge must exist against challenged team.
-     * Score must have already been reported by the other team.
-     *
-     * Success:
-     * 1) Write confirmed score to the database
-     * 2) Update topic
-     * 3) Announce in channel
-     * 4) Alert administrator
-     */
+        if (!challenge) {
+            return false;
+        }
+
+        if (!member.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder or captain.");
+        }
+
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirm\` by itself to confirm your opponent's match report.`, channel);
+            return false;
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already reported.");
+        }
+
+        if (!challenge.details.dateReported) {
+            await Discord.queue(`Sorry, ${member}, but this match hasn't been reported yet.  Use the \`!report\` command if you meant to report the score of the match.`, channel);
+            throw new Warning("Match not reported.");
+        }
+
+        if (team.id === challenge.details.reportingTeam.id) {
+            await Discord.queue(`Sorry, ${member}, but you can't confirm your own team's report.`, channel);
+            throw new Warning("Can't confirm own report.");
+        }
+
+        await challenge.confirmMatch();
+
+        return true;
+    }
 
     // !rename <team> <name>
     /*

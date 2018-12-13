@@ -466,6 +466,61 @@ class Challenge {
         }
     }
 
+    //                     #    #                #  #         #          #
+    //                    # #                    ####         #          #
+    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###    ##   ###
+    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #   #    #     #  #
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##   #    #     #  #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #    ##   ##   #  #
+    /**
+     * Confirms a reported match.
+     * @returns {Promise} A promise that resolves when the match is confirmed.
+     */
+    async confirmMatch() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            this.details.dateConfirmed = await Db.confirmMatch(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a reported match.", err);
+        }
+
+        try {
+            const embed = new DiscordJs.RichEmbed({
+                title: "Match Confirmed",
+                fields: [
+                    {
+                        name: "Post a screenshot",
+                        value: "Remember, OTL matches are only official with player statistics from a screenshot.  Be sure that at least one player posts the screenshot showing full match details, including each players' kills, assists, and deaths."
+                    },
+                    {
+                        name: "This channel is now closed",
+                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an administrator immediately.  This channel will be closed once the stats have been posted."
+                    }
+                ]
+            });
+
+            const winningScore = Math.max(this.details.challengingTeamScore, this.details.challengedTeamScore),
+                losingScore = Math.min(this.details.challengingTeamScore, this.details.challengedTeamScore),
+                winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
+
+            if (winningScore === losingScore) {
+                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.`);
+            } else {
+                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`);
+                embed.setColor(winningTeam.role.color);
+            }
+
+            await Discord.richQueue(embed, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a reported match.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //                     #    #                #  #               #                ##     ##
     //                    # #                    ## #               #                 #    #  #
     //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
@@ -691,6 +746,10 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the caster has been removed from the challenge.
      */
     async removeCaster(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
         try {
             await Db.removeCasterFromChallenge(this);
         } catch (err) {
@@ -749,19 +808,28 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the match has been reported.
      */
     async reportMatch(losingTeam, winningScore, losingScore) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
         const winningTeam = losingTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam;
+
         try {
-            await Db.reportMatch(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
+            this.details.dateReported = await Db.reportMatch(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
         }
 
+        this.details.reportingTeam = losingTeam;
+        this.details.challengingTeamScore = losingTeam.id === this.challengingTeam.id ? losingScore : winningScore;
+        this.details.challengedTeamScore = losingTeam.id === this.challengingTeam.id ? winningScore : losingScore;
+
         try {
             if (winningScore === losingScore) {
-                await Discord.queue(`This match has been reported as a **tie**, ${winningScore} to ${losingScore}.  If this is correct, ${winningTeam.name} needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
+                await Discord.queue(`This match has been reported as a **tie**, **${winningScore}** to **${losingScore}**.  If this is correct, **${winningTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
             } else {
                 await Discord.richQueue(new DiscordJs.RichEmbed({
-                    description: `This match has been reported as a win for **${winningTeam.name}** by the score of ${winningScore} to ${losingScore}.  If this is correct, ${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name} needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
+                    description: `This match has been reported as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  If this is correct, **${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
                     color: winningTeam.role.color
                 }), this.channel);
             }

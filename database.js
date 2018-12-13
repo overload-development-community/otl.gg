@@ -427,6 +427,30 @@ class Database {
         await db.query("UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
+    //                     #    #                #  #         #          #
+    //                    # #                    ####         #          #
+    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###    ##   ###
+    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #   #    #     #  #
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##   #    #     #  #
+    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #    ##   ##   #  #
+    /**
+     * Confirms a reported match.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<Date>} A promise that resolves with the date the match was confirmed.
+     */
+    static async confirmMatch(challenge) {
+
+        /**
+         * @type {{recordsets: [{DateConfirmed: Date}[]]}}
+         */
+        const data = await db.query(`
+            UPDATE tblChallenge SET DateConfirmed = GETUTCDATE() WHERE ChallengeId = @challengeId
+
+            SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
+    }
+
     //                     #    #                #  #               #                ##     ##                                 ####               ##   #           ##    ##
     //                    # #                    ## #               #                 #    #  #                                #                 #  #  #            #     #
     //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -1481,22 +1505,30 @@ class Database {
      * @param {Team} reportingTeam The reporting team.
      * @param {number} challengingTeamScore The challenging team's score.
      * @param {number} challengedTeamScore The challenged team's score.
-     * @returns {Promise} A promise that resolves when the match has been reported.
+     * @returns {Promise<Date>} A promise that resolves with the date the match was reported.
      */
     static async reportMatch(challenge, reportingTeam, challengingTeamScore, challengedTeamScore) {
-        await db.query(`
+
+        /**
+         * @type {{recordsets: [{DateReported: Date}[]]}}
+         */
+        const data = await db.query(`
             UPDATE tblChallenge SET
                 ReportingTeamId = @reportingTeamId,
                 ChallengingTeamScore = @challengingTeamScore,
                 ChallengedTeamScore = @challengedTeamScore,
                 DateReported = GETUTCDATE()
             WHERE ChallengeId = @challengeId
+
+            SELECT DateReported FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
             reportingTeamId: {type: Db.INT, value: reportingTeam.id},
             challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
             challengedTeamScore: {type: Db.INT, value: challengedTeamScore},
             challengeId: {type: Db.INT, value: challenge.id}
         });
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateReported || void 0;
     }
 
     //                                       #    ###
