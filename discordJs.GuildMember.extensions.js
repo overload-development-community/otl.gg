@@ -126,7 +126,7 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
  */
 DiscordJs.GuildMember.prototype.getTimezone = async function() {
     try {
-        return await Db.getTimezone(this) || settings.defaultTimezone;
+        return await Db.getTimezoneForPilot(this) || settings.defaultTimezone;
     } catch (err) {
         return settings.defaultTimezone;
     }
@@ -392,7 +392,7 @@ DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
  */
 DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
     try {
-        await Db.setTimezone(this, timezone);
+        await Db.setTimezoneForPilot(this, timezone);
     } catch (err) {
         throw new Exception("There was a database error setting a pilot's time zone.", err);
     }

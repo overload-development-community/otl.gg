@@ -30,6 +30,7 @@ CREATE TABLE dbo.tblTeam (
     TeamId INT IDENTITY(1, 1) NOT NULL,
     Name VARCHAR(25) NOT NULL,
     Tag VARCHAR(5) NOT NULL,
+    Timezone VARCHAR(50) NULL,
     Disbanded BIT NOT NULL CONSTRAINT DF_tblTeam_Disbanded DEFAULT (0),
     Locked BIT NOT NULL CONSTRAINT DF_tblTeam_Locked DEFAULT(0),
     DateFounded DATETIME NOT NULL CONSTRAINT DF_tblTeam_DateFounded DEFAULT (getutcdate()),

@@ -835,6 +835,36 @@ class Database {
         } || void 0;
     }
 
+    //              #     ##   #           ##    ##                            ###         ###
+    //              #    #  #  #            #     #                            #  #         #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   ###   #  #   #     ##    ###  # #    ###
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #   #    # ##  #  #  ####  ##
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #   # #   #    ##    # ##  #  #    ##
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###     #    #     ##    # #  #  #  ###
+    //  ###                                                         ###               #
+    /**
+     * Gets all challenges for a team.
+     * @param {Team} team The team.
+     * @returns {Promise<ChallengeData[]>} A promise that resolves with an array of challenge data.
+     */
+    static async getChallengesByTeam(team) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
+            FROM tblChallenge
+            WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
+                AND DateConfirmed IS NULL
+                AND DateClosed IS NULL
+                AND DateVoided IS NULL
+        `, {
+            teamId: {type: Db.INT, value: team.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.ChallengeId, challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId})) || [];
+    }
+
     //              #    #  #              ###
     //              #    ## #               #
     //  ###   ##   ###   ## #   ##   #  #   #     ##    ###  # #
@@ -1083,24 +1113,45 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 
-    //              #    ###    #
-    //              #     #
-    //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##
-    // #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
-    //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
-    // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    //              #    ###    #                                        ####              ###    #    ##           #
+    //              #     #                                              #                 #  #         #           #
+    //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###   #  #  ##     #     ##   ###
+    // #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##  #     #  #  #  #  ###    #     #    #  #   #
+    //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##    #     #  #  #     #      #     #    #  #   #
+    // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##   #      ##   #     #     ###   ###    ##     ##
     //  ###
     /**
      * Gets a pilot's time zone.
      * @param {DiscordJs.GuildMember} member The pilot to get the time zone for.
      * @returns {Promise<string>} The pilot's time zone.
      */
-    static async getTimezone(member) {
+    static async getTimezoneForPilot(member) {
 
         /**
          * @type {{recordsets: [{Timezone: string}[]]}}
          */
         const data = await db.query("SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
+    }
+
+    //              #    ###    #                                        ####              ###
+    //              #     #                                              #                  #
+    //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###    #     ##    ###  # #
+    // #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##  #     #  #  #  #   #    # ##  #  #  ####
+    //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##    #     #  #  #      #    ##    # ##  #  #
+    // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##   #      ##   #      #     ##    # #  #  #
+    //  ###
+    /**
+     * Gets a team's time zone.
+     * @param {Team} team The team to get the time zone for.
+     * @returns {Promise<string>} The team's time zone.
+     */
+    static async getTimezoneForTeam(team) {
+
+        /**
+         * @type {{recordsets: [{Timezone: string}[]]}}
+         */
+        const data = await db.query("SELECT Timezone FROM tblTeam WHERE TeamId = @teamId", {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
     }
 
@@ -1567,19 +1618,19 @@ class Database {
         });
     }
 
-    //               #    ###    #
-    //               #     #
-    //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##
-    // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
-    //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
-    // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    //               #    ###    #                                        ####              ###    #    ##           #
+    //               #     #                                              #                 #  #         #           #
+    //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###   #  #  ##     #     ##   ###
+    // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##  #     #  #  #  #  ###    #     #    #  #   #
+    //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##    #     #  #  #     #      #     #    #  #   #
+    // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##   #      ##   #     #     ###   ###    ##     ##
     /**
      * Sets a pilot's time zone.
      * @param {DiscordJs.GuildMember} member The pilot to set the time zone for.
      * @param {string} timezone The time zone to set.
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
-    static async setTimezone(member, timezone) {
+    static async setTimezoneForPilot(member, timezone) {
         await db.query(`
             DECLARE @playerId INT
 
@@ -1597,6 +1648,25 @@ class Database {
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(24), value: member.displayName},
+            timezone: {type: Db.VARCHAR(50), value: timezone}
+        });
+    }
+
+    //               #    ###    #                                        ####              ###
+    //               #     #                                              #                  #
+    //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###    #     ##    ###  # #
+    // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##  #     #  #  #  #   #    # ##  #  #  ####
+    //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##    #     #  #  #      #    ##    # ##  #  #
+    // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##   #      ##   #      #     ##    # #  #  #
+    /**
+     * Sets a team's time zone.
+     * @param {Team} team The team to set the time zone for.
+     * @param {string} timezone The time zone to set.
+     * @returns {Promise} A promise that resolves when the time zone is set.
+     */
+    static async setTimezoneForTeam(team, timezone) {
+        await db.query("UPDATE tblTeam SET Timezone = @timezone WHERE TeamId = @teamId", {
+            teamId: {type: Db.INT, value: team.id},
             timezone: {type: Db.VARCHAR(50), value: timezone}
         });
     }

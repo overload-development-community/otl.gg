@@ -7,7 +7,6 @@ const DiscordJs = require("discord.js"),
     Db = require("./database"),
     Exception = require("./exception"),
     Team = require("./team"),
-    settings = require("./settings"),
 
     channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (.*)$/;
@@ -243,6 +242,33 @@ class Challenge {
         }
 
         return challenge;
+    }
+
+    //              #     ##   ##    ##    ###         ###
+    //              #    #  #   #     #    #  #         #
+    //  ###   ##   ###   #  #   #     #    ###   #  #   #     ##    ###  # #
+    // #  #  # ##   #    ####   #     #    #  #  #  #   #    # ##  #  #  ####
+    //  ##   ##     #    #  #   #     #    #  #   # #   #    ##    # ##  #  #
+    // #      ##     ##  #  #  ###   ###   ###     #    #     ##    # #  #  #
+    //  ###                                       #
+    /**
+     * Gets all of a team's currently active challenges.
+     * @param {Team} team The team to check.
+     * @returns {Promise<Challenge[]>} A promise that resolves with an array of the team's currently active challenges.
+     */
+    static async getAllByTeam(team) {
+        let challenges;
+        try {
+            challenges = await Db.getChallengesByTeam(team);
+        } catch (err) {
+            throw new Exception("There was a database error getting a team's challenges.", err);
+        }
+
+        try {
+            return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
+        } catch (err) {
+            throw new Exception("There was a database error loading a team's challenges.", err);
+        }
     }
 
     //              #    ###          ##   #                             ##
@@ -627,6 +653,19 @@ class Challenge {
                 }
             }
 
+            for (const team of [this.challengingTeam, this.challengedTeam]) {
+                const timezone = await team.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
             const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
                 if (a.value.getTime() !== b.value.getTime()) {
                     return b.value.getTime() - a.value.getTime();
@@ -988,6 +1027,19 @@ class Challenge {
                 }
             }
 
+            for (const challengeTeam of [this.challengingTeam, this.challengedTeam]) {
+                const timezone = await challengeTeam.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
             const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
                 if (a.value.getTime() !== b.value.getTime()) {
                     return b.value.getTime() - a.value.getTime();
@@ -1024,10 +1076,13 @@ class Challenge {
             await this.loadDetails();
         }
 
+        const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
+            challengedTeamTimezone = await this.challengedTeam.getTimezone();
+
         let topic = `${this.challengingTeam.name} vs ${this.challengedTeam.name}`;
 
         if (this.details.dateClockDeadline) {
-            topic = `${topic}\n\nClock Deadline: ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}\nClocked by: ${this.details.clockTeam}`;
+            topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam}`;
         }
 
         topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
@@ -1056,12 +1111,12 @@ class Challenge {
         }
 
         if (this.details.matchTime) {
-            topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+            topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
             if (this.details.suggestedTime) {
-                topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+                topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
             }
         } else if (this.details.suggestedTime) {
-            topic = `${topic}\n\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`;
+            topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
         }
 
         if (this.details.dateReported && !this.details.dateConfirmed) {

@@ -1676,7 +1676,7 @@ class Commands {
 
         let time;
         try {
-            time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit"});
+            time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"});
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
             throw new Warning("Invalid time zone.");
@@ -3641,6 +3641,68 @@ class Commands {
         return true;
     }
 
+    //  #                       #     #
+    //  #                       #
+    // ###    ##    ###  # #   ###   ##    # #    ##   ####   ##   ###    ##
+    //  #    # ##  #  #  ####   #     #    ####  # ##    #   #  #  #  #  # ##
+    //  #    ##    # ##  #  #   #     #    #  #  ##     #    #  #  #  #  ##
+    //   ##   ##    # #  #  #    ##  ###   #  #   ##   ####   ##   #  #   ##
+    /**
+     * Confirms a match report.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
+     */
+    async teamtimezone(member, channel, message) {
+        if (!member.isFounder()) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder.");
+        }
+
+        let team;
+        try {
+            team = await Team.getByPilot(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        if (!message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify a time zone with this command.`, channel);
+            return false;
+        }
+
+        if (!tzdata.zones[message]) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        try {
+            new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit"});
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        try {
+            await team.setTimezone(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    // TODO: Casters can only cast games that are scheduled.
+    // TODO: Announce to the caster the time of the match in their local time zone when it is scheduled.
+
     // !rename <team> <name>
     /*
      * Player must be an admin.
@@ -3881,18 +3943,6 @@ class Commands {
      * Record match as official in the database.
      * Announce in #match-results
      * Close challenge channel
-     */
-
-    // !teamtimezone <timezone>
-    /*
-     * Player must be a founder.
-     * Timezone must be valid.
-     *
-     * Success:
-     * Write timezone to database
-     * Update team timezone
-     * Update team's channel topics
-     * Update team's challenge channel topics
      */
 
     // Disband

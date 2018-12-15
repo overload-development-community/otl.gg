@@ -11,6 +11,15 @@ const DiscordJs = require("discord.js"),
     settings = require("./settings");
 
 /**
+ * @type {typeof import("./challenge")}
+ */
+let Challenge;
+
+setTimeout(() => {
+    Challenge = require("./challenge");
+}, 0);
+
+/**
  * @type {typeof import("./discord")}
  */
 let Discord;
@@ -732,6 +741,25 @@ class Team {
         }
     }
 
+    //              #    ###    #
+    //              #     #
+    //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+    // #  #  # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+    //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+    // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    //  ###
+    /**
+     * Gets the team's time zone.
+     * @returns {Promise<string>} A promise that resolves with the team's time zone.
+     */
+    async getTimezone() {
+        try {
+            return await Db.getTimezoneForTeam(this) || settings.defaultTimezone;
+        } catch (err) {
+            return settings.defaultTimezone;
+        }
+    }
+
     // #                   ##   ##                #              #  ###   #      #            ##
     // #                  #  #   #                #              #   #    #                  #  #
     // ###    ###   ###   #      #     ##    ##   # #    ##    ###   #    ###   ##     ###    #     ##    ###   ###    ##   ###
@@ -1083,6 +1111,44 @@ class Team {
         }
     }
 
+    //               #    ###    #
+    //               #     #
+    //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##
+    // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
+    //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
+    // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
+    /**
+     * Sets a team's time zone.
+     * @param {string} timezone The timezone to set.
+     * @returns {Promise} A promise that resolves when the time zone is sest.
+     */
+    async setTimezone(timezone) {
+        try {
+            await Db.setTimezoneForTeam(this, timezone);
+        } catch (err) {
+            throw new Exception("There was a database error setting a team's timezone.", err);
+        }
+
+        let challenges;
+        try {
+            challenges = await Challenge.getAllByTeam(this);
+        } catch (err) {
+            throw err;
+        }
+
+        try {
+            await this.updateChannels();
+
+            for (const challenge of challenges) {
+                await challenge.updateTopic();
+            }
+
+            await Discord.queue(`Your team's time zone has been set to ${timezone}, where the current local time is ${new Date().toLocaleString("en-US", {timeZone: timezone, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.teamChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the time zone for a team.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //               #
     //               #
     //  ###    ##   ###   #  #  ###
@@ -1214,6 +1280,10 @@ class Team {
                     value: "Set the color for display in Discord."
                 },
                 {
+                    name: "!teamtimezone <timezone>",
+                    value: "Sets the default timezone for your team."
+                },
+                {
                     name: "!addcaptain <teammate>",
                     value: "Makes a teammate a captain."
                 },
@@ -1291,6 +1361,8 @@ class Team {
                 return;
             }
 
+            const timezone = await this.getTimezone();
+
             let teamInfo;
             try {
                 teamInfo = await Db.getTeamInfo(this);
@@ -1321,7 +1393,7 @@ class Team {
             if (teamInfo.upcomingMatches && teamInfo.upcomingMatches.length > 0) {
                 channelTopic += "\n\nUpcoming matches:";
                 teamInfo.upcomingMatches.forEach((match) => {
-                    channelTopic += `\n${match.opponent} - ${match.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    channelTopic += `\n${match.opponent} - ${match.date.toLocaleTimeString("en-us", {timeZone: timezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                     if (match.map) {
                         channelTopic += ` - ${match.map}`;
                     }
@@ -1338,14 +1410,14 @@ class Team {
             if (teamInfo.requests && teamInfo.requests.length > 0) {
                 captainsChannelTopic += "\n\nRequests:";
                 teamInfo.requests.forEach((request) => {
-                    captainsChannelTopic += `\n${request.name} - ${request.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    captainsChannelTopic += `\n${request.name} - ${request.date.toLocaleTimeString("en-us", {timeZone: timezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                 });
             }
 
             if (teamInfo.invites && teamInfo.invites.length > 0) {
                 captainsChannelTopic += "\n\nInvites:";
                 teamInfo.invites.forEach((invite) => {
-                    captainsChannelTopic += `\n${invite.name} - ${invite.date.toLocaleTimeString("en-us", {timeZone: settings.defaultTimezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
+                    captainsChannelTopic += `\n${invite.name} - ${invite.date.toLocaleTimeString("en-us", {timeZone: timezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
                 });
             }
 
