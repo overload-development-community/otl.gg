@@ -3385,20 +3385,108 @@ class Commands {
         return true;
     }
 
-    // !creatematch <team1> <team2>
-    /*
-     * Player must be an admin.
-     * A challenge between the two teams must not exist.
-     * Both teams must have 3 home maps picked.
-     * Both team musts exist and be active.
-     * Both teams must have 2 or more pilots.
-     *
-     * Success:
-     * 1) Write locked challenge to database
-     * 2) Create chat room and apply appropriate permissions
-     * 3) Set topic
-     * 4) Set pinned post
+    //                          #                       #          #
+    //                          #                       #          #
+    //  ##   ###    ##    ###  ###    ##   # #    ###  ###    ##   ###
+    // #     #  #  # ##  #  #   #    # ##  ####  #  #   #    #     #  #
+    // #     #     ##    # ##   #    ##    #  #  # ##   #    #     #  #
+    //  ##   #      ##    # #    ##   ##   #  #   # #    ##   ##   #  #
+    /**
+     * Creates a match between two teams.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async creatematch(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the two teams to create a match for.", channel)) {
+            return false;
+        }
+
+        if (!twoTeamTagMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JO\`.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {1: teamTag1, 2: teamTag2} = twoTeamTagMatch.exec(message);
+
+        const team1 = await Commands.checkTeamExists(teamTag1, member, channel);
+
+        if (team1.disbanded) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** is disbanded.`, channel);
+            throw new Warning("Team disbanded.");
+        }
+
+        let team1PilotCount;
+        try {
+            team1PilotCount = await team1.getPilotCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (team1PilotCount < 2) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 2 or more pilots to be in a match.`, channel);
+            throw new Warning("Team only has one member.");
+        }
+
+        let team1HomeMaps;
+        try {
+            team1HomeMaps = await team1.getHomeMaps();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (team1HomeMaps.length !== 3) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 3 home maps set to be in a match.`, channel);
+            throw new Warning("Team does not have 3 home maps set.");
+        }
+
+        const team2 = await Commands.checkTeamExists(teamTag2, member, channel);
+
+        if (team2.disbanded) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** is disbanded.`, channel);
+            throw new Warning("Team disbanded.");
+        }
+
+        let team2PilotCount;
+        try {
+            team2PilotCount = await team2.getPilotCount();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (team2PilotCount < 2) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 2 or more pilots to be in a match.`, channel);
+            throw new Warning("Team only has one member.");
+        }
+
+        let team2HomeMaps;
+        try {
+            team2HomeMaps = await team2.getHomeMaps();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (team2HomeMaps.length !== 3) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 3 home maps set to be in a match.`, channel);
+            throw new Warning("Team does not have 3 home maps set.");
+        }
+
+        try {
+            Challenge.create(team1, team2, true);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !lockmatch
     /*
@@ -3422,10 +3510,10 @@ class Commands {
      * 2) Announce in channel.
      */
 
-    // !forcehomemapteam <team1> <team2> <hometeam>
+    // !forcehomemapteam <hometeam>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Home team must be one of the teams.
      *
      * Success:
@@ -3434,10 +3522,10 @@ class Commands {
      * 3) Announce in team channel
      */
 
-    // !forcemap <team1> <team2> <a|b|c|map choice>
+    // !forcemap <a|b|c|map choice>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Map must be valid from map list.
      *
      * Success:
@@ -3446,10 +3534,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forceneutralserver <team1> <team2>
+    // !forceneutralserver
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      *
      * Success:
      * 1) Update database
@@ -3457,10 +3545,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forcehomeserverteam <team1> <team2> <hometeam>
+    // !forcehomeserverteam <hometeam>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Home team must be one of the teams.
      *
      * Success:
@@ -3469,10 +3557,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forceteamsize <team1> <team2> <2|3|4>
+    // !forceteamsize <2|3|4>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      *
      * Success:
      * 1) Update database
@@ -3480,10 +3568,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forcetime <team1> <team2> <time>
+    // !forcetime <time>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      *
      * Success:
      * 1) Update database
@@ -3491,10 +3579,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !forcereport <team1> <team2> <score1> <score2>
+    // !forcereport <score1> <score2>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * All challenge parameters must be confirmed.
      *
      * Success:
@@ -3503,10 +3591,10 @@ class Commands {
      * 3) Announce in challenge channel
      */
 
-    // !adjudicate <team1> <team2> <cancel|extend|penalize> <team1|team2|both> <reason> <confirm>
+    // !adjudicate <cancel|extend|penalize> <team1|team2|both> <reason> <confirm>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Either agreed challenge time must have passed, or a challenge on the clock has expired.
      *
      * Success (Cancel)
@@ -3526,10 +3614,10 @@ class Commands {
      * 4) Announce to both teams.
      */
 
-    // !pilotstat <team1> <team2> <player> <K> <A> <D>
+    // !pilotstat <player> <K> <A> <D>
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Challenge must have been reported and confirmed, or force reported.
      *
      * Success:
@@ -3551,10 +3639,10 @@ class Commands {
      * 3) Post to match results.
      */
 
-    // !closegame <team1> <team2>
+    // !closegame
     /*
      * Player must be an admin.
-     * Teams must be involved in a challenge.
+     * Must be done in a challenge channel.
      * Challenge must have been reported and confirmed, or force reported.
      * Sufficient stats must have been added to the game.
      *

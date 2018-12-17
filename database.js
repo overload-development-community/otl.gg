@@ -510,9 +510,10 @@ class Database {
      * Creates a challenge between two teams.
      * @param {Team} team1 The first team.
      * @param {Team} team2 The second team.
+     * @param {boolean} adminCreated Whether the challenge is admin-created.
      * @returns {Promise<{id: number, orangeTeam: Team, blueTeam: Team, homeMapTeam: Team, homeServerTeam: Team, team1Penalized: boolean, team2Penalized: boolean}>} A promise that resolves with the challenge ID.
      */
-    static async createChallenge(team1, team2) {
+    static async createChallenge(team1, team2, adminCreated) {
 
         /**
          * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, HomeServerTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
@@ -556,7 +557,8 @@ class Database {
                 HomeMapTeamId,
                 HomeServerTeamId,
                 ChallengingTeamPenalized,
-                ChallengedTeamPenalized
+                ChallengedTeamPenalized,
+                AdminCreated
             ) VALUES (
                 @team1Id,
                 @team2Id,
@@ -565,7 +567,8 @@ class Database {
                 @HomeMapTeamId,
                 @HomeServerTeamId,
                 @Team1Penalized,
-                @Team2Penalized
+                @Team2Penalized,
+                @adminCreated
             )
 
             UPDATE tblTeamPenalty
@@ -593,7 +596,8 @@ class Database {
             team2Id: {type: Db.INT, value: team2.id},
             colorSeed: {type: Db.FLOAT, value: Math.random()},
             mapSeed: {type: Db.FLOAT, value: Math.random()},
-            serverSeed: {type: Db.FLOAT, value: Math.random()}
+            serverSeed: {type: Db.FLOAT, value: Math.random()},
+            adminCreated: {type: Db.BIT, value: adminCreated}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             id: data.recordsets[0][0].ChallengeId,

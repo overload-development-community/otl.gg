@@ -59,12 +59,13 @@ class Challenge {
      * Creates a challenge between two teams.
      * @param {Team} challengingTeam The challenging team.
      * @param {Team} challengedTeam The challenged team.
+     * @param {boolean} [adminCreated] Whether the match is being created by an admin.
      * @returns {Promise<Challenge>} A promise that resolves with the newly created challenge.
      */
-    static async create(challengingTeam, challengedTeam) {
+    static async create(challengingTeam, challengedTeam, adminCreated) {
         let data;
         try {
-            data = await Db.createChallenge(challengingTeam, challengedTeam);
+            data = await Db.createChallenge(challengingTeam, challengedTeam, !!adminCreated);
         } catch (err) {
             throw new Exception("There was a database error getting a challenge by teams.", err);
         }
@@ -103,7 +104,7 @@ class Challenge {
                 ]
             });
 
-            if (!data.team1Penalized && !data.team2Penalized && !challenge.details.adminCreated) {
+            if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
                 mapEmbed.fields.push({
                     name: "!suggestmap <map>",
                     value: "Suggest a neutral map to play."
@@ -126,7 +127,7 @@ class Challenge {
                 fields: []
             });
 
-            if (!data.team1Penalized && !data.team2Penalized && !challenge.details.adminCreated) {
+            if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
                 serverEmbed.fields.push({
                     name: "!suggestneutralserver",
                     value: "Suggests a neutral server be played.  This allows both teams to decide who starts the match."
@@ -156,7 +157,7 @@ class Challenge {
                 ]
             }), challenge.channel);
 
-            if (!challenge.details.adminCreated) {
+            if (!adminCreated) {
                 serverEmbed.fields.push({
                     name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
                     value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
