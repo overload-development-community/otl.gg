@@ -20,10 +20,10 @@ const tz = require("timezone-js"),
     nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
+    teamPilotMatch = /^(.+) <@!?([0-9]+)>$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/,
     teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
-    teamTagTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/,
-    twoTeamMatch = /^([^ ]+) ([^ ]+)$/;
+    twoTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -235,7 +235,7 @@ class Commands {
     static async checkPilotOnTeam(team, pilot, member, channel) {
         if (!team.role.members.find((m) => m.id === pilot.id)) {
             await Discord.queue(`Sorry, ${member}, but this pilot is not on **${team.name}**.`, channel);
-            throw new Warning("Pilots are not on the same team.");
+            throw new Warning("Pilot is not on the correct team.");
         }
     }
 
@@ -517,6 +517,35 @@ class Commands {
         return true;
     }
 
+    //       #                 #     ###    #    ##           #     ##               ###          ##                #           #
+    //       #                 #     #  #         #           #    #  #              #  #        #  #               #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   #      ###  ###   ###    ##   #      ###  ###   ###    ###  ##    ###
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #     #  #  #  #  #  #  # ##  #     #  #  #  #   #    #  #   #    #  #
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    #  #  # ##  #  #  #  #  ##    #  #  # ##  #  #   #    # ##   #    #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##   ##    # #  #  #  ###    ##    ##    # #  ###     ##   # #  ###   #  #
+    //                                                                                                       #
+    /**
+     * Checks to ensure a pilot can be a captain.
+     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkPilotCanBeCaptain(pilot, member, channel) {
+        let canBeCaptain;
+        try {
+            canBeCaptain = await pilot.canBeCaptain();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!canBeCaptain) {
+            await Discord.queue(`Sorry, ${member}, but due to past penalties, ${pilot.displayName} is unable to be a team captain or founder.`, channel);
+            throw new Warning("Pilot is penalized from being a team captain or founder.");
+        }
+    }
+
     //       #                 #     ###    #    ##           #    ####         #            #
     //       #                 #     #  #         #           #    #                         #
     //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   ###   #  #  ##     ###   ###    ###
@@ -707,7 +736,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The guild member initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async simulate(member, channel, message) {
         await Commands.checkMemberIsOwner(member);
@@ -741,7 +770,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async help(member, channel, message) {
         if (message) {
@@ -763,7 +792,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async version(member, channel, message) {
         if (message) {
@@ -785,7 +814,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async website(member, channel, message) {
         if (message) {
@@ -807,7 +836,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async createteam(member, channel, message) {
         await Commands.checkMemberNotStartingTeam(member, channel);
@@ -840,7 +869,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async name(member, channel, message) {
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
@@ -882,7 +911,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async tag(member, channel, message) {
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
@@ -925,7 +954,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cancel(member, channel, message) {
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
@@ -963,7 +992,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async complete(member, channel, message) {
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
@@ -1021,7 +1050,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async color(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -1156,7 +1185,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async addcaptain(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -1188,18 +1217,7 @@ class Commands {
             throw new Warning("Pilot is already a captain.");
         }
 
-        let canBeCaptain;
-        try {
-            canBeCaptain = await captain.canBeCaptain();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${member}, but due to past penalties, ${captain.displayName} is not a pilot you can add as a captain.`, channel);
-            throw new Warning("Pilot is not able to become a captain.");
-        }
+        await Commands.checkPilotCanBeCaptain(captain, member, channel);
 
         try {
             await team.addCaptain(member, captain);
@@ -1224,7 +1242,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removecaptain(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -1275,7 +1293,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async disband(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -1319,7 +1337,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async makefounder(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -1350,18 +1368,7 @@ class Commands {
             throw new Warning("Captain count limit reached.");
         }
 
-        let canBeCaptain;
-        try {
-            canBeCaptain = await pilot.canBeCaptain();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${member}, but due to past penalties, ${pilot.displayName} is not a pilot you can make the team's founder.`, channel);
-            throw new Warning("Pilot is not able to become the team's founder.");
-        }
+        await Commands.checkPilotCanBeCaptain(pilot, member, channel);
 
         if (!confirm) {
             await Discord.queue(`${member}, are you sure you want to make ${pilot.displayName} your team's founder?  Type \`!makefounder ${pilot.displayName} confirm\` to confirm.`, channel);
@@ -1395,7 +1402,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async reinstate(member, channel, message) {
         await Commands.checkMemberNotStartingTeam(member, channel);
@@ -1456,7 +1463,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async home(member, channel, message) {
         // TODO: Only allow home levels from a valid map list.
@@ -1509,7 +1516,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async request(member, channel, message) {
         await Commands.checkMemberNotStartingTeam(member, channel);
@@ -1574,7 +1581,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async invite(member, channel, message) {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
@@ -1662,7 +1669,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async accept(member, channel, message) {
         await Commands.checkMemberNotStartingTeam(member, channel);
@@ -1761,7 +1768,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async leave(member, channel, message) {
         const team = await Commands.checkMemberOnTeam(member, channel);
@@ -1807,7 +1814,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async remove(member, channel, message) {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
@@ -1882,7 +1889,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async timezone(member, channel, message) {
         if (!await Commands.checkHasParameters(message, member, "You must specify a time zone with this command.", channel)) {
@@ -1914,7 +1921,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async challenge(member, channel, message) {
         if (!member.isCaptainOrFounder()) {
@@ -2029,7 +2036,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async pickmap(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2080,7 +2087,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestmap(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2131,7 +2138,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmmap(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2187,7 +2194,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestneutralserver(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2241,7 +2248,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmneutralserver(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2296,7 +2303,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestteamsize(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2339,7 +2346,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmteamsize(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2392,7 +2399,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggesttime(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2457,7 +2464,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmtime(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2509,7 +2516,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async clock(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2619,7 +2626,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async matchtime(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2654,7 +2661,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async countdown(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2699,7 +2706,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async deadline(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2734,7 +2741,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async deadlinecountdown(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2779,7 +2786,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async twitch(member, channel, message) {
         if (!await Commands.checkHasParameters(message, member, "To link your Twitch channel, add the name of your channel after the command, for example `!twitch roncli`.", channel)) {
@@ -2809,7 +2816,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removetwitch(member, channel, message) {
         if (!await Commands.checkNoParameters(message, member, "Use `!removetwitch` by itself to unlink your Twitch channel.", channel)) {
@@ -2840,7 +2847,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async streaming(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2885,7 +2892,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async notstreaming(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -2927,7 +2934,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cast(member, channel, message) {
         await Commands.checkMemberHasTwitchName(member, channel);
@@ -2936,12 +2943,12 @@ class Commands {
             return false;
         }
 
-        if (!twoTeamMatch.test(message)) {
+        if (!twoTeamTagMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
             return false;
         }
 
-        const {1: tag1, 2: tag2} = twoTeamMatch.exec(message);
+        const {1: tag1, 2: tag2} = twoTeamTagMatch.exec(message);
 
         const team1 = await Commands.checkTeamExists(tag1, member, channel);
         const team2 = await Commands.checkTeamExists(tag2, member, channel);
@@ -2996,7 +3003,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async uncast(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -3036,7 +3043,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async report(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -3091,7 +3098,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirm(member, channel, message) {
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -3138,7 +3145,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async teamtimezone(member, channel, message) {
         await Commands.checkMemberIsFounder(member, channel);
@@ -3170,7 +3177,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async rename(member, channel, message) {
         await Commands.checkMemberIsOwner(member);
@@ -3215,7 +3222,7 @@ class Commands {
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
      * @param {string} message The text of the command.
-     * @returns {Promise} A promise that resolves when the command completes.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async retag(member, channel, message) {
         await Commands.checkMemberIsOwner(member);
@@ -3224,12 +3231,12 @@ class Commands {
             return false;
         }
 
-        if (!teamTagTeamTagMatch.test(message)) {
+        if (!twoTeamTagMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JO\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: oldTeamTag, 2: newTeamTag} = teamTagTeamTagMatch.exec(message);
+        const {1: oldTeamTag, 2: newTeamTag} = twoTeamTagMatch.exec(message);
 
         if (Team.tagExists(newTeamTag)) {
             await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${newTeamTag}.`, channel);
@@ -3248,44 +3255,135 @@ class Commands {
         return true;
     }
 
-    // !replacefounder <team> <newfounder>
-    /*
-     * Player must be an admin.
-     * Ensure this doesn't put players over 3 captains.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update team topics
-     * 3) Update founder permissions
-     * 4) Announce in team channel
-     * 5) Announce in roster changes
+    //                   ##                        #                        #
+    //                    #                       # #                       #
+    // ###    ##   ###    #     ###   ##    ##    #     ##   #  #  ###    ###   ##   ###
+    // #  #  # ##  #  #   #    #  #  #     # ##  ###   #  #  #  #  #  #  #  #  # ##  #  #
+    // #     ##    #  #   #    # ##  #     ##     #    #  #  #  #  #  #  #  #  ##    #
+    // #      ##   ###   ###    # #   ##    ##    #     ##    ###  #  #   ###   ##   #
+    //             #
+    /**
+     * Replaces a team founder.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async replacefounder(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
 
-    // !ejectcaptain <captain>
-    /*
-     * Player must be an admin.
-     * Captain must be a captain of a team.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update team topics
-     * 3) Update captain permissions
-     * 4) Announce in team channel
-     * 5) Announce in roster changes
-     */
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team and mention the pilot, for example, `!replacefounder CF @roncli`.", channel)) {
+            return false;
+        }
 
-    // !ejectpilot <pilot>
-    /*
-     * Player must be an admin.
-     * Pilot must be on a team.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update team topics
-     * 3) Update pilot permissions
-     * 4) Announce in team channel
-     * 5) Announce in roster changes
+        if (!teamPilotMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the team and mention the pilot, for example, \`!replacefounder CF @roncli\`.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {1: teamName, 2: id} = teamPilotMatch.exec(message);
+
+        const team = await Commands.checkTeamExists(teamName, member, channel),
+            pilot = await Commands.checkPilotExists(id, member, channel);
+
+        await Commands.checkPilotOnTeam(team, pilot, member, channel);
+
+        const captainCount = team.captainCount();
+        if (captainCount === 2 && !pilot.isCaptainOrFounder()) {
+            await Discord.queue(`Sorry, ${member}, but this team already has ${captainCount} captains, and the limit is 2.`, channel);
+            throw new Warning("Captain count limit reached.");
+        }
+
+        await Commands.checkPilotCanBeCaptain(pilot, member, channel);
+
+        try {
+            await team.replaceFounder(pilot);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //         #                #                       #           #
+    //                          #                       #
+    //  ##     #    ##    ##   ###    ##    ###  ###   ###    ###  ##    ###
+    // # ##    #   # ##  #      #    #     #  #  #  #   #    #  #   #    #  #
+    // ##      #   ##    #      #    #     # ##  #  #   #    # ##   #    #  #
+    //  ##   # #    ##    ##     ##   ##    # #  ###     ##   # #  ###   #  #
+    //        #                                  #
+    /**
+     * Ejects a captain from their role.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async ejectcaptain(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the captain to eject with this command.", channel)) {
+            return false;
+        }
+
+        const captain = await Commands.checkPilotExists(message, member, channel),
+            isCaptain = captain.isCaptainOrFounder(),
+            isFounder = captain.isFounder();
+        if (isFounder || !isCaptain) {
+            await Discord.queue(`Sorry, ${member}, but ${captain.displayName} is not a captain!`, channel);
+            throw new Warning("Pilot is not a captain.");
+        }
+
+        const team = await captain.getTeam();
+
+        try {
+            await team.removeCaptain(member, captain);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //         #                #           #    ##           #
+    //                          #                 #           #
+    //  ##     #    ##    ##   ###   ###   ##     #     ##   ###
+    // # ##    #   # ##  #      #    #  #   #     #    #  #   #
+    // ##      #   ##    #      #    #  #   #     #    #  #   #
+    //  ##   # #    ##    ##     ##  ###   ###   ###    ##     ##
+    //        #                      #
+    /**
+     * Ejects a captain from their team.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async ejectpilot(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the pilot to eject with this command.", channel)) {
+            return false;
+        }
+
+        const pilot = await Commands.checkPilotExists(message, member, channel),
+            team = await pilot.getTeam();
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but ${pilot.displayName} is not on a team!`, channel);
+            throw new Warning("Pilot is not on a team.");
+        }
+
+        try {
+            await team.removePilot(member, pilot);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !creatematch <team1> <team2>
     /*

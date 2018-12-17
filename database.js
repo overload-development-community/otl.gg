@@ -1307,30 +1307,25 @@ class Database {
     /**
      * Transfers ownership of a team from one pilot to another.
      * @param {Team} team The team to transfer ownership for.
-     * @param {DiscordJs.GuildMember} member The pilot to transfer ownership from.
-     * @param {DiscordJs.GuildMember} pilot The pilot to transfer ownership to.
+     * @param {DiscordJs.GuildMember} member The pilot to transfer ownership to.
      * @returns {Promise} A promise that resolves when ownership has been transferred.
      */
-    static async makeFounder(team, member, pilot) {
+    static async makeFounder(team, member) {
         await db.query(`
             DECLARE @playerId INT
-            DECLARE @pilotPlayerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            SELECT @pilotPlayerId = PlayerId FROM tblPlayer WHERE DiscordId = @pilotId
-
-            UPDATE tblRoster SET Founder = 0, Captain = 1 WHERE TeamId = @teamId AND PlayerId = @playerId
-            UPDATE tblRoster SET Founder = 1, Captain = 0 WHERE TeamId = @teamId AND PlayerId = @pilotPlayerId
+            UPDATE tblRoster SET Founder = 0, Captain = 1 WHERE TeamId = @teamId AND Founder = 1
+            UPDATE tblRoster SET Founder = 1, Captain = 0 WHERE TeamId = @teamId AND PlayerId = @playerId
 
             MERGE tblCaptainHistory ch
-                USING (VALUES (@teamId, @pilotPlayerId)) AS v (TeamId, PlayerId)
+                USING (VALUES (@teamId, @playerId)) AS v (TeamId, PlayerId)
                 ON ch.TeamId = v.TeamId AND ch.PlayerId = v.PlayerId
             WHEN NOT MATCHED THEN
                 INSERT (TeamId, PlayerId) VALUES (v.TeamId, v.PlayerId);
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
-            pilotId: {type: Db.VARCHAR(24), value: pilot.id},
             teamId: {type: Db.INT, value: team.id}
         });
     }

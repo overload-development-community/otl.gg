@@ -817,7 +817,7 @@ class Team {
      */
     async makeFounder(member, pilot) {
         try {
-            await Db.makeFounder(this, member, pilot);
+            await Db.makeFounder(this, pilot);
         } catch (err) {
             throw new Exception("There was a database error transfering a team founder to another pilot.", err);
         }
@@ -1118,9 +1118,10 @@ class Team {
     /**
      * Renames a team.
      * @param {string} name The new name.
+     * @param {DiscordJs.GuildMember} member The admin renaming the team.
      * @returns {Promise} A promise that resolves when the team has been renamed.
      */
-    async rename(name) {
+    async rename(name, member) {
         const oldName = this.name,
             categoryChannel = this.categoryChannel,
             role = this.role;
@@ -1143,10 +1144,10 @@ class Team {
 
             for (const challenge of challenges) {
                 await challenge.updateTopic();
-                await Discord.queue(`An admin has changed the name of **${oldName}** to **${name}**.`, challenge.channel);
+                await Discord.queue(`${member} has changed the name of **${oldName}** to **${name}**.`, challenge.channel);
             }
 
-            await Discord.queue(`An admin has changed your team's name to **${name}**.`, this.teamChannel);
+            await Discord.queue(`${member} has changed your team's name to **${name}**.`, this.teamChannel);
 
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: `${this.name} (${this.tag})`,
@@ -1163,11 +1164,92 @@ class Team {
                     }
                 ],
                 footer: {
-                    text: "renamed by Admin"
+                    text: `renamed by ${member.displayName}`
                 }
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error renaming a team.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                   ##                      ####                       #
+    //                    #                      #                          #
+    // ###    ##   ###    #     ###   ##    ##   ###    ##   #  #  ###    ###   ##   ###
+    // #  #  # ##  #  #   #    #  #  #     # ##  #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #     ##    #  #   #    # ##  #     ##    #     #  #  #  #  #  #  #  #  ##    #
+    // #      ##   ###   ###    # #   ##    ##   #      ##    ###  #  #   ###   ##   #
+    //             #
+    /**
+     * Replaces the founder.
+     * @param {DiscordJs.GuildMember} pilot The new founder.
+     * @param {DiscordJs.GuildMember} member The admin replacing the founder.
+     * @returns {Promise} A promise that resolves when the founder has been replaced.
+     */
+    async replaceFounder(pilot, member) {
+        const oldFounder = this.role.members.find((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id));
+
+        try {
+            await Db.makeFounder(this, pilot);
+        } catch (err) {
+            throw new Exception("There was a database error transfering a team founder to another pilot.", err);
+        }
+
+        try {
+            if (!this.role.members.find((m) => m.id === pilot.id)) {
+                throw new Error("Pilots are not on the same team.");
+            }
+
+            const captainsChannel = this.captainsChannel;
+            if (!captainsChannel) {
+                throw new Error("Captain's channel does not exist for the team.");
+            }
+
+            const teamChannel = this.teamChannel;
+            if (!teamChannel) {
+                throw new Error("Team's channel does not exist.");
+            }
+
+            if (oldFounder) {
+                await oldFounder.removeRole(Discord.founderRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
+                await oldFounder.addRole(Discord.captainRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
+            }
+
+            await pilot.addRole(Discord.founderRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
+            await pilot.removeRole(Discord.captainRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
+
+            await captainsChannel.overwritePermissions(
+                pilot,
+                {"VIEW_CHANNEL": true},
+                `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`
+            );
+
+            await this.updateChannels();
+
+            await Discord.queue(`${pilot}, you are now the founder of **${this.name}**!`, pilot);
+            await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
+            await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: this.name,
+                description: "Leadership Update",
+                color: 0x800000,
+                fields: [
+                    {
+                        name: "Old Founder",
+                        value: `${oldFounder || "Position Vacated"}`,
+                        inline: true
+                    },
+                    {
+                        name: "New Founder",
+                        value: `${pilot}`,
+                        inline: true
+                    }
+                ],
+                footer: {
+                    text: `changed by ${member.displayName}`
+                }
+            }), Discord.rosterUpdatesChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error transfering a team founder to another pilot.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1181,9 +1263,10 @@ class Team {
     /**
      * Renames a team tag.
      * @param {string} tag The new team tag.
+     * @param {DiscordJs.GuildMember} member The admin renaming the team tag.
      * @returns {Promise} A promise that resolves when the team's tag has been renamed.
      */
-    async retag(tag) {
+    async retag(tag, member) {
         const oldTag = this.tag,
             teamChannel = this.teamChannel,
             teamVoiceChannel = this.teamVoiceChannel,
@@ -1211,10 +1294,10 @@ class Team {
             for (const challenge of challenges) {
                 await challenge.channel.setName(challenge.channelName, "Team tag renamed by admin.");
                 await challenge.updateTopic();
-                await Discord.queue(`An admin has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
+                await Discord.queue(`${member} has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
             }
 
-            await Discord.queue(`An admin has changed your team's tag to **${tag}**.`, this.teamChannel);
+            await Discord.queue(`${member} has changed your team's tag to **${tag}**.`, this.teamChannel);
 
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: `${this.name} (${this.tag})`,
@@ -1231,7 +1314,7 @@ class Team {
                     }
                 ],
                 footer: {
-                    text: "renamed by Admin"
+                    text: `renamed by ${member.displayName}`
                 }
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
