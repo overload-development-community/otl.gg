@@ -1111,6 +1111,134 @@ class Team {
         }
     }
 
+    // ###    ##   ###    ###  # #    ##
+    // #  #  # ##  #  #  #  #  ####  # ##
+    // #     ##    #  #  # ##  #  #  ##
+    // #      ##   #  #   # #  #  #   ##
+    /**
+     * Renames a team.
+     * @param {string} name The new name.
+     * @returns {Promise} A promise that resolves when the team has been renamed.
+     */
+    async rename(name) {
+        const oldName = this.name,
+            categoryChannel = this.categoryChannel,
+            role = this.role;
+
+        try {
+            await Db.renameTeam(this, name);
+        } catch (err) {
+            throw new Exception("There was a database error renaming a team.", err);
+        }
+
+        this.name = name;
+
+        const challenges = await Challenge.getAllByTeam(this);
+
+        try {
+            await categoryChannel.setName(this.name, "Team renamed by admin.");
+            await role.setName(this.roleName, "Team renamed by admin.");
+
+            await this.updateChannels();
+
+            for (const challenge of challenges) {
+                await challenge.updateTopic();
+                await Discord.queue(`An admin has changed the name of **${oldName}** to **${name}**.`, challenge.channel);
+            }
+
+            await Discord.queue(`An admin has changed your team's name to **${name}**.`, this.teamChannel);
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: `${this.name} (${this.tag})`,
+                description: "Team renamed",
+                color: 0xFFFF00,
+                fields: [
+                    {
+                        name: "Old Name",
+                        value: `${oldName}`
+                    },
+                    {
+                        name: "New Name",
+                        value: `${name}`
+                    }
+                ],
+                footer: {
+                    text: "renamed by Admin"
+                }
+            }), Discord.rosterUpdatesChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error renaming a team.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //              #
+    //              #
+    // ###    ##   ###    ###   ###
+    // #  #  # ##   #    #  #  #  #
+    // #     ##     #    # ##   ##
+    // #      ##     ##   # #  #
+    //                          ###
+    /**
+     * Renames a team tag.
+     * @param {string} tag The new team tag.
+     * @returns {Promise} A promise that resolves when the team's tag has been renamed.
+     */
+    async retag(tag) {
+        const oldTag = this.tag,
+            teamChannel = this.teamChannel,
+            teamVoiceChannel = this.teamVoiceChannel,
+            captainsChannel = this.captainsChannel,
+            captainsVoiceChannel = this.captainsVoiceChannel;
+
+        try {
+            await Db.retagTeam(this, tag);
+        } catch (err) {
+            throw new Exception("There was a database error renaming a team tag.", err);
+        }
+
+        this.tag = tag;
+
+        const challenges = await Challenge.getAllByTeam(this);
+
+        try {
+            await teamChannel.setName(this.teamChannelName, "Team tag renamed by admin.");
+            await teamVoiceChannel.setName(this.teamVoiceChannelName, "Team tag renamed by admin.");
+            await captainsChannel.setName(this.captainsChannelName, "Team tag renamed by admin.");
+            await captainsVoiceChannel.setName(this.captainsVoiceChannelName, "Team tag renamed by admin.");
+
+            await this.updateChannels();
+
+            for (const challenge of challenges) {
+                await challenge.channel.setName(challenge.channelName, "Team tag renamed by admin.");
+                await challenge.updateTopic();
+                await Discord.queue(`An admin has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
+            }
+
+            await Discord.queue(`An admin has changed your team's tag to **${tag}**.`, this.teamChannel);
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: `${this.name} (${this.tag})`,
+                description: "Team tag renamed",
+                color: 0xFFFF00,
+                fields: [
+                    {
+                        name: "Old Tag",
+                        value: `${oldTag}`
+                    },
+                    {
+                        name: "New Tag",
+                        value: `${tag}`
+                    }
+                ],
+                footer: {
+                    text: "renamed by Admin"
+                }
+            }), Discord.rosterUpdatesChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error renaming a team tag.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //               #    ###    #
     //               #     #
     //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##

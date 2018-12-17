@@ -21,6 +21,8 @@ const tz = require("timezone-js"),
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/,
+    teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
+    teamTagTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/,
     twoTeamMatch = /^([^ ]+) ([^ ]+)$/;
 
 /**
@@ -1458,7 +1460,7 @@ class Commands {
      */
     async home(member, channel, message) {
         // TODO: Only allow home levels from a valid map list.
-        Commands.checkMemberIsCaptainOrFounder(member, channel);
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`.", channel)) {
             return false;
@@ -1575,7 +1577,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async invite(member, channel, message) {
-        Commands.checkMemberIsCaptainOrFounder(member, channel);
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         const team = await Commands.checkMemberOnTeam(member, channel);
 
@@ -1700,7 +1702,7 @@ class Commands {
             throw new Warning("Pilot does not have an invitation to accept.");
         }
 
-        Commands.checkMemberCanJoinATeam(member, channel);
+        await Commands.checkMemberCanJoinATeam(member, channel);
 
         let bannedUntil;
         try {
@@ -1887,7 +1889,7 @@ class Commands {
             return false;
         }
 
-        const time = Commands.checkTimezoneIsValid(message, member, channel);
+        const time = await Commands.checkTimezoneIsValid(message, member, channel);
 
         try {
             await member.setTimezone(message);
@@ -3159,29 +3161,92 @@ class Commands {
         return true;
     }
 
-    // !rename <team> <name>
-    /*
-     * Player must be an admin.
-     * Team name must not already exist.
-     *
-     * Success:
-     * 1) Update team name in database
-     * 2) Update channel category
-     * 3) Update challenges
-     * 4) Announce in team channel
+    // ###    ##   ###    ###  # #    ##
+    // #  #  # ##  #  #  #  #  ####  # ##
+    // #     ##    #  #  # ##  #  #  ##
+    // #      ##   #  #   # #  #  #   ##
+    /**
+     * Renames a team.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async rename(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
 
-    // !retag <team> <tag>
-    /*
-     * Player must be an admin.
-     * Team tag must not already exist.
-     *
-     * Success:
-     * 1) Update team tag in database
-     * 2) Update channel category
-     * 3) Update challenges
-     * 4) Announce in team channel
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team tag followed by the new team name to rename a team, for example `!rename CF Juno Offworld`.", channel)) {
+            return false;
+        }
+
+        if (!teamTagTeamNameMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the team tag followed by the new team name to rename a team, for example \`!rename CF Juno Offworld\`.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {1: teamTag, 2: teamName} = teamTagTeamNameMatch.exec(message);
+
+        if (Team.nameExists(teamName)) {
+            await Discord.queue(`Sorry, ${member}, but there is already a team named ${teamName}.`, channel);
+            throw new Warning("Team name already exists.");
+        }
+
+        const team = await Commands.checkTeamExists(teamTag, member, channel);
+
+        try {
+            await team.rename(teamName);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //              #
+    //              #
+    // ###    ##   ###    ###   ###
+    // #  #  # ##   #    #  #  #  #
+    // #     ##     #    # ##   ##
+    // #      ##     ##   # #  #
+    //                          ###
+    /**
+     * Renames a team tag.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise} A promise that resolves when the command completes.
      */
+    async retag(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the old team tag followed by the new team tag to rename a team tag, for example `!retag CF JO`.", channel)) {
+            return false;
+        }
+
+        if (!teamTagTeamTagMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JO\`.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {1: oldTeamTag, 2: newTeamTag} = teamTagTeamTagMatch.exec(message);
+
+        if (Team.tagExists(newTeamTag)) {
+            await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${newTeamTag}.`, channel);
+            throw new Warning("Team tag already exists.");
+        }
+
+        const team = await Commands.checkTeamExists(oldTeamTag, member, channel);
+
+        try {
+            await team.retag(newTeamTag);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !replacefounder <team> <newfounder>
     /*
@@ -3410,6 +3475,7 @@ class Commands {
     /*
      * Alert administrator when 28 days have passed since a challenge was clocked.
      * Alert administrator when an hour has passed since a challenge was supposed to be played.
+     * Alert teams half an hour before their match is scheduled to begin.
      */
 }
 

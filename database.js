@@ -1543,6 +1543,25 @@ class Database {
         await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
     }
 
+    //                                     ###
+    //                                      #
+    // ###    ##   ###    ###  # #    ##    #     ##    ###  # #
+    // #  #  # ##  #  #  #  #  ####  # ##   #    # ##  #  #  ####
+    // #     ##    #  #  # ##  #  #  ##     #    ##    # ##  #  #
+    // #      ##   #  #   # #  #  #   ##    #     ##    # #  #  #
+    /**
+     * Renames a team.
+     * @param {Team} team The team to rename.
+     * @param {string} name The name to rename the team to.
+     * @returns {Promise} A promise that resolves when the team has been renamed.
+     */
+    static async renameTeam(team, name) {
+        await db.query("UPDATE tblTeam SET Name = @name WHERE TeamId = @teamId", {
+            name: {type: Db.VARCHAR(25), value: name},
+            teamId: {type: Db.INT, value: team.id}
+        });
+    }
+
     //                                #    #  #         #          #
     //                                #    ####         #          #
     // ###    ##   ###    ##   ###   ###   ####   ###  ###    ##   ###
@@ -1614,6 +1633,26 @@ class Database {
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName},
+            teamId: {type: Db.INT, value: team.id}
+        });
+    }
+
+    //              #                ###
+    //              #                 #
+    // ###    ##   ###    ###   ###   #     ##    ###  # #
+    // #  #  # ##   #    #  #  #  #   #    # ##  #  #  ####
+    // #     ##     #    # ##   ##    #    ##    # ##  #  #
+    // #      ##     ##   # #  #      #     ##    # #  #  #
+    //                          ###
+    /**
+     * Renames a team tag.
+     * @param {Team} team The team to rename the tag of.
+     * @param {string} tag The tag to rename the team tag to.
+     * @returns {Promise} A promise that resolves when the team tag has been renamed.
+     */
+    static async retagTeam(team, tag) {
+        await db.query("UPDATE tblTeam SET Tag = @tag WHERE TeamId = @teamId", {
+            tag: {type: Db.VARCHAR(5), value: tag},
             teamId: {type: Db.INT, value: team.id}
         });
     }
