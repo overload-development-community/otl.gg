@@ -3201,7 +3201,7 @@ class Commands {
         const team = await Commands.checkTeamExists(teamTag, member, channel);
 
         try {
-            await team.rename(teamName);
+            await team.rename(teamName, member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -3246,7 +3246,7 @@ class Commands {
         const team = await Commands.checkTeamExists(oldTeamTag, member, channel);
 
         try {
-            await team.retag(newTeamTag);
+            await team.retag(newTeamTag, member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -3297,7 +3297,7 @@ class Commands {
         await Commands.checkPilotCanBeCaptain(pilot, member, channel);
 
         try {
-            await team.replaceFounder(pilot);
+            await team.replaceFounder(pilot, member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
