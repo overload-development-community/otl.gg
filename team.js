@@ -1129,12 +1129,7 @@ class Team {
             throw new Exception("There was a database error setting a team's timezone.", err);
         }
 
-        let challenges;
-        try {
-            challenges = await Challenge.getAllByTeam(this);
-        } catch (err) {
-            throw err;
-        }
+        const challenges = await Challenge.getAllByTeam(this);
 
         try {
             await this.updateChannels();

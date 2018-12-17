@@ -1,3 +1,4 @@
+import NewTeam from "./newTeam";
 import Team from "./team";
 
 declare module 'discord.js' {
@@ -9,7 +10,10 @@ declare module 'discord.js' {
         bannedFromTeamUntil(team: Team): Promise<Date>;
         canBeCaptain(): Promise<boolean>;
         canRemovePilot(pilot: GuildMember): Promise<boolean>;
+        createNewTeam(): Promise<NewTeam>;
+        getNewTeam(): Promise<NewTeam>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
+        getTeam(): Promise<Team>;
         getTimezone(): Promise<string>;
         getTwitchName(): Promise<string>;
         hasBeenInvitedToTeam(team: Team): Promise<boolean>;

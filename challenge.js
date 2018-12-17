@@ -103,7 +103,7 @@ class Challenge {
                 ]
             });
 
-            if (!data.team1Penalized && !data.team2Penalized) {
+            if (!data.team1Penalized && !data.team2Penalized && !challenge.details.adminCreated) {
                 mapEmbed.fields.push({
                     name: "!suggestmap <map>",
                     value: "Suggest a neutral map to play."
@@ -126,7 +126,7 @@ class Challenge {
                 fields: []
             });
 
-            if (!data.team1Penalized && !data.team2Penalized) {
+            if (!data.team1Penalized && !data.team2Penalized && !challenge.details.adminCreated) {
                 serverEmbed.fields.push({
                     name: "!suggestneutralserver",
                     value: "Suggests a neutral server be played.  This allows both teams to decide who starts the match."
@@ -152,24 +152,30 @@ class Challenge {
                     }, {
                         name: "!confirmteamsize",
                         value: "Confirms a team size suggested by the other team."
-                    }, {
-                        name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
-                        value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
-                    }, {
-                        name: "!confirmtime",
-                        value: "Confirms the date and time to play the match as suggested by the other team."
-                    }, {
-                        name: "!clock",
-                        value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`
-                    }, {
-                        name: "!streaming",
-                        value: "Indicates that a pilot will be streaming the match live."
-                    }, {
-                        name: "!notstreaming",
-                        value: "Indicates that a pilot will not be streaming the match live, which is the default setting."
                     }
                 ]
             }), challenge.channel);
+
+            if (!challenge.details.adminCreated) {
+                serverEmbed.fields.push({
+                    name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
+                    value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
+                }, {
+                    name: "!confirmtime",
+                    value: "Confirms the date and time to play the match as suggested by the other team."
+                }, {
+                    name: "!clock",
+                    value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`
+                });
+            }
+
+            serverEmbed.fields.push({
+                name: "!streaming",
+                value: "Indicates that a pilot will be streaming the match live."
+            }, {
+                name: "!notstreaming",
+                value: "Indicates that a pilot will not be streaming the match live, which is the default setting."
+            });
 
             if (optionsMsg) {
                 await optionsMsg.pin();
@@ -379,6 +385,10 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the caster has been added to the challenge.
      */
     async addCaster(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
         try {
             await Db.addCasterToChallenge(this, member);
         } catch (err) {
@@ -396,7 +406,7 @@ class Challenge {
 
             await this.updateTopic();
 
-            await Discord.queue(`${member} is now scheduled to cast this match.`, this.channel);
+            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, this.channel);
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
         }

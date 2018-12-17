@@ -67,12 +67,7 @@ class NewTeam {
         const newTeam = new NewTeam(data);
 
         try {
-            let currentTeam;
-            try {
-                currentTeam = await Team.getByPilot(member);
-            } catch (err) {
-                throw err;
-            }
+            const currentTeam = await Team.getByPilot(member);
 
             if (currentTeam) {
                 throw new Error("Pilot is already on a team.");
@@ -176,6 +171,20 @@ class NewTeam {
      */
     get channelName() {
         return `new-team-${this.member.id}`;
+    }
+
+    //                          #          ###
+    //                          #           #
+    //  ##   ###    ##    ###  ###    ##    #     ##    ###  # #
+    // #     #  #  # ##  #  #   #    # ##   #    # ##  #  #  ####
+    // #     #     ##    # ##   #    ##     #    ##    # ##  #  #
+    //  ##   #      ##    # #    ##   ##    #     ##    # #  #  #
+    /**
+     * Creates a team from the new team object.
+     * @returns {Promise<Team>} A promise that resolves with the team.
+     */
+    createTeam() {
+        return Team.create(this);
     }
 
     //    #        ##           #

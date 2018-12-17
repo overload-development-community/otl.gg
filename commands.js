@@ -1,6 +1,7 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ * @typedef {import("./newteam")} NewTeam
  */
 
 const tz = require("timezone-js"),
@@ -8,7 +9,6 @@ const tz = require("timezone-js"),
 
     Challenge = require("./challenge"),
     pjson = require("./package.json"),
-    NewTeam = require("./newTeam"),
     Team = require("./team"),
     Warning = require("./warning"),
 
@@ -43,6 +43,657 @@ setTimeout(() => {
  * A class that handles commands given by chat.
  */
 class Commands {
+    //       #                 #      ##   #           ##    ##                            ###          #           #    ##
+    //       #                 #     #  #  #            #     #                            #  #         #                 #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   #  #   ##   ###    ###  ##     #     ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  # ##   #    #  #   #     #    ##
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  ##     #    # ##   #     #      ##
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ##     ##   # #  ###   ###   ###
+    //                                                                          ###
+    /**
+     * Checks to ensure challenge details are loaded.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeDetails(challenge, member, channel) {
+        try {
+            await challenge.loadDetails();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###          #  #         #     ##                 #    #                         #
+    //       #                 #     #  #  #            #     #                             #           ## #         #    #  #               # #                             #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ## #   ##   ###   #      ##   ###    #    ##    ###   # #    ##    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    ##     # ##  #  #   #    #     #  #  #  #  ###    #    #  #  ####  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #      ##   # ##  #  #   #    #  #  #  #  #  #   #     #    #     #  #  ##    #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###   ###    #  #   ##     ##   ##    ##   #  #   #    ###   #     #  #   ##    ###
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge is not confirmed.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeIsNotConfirmed(challenge, member, channel) {
+        if (challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            throw new Warning("Match was already confirmed.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###          #  #         #    #                 #              #
+    //       #                 #     #  #  #            #     #                             #           ## #         #    #                 #              #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ## #   ##   ###   #      ##    ##   # #    ##    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    ##     # ##  #  #   #    #     #  #  #     ##    # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #      ##   # ##  #  #   #    #     #  #  #     # #   ##    #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###   ###    #  #   ##     ##  ####   ##    ##   #  #   ##    ###
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge is not locked.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeIsNotLocked(challenge, member, channel) {
+        if (challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but this match was created by an admin, and this command is not available.`, channel);
+            throw new Warning("Match is locked by admin.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###          #  #         #    ###                     ##     #                   #
+    //       #                 #     #  #  #            #     #                             #           ## #         #    #  #                     #                         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ## #   ##   ###   #  #   ##   ###    ###   #    ##    ####   ##    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    ##     # ##  #  #   #    ###   # ##  #  #  #  #   #     #      #   # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #      ##   # ##  #  #   #    #     ##    #  #  # ##   #     #     #    ##    #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###   ###    #  #   ##     ##  #      ##   #  #   # #  ###   ###   ####   ##    ###
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge is not penalized.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeIsNotPenalized(challenge, member, channel) {
+        if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
+            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, this command is not available.`, channel);
+            throw new Warning("Penalties apply.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###          #  #         #    #  #         #       #           #
+    //       #                 #     #  #  #            #     #                             #           ## #         #    #  #                 #           #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ## #   ##   ###   #  #   ##   ##     ###   ##    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    ##     # ##  #  #   #    #  #  #  #   #    #  #  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #      ##   # ##  #  #   #     ##   #  #   #    #  #  ##    #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###   ###    #  #   ##     ##   ##    ##   ###    ###   ##    ###
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge is not voided.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeIsNotVoided(challenge, member, channel) {
+        if (challenge.details.dateVoided) {
+            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
+            throw new Warning("Match was voided.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            #  #              ###          #  #         #     ##          #
+    //       #                 #     #  #  #            #     #                            ####               #           ## #         #    #  #         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   ####   ###  ###    #     ###   ## #   ##   ###    #     ##   ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #  #  #   #    ##     # ##  #  #   #      #   # ##   #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  # ##  #  #   #      ##   # ##  #  #   #    #  #  ##     #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #   # #  ###   ###   ###    #  #   ##     ##   ##    ##     ##
+    //                                                                          ###                    #
+    /**
+     * Checks to ensure the challenge map is not set.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeMapIsNotSet(challenge, member, channel) {
+        if (challenge.details.map) {
+            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
+            throw new Warning("Map already set.");
+        }
+    }
+
+    //       #                 #      ##   #                             ##    ###           ##   #           ##    ##                            ###
+    //       #                 #     #  #  #                              #     #           #  #  #            #     #                            #  #
+    //  ##   ###    ##    ##   # #   #     ###    ###  ###   ###    ##    #     #     ###   #     ###    ###   #     #     ##   ###    ###   ##   #  #   ##    ##   # #
+    // #     #  #  # ##  #     ##    #     #  #  #  #  #  #  #  #  # ##   #     #    ##     #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  ###   #  #  #  #  ####
+    // #     #  #  ##    #     # #   #  #  #  #  # ##  #  #  #  #  ##     #     #      ##   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    # #   #  #  #  #  #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  #  #  #  #   ##   ###   ###   ###     ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #   ##    ##   #  #
+    //                                                                                                                                 ###
+    /**
+     * Checks to ensure a channel is a challenge room, returning the challenge room.
+     * @param {DiscordJs.TextChannel} channel The channel.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @returns {Promise<Challenge>} A promise that resolves with the challenge.
+     */
+    static async checkChannelIsChallengeRoom(channel, member) {
+        try {
+            return await Challenge.getByChannel(channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+    }
+
+    //       #                 #     #  #               ###                                  #
+    //       #                 #     #  #               #  #                                 #
+    //  ##   ###    ##    ##   # #   ####   ###   ###   #  #   ###  ###    ###  # #    ##   ###    ##   ###    ###
+    // #     #  #  # ##  #     ##    #  #  #  #  ##     ###   #  #  #  #  #  #  ####  # ##   #    # ##  #  #  ##
+    // #     #  #  ##    #     # #   #  #  # ##    ##   #     # ##  #     # ##  #  #  ##     #    ##    #       ##
+    //  ##   #  #   ##    ##   #  #  #  #   # #  ###    #      # #  #      # #  #  #   ##     ##   ##   #     ###
+    /**
+     * Checks to ensure a command has parameters.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {string} text The text to display if parameters are found.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<boolean>} A promise that returns with whether the check passed.
+     */
+    static async checkHasParameters(message, member, text, channel) {
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  ${text}`, channel);
+            return false;
+        }
+
+        return true;
+    }
+
+    //       #                 #     ###    #    ##           #     ##         ###
+    //       #                 #     #  #         #           #    #  #         #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   #  #  ###    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##   ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the pilot is on the specified team.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember} member The member issuing the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkPilotOnTeam(team, pilot, member, channel) {
+        if (!team.role.members.find((m) => m.id === pilot.id)) {
+            await Discord.queue(`Sorry, ${member}, but this pilot is not on **${team.name}**.`, channel);
+            throw new Warning("Pilots are not on the same team.");
+        }
+    }
+
+    //       #                 #     #  #              #                  ##               ###          ##                #           #
+    //       #                 #     ####              #                 #  #              #  #        #  #               #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   #      ###  ###   ###    ##   #      ###  ###   ###    ###  ##    ###
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  #     #  #  #  #  #  #  # ##  #     #  #  #  #   #    #  #   #    #  #
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     #  #  # ##  #  #  #  #  ##    #  #  # ##  #  #   #    # ##   #    #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #      ##    # #  #  #  ###    ##    ##    # #  ###     ##   # #  ###   #  #
+    //                                                                                                             #
+    /**
+     * Checks to ensure the member can be a team captain.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberCanBeCaptain(member, channel) {
+        let canBeCaptain;
+        try {
+            canBeCaptain = await member.canBeCaptain();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!canBeCaptain) {
+            await Discord.queue(`Sorry, ${member}, but you are penalized and cannot use this command.  For details, talk to an admin.`, channel);
+            throw new Warning("Pilot is penalized from being captain.");
+        }
+    }
+
+    //       #                 #     #  #              #                  ##                  #         #           ##   ###
+    //       #                 #     ####              #                 #  #                 #                    #  #   #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   #      ###  ###      #   ##   ##    ###   #  #   #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  #     #  #  #  #     #  #  #   #    #  #  ####   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     #  #  # ##  #  #  #  #  #  #   #    #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #      ##    # #  #  #   ##    ##   ###   #  #  #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure a member can join a team.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberCanJoinATeam(member, channel) {
+        let deniedUntil;
+        try {
+            deniedUntil = await member.joinTeamDeniedUntil();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (deniedUntil) {
+            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You cannot use this command until ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            throw new Warning("Pilot already accepted an invitation within 28 days.");
+        }
+    }
+
+    //       #                 #     #  #              #                 #  #               ###          #     #          #     #  #
+    //       #                 #     ####              #                 #  #                #                 #          #     ## #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   ####   ###   ###    #    #  #  ##    ###    ##   ###   ## #   ###  # #    ##
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  #  #  #  #  ##      #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     #  #  # ##    ##    #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     #  #   # #  ###     #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
+    /**
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
+     */
+    static async checkMemberHasTwitchName(member, channel) {
+        let twitchName;
+        try {
+            twitchName = await member.getTwitchName();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!twitchName) {
+            await Discord.queue(`Sorry, ${member}, but you haven't linked your Twitch channel yet!  Use the \`!twitch\` command to link your Twitch channel.`, channel);
+            throw new Warning("Twitch channel not linked.");
+        }
+
+        return twitchName;
+    }
+
+    //       #                 #     #  #              #                 ###           ##                #           #           ##         ####                       #
+    //       #                 #     ####              #                  #           #  #               #                      #  #        #                          #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###    #     ###   #      ###  ###   ###    ###  ##    ###   #  #  ###   ###    ##   #  #  ###    ###   ##   ###
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #   #    ##     #     #  #  #  #   #    #  #   #    #  #  #  #  #  #  #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #      #      ##   #  #  # ##  #  #   #    # ##   #    #  #  #  #  #     #     #  #  #  #  #  #  #  #  ##    #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     ###   ###     ##    # #  ###     ##   # #  ###   #  #   ##   #     #      ##    ###  #  #   ###   ##   #
+    //                                                                                            #
+    /**
+     * Checks to ensure a member is a captian or a founder.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberIsCaptainOrFounder(member, channel) {
+        const isCaptain = member.isCaptainOrFounder();
+        if (!isCaptain) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
+            throw new Warning("Pilot is not a captain or founder.");
+        }
+    }
+
+    //       #                 #     #  #              #                 ###          ####                       #
+    //       #                 #     ####              #                  #           #                          #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###    #     ###   ###    ##   #  #  ###    ###   ##   ###
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #      #      ##   #     #  #  #  #  #  #  #  #  ##    #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     ###   ###    #      ##    ###  #  #   ###   ##   #
+    /**
+     * Checks to ensure a member is a founder.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberIsFounder(member, channel) {
+        const isFounder = member.isFounder();
+        if (!isFounder) {
+            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
+            throw new Warning("Pilot is not a founder.");
+        }
+    }
+
+    //       #                 #     #  #              #                 ###           ##
+    //       #                 #     ####              #                  #           #  #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###    #     ###   #  #  #  #  ###    ##   ###
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #   #    ##     #  #  #  #  #  #  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #      #      ##   #  #  ####  #  #  ##    #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     ###   ###     ##   ####  #  #   ##   #
+    /**
+     * Checks to ensure the member is the owner of the server.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @returns {void}
+     */
+    static checkMemberIsOwner(member) {
+        if (!Discord.isOwner(member)) {
+            throw new Warning("Owner permission required to perform this command.");
+        }
+    }
+
+    //       #                 #     #  #              #                 #  #         #     ##         ###
+    //       #                 #     ####              #                 ## #         #    #  #         #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   ## #   ##   ###   #  #  ###    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  # ##  #  #   #    #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     # ##  #  #   #    #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     #  #   ##     ##   ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the member is not on a team.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberNotOnTeam(member, channel) {
+        let team;
+        try {
+            team = await member.getTeam();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (team) {
+            await Discord.queue(`Sorry, ${member}, but you are already on **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
+            throw new Warning("Pilot is already on a team.");
+        }
+    }
+
+    //       #                 #     #  #              #                 #  #         #     ##    #                 #     #                ###
+    //       #                 #     ####              #                 ## #         #    #  #   #                 #                       #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   ## #   ##   ###    #    ###    ###  ###   ###   ##    ###    ###   #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  # ##  #  #   #      #    #    #  #  #  #   #     #    #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     # ##  #  #   #    #  #   #    # ##  #      #     #    #  #   ##    #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     #  #   ##     ##   ##     ##   # #  #       ##  ###   #  #  #      #     ##    # #  #  #
+    //                                                                                                                                ###
+    /**
+     * Checks to ensure the member is not starting a team.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberNotStartingTeam(member, channel) {
+        let newTeam;
+        try {
+            newTeam = await member.getNewTeam();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (newTeam) {
+            await Discord.queue(`Sorry, ${member}, but you are already in the process of starting a team!  Visit ${newTeam.channel} to get started, or \`!cancel\` to cancel your new team creation.`, channel);
+            throw new Warning("Pilot is already in the process of starting a team.");
+        }
+    }
+
+    //       #                 #     #  #              #                  ##         ###
+    //       #                 #     ####              #                 #  #         #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   #  #  ###    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #      ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the member is on the team, and returns the team.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<Team>} A promise that resolves with the member's team.
+     */
+    static async checkMemberOnTeam(member, channel) {
+        let team;
+        try {
+            team = await member.getTeam();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
+            throw new Warning("Pilot not on a team.");
+        }
+
+        return team;
+    }
+
+    //       #                 #     #  #              #                  ##    #                 #     #                #  #              ###
+    //       #                 #     ####              #                 #  #   #                 #                      ## #               #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###  ## #   ##   #  #   #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #    #    #    #  #  #  #   #     #    #  #  #  #  # ##  # ##  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     #  #   #    # ##  #      #     #    #  #   ##   # ##  ##    ####   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #      ##     ##   # #  #       ##  ###   #  #  #     #  #   ##   ####   #     ##    # #  #  #
+    //                                                                                                              ###
+    /**
+     * Checks to ensure the member is starting a new team, and returns the new team object.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<NewTeam>} A promise that resolves with the new team object.
+     */
+    static async checkMemberStartingNewTeam(member, channel) {
+        let newTeam;
+        try {
+            newTeam = await member.getNewTeam();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!newTeam) {
+            await Discord.queue(`Sorry, ${member}, but you can only use this command when you're in the process of creating a new team.`, channel);
+            throw new Warning("Pilot is already in the process of starting a team.");
+        }
+
+        return newTeam;
+    }
+
+    //       #                 #     #  #        ###                                  #
+    //       #                 #     ## #        #  #                                 #
+    //  ##   ###    ##    ##   # #   ## #   ##   #  #   ###  ###    ###  # #    ##   ###    ##   ###    ###
+    // #     #  #  # ##  #     ##    # ##  #  #  ###   #  #  #  #  #  #  ####  # ##   #    # ##  #  #  ##
+    // #     #  #  ##    #     # #   # ##  #  #  #     # ##  #     # ##  #  #  ##     #    ##    #       ##
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #      # #  #      # #  #  #   ##     ##   ##   #     ###
+    /**
+     * Checks to ensure a command has no parameters.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {string} text The text to display if parameters are found.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<boolean>} A promise that returns with whether the check passed.
+     */
+    static async checkNoParameters(message, member, text, channel) {
+        if (message) {
+            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  ${text}`, channel);
+            return false;
+        }
+
+        return true;
+    }
+
+    //       #                 #     ###    #    ##           #    ####         #            #
+    //       #                 #     #  #         #           #    #                         #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   ###   #  #  ##     ###   ###    ###
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #      ##    #    ##      #    ##
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    #      ##    #      ##    #      ##
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##  ####  #  #  ###   ###      ##  ###
+    /**
+     * Checks to ensure the pilot exists, and returns the pilot.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<DiscordJs.GuildMember>} A promise that resolves with the pilot.
+     */
+    static async checkPilotExists(message, member, channel) {
+        let pilot;
+        if (idParse.test(message)) {
+            const {1: id} = idParse.exec(message);
+
+            pilot = Discord.findGuildMemberById(id);
+        } else {
+            pilot = Discord.findGuildMemberByDisplayName(message);
+        }
+
+        if (!pilot) {
+            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot.`, channel);
+            throw new Warning("Pilot not found.");
+        }
+
+        return pilot;
+    }
+
+    //       #                 #     ###    #    ##           #    ####         #            #           #  #   #     #    #      ##                 #    #                       #     #
+    //       #                 #     #  #         #           #    #                         #           #  #         #    #     #  #               # #                           #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   ###   #  #  ##     ###   ###    ###   #  #  ##    ###   ###   #      ##   ###    #    ##    ###   # #    ###  ###   ##     ##   ###
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #      ##    #    ##      #    ##     ####   #     #    #  #  #     #  #  #  #  ###    #    #  #  ####  #  #   #     #    #  #  #  #
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    #      ##    #      ##    #      ##   ####   #     #    #  #  #  #  #  #  #  #   #     #    #     #  #  # ##   #     #    #  #  #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##  ####  #  #  ###   ###      ##  ###    #  #  ###     ##  #  #   ##    ##   #  #   #    ###   #     #  #   # #    ##  ###    ##   #  #
+    /**
+     * Checks to ensure the pilot exists, and returns the pilot along with whether there was confirmation.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<{pilot: DiscordJs.GuildMember, confirm: string}>} A promise that resolves with the pilot and whether there was confirmation.
+     */
+    static async checkPilotExistsWithConfirmation(message, member, channel) {
+        let pilot, confirm;
+        if (idConfirmParse.test(message)) {
+            const {1: id, 2: confirmed} = idConfirmParse.exec(message);
+
+            pilot = Discord.findGuildMemberById(id);
+            confirm = confirmed;
+        } else if (nameConfirmParse.test(message)) {
+            const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
+
+            pilot = Discord.findGuildMemberByDisplayName(name);
+            confirm = confirmed;
+        }
+
+        if (!pilot) {
+            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to make founder.`, channel);
+            throw new Warning("Pilot not found.");
+        }
+
+        return {pilot, confirm};
+    }
+
+    //       #                 #     ###                     ####         #            #
+    //       #                 #      #                      #                         #
+    //  ##   ###    ##    ##   # #    #     ##    ###  # #   ###   #  #  ##     ###   ###    ###
+    // #     #  #  # ##  #     ##     #    # ##  #  #  ####  #      ##    #    ##      #    ##
+    // #     #  #  ##    #     # #    #    ##    # ##  #  #  #      ##    #      ##    #      ##
+    //  ##   #  #   ##    ##   #  #   #     ##    # #  #  #  ####  #  #  ###   ###      ##  ###
+    /**
+     * Checks to ensure the team exists, and returns the team.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<Team>} A promise that resolves with the team.
+     */
+    static async checkTeamExists(message, member, channel) {
+        let team;
+        try {
+            team = await Team.getByNameOrTag(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but I can't find a team by the name of **${message}**.`, channel);
+            throw new Warning("Team does not exist.");
+        }
+
+        return team;
+    }
+
+    //       #                 #     ###                     ####         #            #           #  #   #     #    #      ##                 #    #                       #     #
+    //       #                 #      #                      #                         #           #  #         #    #     #  #               # #                           #
+    //  ##   ###    ##    ##   # #    #     ##    ###  # #   ###   #  #  ##     ###   ###    ###   #  #  ##    ###   ###   #      ##   ###    #    ##    ###   # #    ###  ###   ##     ##   ###
+    // #     #  #  # ##  #     ##     #    # ##  #  #  ####  #      ##    #    ##      #    ##     ####   #     #    #  #  #     #  #  #  #  ###    #    #  #  ####  #  #   #     #    #  #  #  #
+    // #     #  #  ##    #     # #    #    ##    # ##  #  #  #      ##    #      ##    #      ##   ####   #     #    #  #  #  #  #  #  #  #   #     #    #     #  #  # ##   #     #    #  #  #  #
+    //  ##   #  #   ##    ##   #  #   #     ##    # #  #  #  ####  #  #  ###   ###      ##  ###    #  #  ###     ##  #  #   ##    ##   #  #   #    ###   #     #  #   # #    ##  ###    ##   #  #
+    /**
+     * Checks to ensure the team exists, and returns the team along with whether there was confirmation.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<{team: Team, confirm: string}>} A promise that resolves with the team and whether there was confirmation.
+     */
+    static async checkTeamExistsWithConfirmation(message, member, channel) {
+        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
+        let team;
+        try {
+            team = await Team.getByNameOrTag(name);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!team) {
+            await Discord.queue(`Sorry, ${member}, but I have no record of that team ever existing.`, channel);
+            throw new Warning("Team does not exist.");
+        }
+
+        return {team, confirm};
+    }
+
+    //       #                 #     ###                     ###          ###          ##   #           ##    ##
+    //       #                 #      #                       #            #          #  #  #            #     #
+    //  ##   ###    ##    ##   # #    #     ##    ###  # #    #     ###    #    ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #     #  #  # ##  #     ##     #    # ##  #  #  ####   #    ##      #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     #  #  ##    #     # #    #    ##    # ##  #  #   #      ##    #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   #  #   ##    ##   #  #   #     ##    # #  #  #  ###   ###    ###   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                           ###
+    /**
+     * Checks to ensure a team is in a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkTeamIsInChallenge(challenge, team, member, channel) {
+        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
+            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            throw new Warning("Pilot not on a team in the challenge.");
+        }
+    }
+
+    //       #                 #     ###    #                                        ###          #  #        ##     #       #
+    //       #                 #      #                                               #           #  #         #             #
+    //  ##   ###    ##    ##   # #    #    ##    # #    ##   ####   ##   ###    ##    #     ###   #  #   ###   #    ##     ###
+    // #     #  #  # ##  #     ##     #     #    ####  # ##    #   #  #  #  #  # ##   #    ##     #  #  #  #   #     #    #  #
+    // #     #  #  ##    #     # #    #     #    #  #  ##     #    #  #  #  #  ##     #      ##    ##   # ##   #     #    #  #
+    //  ##   #  #   ##    ##   #  #   #    ###   #  #   ##   ####   ##   #  #   ##   ###   ###     ##    # #  ###   ###    ###
+    /**
+     * Checks to ensure a time zone is valid.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<string>} A promise that resolves with the time in the specified time zone.
+     */
+    static async checkTimezoneIsValid(message, member, channel) {
+        if (!tzdata.zones[message]) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        let time;
+        try {
+            time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"});
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            throw new Warning("Invalid time zone.");
+        }
+
+        return time;
+    }
+
     //         #                ##           #
     //                           #           #
     //  ###   ##    # #   #  #   #     ###  ###    ##
@@ -57,9 +708,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async simulate(member, channel, message) {
-        if (!Discord.isOwner(member)) {
-            throw new Warning("Owner permission required to perform this command.");
-        }
+        await Commands.checkMemberIsOwner(member);
 
         if (!idMessageParse.test(message)) {
             return false;
@@ -98,7 +747,6 @@ class Commands {
         }
 
         await Discord.queue(`${member}, see the documentation at https://github.com/roncli/otl-bot/blob/master/README.md.`, channel);
-
         return true;
     }
 
@@ -121,7 +769,6 @@ class Commands {
         }
 
         await Discord.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}.  Project is open source, visit https://github.com/roncli/otl-bot.`, channel);
-
         return true;
     }
 
@@ -144,7 +791,6 @@ class Commands {
         }
 
         await Discord.queue("Website pending!", channel);
-
         return true;
     }
 
@@ -162,66 +808,18 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async createteam(member, channel, message) {
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!createteam\` by itself to begin the process of creating a team.`, channel);
+        await Commands.checkMemberNotStartingTeam(member, channel);
+        await Commands.checkMemberNotOnTeam(member, channel);
+        await Commands.checkMemberCanBeCaptain(member, channel);
+        await Commands.checkMemberCanJoinATeam(member, channel);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!createteam` by itself to begin the process of creating a team.", channel)) {
             return false;
-        }
-
-        let existingNewTeam;
-        try {
-            existingNewTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (existingNewTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already in the process of starting a team!  Visit ${existingNewTeam.channel} to get started.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
-
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (team) {
-            await Discord.queue(`Sorry, ${member}, but you are already on **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
-            throw new Warning("Pilot is already on a team.");
-        }
-
-        let canBeCaptain;
-        try {
-            canBeCaptain = await member.canBeCaptain();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${member}, but due to past penalties, you cannot create a team.`, channel);
-            throw new Warning("Pilot is not able to create a team.");
-        }
-
-        let deniedUntil;
-        try {
-            deniedUntil = await member.joinTeamDeniedUntil();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to create a new team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
-            throw new Warning("Pilot not allowed to create a new team.");
         }
 
         let newTeam;
         try {
-            newTeam = await NewTeam.create(member);
+            newTeam = await member.createNewTeam();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -243,22 +841,10 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async name(member, channel, message) {
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To name your team, add the team name after the command, for example \`!name Cronus Frontier\`.`, channel);
+        const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To name your team, add the team name after the command, for example `!name Cronus Frontier`.", channel)) {
             return false;
-        }
-
-        let newTeam;
-        try {
-            newTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!newTeam) {
-            await Discord.queue(`Sorry, ${member}, but you cannot name a team when you're not in the process of creating one.  If you need to rename your team due to a misspelling or typo, please contact an admin.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
         }
 
         if (!teamNameMatch.test(message)) {
@@ -266,8 +852,7 @@ class Commands {
             throw new Warning("Pilot used non-alphanumeric characters in their team name.");
         }
 
-        const exists = Team.nameExists(message);
-        if (exists) {
+        if (Team.nameExists(message)) {
             await Discord.queue(`Sorry, ${member}, but this team name already exists!`, channel);
             throw new Warning("Team name already exists.");
         }
@@ -298,22 +883,10 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async tag(member, channel, message) {
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To assign a tag to your team, add the tag after the command, for example \`!tag CF\` for a team named Cronus Frontier.`, channel);
+        const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To assign a tag to your team, add the tag after the command, for example `!tag CF` for a team named Cronus Frontier.", channel)) {
             return false;
-        }
-
-        let newTeam;
-        try {
-            newTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!newTeam) {
-            await Discord.queue(`Sorry, ${member}, but you cannot provide a team tag when you're not in the process of creating a team.  If you need to rename your team due to a misspelling or typo, please contact an admin.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
         }
 
         message = message.toUpperCase();
@@ -353,18 +926,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async cancel(member, channel, message) {
-        let newTeam;
-        try {
-            newTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!newTeam) {
-            await Discord.queue(`Sorry, ${member}, but you cannot cancel new team creation when you're not in the process of creating one.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
+        const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!message) {
             await Discord.queue(`${member}, are you sure you want to cancel your new team request?  There is no undoing this action!  Type \`!cancel confirm\` to confirm.`, channel);
@@ -402,18 +964,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async complete(member, channel, message) {
-        let newTeam;
-        try {
-            newTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!newTeam) {
-            await Discord.queue(`Sorry, ${member}, but you cannot complete creating a team when you're not in the process of creating one.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
+        const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!newTeam.name) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!name\` and \`!tag\` commands to give your team a name and a tag before completing your request to create a team.`, channel);
@@ -423,16 +974,6 @@ class Commands {
         if (!newTeam.tag) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!tag\` command to give your team a tag before completing your request to create a team.`, channel);
             throw new Warning("Team not yet given a tag.");
-        }
-
-        if (!message) {
-            await Discord.queue(`${member}, are you sure you want to complete your request to create a team?  There is no undoing this action!  Type \`!complete confirm\` to confirm.`, channel);
-            return true;
-        }
-
-        if (message !== "confirm") {
-            await Discord.queue(`Sorry, ${member}, but you must type \`!complete confirm\` to confirm that you wish to complete your request to create a team.`, channel);
-            return false;
         }
 
         if (Team.nameExists(newTeam.name)) {
@@ -445,9 +986,19 @@ class Commands {
             throw new Warning("Team tag already exists.");
         }
 
+        if (!message) {
+            await Discord.queue(`${member}, are you sure you want to complete your request to create a team?  There is no undoing this action!  Type \`!complete confirm\` to confirm.`, channel);
+            return true;
+        }
+
+        if (message !== "confirm") {
+            await Discord.queue(`Sorry, ${member}, but you must type \`!complete confirm\` to confirm that you wish to complete your request to create a team.`, channel);
+            return false;
+        }
+
         let team;
         try {
-            team = await Team.create(newTeam);
+            team = await newTeam.createTeam();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -471,15 +1022,10 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async color(member, channel, message) {
-        const isFounder = member.isFounder();
-        if (!isFounder) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue("You can use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel);
-            return true;
+        if (!await Commands.checkHasParameters(message, member, "You can use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel)) {
+            return false;
         }
 
         if (!colorMatch.test(message)) {
@@ -487,20 +1033,8 @@ class Commands {
             throw new Warning("Invalid color.");
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        const colors = message.split(" ");
+        const team = await Commands.checkMemberOnTeam(member, channel),
+            colors = message.split(" ");
         let color;
 
         switch (colors[colors.length === 1 ? 0 : 1]) {
@@ -623,51 +1157,22 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async addcaptain(member, channel, message) {
-        const isFounder = member.isFounder();
-        if (!isFounder) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but you must mention the pilot on your team that you wish to add as a captain.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must mention the pilot on your team that you wish to add as a captain.", channel)) {
             return false;
         }
 
-        /**
-         * @type {DiscordJs.GuildMember}
-         */
-        let captain;
-        if (idParse.test(message)) {
-            const {1: id} = idParse.exec(message);
-
-            captain = Discord.findGuildMemberById(id);
-        } else {
-            captain = Discord.findGuildMemberByDisplayName(message);
-        }
-
-        if (!captain) {
-            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to add as a captain.`, channel);
-            throw new Warning("Pilot not found.");
-        }
+        const captain = await Commands.checkPilotExists(message, member, channel);
 
         if (captain.id === member.id) {
             await Discord.queue(`Sorry, ${member}, but you can't promote yourself to captain!`, channel);
             throw new Warning("Pilot can't promote themselves.");
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team.role.members.find((m) => m.id === captain.id)) {
-            await Discord.queue(`Sorry, ${member}, but you can only add a captain if they are on your team.`, channel);
-            throw new Warning("Pilots are not on the same team.");
-        }
+        await Commands.checkPilotOnTeam(team, captain, member, channel);
 
         const captainCount = team.captainCount();
         if (captainCount >= 2) {
@@ -720,38 +1225,20 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async removecaptain(member, channel, message) {
-        const isFounder = member.isFounder();
-        if (!isFounder) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but you must mention the pilot on your team that you wish to remove as a captain.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must mention the pilot on your team that you wish to remove as a captain.", channel)) {
             return false;
         }
 
-        let captain;
-        if (idParse.test(message)) {
-            const {1: id} = idParse.exec(message);
+        const captain = await Commands.checkPilotExists(message, member, channel);
 
-            captain = Discord.findGuildMemberById(id);
-        } else {
-            captain = Discord.findGuildMemberByDisplayName(message);
+        if (captain.id === member.id) {
+            await Discord.queue(`Sorry, ${member}, but you can't remove yourself as captain!`, channel);
+            throw new Warning("Pilot can't remove themselves as captain.");
         }
 
-        if (!captain) {
-            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to remove as a captain.`, channel);
-            throw new Warning("Pilot not found.");
-        }
-
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (!team.role.members.find((m) => m.id === captain.id)) {
             await Discord.queue(`Sorry, ${member}, but you can only remove a captain if they are on your team.`, channel);
@@ -761,7 +1248,7 @@ class Commands {
         const isCaptain = captain.isCaptainOrFounder();
         if (!isCaptain) {
             await Discord.queue(`Sorry, ${member}, but ${captain.displayName} is not a captain!`, channel);
-            throw new Warning("Pilot is already a captain.");
+            throw new Warning("Pilot is not a captain.");
         }
 
         try {
@@ -789,19 +1276,9 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async disband(member, channel, message) {
-        const isFounder = member.isFounder();
-        if (!isFounder) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (team.locked) {
             await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
@@ -843,32 +1320,13 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async makefounder(member, channel, message) {
-        const isFounder = member.isFounder();
-        if (!isFounder) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but you must mention the pilot you wish to make founder.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to make founder.", channel)) {
             return false;
         }
 
-        let pilot, confirm;
-        if (idConfirmParse.test(message)) {
-            const {1: id, 2: confirmed} = idConfirmParse.exec(message);
-
-            pilot = Discord.findGuildMemberById(id);
-            confirm = confirmed;
-        } else if (nameConfirmParse.test(message)) {
-            const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
-
-            pilot = Discord.findGuildMemberByDisplayName(name);
-            confirm = confirmed;
-        } else {
-            await Discord.queue(`Sorry, ${member}, but you must mention the pilot you wish to make founder.`, channel);
-            return false;
-        }
+        const {pilot, confirm} = await Commands.checkPilotExistsWithConfirmation(message, member, channel);
 
         if (!pilot) {
             await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to make founder.`, channel);
@@ -880,18 +1338,9 @@ class Commands {
             throw new Warning("Pilot is already the team's founder.");
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team.role.members.find((m) => m.id === pilot.id)) {
-            await Discord.queue(`Sorry, ${member}, but you can only add a captain if they are on your team.`, channel);
-            throw new Warning("Pilots are not on the same team.");
-        }
+        await Commands.checkPilotOnTeam(team, pilot, member, channel);
 
         const captainCount = team.captainCount();
         if (captainCount === 2 && !pilot.isCaptainOrFounder()) {
@@ -947,50 +1396,14 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async reinstate(member, channel, message) {
-        if (!message) {
-            await Discord.queue("You must include the name of the team you wish to reinstate.", channel);
+        await Commands.checkMemberNotStartingTeam(member, channel);
+        await Commands.checkMemberNotOnTeam(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to make founder.", channel)) {
             return false;
         }
 
-        let existingNewTeam;
-        try {
-            existingNewTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (existingNewTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already in the process of starting a team!  Visit ${existingNewTeam.channel} to get started.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
-
-        let currentTeam;
-        try {
-            currentTeam = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (currentTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already on **${currentTeam.name}**!  Visit your team channel at ${currentTeam.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
-            throw new Warning("Pilot is already on a team.");
-        }
-
-        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
-        let team;
-        try {
-            team = await Team.getByNameOrTag(name);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but I have no record of that team ever existing.`, channel);
-            throw new Warning("Team does not exist.");
-        }
+        const {team, confirm} = await Commands.checkTeamExistsWithConfirmation(message, member, channel);
 
         if (!team.disbanded) {
             await Discord.queue(`Sorry, ${member}, but you can't reinstate a team that isn't disbanded.`, channel);
@@ -1010,34 +1423,11 @@ class Commands {
             throw new Warning("Team does not exist.");
         }
 
-        let canBeCaptain;
-        try {
-            canBeCaptain = await member.canBeCaptain();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!canBeCaptain) {
-            await Discord.queue(`Sorry, ${member}, but due to past penalties, you cannot reinstate a team.`, channel);
-            throw new Warning("Pilot is not able to reinstate a team.");
-        }
-
-        let deniedUntil;
-        try {
-            deniedUntil = await member.joinTeamDeniedUntil();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to reinstate this team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
-            throw new Warning("Pilot not allowed to create a new team.");
-        }
+        await Commands.checkMemberCanBeCaptain(member, channel);
+        await Commands.checkMemberCanJoinATeam(member, channel);
 
         if (!confirm) {
-            await Discord.queue(`${member}, are you sure you wish to reinstate this team?  Type \`!reinstate ${name} confirm\` to confirm that you wish to reinstate this team.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
+            await Discord.queue(`${member}, are you sure you wish to reinstate this team?  Type \`!reinstate ${team.name} confirm\` to confirm that you wish to reinstate this team.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
             return true;
         }
 
@@ -1068,15 +1458,10 @@ class Commands {
      */
     async home(member, channel, message) {
         // TODO: Only allow home levels from a valid map list.
-        const isCaptain = member.isCaptainOrFounder();
-        if (!isCaptain) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue("To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`", channel);
-            return true;
+        if (!await Commands.checkHasParameters(message, member, "To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`.", channel)) {
+            return false;
         }
 
         if (!mapMatch.test(message)) {
@@ -1084,20 +1469,8 @@ class Commands {
             throw new Warning("Pilot is not a founder or captain.");
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you are already on **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
-            throw new Warning("Pilot is not on a team.");
-        }
-
-        const {1: number, 2: map} = mapMatch.exec(message);
+        const team = await Commands.checkMemberOnTeam(member, channel),
+            {1: number, 2: map} = mapMatch.exec(message);
         let homes;
         try {
             homes = await team.getHomeMaps();
@@ -1137,49 +1510,14 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async request(member, channel, message) {
-        let existingNewTeam;
-        try {
-            existingNewTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        await Commands.checkMemberNotStartingTeam(member, channel);
+        await Commands.checkMemberNotOnTeam(member, channel);
 
-        if (existingNewTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already in the process of starting a team!  Visit ${existingNewTeam.channel} to get started, or \`!cancel\` to cancel your new team creation and try this command again.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
-
-        let currentTeam;
-        try {
-            currentTeam = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (currentTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already on **${currentTeam.name}**!  Visit your team channel at ${currentTeam.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
-            throw new Warning("Pilot is already on a team.");
-        }
-
-        if (!message) {
-            await Discord.queue("You must include the name of the team you want to send a join request to.", channel);
+        if (!await Commands.checkHasParameters(message, member, "You must include the name of the team you want to send a join request to.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByNameOrTag(message);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but I can't find a team by that name.`, channel);
-            throw new Warning("Team does not exist.");
-        }
+        const team = await Commands.checkTeamExists(message, member, channel);
 
         if (team.disbanded) {
             await Discord.queue(`Sorry, ${member}, but that team has disbanded.  A former captain or founder may reinstate the team with the \`!reinstate ${team.tag}\` command.`, channel);
@@ -1237,23 +1575,12 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async invite(member, channel, message) {
-        const isCaptain = member.isCaptainOrFounder();
-        if (!isCaptain) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you are not on a team.`, channel);
-            throw new Warning("Pilot already on another team.");
+        if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to invite.", channel)) {
+            return false;
         }
 
         let pilotCount;
@@ -1269,26 +1596,11 @@ class Commands {
             throw new Warning("Roster is full.");
         }
 
-        /**
-         * @type {DiscordJs.GuildMember}
-         */
-        let pilot;
-        if (idParse.test(message)) {
-            const {1: id} = idParse.exec(message);
-
-            pilot = Discord.findGuildMemberById(id);
-        } else {
-            pilot = Discord.findGuildMemberByDisplayName(message);
-        }
-
-        if (!pilot) {
-            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to invite.`, channel);
-            throw new Warning("Pilot not found.");
-        }
+        const pilot = await Commands.checkPilotExists(message, member, channel);
 
         let existingNewTeam;
         try {
-            existingNewTeam = await NewTeam.getByPilot(pilot);
+            existingNewTeam = await pilot.getNewTeam();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1314,7 +1626,7 @@ class Commands {
 
         let currentTeam;
         try {
-            currentTeam = await Team.getByPilot(pilot);
+            currentTeam = await pilot.getTeam();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1351,34 +1663,10 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async accept(member, channel, message) {
-        let existingNewTeam;
-        try {
-            existingNewTeam = await NewTeam.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        await Commands.checkMemberNotStartingTeam(member, channel);
+        await Commands.checkMemberNotOnTeam(member, channel);
 
-        if (existingNewTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already in the process of starting a team!  Visit ${existingNewTeam.channel} to get started.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
-        }
-
-        let currentTeam;
-        try {
-            currentTeam = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (currentTeam) {
-            await Discord.queue(`Sorry, ${member}, but you are already on **${currentTeam.name}**!  Visit your team channel at ${currentTeam.teamChannel} to talk with your teammates, or use \`!leave\` to leave your current team.`, channel);
-            throw new Warning("Pilot is already on a team.");
-        }
-
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but you must include the name or tag of the team you wish to accept an invitation from.  For example, if you wish to accept an invitation from Cronus Frontier, use either \`!accept Cronus Frontier\` or \`!accept CF\`.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must include the name or tag of the team you wish to accept an invitation from.  For example, if you wish to accept an invitation from Cronus Frontier, use either `!accept Cronus Frontier` or `!accept CF`.", channel)) {
             return false;
         }
 
@@ -1387,19 +1675,7 @@ class Commands {
             return false;
         }
 
-        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
-        let team;
-        try {
-            team = await Team.getByNameOrTag(name);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but I can't find a team by that name.`, channel);
-            throw new Warning("Invalid team name.");
-        }
+        const {team, confirm} = await Commands.checkTeamExistsWithConfirmation(message, member, channel);
 
         if (team.disbanded) {
             await Discord.queue(`Sorry, ${member}, but that team has disbanded.  A former captain or founder may reinstate the team with the \`!reinstate ${team.tag}\` command.`, channel);
@@ -1424,18 +1700,7 @@ class Commands {
             throw new Warning("Pilot does not have an invitation to accept.");
         }
 
-        let deniedUntil;
-        try {
-            deniedUntil = await member.joinTeamDeniedUntil();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You will be able to join a new team on ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
-            throw new Warning("Pilot not allowed to accept an invite.");
-        }
+        Commands.checkMemberCanJoinATeam(member, channel);
 
         let bannedUntil;
         try {
@@ -1479,8 +1744,7 @@ class Commands {
             await requestedTeam.updateChannels();
         });
 
-        const teamChannel = team.teamChannel;
-        await Discord.queue(`${member}, you are now a member of **${team.name}**!  Visit your team channel at ${teamChannel} to talk with your teammates.  Best of luck flying in the OTL!`, channel);
+        await Discord.queue(`${member}, you are now a member of **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates.  Best of luck flying in the OTL!`, channel);
         return true;
     }
 
@@ -1498,18 +1762,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async leave(member, channel, message) {
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you can't leave a team when you aren't on one!`, channel);
-            throw new Warning("Pilot is not on a team.");
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (team.locked) {
             await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
@@ -1555,54 +1808,20 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async remove(member, channel, message) {
-        const isCaptain = member.isCaptainOrFounder();
-        if (!isCaptain) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (team.locked) {
             await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
             throw new Warning("Team rosters are locked.");
         }
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To remove a pilot, you must mention them as part of the \`!remove\` command.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "To remove a pilot, you must mention them as part of the `!remove` command.", channel)) {
             return false;
         }
 
-        /**
-         * @type {DiscordJs.GuildMember}
-         */
-        let pilot;
-        let confirm;
-        if (idConfirmParse.test(message)) {
-            const {1: id, 2: confirmed} = idConfirmParse.exec(message);
-
-            pilot = Discord.findGuildMemberById(id);
-            confirm = confirmed;
-        } else if (nameConfirmParse.test(message)) {
-            const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
-
-            pilot = Discord.findGuildMemberByDisplayName(name);
-            confirm = confirmed;
-        } else {
-            await Discord.queue(`Sorry, ${member}, but you must mention the pilot you wish to make founder.`, channel);
-            return false;
-        }
-
-        if (!pilot) {
-            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot you wish to remove.`, channel);
-            throw new Warning("Pilot not found.");
-        }
+        const {pilot, confirm} = await Commands.checkPilotExistsWithConfirmation(message, member, channel);
 
         if (pilot.id === member.id) {
             await Discord.queue(`Sorry, ${member}, you can't remove yourself with this command.  If you wish to leave the team, use the \`!leave\` command.`, channel);
@@ -1664,23 +1883,11 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async timezone(member, channel, message) {
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify a time zone with this command.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must specify a time zone with this command.", channel)) {
             return false;
         }
 
-        if (!tzdata.zones[message]) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
-            throw new Warning("Invalid time zone.");
-        }
-
-        let time;
-        try {
-            time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"});
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
-            throw new Warning("Invalid time zone.");
-        }
+        const time = Commands.checkTimezoneIsValid(message, member, channel);
 
         try {
             await member.setTimezone(message);
@@ -1713,23 +1920,11 @@ class Commands {
             throw new Warning("Pilot is not a founder or captain.");
         }
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify the team you wish to challenge with this command.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to challenge with this command.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         let pilotCount;
         try {
@@ -1757,21 +1952,9 @@ class Commands {
             throw new Warning("Team does not have 3 home maps set.");
         }
 
-        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
-        let opponent;
-        try {
-            opponent = await Team.getByNameOrTag(name);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const {team: opponent, confirm} = await Commands.checkTeamExistsWithConfirmation(message, member, channel);
 
-        if (!opponent) {
-            await Discord.queue(`Sorry, ${member}, but I have no record of that team ever existing.`, channel);
-            throw new Warning("Team does not exist.");
-        }
-
-        if (opponent.disbandTeam) {
+        if (opponent.disbanded) {
             await Discord.queue(`Sorry, ${member}, but that team is disbanded.`, channel);
             throw new Warning("Team is disbanded.");
         }
@@ -1816,7 +1999,7 @@ class Commands {
         }
 
         if (!confirm) {
-            await Discord.queue(`${member}, are you sure you wish to challenge **${opponent.name}**?  Type \`!challenge ${name} confirm\` to confirm.`, channel);
+            await Discord.queue(`${member}, are you sure you wish to challenge **${opponent.name}**?  Type \`!challenge ${opponent.tag} confirm\` to confirm.`, channel);
             return true;
         }
 
@@ -1847,67 +2030,26 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async pickmap(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (challenge.details.homeMapTeam.id === team.id) {
             await Discord.queue(`Sorry, ${member}, but your team is the home team.  Your opponents must pick the map from your list of home maps.`, channel);
             throw new Warning("Wrong team.");
         }
 
-        if (challenge.details.map) {
-            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
-            throw new Warning("Map already set.");
-        }
+        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
         if (!message || ["a", "b", "c"].indexOf(message.toLowerCase()) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`!pickmap a\`, \`!pickmap b\`, or \`!pickmap c\`.`, channel);
@@ -1939,77 +2081,26 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async suggestmap(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To suggest a neutral map, use the `!suggestmap` command with the map you want to suggest.", channel)) {
+            return false;
         }
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a neutral map, use the \`!suggestmap\` command with the map you want to suggest.`, channel);
-            throw new Warning("Missing map selection.");
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
-
-        if (challenge.details.adminCreated) {
-            await Discord.queue(`Sorry, ${member}, but a neutral map may not be agreed to in a match created by an admin.`, channel);
-            throw new Warning("Map is locked by admin.");
-        }
-
-        if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
-            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a neutral map cannot be suggested.`, channel);
-            throw new Warning("Penalties apply.");
-        }
-
-        if (challenge.details.map) {
-            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
-            throw new Warning("Map has already been set.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
+        await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
+        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
         if (challenge.details.homeMaps.indexOf(message) !== -1) {
             await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
@@ -2041,67 +2132,26 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async confirmmap(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmmap\` by itself to confirm a suggested neutral map.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirmmap` by itself to confirm a suggested neutral map.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
-
-        if (challenge.details.map) {
-            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
-            throw new Warning("Map has already been set.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
+        await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
+        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
         if (!challenge.details.suggestedMap || challenge.details.suggestedMap.length === 0) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral map for this match yet!  Use the \`!suggestmap\` command to do so.`, channel);
@@ -2138,72 +2188,25 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async suggestneutralserver(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!suggestneutralserver\` by itself to suggest a neutral server.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!suggestneutralserver` by itself to suggest a neutral server.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
-
-        if (challenge.details.adminCreated) {
-            await Discord.queue(`Sorry, ${member}, but a neutral server may not be agreed to in a match created by an admin.`, channel);
-            throw new Warning("Server is locked by admin.");
-        }
-
-        if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
-            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, a neutral server cannot be suggested.`, channel);
-            throw new Warning("Penalties apply.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
+        await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
 
         if (!challenge.details.usingHomeServerTeam) {
             await Discord.queue(`Sorry, ${member}, but the server for this match has already been locked in to be neutral.`, channel);
@@ -2239,62 +2242,25 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async confirmneutralserver(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmneutralserver\` by itself to confirm a suggested neutral server.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirmneutralserver` by itself to confirm a suggested neutral server.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
+        await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
 
         if (!challenge.details.suggestedNeutralServerTeam) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral server for this match yet!  Use the \`!suggestneutralserver\` command to do so.`, channel);
@@ -2331,62 +2297,24 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async suggestteamsize(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!message || ["2", "3", "4", "2v2", "3v3", "4v4", "2V2", "3V3", "4V4"].indexOf(message) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
             throw new Warning("Missing team size.");
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         try {
             await challenge.suggestTeamSize(team, +message.charAt(0));
@@ -2412,62 +2340,23 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async confirmteamsize(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmteamsize\` by itself to confirm a suggested team size.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirmteamsize` by itself to confirm a suggested team size.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (!challenge.details.suggestedTeamSize) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a team size for this match yet!  Use the \`!suggestteamsize\` command to do so.`, channel);
@@ -2504,67 +2393,28 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async suggesttime(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To suggest a time, use `!suggesttime` along with the date and time.  Time zone defaults to your team's selected time zone, or Pacific Time if not set.  Use the `!timezone` command to set your own time zone.  Founders may use the `!teamtimezone` command to set the default time zone for their team.", channel)) {
+            return false;
         }
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a time, use \`!suggesttime\` along with the date and time.  Timezone defaults to Pacific time, use the \`!timezone\` command to set your own time zone.`, channel);
-            throw new Warning("Missing time.");
-        }
-
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
             await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
             throw new Warning("Pilot not on a team in the challenge.");
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.adminCreated) {
-            await Discord.queue(`Sorry, ${member}, but a time may not be agreed to in a match created by an admin.`, channel);
-            throw new Warning("Time is locked by admin.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         let date;
         try {
@@ -2608,62 +2458,23 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async confirmtime(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirmtime\` by itself to confirm a suggested time.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirmtime` by itself to confirm a suggested time.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (!challenge.details.suggestedTime) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a time for this match yet!  Use the \`!suggesttime\` command to do so.`, channel);
@@ -2699,47 +2510,19 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async clock(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (challenge.details.dateClocked) {
             await Discord.queue(`Sorry, ${member}, but this challenge is already on the clock!`, channel);
@@ -2749,16 +2532,6 @@ class Commands {
         if (challenge.challengingTeam.locked || challenge.challengedTeam.locked) {
             await Discord.queue(`Sorry, ${member}, but due to tournament participation, this match cannot be clocked.`, channel);
             throw new Warning("A team is in a tournament.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
         }
 
         let nextClockDate;
@@ -2847,34 +2620,17 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async matchtime(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!matchtime\` by itself to get the match's time in your local time zone.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!matchtime` by itself to get the match's time in your local time zone.", channel)) {
             return false;
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.matchTime) {
             await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
@@ -2899,34 +2655,17 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async countdown(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!countdown\` by itself to get the time remaining until the match begins.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!countdown` by itself to get the time remaining until the match begins.", channel)) {
             return false;
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.matchTime) {
             const difference = challenge.details.matchTime.getDate() - new Date().getDate(),
@@ -2961,34 +2700,17 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async deadline(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!deadline\` by itself to get the match's clock deadline in your local time zone.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!deadline` by itself to get the match's clock deadline in your local time zone.", channel)) {
             return false;
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.dateClockDeadline) {
             await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
@@ -3013,34 +2735,17 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async deadlinecountdown(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!deadlinecountdown\` by itself to get the time remaining until the match's clock deadline.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!deadlinecountdown` by itself to get the time remaining until the match's clock deadline.", channel)) {
             return false;
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.dateClockDeadline) {
             const difference = challenge.details.dateClockDeadline.getDate() - new Date().getDate(),
@@ -3075,8 +2780,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async twitch(member, channel, message) {
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To link your Twitch channel, add the name of your channel after the command, for example \`!twitch roncli\`.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "To link your Twitch channel, add the name of your channel after the command, for example `!twitch roncli`.", channel)) {
             return false;
         }
 
@@ -3106,8 +2810,7 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async removetwitch(member, channel, message) {
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!removetwitch\` by itself to unlink your Twitch channel.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!removetwitch` by itself to unlink your Twitch channel.", channel)) {
             return false;
         }
 
@@ -3138,70 +2841,23 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async streaming(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!streaming\` by itself to indicate that you will be streaming this match.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!streaming` by itself to indicate that you will be streaming this match.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
-            throw new Warning("Match has been confirmed.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        let twitchName;
-        try {
-            twitchName = await member.getTwitchName();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (!twitchName) {
-            await Discord.queue(`Sorry, ${member}, but you haven't linked your Twitch channel yet!  Use the \`!twitch\` command to link your Twitch channel.`, channel);
-            throw new Warning("Twitch channel not linked.");
-        }
+        const twitchName = await Commands.checkMemberHasTwitchName(member, channel);
 
         try {
             await challenge.addStreamer(member);
@@ -3230,57 +2886,21 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async notstreaming(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!notstreaming\` by itself to indicate that you will not be streaming the match.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!notstreaming` by itself to indicate that you will not be streaming the match.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
-            throw new Warning("Match has been confirmed.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         try {
             await challenge.removeStreamer(member);
@@ -3308,20 +2928,9 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async cast(member, channel, message) {
-        let twitchName;
-        try {
-            twitchName = member.getTwitchName();
-        } catch (err) {
-            throw err;
-        }
+        await Commands.checkMemberHasTwitchName(member, channel);
 
-        if (!twitchName) {
-            await Discord.queue(`Sorry, ${member}, but you must link your Twitch channel before requesting to cast a match.  Use the \`!twitch\` command to link your Twitch channel.`, channel);
-            throw new Warning("Pilot has not linked Twitch.");
-        }
-
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To cast a match, use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the two tags of the teams in the match you wish to cast, for example `!cast CF JO`.", channel)) {
             return false;
         }
 
@@ -3332,34 +2941,14 @@ class Commands {
 
         const {1: tag1, 2: tag2} = twoTeamMatch.exec(message);
 
-        let team1;
-        try {
-            team1 = await Team.getByNameOrTag(tag1);
-        } catch (err) {
-            throw err;
-        }
-
-        if (!team1) {
-            await Discord.queue(`Sorry, ${member}, but I do not recognize **${tag1}** as a valid team tag.`, channel);
-            throw new Warning("Invalid team tag.");
-        }
-
-        let team2;
-        try {
-            team2 = await Team.getByNameOrTag(tag1);
-        } catch (err) {
-            throw err;
-        }
-
-        if (!team2) {
-            await Discord.queue(`Sorry, ${member}, but I do not recognize **${tag2}** as a valid team tag.`, channel);
-            throw new Warning("Invalid team tag.");
-        }
+        const team1 = await Commands.checkTeamExists(tag1, member, channel);
+        const team2 = await Commands.checkTeamExists(tag2, member, channel);
 
         let challenge;
         try {
             challenge = await Challenge.getByTeams(team1, team2);
         } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
@@ -3368,30 +2957,24 @@ class Commands {
             throw new Warning("Invalid team tag.");
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            throw err;
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (challenge.details.caster) {
             await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} is already scheduled to cast this match.`, channel);
             throw new Warning("");
         }
 
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
-            throw new Warning("Match has been confirmed.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
+        if (!challenge.details.matchTime) {
+            await Discord.queue(`Sorry, ${member}, but this match has not been scheduled yet.`, channel);
+            throw new Warning("Match not scheduled.");
         }
 
         try {
             await challenge.addCaster(member);
         } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
@@ -3414,39 +2997,18 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async uncast(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!uncast\` by itself to indicate that you will not be casting the match.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!uncast` by itself to indicate that you will not be casting the match.", channel)) {
             return false;
         }
 
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
-            throw new Warning("Match has been confirmed.");
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         try {
             await challenge.removeCaster(member);
@@ -3475,62 +3037,23 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async report(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+        if (!await Commands.checkHasParameters(message, member, "To report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example `!report 49 27`.  Note that only the losing team should report the score.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already confirmed.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (!scoreMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
@@ -3569,62 +3092,23 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async confirm(member, channel, message) {
-        let challenge;
-        try {
-            challenge = await Challenge.getByChannel(channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        if (!member.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
-        }
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  Use \`!confirm\` by itself to confirm your opponent's match report.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirm` by itself to confirm your opponent's match report.", channel)) {
             return false;
         }
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
-
-        try {
-            await challenge.loadDetails();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (challenge.details.dateVoided) {
-            await Discord.queue(`Sorry, ${member}, but this match is voided.`, channel);
-            throw new Warning("Match was voided.");
-        }
-
-        if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
-            throw new Warning("Match was already reported.");
-        }
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (!challenge.details.dateReported) {
             await Discord.queue(`Sorry, ${member}, but this match hasn't been reported yet.  Use the \`!report\` command if you meant to report the score of the match.`, channel);
@@ -3655,40 +3139,15 @@ class Commands {
      * @returns {Promise} A promise that resolves when the command completes.
      */
     async teamtimezone(member, channel, message) {
-        if (!member.isFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you must be a team founder to use this command.`, channel);
-            throw new Warning("Pilot is not a founder.");
-        }
+        await Commands.checkMemberIsFounder(member, channel);
 
-        let team;
-        try {
-            team = await Team.getByPilot(member);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!team) {
-            await Discord.queue(`Sorry, ${member}, but you must be on a team to use this command.`, channel);
-            throw new Warning("Pilot not on a team.");
-        }
-
-        if (!message) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  You must specify a time zone with this command.`, channel);
+        if (!await Commands.checkNoParameters(message, member, "You must specify a time zone with this command.", channel)) {
             return false;
         }
 
-        if (!tzdata.zones[message]) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
-            throw new Warning("Invalid time zone.");
-        }
-
-        try {
-            new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit"});
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
-            throw new Warning("Invalid time zone.");
-        }
+        await Commands.checkTimezoneIsValid(message, member, channel);
 
         try {
             await team.setTimezone(message);
@@ -3699,9 +3158,6 @@ class Commands {
 
         return true;
     }
-
-    // TODO: Casters can only cast games that are scheduled.
-    // TODO: Announce to the caster the time of the match in their local time zone when it is scheduled.
 
     // !rename <team> <name>
     /*

@@ -91,6 +91,35 @@ DiscordJs.GuildMember.prototype.canRemovePilot = async function(pilot) {
     }
 };
 
+//                          #          #  #              ###
+//                          #          ## #               #
+//  ##   ###    ##    ###  ###    ##   ## #   ##   #  #   #     ##    ###  # #
+// #     #  #  # ##  #  #   #    # ##  # ##  # ##  #  #   #    # ##  #  #  ####
+// #     #     ##    # ##   #    ##    # ##  ##    ####   #    ##    # ##  #  #
+//  ##   #      ##    # #    ##   ##   #  #   ##   ####   #     ##    # #  #  #
+/**
+ * Starts team creation for the pilot.
+ * @returns {Promise<NewTeam>} A promise that resolves with a new team object.
+ */
+DiscordJs.GuildMember.prototype.createNewTeam = function() {
+    return NewTeam.create(this);
+};
+
+//              #    #  #              ###
+//              #    ## #               #
+//  ###   ##   ###   ## #   ##   #  #   #     ##    ###  # #
+// #  #  # ##   #    # ##  # ##  #  #   #    # ##  #  #  ####
+//  ##   ##     #    # ##  ##    ####   #    ##    # ##  #  #
+// #      ##     ##  #  #   ##   ####   #     ##    # #  #  #
+//  ###
+/**
+ * Returns the pilot's new team object.
+ * @returns {Promise<NewTeam>} A promise that resolves with the new team object for the pilot.
+ */
+DiscordJs.GuildMember.prototype.getNewTeam = function() {
+    return NewTeam.getByPilot(this);
+};
+
 //              #    ###                                   #             #   ##         ###                #     #             #  ###
 //              #    #  #                                  #             #  #  #         #                       #             #   #
 //  ###   ##   ###   #  #   ##    ###  #  #   ##    ###   ###    ##    ###  #  #  ###    #    ###   # #   ##    ###    ##    ###   #     ##    ###  # #    ###
@@ -113,6 +142,21 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
     return teams.map((t) => new Team(t));
 };
 
+//              #    ###
+//              #     #
+//  ###   ##   ###    #     ##    ###  # #
+// #  #  # ##   #     #    # ##  #  #  ####
+//  ##   ##     #     #    ##    # ##  #  #
+// #      ##     ##   #     ##    # #  #  #
+//  ###
+/**
+ * Returns the pilot's team.
+ * @returns {Promise<Team>} A promise that resolves with the pilot's team.
+ */
+DiscordJs.GuildMember.prototype.getTeam = function() {
+    return Team.getByPilot(this);
+};
+
 //              #    ###    #
 //              #     #
 //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##
@@ -121,12 +165,25 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
 // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
 //  ###
 /**
- * Gets a pilot's time zone.
+ * Gets a pilot's time zone.  Default to team's time zone if the pilot doesn't have one, or the default time zone if neither have a value.
  * @returns {Promise<string>} A promise that resolves with the pilot's time zone.
  */
 DiscordJs.GuildMember.prototype.getTimezone = async function() {
     try {
-        return await Db.getTimezoneForPilot(this) || settings.defaultTimezone;
+        const timezone = await Db.getTimezoneForPilot(this);
+        if (timezone) {
+            return timezone;
+        }
+
+        const team = new Team(await Db.getTeamByPilot(this));
+        if (team) {
+            const teamTimezone = await team.getTimezone();
+            if (teamTimezone) {
+                return teamTimezone;
+            }
+        }
+
+        return settings.defaultTimezone;
     } catch (err) {
         return settings.defaultTimezone;
     }
