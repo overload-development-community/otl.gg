@@ -690,7 +690,7 @@ class Commands {
      */
     static async checkTeamIsInChallenge(challenge, team, member, channel) {
         if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
+            await Discord.queue(`Sorry, ${member}, but **${team.name}** is not one of the teams in this challenge.`, channel);
             throw new Warning("Pilot not on a team in the challenge.");
         }
     }
@@ -2090,6 +2090,7 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestmap(member, channel, message) {
+        // TODO: Only allow home levels from a valid map list.
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3566,17 +3567,88 @@ class Commands {
         return true;
     }
 
-    // !forcehomemapteam <hometeam>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * Home team must be one of the teams.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update team topics
-     * 3) Announce in team channel
+    //   #                           #                                          #
+    //  # #                          #                                          #
+    //  #     ##   ###    ##    ##   ###    ##   # #    ##   # #    ###  ###   ###    ##    ###  # #
+    // ###   #  #  #  #  #     # ##  #  #  #  #  ####  # ##  ####  #  #  #  #   #    # ##  #  #  ####
+    //  #    #  #  #     #     ##    #  #  #  #  #  #  ##    #  #  # ##  #  #   #    ##    # ##  #  #
+    //  #     ##   #      ##    ##   #  #   ##   #  #   ##   #  #   # #  ###     ##   ##    # #  #  #
+    //                                                                   #
+    /**
+     * Forces a team to be the home map team.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forcehomemapteam(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use `!forcehomemapteam` along with the team you want to be the home map team.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkTeamExists(message, member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+
+        try {
+            await challenge.setHomeMapTeam(team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //   #
+    //  # #
+    //  #     ##   ###    ##    ##   # #    ###  ###
+    // ###   #  #  #  #  #     # ##  ####  #  #  #  #
+    //  #    #  #  #     #     ##    #  #  # ##  #  #
+    //  #     ##   #      ##    ##   #  #   # #  ###
+    //                                           #
+    /**
+     * Forces a map for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async forcemap(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use `!forcemap` with either the letter of the home map to use or with a neutral home map.", channel)) {
+            return false;
+        }
+
+        if (["a", "b", "c"].indexOf(message) !== -1) {
+            try {
+                await challenge.pickMap(message.charCodeAt(0) - 96);
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw err;
+            }
+
+            return true;
+        }
+
+        // TODO: Only allow home levels from a valid map list.
+
+        try {
+            await challenge.forceMap(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !forcemap <a|b|c|map choice>
     /*

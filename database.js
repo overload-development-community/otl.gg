@@ -1370,7 +1370,8 @@ class Database {
          */
         const data = await db.query(`
             UPDATE c
-            SET Map = ch.Map
+            SET Map = ch.Map,
+                UsingHomeMapTeam = 1
             FROM tblChallenge c
             INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId
             WHERE c.ChallengeId = @challengeId
@@ -1669,6 +1670,55 @@ class Database {
         await db.query("UPDATE tblTeam SET Tag = @tag WHERE TeamId = @teamId", {
             tag: {type: Db.VARCHAR(5), value: tag},
             teamId: {type: Db.INT, value: team.id}
+        });
+    }
+
+    //               #    #  #                    #  #              ###                     ####               ##   #           ##    ##
+    //               #    #  #                    ####               #                      #                 #  #  #            #     #
+    //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #   #    # ##  #  #  ####  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #   #    ##    # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   ##   #  #   ##   #  #   # #  ###    #     ##    # #  #  #  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                        #                                                                                          ###
+    /**
+     * Sets the home map team for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The new home map team.
+     * @returns {Promise<string[]>} A promise that resolves with the new home map team's home maps.
+     */
+    static async setHomeMapTeamForChallenge(challenge, team) {
+
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query(`
+            UPDATE tblChallenge SET HomeMapTeamId = @teamId, UsingHomeMapTeam = 1, Map = NULL WHERE ChallengeId = @challengeId
+
+            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
+    }
+
+    //               #    #  #              ####               ##   #           ##    ##
+    //               #    ####              #                 #  #  #            #     #
+    //  ###    ##   ###   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    #  #  #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #  #  # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   # #  ###   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                #                                                                  ###
+    /**
+     * Sets the map for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the map has been set.
+     */
+    static async setMapForChallenge(challenge, map) {
+        await db.query("UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0 FROM tblChallenge WHERE ChallengeId = @challengeId", {
+            challengeId: {type: Db.INT, value: challenge.id},
+            map: {type: Db.VARCHAR(100), value: map}
         });
     }
 

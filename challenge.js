@@ -696,6 +696,40 @@ class Challenge {
         }
     }
 
+    //   #                           #  #
+    //  # #                          ####
+    //  #     ##   ###    ##    ##   ####   ###  ###
+    // ###   #  #  #  #  #     # ##  #  #  #  #  #  #
+    //  #    #  #  #     #     ##    #  #  # ##  #  #
+    //  #     ##   #      ##    ##   #  #   # #  ###
+    //                                           #
+    /**
+     * Forces the map for the challenge.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the map has been saved.
+     */
+    async forceMap(map) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setMapForChallenge(this, map);
+        } catch (err) {
+            throw new Exception("There was a database error forcing a map for a challenge.", err);
+        }
+
+        this.details.map = map;
+
+        try {
+            await Discord.queue(`The map for this match has been set to **${this.details.map}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error forcing a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -919,6 +953,43 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    #  #                    #  #              ###
+    //               #    #  #                    ####               #
+    //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #
+    // ##     # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #   #    # ##  #  #  ####
+    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #   #    ##    # ##  #  #
+    // ###     ##     ##  #  #   ##   #  #   ##   #  #   # #  ###    #     ##    # #  #  #
+    //                                                        #
+    /**
+     * Sets the home map team.
+     * @param {Team} team The team to set as the home team.
+     * @returns {Promise} A promise that resolves when the home map team has been set.
+     */
+    async setHomeMapTeam(team) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        let homes;
+        try {
+            homes = await Db.setHomeMapTeamForChallenge(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error setting a home map team for a challenge.", err);
+        }
+
+        this.details.homeMapTeam = team;
+        this.details.usingHomeMapTeam = true;
+        this.details.map = void 0;
+
+        try {
+            await Discord.queue(`An admin has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
