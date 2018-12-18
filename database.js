@@ -1302,6 +1302,22 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateExpires && data.recordsets[0][0].DateExpires > new Date() && data.recordsets[0][0].DateExpires || void 0;
     }
 
+    // ##                #      ##   #           ##    ##
+    //  #                #     #  #  #            #     #
+    //  #     ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    //  #    #  #  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  #    #  #  #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###    ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                    ###
+    /**
+     * Locks a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the challenge is locked.
+     */
+    static async lockChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET AdminCreated = 1 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //             #           ####                       #
     //             #           #                          #
     // # #    ###  # #    ##   ###    ##   #  #  ###    ###   ##   ###
@@ -1863,6 +1879,22 @@ class Database {
             team2id: {type: Db.INT, value: team2.id}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
+    }
+
+    //             ##                #      ##   #           ##    ##
+    //              #                #     #  #  #            #     #
+    // #  #  ###    #     ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #   #    #  #  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #   #    #  #  #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ###  #  #  ###    ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                ###
+    /**
+     * Unlocks a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the challenge is unlocked.
+     */
+    static async unlockChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET AdminCreated = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                #         #          #  #

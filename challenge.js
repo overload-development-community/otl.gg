@@ -752,6 +752,38 @@ class Challenge {
         };
     }
 
+    // ##                #
+    //  #                #
+    //  #     ##    ##   # #
+    //  #    #  #  #     ##
+    //  #    #  #  #     # #
+    // ###    ##    ##   #  #
+    /**
+     * Locks a challenge.
+     * @returns {Promise} A promise that resolves when the challenge is locked.
+     */
+    async lock() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.lockChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error locking a challenge.", err);
+        }
+
+        this.details.adminCreated = true;
+
+        try {
+            await Discord.queue("This challenge has been locked by an admin, match parameters can no longer be set.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error locking a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //        #          #     #  #
     //                   #     ####
     // ###   ##     ##   # #   ####   ###  ###
@@ -1067,6 +1099,38 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //             ##                #
+    //              #                #
+    // #  #  ###    #     ##    ##   # #
+    // #  #  #  #   #    #  #  #     ##
+    // #  #  #  #   #    #  #  #     # #
+    //  ###  #  #  ###    ##    ##   #  #
+    /**
+     * Unlocks a challenge.
+     * @returns {Promise} A promise that resolves when the challenge is unlocked.
+     */
+    async unlock() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.unlockChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error unlocking a challenge.", err);
+        }
+
+        this.details.adminCreated = false;
+
+        try {
+            await Discord.queue("This challenge has been unlocked by an admin.  You may now use `!suggestmap` to suggest a neutral map, `!suggestneutralserver` to suggest the map be played on a neutral server, and `!suggesttime` to suggest the match time.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error unlocking a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

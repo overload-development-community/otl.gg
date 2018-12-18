@@ -3488,27 +3488,83 @@ class Commands {
         return true;
     }
 
-    // !lockmatch
-    /*
-     * Player must be an admin.
-     * A challenge between the two teams must exist.
-     * Match must be unlocked.
-     *
-     * Success:
-     * 1) Match locks in database.
-     * 2) Announce in channel.
+    // ##                #                  #          #
+    //  #                #                  #          #
+    //  #     ##    ##   # #   # #    ###  ###    ##   ###
+    //  #    #  #  #     ##    ####  #  #   #    #     #  #
+    //  #    #  #  #     # #   #  #  # ##   #    #     #  #
+    // ###    ##    ##   #  #  #  #   # #    ##   ##   #  #
+    /**
+     * Locks a challenge so that only the admin may set match parameters.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async lockmatch(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
 
-    // !unlockmatch
-    /*
-     * Player must be an admin.
-     * A challenge between the two teams must exist.
-     * Match must be locked.
-     *
-     * Success:
-     * 1) Match unlocks in database.
-     * 2) Announce in channel.
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!lockmatch` by itself to lock a challenge.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but this match is already locked.`, channel);
+            throw new Warning("Match already locked.");
+        }
+
+        try {
+            await challenge.lock();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //             ##                #                  #          #
+    //              #                #                  #          #
+    // #  #  ###    #     ##    ##   # #   # #    ###  ###    ##   ###
+    // #  #  #  #   #    #  #  #     ##    ####  #  #   #    #     #  #
+    // #  #  #  #   #    #  #  #     # #   #  #  # ##   #    #     #  #
+    //  ###  #  #  ###    ##    ##   #  #  #  #   # #    ##   ##   #  #
+    /**
+     * Unlocks a challenge so that the teams may set match parameters.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async unlockmatch(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!unlockmatch` by itself to lock a challenge.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (!challenge.details.adminCreated) {
+            await Discord.queue(`Sorry, ${member}, but this match is already unlocked.`, channel);
+            throw new Warning("Match already unlocked.");
+        }
+
+        try {
+            await challenge.unlock();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !forcehomemapteam <hometeam>
     /*
