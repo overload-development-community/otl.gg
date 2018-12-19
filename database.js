@@ -451,22 +451,6 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
     }
 
-    //                     #    #                #  #               #                ##     ##                                 ####               ##   #           ##    ##
-    //                    # #                    ## #               #                 #    #  #                                #                 #  #  #            #     #
-    //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
-    // #     #  #  #  #  ###    #    #  #  ####  # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
-    // #     #  #  #  #   #     #    #     #  #  # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #     #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
-    //  ##    ##   #  #   #    ###   #     #  #  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #     #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
-    //                                                                                                                                                                                      ###
-    /**
-     * Confirms a suggested neutral server for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
-     */
-    static async confirmNeutralServerForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
-    }
-
     //                     #    #                ###                      ##    #                ####               ##   #           ##    ##
     //                    # #                     #                      #  #                    #                 #  #  #            #     #
     //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -1702,6 +1686,26 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
+    //               #    #  #                     ##                                 ###                     ####               ##   #           ##    ##
+    //               #    #  #                    #  #                                 #                      #                 #  #  #            #     #
+    //  ###    ##   ###   ####   ##   # #    ##    #     ##   ###   # #    ##   ###    #     ##    ###  # #   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    #  #  #  #  ####  # ##    #   # ##  #  #  # #   # ##  #  #   #    # ##  #  #  ####  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  ##    #     # #   ##    #      #    ##    # ##  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   ##   #  #   ##    ##    ##   #      #     ##   #      #     ##    # #  #  #  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                                     ###
+    /**
+     * Sets the home server team for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The new home server team.
+     * @returns {Promise} A promise that resolves when the home server team has been set.
+     */
+    static async setHomeServerTeamForChallenge(challenge, team) {
+        await db.query("UPDATE tblChallenge SET HomeServerTeamId = @teamId, UsingHomeServerTeam = 1 WHERE ChallengeId = @challengeId", {
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //               #    #  #              ####               ##   #           ##    ##
     //               #    ####              #                 #  #  #            #     #
     //  ###    ##   ###   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -1720,6 +1724,22 @@ class Database {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: map}
         });
+    }
+
+    //               #    #  #               #                ##     ##                                 ####               ##   #           ##    ##
+    //               #    ## #               #                 #    #  #                                #                 #  #  #            #     #
+    //  ###    ##   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #     #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #     #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                               ###
+    /**
+     * Confirms a suggested neutral server for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
+     */
+    static async setNeutralServerForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //               #    ###    #                                        ####              ###    #    ##           #

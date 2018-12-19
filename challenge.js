@@ -574,7 +574,7 @@ class Challenge {
         }
 
         try {
-            await Db.confirmNeutralServerForChallenge(this);
+            await Db.setNeutralServerForChallenge(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested neutral server for a challenge.", err);
         }
@@ -990,6 +990,73 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    #  #                    #  #              ###
+    //               #    #  #                    ####               #
+    //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #
+    // ##     # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #   #    # ##  #  #  ####
+    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #   #    ##    # ##  #  #
+    // ###     ##     ##  #  #   ##   #  #   ##   #  #   # #  ###    #     ##    # #  #  #
+    //                                                        #
+    /**
+     * Sets the home server team.
+     * @param {Team} team The team to set as the home team.
+     * @returns {Promise} A promise that resolves when the home server team has been set.
+     */
+    async setHomeServerTeam(team) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setHomeServerTeamForChallenge(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error setting a home server team for a challenge.", err);
+        }
+
+        this.details.homeServerTeam = team;
+        this.details.usingHomeServerTeam = true;
+
+        try {
+            await Discord.queue(`An admin has made **${team.tag}** the home server team.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    #  #               #                ##     ##
+    //               #    ## #               #                 #    #  #
+    //  ###    ##   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
+    // ##     # ##   #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
+    //   ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
+    // ###     ##     ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
+    /**
+     * Sets a neutral server for this match.
+     * @returns {Promise} A promise that resolves when the neutral server has been set.
+     */
+    async setNeutralServer() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setNeutralServerForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error setting a neutral server for a challenge.", err);
+        }
+
+        this.details.usingHomeServerTeam = false;
+
+        try {
+            await Discord.queue("An admin has set the server for this match to be neutral.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

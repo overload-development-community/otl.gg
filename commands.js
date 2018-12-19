@@ -3650,40 +3650,73 @@ class Commands {
         return true;
     }
 
-    // !forcemap <a|b|c|map choice>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * Map must be valid from map list.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
+    //   #                                              #                ##
+    //  # #                                             #                 #
+    //  #     ##   ###    ##    ##   ###    ##   #  #  ###   ###    ###   #     ###    ##   ###   # #    ##   ###
+    // ###   #  #  #  #  #     # ##  #  #  # ##  #  #   #    #  #  #  #   #    ##     # ##  #  #  # #   # ##  #  #
+    //  #    #  #  #     #     ##    #  #  ##    #  #   #    #     # ##   #      ##   ##    #     # #   ##    #
+    //  #     ##   #      ##    ##   #  #   ##    ###    ##  #      # #  ###   ###     ##   #      #     ##   #
+    /**
+     * Forces a neutral server for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forceneutralserver(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
 
-    // !forceneutralserver
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
-     */
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
 
-    // !forcehomeserverteam <hometeam>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * Home team must be one of the teams.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
+        if (!await Commands.checkNoParameters(message, member, "Use `!forceneutralserver` by itself to force this match to be played on a neutral server.", channel)) {
+            return false;
+        }
+
+        try {
+            await challenge.setNeutralServer();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //   #                           #                                                             #
+    //  # #                          #                                                             #
+    //  #     ##   ###    ##    ##   ###    ##   # #    ##    ###    ##   ###   # #    ##   ###   ###    ##    ###  # #
+    // ###   #  #  #  #  #     # ##  #  #  #  #  ####  # ##  ##     # ##  #  #  # #   # ##  #  #   #    # ##  #  #  ####
+    //  #    #  #  #     #     ##    #  #  #  #  #  #  ##      ##   ##    #     # #   ##    #      #    ##    # ##  #  #
+    //  #     ##   #      ##    ##   #  #   ##   #  #   ##   ###     ##   #      #     ##   #       ##   ##    # #  #  #
+    /**
+     * Forces a team to be the home map team.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forcehomeserverteam(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use `!forcehomeserverteam` along with the team you want to be the home server team.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkTeamExists(message, member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+
+        try {
+            await challenge.setHomeServerTeam(team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !forceteamsize <2|3|4>
     /*
