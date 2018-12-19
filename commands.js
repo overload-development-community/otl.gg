@@ -2870,13 +2870,11 @@ class Commands {
         const twitchName = await Commands.checkMemberHasTwitchName(member, channel);
 
         try {
-            await challenge.addStreamer(member);
+            await challenge.addStreamer(member, twitchName);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
-
-        await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}!`, channel);
 
         return true;
     }
@@ -2918,8 +2916,6 @@ class Commands {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
-
-        await Discord.queue(`${member} is no longer streaming this match.`, channel);
 
         return true;
     }
@@ -3506,6 +3502,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkNoParameters(message, member, "Use `!lockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -3545,6 +3544,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkNoParameters(message, member, "Use `!unlockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -3585,6 +3587,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcehomemapteam` along with the team you want to be the home map team.", channel)) {
             return false;
@@ -3622,6 +3627,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcemap` with either the letter of the home map to use or with a neutral home map.", channel)) {
             return false;
@@ -3641,7 +3649,7 @@ class Commands {
         // TODO: Only allow home levels from a valid map list.
 
         try {
-            await challenge.forceMap(message);
+            await challenge.setMap(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3667,6 +3675,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkNoParameters(message, member, "Use `!forceneutralserver` by itself to force this match to be played on a neutral server.", channel)) {
             return false;
@@ -3699,6 +3710,9 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcehomeserverteam` along with the team you want to be the home server team.", channel)) {
             return false;
@@ -3718,27 +3732,89 @@ class Commands {
         return true;
     }
 
-    // !forceteamsize <2|3|4>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
+    //   #                            #                              #
+    //  # #                           #
+    //  #     ##   ###    ##    ##   ###    ##    ###  # #    ###   ##    ####   ##
+    // ###   #  #  #  #  #     # ##   #    # ##  #  #  ####  ##      #      #   # ##
+    //  #    #  #  #     #     ##     #    ##    # ##  #  #    ##    #     #    ##
+    //  #     ##   #      ##    ##     ##   ##    # #  #  #  ###    ###   ####   ##
+    /**
+     * Forces the team size for a match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forceteamsize(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
 
-    // !forcetime <time>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!message || ["2", "3", "4", "2v2", "3v3", "4v4", "2V2", "3V3", "4V4"].indexOf(message) === -1) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
+            throw new Warning("Missing team size.");
+        }
+
+        try {
+            await challenge.setTeamSize(+message.charAt(0));
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //   #                            #     #
+    //  # #                           #
+    //  #     ##   ###    ##    ##   ###   ##    # #    ##
+    // ###   #  #  #  #  #     # ##   #     #    ####  # ##
+    //  #    #  #  #     #     ##     #     #    #  #  ##
+    //  #     ##   #      ##    ##     ##  ###   #  #   ##
+    /**
+     * Forces the time for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forcetime(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkHasParameters(message, member, "To force a time, use `!forcetime` along with the date and time.", channel)) {
+            return false;
+        }
+
+        let date;
+        try {
+            date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+            throw new Warning("Invalid date.");
+        }
+
+        if (!date) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+            throw new Warning("Invalid date.");
+        }
+
+        try {
+            await challenge.setTime(date);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !forcereport <score1> <score2>
     /*

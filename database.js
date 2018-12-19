@@ -1742,6 +1742,46 @@ class Database {
         await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
+    //               #    ###                      ##    #                ####               ##   #           ##    ##
+    //               #     #                      #  #                    #                 #  #  #            #     #
+    //  ###    ##   ###    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #     #    # ##  #  #  ####    #    #      #   # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #     #    ##    # ##  #  #  #  #   #     #    ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##   #     ##    # #  #  #   ##   ###   ####   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                 ###
+    /**
+     * Sets a team size for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {number} size The team size.
+     * @returns {Promise} A promise that resolves when the team size has been set.
+     */
+    static async setTeamSizeForChallenge(challenge, size) {
+        await db.query("UPDATE tblChallenge SET TeamSize = @size, , SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {
+            size: {type: Db.INT, value: size},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
+    //               #    ###    #                ####               ##   #           ##    ##
+    //               #     #                      #                 #  #  #            #     #
+    //  ###    ##   ###    #    ##    # #    ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #     #     #    ####  # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #     #     #    #  #  ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##   #    ###   #  #   ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                         ###
+    /**
+     * Sets the time for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Date} date The time of the challenge.
+     * @returns {Promise} A promise that resolves when the time has been set.
+     */
+    static async setTimeForChallenge(challenge, date) {
+        await db.query("UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL WHERE ChallengeId = @challengeId", {
+            challengeId: {type: Db.INT, value: challenge.id},
+            date: {type: Db.DATETIME, value: date}
+        });
+    }
+
     //               #    ###    #                                        ####              ###    #    ##           #
     //               #     #                                              #                 #  #         #           #
     //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###   #  #  ##     #     ##   ###

@@ -67,7 +67,7 @@ class Challenge {
         try {
             data = await Db.createChallenge(challengingTeam, challengedTeam, !!adminCreated);
         } catch (err) {
-            throw new Exception("There was a database error getting a challenge by teams.", err);
+            throw new Exception("There was a database error creating a challenge.", err);
         }
 
         const challenge = new Challenge({id: data.id, challengingTeam, challengedTeam});
@@ -245,7 +245,7 @@ class Challenge {
                 await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map and server selection is disabled.`, challenge.channel);
             }
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting up a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error creating a challenge.  Please resolve this manually as soon as possible.", err);
         }
 
         return challenge;
@@ -422,16 +422,23 @@ class Challenge {
     /**
      * Indicates that a pilot will be streaming the challenge.
      * @param {DiscordJs.GuildMember} member The pilot streaming the challenge.
+     * @param {string} twitchName The Twitch channel name for the pilot.
      * @returns {Promise} A promise that resolves when the pilot has been updated to be streaming the challenge.
      */
-    async addStreamer(member) {
+    async addStreamer(member, twitchName) {
         try {
             await Db.addStreamerToChallenge(this, member);
         } catch (err) {
-            throw new Exception("There was a database error adding a pilot as a streamer to a challenge.", err);
+            throw new Exception("There was a database error adding a pilot as a streamer for a challenge.", err);
         }
 
-        await this.updateTopic();
+        try {
+            await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}!`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //       ##                #
@@ -465,7 +472,7 @@ class Challenge {
 
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error clocking a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -620,7 +627,7 @@ class Challenge {
 
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error confirming a suggested team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -692,41 +699,7 @@ class Challenge {
 
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //   #                           #  #
-    //  # #                          ####
-    //  #     ##   ###    ##    ##   ####   ###  ###
-    // ###   #  #  #  #  #     # ##  #  #  #  #  #  #
-    //  #    #  #  #     #     ##    #  #  # ##  #  #
-    //  #     ##   #      ##    ##   #  #   # #  ###
-    //                                           #
-    /**
-     * Forces the map for the challenge.
-     * @param {string} map The name of the map.
-     * @returns {Promise} A promise that resolves when the map has been saved.
-     */
-    async forceMap(map) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.setMapForChallenge(this, map);
-        } catch (err) {
-            throw new Exception("There was a database error forcing a map for a challenge.", err);
-        }
-
-        this.details.map = map;
-
-        try {
-            await Discord.queue(`The map for this match has been set to **${this.details.map}**.`, this.channel);
-
-            await this.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error forcing a map for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error confirming a suggested time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -905,7 +878,15 @@ class Challenge {
         try {
             await Db.removeStreamerFromChallenge(this, member);
         } catch (err) {
-            throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
+            throw new Exception("There was a database error removing a pilot as a streamer for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue(`${member} is no longer streaming this match.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error removing a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -933,7 +914,7 @@ class Challenge {
         try {
             this.details.dateReported = await Db.reportMatch(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
         } catch (err) {
-            throw new Exception("There was a database error removing a pilot as a streamer from a challenge.", err);
+            throw new Exception("There was a database error reporting a challenge.", err);
         }
 
         this.details.reportingTeam = losingTeam;
@@ -952,7 +933,7 @@ class Challenge {
 
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error reporting a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -993,13 +974,12 @@ class Challenge {
         }
     }
 
-    //               #    #  #                    #  #              ###
-    //               #    #  #                    ####               #
-    //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #
-    // ##     # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #   #    # ##  #  #  ####
-    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #   #    ##    # ##  #  #
-    // ###     ##     ##  #  #   ##   #  #   ##   #  #   # #  ###    #     ##    # #  #  #
-    //                                                        #
+    //               #    #  #                     ##                                 ###
+    //               #    #  #                    #  #                                 #
+    //  ###    ##   ###   ####   ##   # #    ##    #     ##   ###   # #    ##   ###    #     ##    ###  # #
+    // ##     # ##   #    #  #  #  #  ####  # ##    #   # ##  #  #  # #   # ##  #  #   #    # ##  #  #  ####
+    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  ##    #     # #   ##    #      #    ##    # ##  #  #
+    // ###     ##     ##  #  #   ##   #  #   ##    ##    ##   #      #     ##   #      #     ##    # #  #  #
     /**
      * Sets the home server team.
      * @param {Team} team The team to set as the home team.
@@ -1024,7 +1004,41 @@ class Challenge {
 
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error setting a home server team for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    #  #
+    //               #    ####
+    //  ###    ##   ###   ####   ###  ###
+    // ##     # ##   #    #  #  #  #  #  #
+    //   ##   ##     #    #  #  # ##  #  #
+    // ###     ##     ##  #  #   # #  ###
+    //                                #
+    /**
+     * Sets the map for the challenge.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the map has been saved.
+     */
+    async setMap(map) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setMapForChallenge(this, map);
+        } catch (err) {
+            throw new Exception("There was a database error setting a map for a challenge.", err);
+        }
+
+        this.details.map = map;
+
+        try {
+            await Discord.queue(`An admin has set the map for this match to **${this.details.map}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1057,6 +1071,114 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    ###                      ##    #
+    //               #     #                      #  #
+    //  ###    ##   ###    #     ##    ###  # #    #    ##    ####   ##
+    // ##     # ##   #     #    # ##  #  #  ####    #    #      #   # ##
+    //   ##   ##     #     #    ##    # ##  #  #  #  #   #     #    ##
+    // ###     ##     ##   #     ##    # #  #  #   ##   ###   ####   ##
+    /**
+     * Sets the team size.
+     * @param {number} size The team size.
+     * @returns {Promise} A promise that resolves when the team size has been set.
+     */
+    async setTeamSize(size) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setTeamSizeForChallenge(this, size);
+        } catch (err) {
+            throw new Exception("There was a database error setting the team size for a challenge.", err);
+        }
+
+        this.details.teamSize = size;
+        this.details.suggestedTeamSize = void 0;
+        this.details.suggestedTeamSizeTeam = void 0;
+
+        try {
+            await Discord.queue(`And admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the team size for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #    ###    #
+    //               #     #
+    //  ###    ##   ###    #    ##    # #    ##
+    // ##     # ##   #     #     #    ####  # ##
+    //   ##   ##     #     #     #    #  #  ##
+    // ###     ##     ##   #    ###   #  #   ##
+    /**
+     * Sets the time of the match.
+     * @param {Date} date The time of the match.
+     * @returns {Promise} A promise that resolves when the time has been set.
+     */
+    async setTime(date) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setTimeForChallenge(this, date);
+        } catch (err) {
+            throw new Exception("There was a database error setting the time for a challenge.", err);
+        }
+
+        this.details.matchTime = date;
+        this.details.suggestedTime = void 0;
+        this.details.suggestedTimeTeam = void 0;
+
+        try {
+            const times = {};
+            for (const member of this.channel.members.values()) {
+                const timezone = await member.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            for (const team of [this.challengingTeam, this.challengedTeam]) {
+                const timezone = await team.getTimezone(),
+                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
+                if (a.value.getTime() !== b.value.getTime()) {
+                    return b.value.getTime() - a.value.getTime();
+                }
+
+                return a.timezone.localeCompare(b.timezone);
+            });
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                description: "An admin has set the time for this match.",
+                fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
+            }), this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
