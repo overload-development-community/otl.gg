@@ -50,6 +50,7 @@
         "no-implicit-coercion": "off",
         "no-inline-comments": "off",
         "no-invalid-this": "off",
+        "no-loop-func": "off",
         "no-magic-numbers": "off",
         "no-mixed-operators": "off",
         "no-mixed-requires": "off",

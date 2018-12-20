@@ -364,7 +364,7 @@ class Database {
      * Puts a challenge on the clock.
      * @param {Team} team The team clocking the challenge.
      * @param {Challenge} challenge The challenge to clock.
-     * @returns {Promise<{clocked: Date, clockDeadline: Date}>} The clocked date and the clock deadline date.
+     * @returns {Promise<{clocked: Date, clockDeadline: Date}>} A promise that resolves with the clocked date and the clock deadline date.
      */
     static async clockChallenge(team, challenge) {
 
@@ -392,7 +392,7 @@ class Database {
     /**
      * Gets the number of clocked challenges for a team.
      * @param {Team} team The team to check.
-     * @returns {Promise<number>} The number of clocked challenges for this team.
+     * @returns {Promise<number>} A promise that resolves with the number of clocked challenges for this team.
      */
     static async clockedChallengeCountForTeam(team) {
 
@@ -672,6 +672,36 @@ class Database {
             DELETE FROM tblRequest WHERE TeamId = @teamId
             DELETE FROM tblInvite WHERE TeamId = @teamId
         `, {teamId: {type: Db.INT, value: team.id}});
+    }
+
+    //              #                   #   ##   #           ##    ##
+    //              #                   #  #  #  #            #     #
+    //  ##   #  #  ###    ##   ###    ###  #     ###    ###   #     #     ##   ###    ###   ##
+    // # ##   ##    #    # ##  #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // ##     ##    #    ##    #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   #  #    ##   ##   #  #   ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                ###
+    /**
+     * Extends a challenge.
+     * @param {Challenge} challenge The challenge to extend.
+     * @returns {Promise<Date>} A promise that resolves with the extended clock deadline.
+     */
+    static async extendChallenge(challenge) {
+
+        /**
+         * @type {{recordsets: [{DateClockDeadline: Date}[]]}}
+         */
+        const data = await db.query(`
+            UPDATE tblChallenge SET
+                DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, UTCDATE()) END,
+                MatchTime = NULL,
+                SuggestedTime = NULL,
+                SuggestedTimeTeamId = NULL
+            WHERE ChallengeId = @challengeId
+
+            SELECT DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateClockDeadline || void 0;
     }
 
     //              #     ##               ###                     ###         #  #                     ##         ###
@@ -2052,6 +2082,77 @@ class Database {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName}
         });
+    }
+
+    //              #       #   ##   #           ##    ##
+    //                      #  #  #  #            #     #
+    // # #    ##   ##     ###  #     ###    ###   #     #     ##   ###    ###   ##
+    // # #   #  #   #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // # #   #  #   #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  #     ##   ###    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                    ###
+    /**
+     * Voids a challenge.
+     * @param {Challenge} challenge The challenge to void.
+     * @returns {Promise} A promise that resolves when the challenge is voided.
+     */
+    static async voidChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //              #       #   ##   #           ##    ##                            #  #   #     #    #     ###                     ##     #     #
+    //                      #  #  #  #            #     #                            #  #         #    #     #  #                     #     #
+    // # #    ##   ##     ###  #     ###    ###   #     #     ##   ###    ###   ##   #  #  ##    ###   ###   #  #   ##   ###    ###   #    ###   ##     ##    ###
+    // # #   #  #   #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  ####   #     #    #  #  ###   # ##  #  #  #  #   #     #     #    # ##  ##
+    // # #   #  #   #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##    ####   #     #    #  #  #     ##    #  #  # ##   #     #     #    ##      ##
+    //  #     ##   ###    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #  ###     ##  #  #  #      ##   #  #   # #  ###     ##  ###    ##   ###
+    //                                                                    ###
+    /**
+     * Voids a challenge and assesses penalties.
+     * @param {Challenge} challenge The challenge to void.
+     * @param {Team[]} teams The teams to assess penalties to.
+     * @returns {Promise} A promise that resolves when the challenge is voided and penalties are assessed.
+     */
+    static async voidChallengeWithPenalties(challenge, teams) {
+        const params = {challengeId: {type: Db.INT, value: challenge.id}};
+        let sql = "UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId";
+
+        teams.forEach((team, index) => {
+            params[`team${index}id`] = {type: Db.INT, value: team.id};
+
+            sql = `${sql}
+                IF (SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)
+                BEGIN
+                    INSERT INTO tblLeadershipPenalty
+                    (PlayerId, DatePenalized)
+                    SELECT PlayerId, GETUTCDATE()
+                    FROM tblRoster
+                    WHERE TeamId = @team${index}Id
+                        AND (Founder = 1 OR Captain = 1)
+
+                    UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @team${index}Id
+
+                    DELETE FROM cs
+                    FROM tblChallengeStreamer cs
+                    INNER JOIN tblChallenge c ON cs.ChallengeId = c.ChallengeId
+                    WHERE c.DateConfirmed IS NULL
+                        AND c.DateVoided IS NULL
+                        AND cs.PlayerId IN (SELECT PlayerId FROM tblRoster WHERE TeamId = @team${index}Id)
+
+                    DELETE FROM tblRoster WHERE TeamId = @team${index}Id
+                    DELETE FROM tblRequest WHERE TeamId = @team${index}Id
+                    DELETE FROM tblInvite WHERE TeamId = @team${index}Id
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO tblTeamPenalty
+                    (TeamId, PenaltiesRemaining, DatePenalized)
+                    VALUES (@team${index}Id, 3, GETUTCDATE())
+                END
+            `;
+        });
+
+        await db.query(sql, params);
     }
 
     //                    ###                      #                        ##                #           #           ##         ####                       #               ##     #   ###

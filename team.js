@@ -620,7 +620,7 @@ class Team {
                     await teamMember.removeRole(Discord.founderRole, `${member.displayName} disbanded ${this.name}.`);
                 }
 
-                await Discord.queue(`Your team ${this.name} has been disbanded.`, teamMember);
+                await Discord.queue(`Your team **${this.name}** has been disbanded.`, teamMember);
             }
 
             await this.role.delete(`${member.displayName} disbanded ${this.name}.`);
@@ -1558,6 +1558,7 @@ class Team {
      * @returns {Promise} A promise that resolves when the team's channels have been updated.
      */
     async updateChannels() {
+        // TODO: Add penalty status to captain topic.
         try {
             const captainsChannel = this.captainsChannel;
             if (!captainsChannel) {

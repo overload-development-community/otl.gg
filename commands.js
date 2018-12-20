@@ -12,6 +12,7 @@ const tz = require("timezone-js"),
     Team = require("./team"),
     Warning = require("./warning"),
 
+    adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}) )?$/,
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     idParse = /^<@!?([0-9]+)>$/,
     idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
@@ -3861,28 +3862,84 @@ class Commands {
         return true;
     }
 
-    // !adjudicate <cancel|extend|penalize> <team1|team2|both> <reason> <confirm>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * Either agreed challenge time must have passed, or a challenge on the clock has expired.
-     *
-     * Success (Cancel)
-     * 1) Remove channel
-     * 2) Set match to cancelled in the database
-     * 3) Announce to both teams.
-     *
-     * Success (Extend)
-     * 1) Clear agreed upon date.
-     * 2) If challenge is on the clock, set deadline to 14 days from today.
-     * 3) Announce to both teams.
-     *
-     * Success (Penalize)
-     * 1) Remove channel.
-     * 2) Set match to cancelled in the database.
-     * 3) If 1st offense, assess penalty in database, with a 3 game penalty given. If 2nd offense, disband offending teams and blacklist leadership.
-     * 4) Announce to both teams.
+    //          #    #            #   #                 #
+    //          #                 #                     #
+    //  ###   ###    #   #  #   ###  ##     ##    ###  ###    ##
+    // #  #  #  #    #   #  #  #  #   #    #     #  #   #    # ##
+    // # ##  #  #    #   #  #  #  #   #    #     # ##   #    ##
+    //  # #   ###  # #    ###   ###  ###    ##    # #    ##   ##
+    //              #
+    /**
+     * Adjudicates a match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async adjudicate(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!adjudicate` command followed by how you wish to adjudicate this match, either `cancel`, `extend`, or `penalize`.  If you penalize a team, include the name of the team.", channel)) {
+            return false;
+        }
+
+        if (!adjudicateMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!adjudicate\` command followed by how you wish to adjudicate this match, either \`cancel\`, \`extend\`, or \`penalize\`.  If you penalize a team, include the name of the team.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (!challenge.details.matchTime && !challenge.details.dateClockDeadline) {
+            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate an unscheduled match that's not on the clock.`, channel);
+            throw new Warning("Match unscheduled and not on the clock.");
+        }
+
+        if (challenge.details.matchTime && challenge.details.matchTime > new Date()) {
+            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate a scheduled match when the scheduled time hasn't passed yet.`, channel);
+            throw new Warning("Match time not passed yet.");
+        }
+
+        if (!challenge.details.matchTime && challenge.details.dateClockDeadline && challenge.details.dateClockDeadline > new Date()) {
+            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate an unscheduled match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            throw new Warning("Match unscheduled, but clock deadline not passed yet.");
+        }
+
+        const {1: decision, 2: teamTag} = adjudicateMatch.exec(message);
+
+        let teams;
+        if (decision === "penalize") {
+            if (teamTag === "both") {
+                teams = [challenge.challengingTeam, challenge.challengedTeam];
+            } else if (teamTag) {
+                const team = await Commands.checkTeamExists(teamTag, member, channel);
+
+                await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+
+                teams = [team];
+            } else {
+                await Discord.queue(`Sorry, ${member}, but you cannot adjudicate an unscheduled match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+                throw new Warning("You must specifiy a team to penalize.");
+            }
+        }
+
+        try {
+            await challenge.adjudicate(member, decision, teams);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !pilotstat <player> <K> <A> <D>
     /*
@@ -3922,9 +3979,14 @@ class Commands {
      * Close challenge channel
      */
 
+    // Voided/Adjudicated challenges
+    /*
+     * Return penalty games to penalized teams.
+     */
+
     // Disband
     /*
-     * Remove all challenges
+     * Remove all challenges, return penalty games to penalized teams.
      */
 
     // Automation

@@ -441,6 +441,102 @@ class Challenge {
         }
     }
 
+    //          #    #            #   #                 #
+    //          #                 #                     #
+    //  ###   ###    #   #  #   ###  ##     ##    ###  ###    ##
+    // #  #  #  #    #   #  #  #  #   #    #     #  #   #    # ##
+    // # ##  #  #    #   #  #  #  #   #    #     # ##   #    ##
+    //  # #   ###  # #    ###   ###  ###    ##    # #    ##   ##
+    //              #
+    /**
+     * Adjudicates a match.
+     * @param {DiscordJs.GuildMember} member The admin adjudicating the match.
+     * @param {string} decision The decision.
+     * @param {Team[]} teams The teams being adjudicated, if any.
+     * @returns {Promise} A promise that resolves when the match has been adjudicated.
+     */
+    async adjudicate(member, decision, teams) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        switch (decision) {
+            case "cancel":
+                try {
+                    await Db.voidChallenge(this);
+                } catch (err) {
+                    throw new Exception("There was a database error voiding a challenge.", err);
+                }
+
+                try {
+                    await this.channel.delete("An admin voided the challenge.");
+
+                    await Discord.queue(`An admin voided the challenge against **${this.challengedTeam.name}**.  No penalties were assessed.`, this.challengingTeam.teamChannel);
+                    await Discord.queue(`An admin voided the challenge against **${this.challengingTeam.name}**.  No penalties were assessed.`, this.challengedTeam.teamChannel);
+                } catch (err) {
+                    throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
+                }
+
+                break;
+            case "extend":
+            {
+                let deadline;
+                try {
+                    deadline = await Db.extendChallenge(this);
+                } catch (err) {
+                    throw new Exception("There was a database error extending a challenge.", err);
+                }
+
+                this.details.dateClockDeadline = deadline;
+                this.details.dateClockDeadlineNotified = void 0;
+
+                try {
+                    await Discord.queue("An admin has extended the deadline of this challenge.  You have 14 days to get the match scheduled.", this.channel);
+
+                    await this.updateTopic();
+                } catch (err) {
+                    throw new Exception("There was a critical Discord error extending a challenge.  Please resolve this manually as soon as possible.", err);
+                }
+
+                break;
+            }
+            case "penalize":
+            {
+                let penalizedTeams;
+                try {
+                    penalizedTeams = await Db.voidChallengeWithPenalties(this, teams);
+                } catch (err) {
+                    throw new Exception("There was a database error penalizing a challenge.", err);
+                }
+
+                try {
+                    await this.channel.delete("An admin voided the challenge.");
+
+                    await Discord.queue(`An admin voided the challenge against **${this.challengedTeam.name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.`, this.challengingTeam.teamChannel);
+                    await Discord.queue(`An admin voided the challenge against **${this.challengingTeam.name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.`, this.challengedTeam.teamChannel);
+
+                    for (const penalizedTeam of penalizedTeams) {
+                        if (penalizedTeam.first) {
+                            await Discord.queue("This penalty means that your next three games will automatically give home map and home server to your opponent.  If you are penalized again, the team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.", penalizedTeam.team.teamChannel);
+                        } else {
+                            const oldCaptains = penalizedTeam.team.members.filter((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
+
+                            await penalizedTeam.team.disbandTeam(member);
+
+                            for (const captain of oldCaptains) {
+                                await Discord.queue(`An admin voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    throw new Exception("There was a critical Discord error penalizing a challenge.  Please resolve this manually as soon as possible.", err);
+                }
+
+                break;
+            }
+        }
+    }
+
     //       ##                #
     //        #                #
     //  ##    #     ##    ##   # #
