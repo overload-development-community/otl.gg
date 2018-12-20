@@ -3816,17 +3816,50 @@ class Commands {
         return true;
     }
 
-    // !forcereport <score1> <score2>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * All challenge parameters must be confirmed.
-     *
-     * Success:
-     * 1) Update database
-     * 2) Update challenge topic
-     * 3) Announce in challenge channel
+    //   #                                                          #
+    //  # #                                                         #
+    //  #     ##   ###    ##    ##   ###    ##   ###    ##   ###   ###
+    // ###   #  #  #  #  #     # ##  #  #  # ##  #  #  #  #  #  #   #
+    //  #    #  #  #     #     ##    #     ##    #  #  #  #  #      #
+    //  #     ##   #      ##    ##   #      ##   ###    ##   #       ##
+    //                                           #
+    /**
+     * Forces the score of a match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async forcereport(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkHasParameters(message, member, "To force a score, use `!forcereport` followed by the score of the challenging team, and then the score of the challenged team.  Separate the scores with a space.", channel)) {
+            return false;
+        }
+
+        if (!scoreMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            return false;
+        }
+
+        const matches = scoreMatch.exec(message),
+            score1 = +matches[1],
+            score2 = +matches[2];
+
+        try {
+            await challenge.setScore(score1, score2);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !adjudicate <cancel|extend|penalize> <team1|team2|both> <reason> <confirm>
     /*

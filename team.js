@@ -111,7 +111,7 @@ class Team {
         try {
             data = await Db.getTeamById(id);
         } catch (err) {
-            throw new Exception("There was a database error getting a team by pilot.", err);
+            throw new Exception("There was a database error getting a team by team ID.", err);
         }
 
         return data ? new Team(data) : void 0;
@@ -502,7 +502,7 @@ class Team {
         try {
             await Db.applyHomeMap(this, number, map);
         } catch (err) {
-            throw new Exception("There was a database error setting a home map for the team the pilot is on.", err);
+            throw new Exception("There was a database error setting a home map.", err);
         }
 
         try {
@@ -515,7 +515,7 @@ class Team {
 
             await Discord.queue(`${member} has changed home map number ${number} to ${map}.`, teamChannel);
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting a home map for the team the pilot is on.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -798,9 +798,13 @@ class Team {
             throw new Exception("There was a database error inviting a pilot to a team.", err);
         }
 
-        await Discord.queue(`${toMember.displayName}, you have been invited to join **${this.name}** by ${fromMember.displayName}.  You can accept this invitation by responding with \`!accept ${this.name}\`.`, toMember);
+        try {
+            await Discord.queue(`${toMember.displayName}, you have been invited to join **${this.name}** by ${fromMember.displayName}.  You can accept this invitation by responding with \`!accept ${this.name}\`.`, toMember);
 
-        await this.updateChannels();
+            await this.updateChannels();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error inviting a pilot to a team.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //             #           ####                       #
@@ -1351,7 +1355,7 @@ class Team {
 
             await Discord.queue(`Your team's time zone has been set to ${timezone}, where the current local time is ${new Date().toLocaleString("en-US", {timeZone: timezone, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.teamChannel);
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting the time zone for a team.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error setting the a team's timezone.  Please resolve this manually as soon as possible.", err);
         }
     }
 

@@ -1074,6 +1074,66 @@ class Challenge {
         }
     }
 
+    //               #     ##
+    //               #    #  #
+    //  ###    ##   ###    #     ##    ##   ###    ##
+    // ##     # ##   #      #   #     #  #  #  #  # ##
+    //   ##   ##     #    #  #  #     #  #  #     ##
+    // ###     ##     ##   ##    ##    ##   #      ##
+    /**
+     * Sets the score for a match.
+     * @param {number} challengingTeamScore The challenging team's score.
+     * @param {number} challengedTeamScore The challenged team's score.
+     * @returns {Promise} A promise that resolves when the score has been set.
+     */
+    async setScore(challengingTeamScore, challengedTeamScore) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setScoreForChallenge(this, challengingTeamScore, challengedTeamScore);
+        } catch (err) {
+            throw new Exception("There was a database error setting the score for a challenge.", err);
+        }
+
+        this.details.challengingTeamScore = challengingTeamScore;
+        this.details.challengedTeamScore = challengedTeamScore;
+
+        try {
+            const embed = new DiscordJs.RichEmbed({
+                title: "Match Confirmed",
+                fields: [
+                    {
+                        name: "Post a screenshot",
+                        value: "Remember, OTL matches are only official with player statistics from a screenshot.  Be sure that at least one player posts the screenshot showing full match details, including each players' kills, assists, and deaths."
+                    },
+                    {
+                        name: "This channel is now closed",
+                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an administrator immediately.  This channel will be closed once the stats have been posted."
+                    }
+                ]
+            });
+
+            const winningScore = Math.max(this.details.challengingTeamScore, this.details.challengedTeamScore),
+                losingScore = Math.min(this.details.challengingTeamScore, this.details.challengedTeamScore),
+                winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
+
+            if (winningScore === losingScore) {
+                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.`);
+            } else {
+                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`);
+                embed.setColor(winningTeam.role.color);
+            }
+
+            await Discord.richQueue(embed, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the score for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //               #    ###                      ##    #
     //               #     #                      #  #
     //  ###    ##   ###    #     ##    ###  # #    #    ##    ####   ##

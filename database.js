@@ -1742,6 +1742,34 @@ class Database {
         await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
+    //               #     ##                           ####               ##   #           ##    ##
+    //               #    #  #                          #                 #  #  #            #     #
+    //  ###    ##   ###    #     ##    ##   ###    ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #      #   #     #  #  #  #  # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #  #  #     #  #  #     ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##   ##    ##    ##   #      ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                               ###
+    /**
+     * Sets the score of a match.
+     * @param {Challenge} challenge The challenge.
+     * @param {number} challengingTeamScore The challenging team's score.
+     * @param {number} challengedTeamScore The challenged team's score.
+     * @returns {Promise} A promise that resolves when the score is set.
+     */
+    static async setScoreForChallenge(challenge, challengingTeamScore, challengedTeamScore) {
+        await db.query(`
+            UPDATE tblChallenge SET
+                ReportingTeamId = NULL,
+                ChallengingTeamScore = @challengingTeamScore,
+                ChallengedTeamScore = @challengedTeamScore
+            WHERE ChallengeId = @challengeId
+        `, {
+            challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
+            challengedTeamScore: {type: Db.INT, value: challengedTeamScore},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //               #    ###                      ##    #                ####               ##   #           ##    ##
     //               #     #                      #  #                    #                 #  #  #            #     #
     //  ###    ##   ###    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
