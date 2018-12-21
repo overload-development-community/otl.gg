@@ -114,6 +114,50 @@ class Database {
         });
     }
 
+    //          #     #   ##    #           #    ###          ##   #           ##    ##
+    //          #     #  #  #   #           #     #          #  #  #            #     #
+    //  ###   ###   ###   #    ###    ###  ###    #     ##   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #    #    #    #  #   #     #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // # ##  #  #  #  #  #  #   #    # ##   #     #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  # #   ###   ###   ##     ##   # #    ##   #     ##    ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                  ###
+    /**
+     * Adds a stat to a challenge.
+     * @param {Challenge} challenge The challenge to add the stat to.
+     * @param {Team} team The team to add the stat to.
+     * @param {DiscordJs.GuildMember} pilot The pilot to add a stat for.
+     * @param {number} kills The number of kills the pilot had.
+     * @param {number} assists The number of assists the pilot had.
+     * @param {number} deaths The number of deaths the pilot had.
+     * @returns {Promise} A promise that resolves when the stat is added to the database.
+     */
+    static async addStatToChallenge(challenge, team, pilot, kills, assists, deaths) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            MERGE tblStats s
+                USING (VALUES (@challengeId, @teamId, @kills, @assists, @deaths, @playerId)) AS v (ChallengeId, TeamId, Kills, Assists, Deaths, PlayerId)
+                ON s.ChallengeId = v.ChallengeId AND s.TeamId = v.TeamId AND s.Kills = v.Kills AND s.Assists = v.Assists AND s.Deaths = v.Deaths AND s.PlayerId = v.PlayerId
+            WHEN MATCHED THEN
+                UPDATE SET
+                    TeamId = v.TeamId,
+                    Kills = v.Kills,
+                    Assists = v.Assists,
+                    Deaths = v.Deaths
+            WHEN NOT MATCHED THEN
+                INSERT (ChallengeId, TeamId, PlayerId, Kills, Assists, Deaths) VALUES (v.ChallengeId, v.TeamId, v.PlayerId, v.Kills, v.Assists, v.Deaths);
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: pilot.id},
+            challengeId: {type: Db.INT, value: challenge.id},
+            teamId: {type: Db.INT, value: team.id},
+            kills: {type: Db.INT, value: kills},
+            assists: {type: Db.INT, value: assists},
+            deaths: {type: Db.INT, value: deaths}
+        });
+    }
+
     //          #     #   ##    #                                        ###          ##   #           ##    ##
     //          #     #  #  #   #                                         #          #  #  #            #     #
     //  ###   ###   ###   #    ###   ###    ##    ###  # #    ##   ###    #     ##   #     ###    ###   #     #     ##   ###    ###   ##
@@ -1131,6 +1175,37 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 
+    //              #    ###                      ##    #           #           ####               ##   #           ##    ##
+    //              #     #                      #  #   #           #           #                 #  #  #            #     #
+    //  ###   ##   ###    #     ##    ###  # #    #    ###    ###  ###    ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##   #     #    # ##  #  #  ####    #    #    #  #   #    ##     #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  ##   ##     #     #    ##    # ##  #  #  #  #   #    # ##   #      ##   #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##     ##   #     ##    # #  #  #   ##     ##   # #    ##  ###    #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //  ###                                                                                                                                  ###
+    /**
+     * Gets the team stats for a challenge.
+     * @param {Challenge} challenge The challenge to get stats for.
+     * @param {Team} team The team to get stats for.
+     * @returns {Promise<{discordId: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with the team's stats for the challenge.
+     */
+    static async getTeamStatsForChallenge(challenge, team) {
+
+        /**
+         * @type {{recordsets: [{DiscordId: string, Kills: number, Assists: number, Deaths: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT p.DiscordId, s.Kills, s.Assists, s.Deaths
+            FROM tblStats s
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE s.ChallengeId = @challengeId
+                AND s.TeamId = @teamId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            teamId: {type: Db.INT, value: team.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({discordId: row.DiscordId, kills: row.Kills, assists: row.Assists, deaths: row.Deaths})) || [];
+    }
+
     //              #    ###    #                                        ####              ###    #    ##           #
     //              #     #                                              #                 #  #         #           #
     //  ###   ##   ###    #    ##    # #    ##   ####   ##   ###    ##   ###    ##   ###   #  #  ##     #     ##   ###
@@ -1527,6 +1602,32 @@ class Database {
         `, {
             teamId: {type: Db.INT, value: team.id},
             discordId: {type: Db.VARCHAR(24), value: member.id}
+        });
+    }
+
+    //                                      ##    #           #    ####                     ##   #           ##    ##
+    //                                     #  #   #           #    #                       #  #  #            #     #
+    // ###    ##   # #    ##   # #    ##    #    ###    ###  ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##  ####  #  #  # #   # ##    #    #    #  #   #    #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     ##    #  #  #  #  # #   ##    #  #   #    # ##   #    #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##   #  #   ##    #     ##    ##     ##   # #    ##  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                ###
+    /**
+     * Removes a stat from a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @returns {Promise} A promise that resolves when the stat has been removed.
+     */
+    static async removeStatFromChallenge(challenge, pilot) {
+        await db.query(`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+    
+            DELETE FROM tblStats WHERE ChallengeId = @challengeId AND PlayerId = @playerId
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: pilot.id},
+            challengeId: {type: Db.INT, value: challenge.id}
         });
     }
 

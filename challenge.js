@@ -413,6 +413,31 @@ class Challenge {
         }
     }
 
+    //          #     #   ##    #           #
+    //          #     #  #  #   #           #
+    //  ###   ###   ###   #    ###    ###  ###
+    // #  #  #  #  #  #    #    #    #  #   #
+    // # ##  #  #  #  #  #  #   #    # ##   #
+    //  # #   ###   ###   ##     ##   # #    ##
+    /**
+     * Adds a stat to the challenge.
+     * @param {Team} team The team to add the stat for.
+     * @param {DiscordJs.GuildMember} pilot The pilot to add the stat for.
+     * @param {number} kills The number of kills the pilot had.
+     * @param {number} assists The number of assists the pilot had.
+     * @param {number} deaths The number of deaths the pilot had.
+     * @returns {Promise} A promise that resolves when the stat has been added.
+     */
+    async addStat(team, pilot, kills, assists, deaths) {
+        try {
+            await Db.addStatToChallenge(this, team, pilot, kills, assists, deaths);
+        } catch (err) {
+            throw new Exception("There was a database error adding a stat to a challenge.", err);
+        }
+
+        await Discord.queue(`Added stats for ${pilot}: ${kills} kills, ${assists} assists, ${deaths} deaths.`, this.channel);
+    }
+
     //          #     #   ##    #
     //          #     #  #  #   #
     //  ###   ###   ###   #    ###   ###    ##    ###  # #    ##   ###
@@ -799,6 +824,26 @@ class Challenge {
         }
     }
 
+    //              #     ##    #           #           ####              ###
+    //              #    #  #   #           #           #                  #
+    //  ###   ##   ###    #    ###    ###  ###    ###   ###    ##   ###    #     ##    ###  # #
+    // #  #  # ##   #      #    #    #  #   #    ##     #     #  #  #  #   #    # ##  #  #  ####
+    //  ##   ##     #    #  #   #    # ##   #      ##   #     #  #  #      #    ##    # ##  #  #
+    // #      ##     ##   ##     ##   # #    ##  ###    #      ##   #      #     ##    # #  #  #
+    //  ###
+    /**
+     * Gets the stats from a challenge for a team.
+     * @param {Team} team The team to get stats for.
+     * @return {Promise<{pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     */
+    async getStatsForTeam(team) {
+        try {
+            return (await Db.getTeamStatsForChallenge(this, team)).map((s) => ({pilot: Discord.findGuildMemberById(s.discordId), kills: s.kills, assists: s.assists, deaths: s.deaths}));
+        } catch (err) {
+            throw new Exception("There was a database error loading team stats for a challenge.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -956,6 +1001,27 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
         }
+    }
+
+    //                                      ##    #           #
+    //                                     #  #   #           #
+    // ###    ##   # #    ##   # #    ##    #    ###    ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##    #    #    #  #   #
+    // #     ##    #  #  #  #  # #   ##    #  #   #    # ##   #
+    // #      ##   #  #   ##    #     ##    ##     ##   # #    ##
+    /**
+     * Removes a stat from a challenge for a pilot.
+     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @returns {Promise} A promise that resolves when the stat has been removed.
+     */
+    async removeStat(pilot) {
+        try {
+            await Db.removeStatFromChallenge(this, pilot);
+        } catch (err) {
+            throw new Exception("There was a database error removing a stat from a challenge.", err);
+        }
+
+        await Discord.queue(`Removed stats for ${pilot}.`, this.channel);
     }
 
     //                                      ##    #                                        ####                     ##   #           ##    ##

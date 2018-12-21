@@ -20,6 +20,7 @@ const tz = require("timezone-js"),
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
+    statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
     teamPilotMatch = /^(.+) <@!?([0-9]+)>$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/,
@@ -69,6 +70,27 @@ class Commands {
         }
     }
 
+    //       #                 #      ##   #           ##    ##                            ###           ##                 #    #                         #
+    //       #                 #     #  #  #            #     #                             #           #  #               # #                             #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   #      ##   ###    #    ##    ###   # #    ##    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    ##     #     #  #  #  #  ###    #    #  #  ####  # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #      ##   #  #  #  #  #  #   #     #    #     #  #  ##    #  #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###   ###     ##    ##   #  #   #    ###   #     #  #   ##    ###
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge is confirmed.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeIsConfirmed(challenge, member, channel) {
+        if (!challenge.details.dateConfirmed) {
+            await Discord.queue(`Sorry, ${member}, but this match has not yet been confirmed.`, channel);
+            throw new Warning("Match was not confirmed.");
+        }
+    }
+
     //       #                 #      ##   #           ##    ##                            ###          #  #         #     ##                 #    #                         #
     //       #                 #     #  #  #            #     #                             #           ## #         #    #  #               # #                             #
     //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ## #   ##   ###   #      ##   ###    #    ##    ###   # #    ##    ###
@@ -85,7 +107,7 @@ class Commands {
      */
     static async checkChallengeIsNotConfirmed(challenge, member, channel) {
         if (challenge.details.dateConfirmed) {
-            await Discord.queue(`Sorry, ${member}, but this match has already been reported.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
             throw new Warning("Match was already confirmed.");
         }
     }
@@ -171,6 +193,31 @@ class Commands {
         if (challenge.details.map) {
             await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
             throw new Warning("Map already set.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###                      ##    #           #
+    //       #                 #     #  #  #            #     #                             #                      #  #   #           #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ##    ###  # #    #    ###    ###  ###    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    # ##  #  #  ####    #    #    #  #   #    ##
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #    ##    # ##  #  #  #  #   #    # ##   #      ##
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##    #     ##    # #  #  #   ##     ##   # #    ##  ###
+    //                                                                          ###
+    /**
+     * Checks to ensure that adding a pilot's stat won't put the team over the number of pilots per side in the challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {Team} team The team to check.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeTeamStats(challenge, pilot, team, member, channel) {
+        const stats = await challenge.getStatsForTeam(team);
+
+        if (!stats.find((s) => s.pilot.id === pilot.id) && stats.length >= challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but you have already provided enough player stats for this match.`, channel);
+            throw new Warning("Too many stats for team.");
         }
     }
 
@@ -3941,16 +3988,96 @@ class Commands {
         return true;
     }
 
-    // !pilotstat <player> <K> <A> <D>
-    /*
-     * Player must be an admin.
-     * Must be done in a challenge channel.
-     * Challenge must have been reported and confirmed, or force reported.
-     *
-     * Success:
-     * 1) Write stat to the database.
-     * 2) Confirm with admin.
+    //          #     #          #           #
+    //          #     #          #           #
+    //  ###   ###   ###   ###   ###    ###  ###
+    // #  #  #  #  #  #  ##      #    #  #   #
+    // # ##  #  #  #  #    ##    #    # ##   #
+    //  # #   ###   ###  ###      ##   # #    ##
+    /**
+     * Add a stat for a pilot to a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async addstat(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!pilotstat` command followed by the player you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        if (!statMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!pilotstat\` command followed by the player you are recording the stat for, along with the kills, assists, and deaths.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {1: pilotName, 2: teamName, 3: kills, 4: assists, 5: deaths} = statMatch.exec(message),
+            pilot = await Commands.checkPilotExists(pilotName, member, channel),
+            team = await Commands.checkTeamExists(teamName, member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+
+        await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
+
+        try {
+            await challenge.addStat(team, pilot, +kills, +assists, +deaths);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                                             #           #
+    //                                             #           #
+    // ###    ##   # #    ##   # #    ##    ###   ###    ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  ##      #    #  #   #
+    // #     ##    #  #  #  #  # #   ##      ##    #    # ##   #
+    // #      ##   #  #   ##    #     ##   ###      ##   # #    ##
+    /**
+     * Removes a stat for a pilot from a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async removestat(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!removestat` command followed by the player whose stat you are removing.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        const pilot = await Commands.checkPilotExists(message, member, channel);
+
+        try {
+            await challenge.removeStat(pilot);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !voidgame <team1> <team2> <#> <reason> <confirm>
     /*
