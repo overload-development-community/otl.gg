@@ -19,6 +19,7 @@ const tz = require("timezone-js"),
     idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
+    numberMatch = /^(?:[1-9][0-9]*)$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
     teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
@@ -68,6 +69,37 @@ class Commands {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###      #  ####         #            #
+    //       #                 #     #  #  #            #     #                             #       #  #                         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ###  ###   #  #  ##     ###   ###    ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    #  #  #      ##    #    ##      #    ##
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #    #  #  #      ##    #      ##    #      ##
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ###  ####  #  #  ###   ###      ##  ###
+    //                                                                          ###
+    /**
+     * Checks to ensure a challenge exists.
+     * @param {number} id The ID of the challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<Challenge>} A promise that resolves with the challenge.
+     */
+    static async checkChallengeIdExists(id, member, channel) {
+        let challenge;
+        try {
+            challenge = await Challenge.getById(id);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!challenge) {
+            await Discord.queue(`Sorry, ${member}, but that was an invalid challenge ID.`, channel);
+            throw new Warning("Invalid challenge ID.");
+        }
+
+        return challenge;
     }
 
     //       #                 #      ##   #           ##    ##                            ###           ##                 #    #                         #
@@ -216,7 +248,7 @@ class Commands {
         const stats = await challenge.getStatsForTeam(team);
 
         if (!stats.find((s) => s.pilot.id === pilot.id) && stats.length >= challenge.details.teamSize) {
-            await Discord.queue(`Sorry, ${member}, but you have already provided enough player stats for this match.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have already provided enough pilot stats for this match.`, channel);
             throw new Warning("Too many stats for team.");
         }
     }
@@ -1649,7 +1681,7 @@ class Commands {
         }
 
         if (pilotCount >= 8) {
-            await Discord.queue(`Sorry, ${member}, but there is a maximum of 8 pilots per roster, and your team currently has ${pilotCount}, including invited players.`, channel);
+            await Discord.queue(`Sorry, ${member}, but there is a maximum of 8 pilots per roster, and your team currently has ${pilotCount}, including invited pilots.`, channel);
             throw new Warning("Roster is full.");
         }
 
@@ -1888,7 +1920,7 @@ class Commands {
         const isFounder = member.isFounder(),
             pilotIsCaptain = pilot.isCaptainOrFounder();
         if (!isFounder && pilotIsCaptain) {
-            await Discord.queue(`Sorry, ${member}, but you must be the founder to remove this player.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must be the founder to remove this pilot.`, channel);
             throw new Warning("Pilot cannot remove a captain.");
         }
 
@@ -3032,7 +3064,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the players who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` in ${challenge.channel}`, channel);
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` in ${challenge.channel}`, channel);
 
         return true;
     }
@@ -3566,7 +3598,7 @@ class Commands {
         }
 
         try {
-            await challenge.lock();
+            await challenge.lock(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3608,7 +3640,7 @@ class Commands {
         }
 
         try {
-            await challenge.unlock();
+            await challenge.unlock(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3648,7 +3680,7 @@ class Commands {
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
 
         try {
-            await challenge.setHomeMapTeam(team);
+            await challenge.setHomeMapTeam(member, team);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3697,7 +3729,7 @@ class Commands {
         // TODO: Only allow home levels from a valid map list.
 
         try {
-            await challenge.setMap(message);
+            await challenge.setMap(member, message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3732,7 +3764,7 @@ class Commands {
         }
 
         try {
-            await challenge.setNeutralServer();
+            await challenge.setNeutralServer(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3771,7 +3803,7 @@ class Commands {
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
 
         try {
-            await challenge.setHomeServerTeam(team);
+            await challenge.setHomeServerTeam(member, team);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3855,7 +3887,7 @@ class Commands {
         }
 
         try {
-            await challenge.setTime(date);
+            await challenge.setTime(member, date);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4009,7 +4041,7 @@ class Commands {
             return false;
         }
 
-        if (!await Commands.checkHasParameters(message, member, "Use the `!pilotstat` command followed by the player you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "Use the `!pilotstat` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
             return false;
         }
 
@@ -4017,7 +4049,7 @@ class Commands {
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
         if (!statMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use the \`!pilotstat\` command followed by the player you are recording the stat for, along with the kills, assists, and deaths.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!pilotstat\` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
@@ -4060,7 +4092,7 @@ class Commands {
             return false;
         }
 
-        if (!await Commands.checkHasParameters(message, member, "Use the `!removestat` command followed by the player whose stat you are removing.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "Use the `!removestat` command followed by the pilot whose stat you are removing.", channel)) {
             return false;
         }
 
@@ -4079,41 +4111,151 @@ class Commands {
         return true;
     }
 
-    // !voidgame <team1> <team2> <#> <reason> <confirm>
-    /*
-     * Player must be an admin.
-     * Must confirm.
-     *
-     * Success (Teams only)
-     * 1) List games between the two teams.
-     *
-     * Success (With game number)
-     * 1) Void game in database
-     * 2) Announce to both teams.
-     * 3) Post to match results.
+    //              #       #
+    //                      #
+    // # #    ##   ##     ###   ###   ###  # #    ##
+    // # #   #  #   #    #  #  #  #  #  #  ####  # ##
+    // # #   #  #   #    #  #   ##   # ##  #  #  ##
+    //  #     ##   ###    ###  #      # #  #  #   ##
+    //                          ###
+    /**
+     * Voids a game.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async voidgame(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        let challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+
+        if (challenge) {
+            if (!await Commands.checkNoParameters(message, member, "Use the `!voidgame` command by itself in a challenge channel to void the match.", channel)) {
+                return false;
+            }
+
+            try {
+                await challenge.void(member);
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw err;
+            }
+        } else {
+            if (!await Commands.checkHasParameters(message, member, "Use the `!voidgame` command with the team tags of the two teams for which you wish to look up a match to void.", channel)) {
+                return false;
+            }
+
+            if (twoTeamTagMatch.test(message)) {
+                const {1: team1Tag, 2: team2Tag} = twoTeamTagMatch.exec(message),
+                    team1 = await Commands.checkTeamExists(team1Tag, member, channel),
+                    team2 = await Commands.checkTeamExists(team2Tag, member, channel),
+                    challenges = await Challenge.getAllByTeams(team1, team2),
+                    results = [];
+
+                if (challenges.length === 0) {
+                    await Discord.queue(`Sorry, ${member}, but no games have been scheduled between **${team1.name}** and **${team2.name}**.`, channel);
+                    throw new Warning("No games played between specified teams.");
+                }
+
+                for (challenge of challenges) {
+                    await Commands.checkChallengeDetails(challenge, member, channel);
+
+                    if (challenge.details.dateConfirmed) {
+                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} ${challenge.details.challengingTeamScore}, ${challenge.challengedTeam.tag} ${challenge.details.challengedTeamScore}, ${challenge.details.map}, ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`);
+                    } else {
+                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} vs ${challenge.challengedTeam.tag}, ${challenge.details.map || "Map not set"}, ${challenge.details.matchTime ? challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"}) : "Time not set"}`);
+                    }
+                }
+
+                await Discord.queue(`Use \`!voidgame\` along with the challenge ID from the list below to void a specific game.\n${results.join("\n")}`, member);
+            } else if (numberMatch.test(message)) {
+                challenge = await Commands.checkChallengeIdExists(+message, member, channel);
+
+                try {
+                    await challenge.void(member);
+                } catch (err) {
+                    await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                    throw err;
+                }
+            } else {
+                await Discord.queue(`Sorry, ${member}, but you must use the \`!voidgame\` command with the team tags of the two teams for which you wish to look up a match to void.`, channel);
+                throw new Warning("Invalid parameters.");
+            }
+        }
+
+        return true;
+    }
+
+    //                          #       #
+    //                                  #
+    // #  #  ###   # #    ##   ##     ###   ###   ###  # #    ##
+    // #  #  #  #  # #   #  #   #    #  #  #  #  #  #  ####  # ##
+    // #  #  #  #  # #   #  #   #    #  #   ##   # ##  #  #  ##
+    //  ###  #  #   #     ##   ###    ###  #      # #  #  #   ##
+    //                                      ###
+    /**
+     * Unvoids a game.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async unvoidgame(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!unvoidgame` command with the challenge ID of the challenge you wish to unvoid.", channel)) {
+            return false;
+        }
+
+        if (!numberMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!unvoidgame\` command with the challenge ID of the challenge you wish to unvoid.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const challenge = await Commands.checkChallengeIdExists(+message, member, channel);
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (!challenge.details.dateConfirmed && !challenge.channel) {
+            await Discord.queue(`Sorry, ${member}, but this incomplete challenge no longer exists.  Have the teams simply challenge each other again.`, channel);
+            throw new Warning("Challenge channel deleted already.");
+        }
+
+        try {
+            await challenge.unvoid(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // !closegame
     /*
-     * Player must be an admin.
+     * Pilot must be an admin.
      * Must be done in a challenge channel.
-     * Challenge must have been reported and confirmed, or force reported.
+     * Challenge must have a score confirmed, or must have been voided.
      * Sufficient stats must have been added to the game.
      *
      * Success:
      * Record match as official in the database.
-     * Announce in #match-results
      * Close challenge channel
      */
 
-    // Voided/Adjudicated challenges
+    // Match Results
     /*
-     * Return penalty games to penalized teams.
+     * Post closed games to match results.
+     * Post voided games that were completed to match results.
+     * Post unvoided games that were completed to match results.
      */
 
-    // Disband
+    // Penalties
     /*
-     * Remove all challenges, return penalty games to penalized teams.
+     * On voided games, return penalty games to penalized teams.
+     * On team disband, return penalty games to penalized teams.
+     * After 10 consecutive completed games after a team's first penalty, delete the first penalty.
      */
 
     // Automation

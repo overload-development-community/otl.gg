@@ -291,7 +291,7 @@ DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async function() {
     try {
         return await Db.joinTeamDeniedUntil(this);
     } catch (err) {
-        throw new Exception("There was a database error checking when a player is banned from joining teams until.", err);
+        throw new Exception("There was a database error checking when a pilot is banned from joining teams until.", err);
     }
 };
 

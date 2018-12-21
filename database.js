@@ -769,6 +769,27 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded, locked: !!data.recordsets[0][0].Locked} || void 0;
     }
 
+    //              #     ##   #           ##    ##                            ###         ###      #
+    //              #    #  #  #            #     #                            #  #         #       #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   ###   #  #   #     ###
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #   #    #  #
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #   # #   #    #  #
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###     #   ###    ###
+    //  ###                                                         ###               #
+    /**
+     * Gets a challenge by its ID.
+     * @param {number} id The ID number of the challenge.
+     * @returns {Promise<ChallengeData>} A promise that resolves with the challenge data.
+     */
+    static async getChallengeById(id) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
+         */
+        const data = await db.query("SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @id", {id: {type: Db.INT, value: id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].ChallengeId, challengingTeamId: data.recordsets[0][0].ChallengingTeamId, challengedTeamId: data.recordsets[0][0].ChallengedTeamId} || void 0;
+    }
+
     //              #     ##   #           ##    ##                            ###         ###
     //              #    #  #  #            #     #                            #  #         #
     //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   ###   #  #   #     ##    ###  # #    ###
@@ -897,13 +918,13 @@ class Database {
         } || void 0;
     }
 
-    //              #     ##   #           ##    ##                            ###         ###
-    //              #    #  #  #            #     #                            #  #         #
-    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##   ###   #  #   #     ##    ###  # #    ###
-    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #   #    # ##  #  #  ####  ##
-    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #   # #   #    ##    # ##  #  #    ##
-    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###     #    #     ##    # #  #  #  ###
-    //  ###                                                         ###               #
+    //              #     ##   #           ##    ##                                   ###         ###
+    //              #    #  #  #            #     #                                   #  #         #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##    ###   ###   #  #   #     ##    ###  # #
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  ##     #  #  #  #   #    # ##  #  #  ####
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##      ##   #  #   # #   #    ##    # ##  #  #
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ###     #    #     ##    # #  #  #
+    //  ###                                                         ###                      #
     /**
      * Gets all challenges for a team.
      * @param {Team} team The team.
@@ -923,6 +944,37 @@ class Database {
                 AND DateVoided IS NULL
         `, {
             teamId: {type: Db.INT, value: team.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.ChallengeId, challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId})) || [];
+    }
+
+    //              #     ##   #           ##    ##                                   ###         ###
+    //              #    #  #  #            #     #                                   #  #         #
+    //  ###   ##   ###   #     ###    ###   #     #     ##   ###    ###   ##    ###   ###   #  #   #     ##    ###  # #    ###
+    // #  #  # ##   #    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  ##     #  #  #  #   #    # ##  #  #  ####  ##
+    //  ##   ##     #    #  #  #  #  # ##   #     #    ##    #  #   ##   ##      ##   #  #   # #   #    ##    # ##  #  #    ##
+    // #      ##     ##   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ###     #    #     ##    # #  #  #  ###
+    //  ###                                                         ###                      #
+    /**
+     * Gets all challenges for two teams.
+     * @param {Team} team1 The first team.
+     * @param {Team} team2 The second team.
+     * @returns {Promise<ChallengeData[]>} A promise that resolves with an array of challenge data.
+     */
+    static async getChallengesByTeams(team1, team2) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
+            FROM tblChallenge
+            WHERE (ChallengingTeamId = @team1Id OR ChallengedTeamId = @team1Id)
+                AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
+                AND DateVoided IS NULL
+        `, {
+            team1Id: {type: Db.INT, value: team1.id},
+            team2Id: {type: Db.INT, value: team2.id}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.ChallengeId, challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId})) || [];
     }
@@ -1623,7 +1675,7 @@ class Database {
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
-    
+
             DELETE FROM tblStats WHERE ChallengeId = @challengeId AND PlayerId = @playerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: pilot.id},
@@ -2166,6 +2218,22 @@ class Database {
         await db.query("UPDATE tblChallenge SET AdminCreated = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
+    //                          #       #   ##   #           ##    ##
+    //                                  #  #  #  #            #     #
+    // #  #  ###   # #    ##   ##     ###  #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  # #   #  #   #    #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #  # #   #  #   #    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ###  #  #   #     ##   ###    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                ###
+    /**
+     * Unvoids a challenge.
+     * @param {Challenge} challenge The challenge to unvoid.
+     * @returns {Promise} A promise that resolves when the challenge is unvoided.
+     */
+    static async unvoidChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //                #         #          #  #
     //                #         #          ## #
     // #  #  ###    ###   ###  ###    ##   ## #   ###  # #    ##
@@ -2215,11 +2283,12 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is voided and penalties are assessed.
      */
     static async voidChallengeWithPenalties(challenge, teams) {
+        // TODO: Actually return data.
         const params = {challengeId: {type: Db.INT, value: challenge.id}};
         let sql = "UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId";
 
         teams.forEach((team, index) => {
-            params[`team${index}id`] = {type: Db.INT, value: team.id};
+            params[`team${index}Id`] = {type: Db.INT, value: team.id};
 
             sql = `${sql}
                 IF (SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)

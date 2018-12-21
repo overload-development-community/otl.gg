@@ -4,7 +4,7 @@ The Discord bot used for the Overload Teams League.
 
 # Commands
 
-Commands can work from any channel that the bot is in, or directly via DM to the bot.  The following commands are implemented:
+Most commands will work from any channel that the bot is in, or directly via direct message to the bot.  Some commands can only work in a challenge channel, and will be ignored in other channels.  The following commands are implemented:
 
 ## General
 

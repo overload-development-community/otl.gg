@@ -122,7 +122,7 @@ class Challenge {
 
             const serverEmbed = new DiscordJs.RichEmbed({
                 title: "Challenge commands - Server",
-                description: `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two players start the match in an effort to select a specific server.`,
+                description: `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two pilots start the match in an effort to select a specific server.`,
                 color: data.homeServerTeam.role.color,
                 fields: []
             });
@@ -194,7 +194,7 @@ class Challenge {
                         value: "Confirms the reported score by the other team."
                     }, {
                         name: "Screenshot required!",
-                        value: "At least one player must post a screenshot of the final score screen, which includes each player's individual performance.  Games reported without a screenshot will not be counted."
+                        value: "At least one pilot must post a screenshot of the final score screen, which includes each pilot's individual performance.  Games reported without a screenshot will not be counted."
                     }
                 ]
             }), challenge.channel);
@@ -267,14 +267,34 @@ class Challenge {
         let challenges;
         try {
             challenges = await Db.getChallengesByTeam(team);
+
+            return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
             throw new Exception("There was a database error getting a team's challenges.", err);
         }
+    }
 
+    //              #     ##   ##    ##    ###         ###
+    //              #    #  #   #     #    #  #         #
+    //  ###   ##   ###   #  #   #     #    ###   #  #   #     ##    ###  # #    ###
+    // #  #  # ##   #    ####   #     #    #  #  #  #   #    # ##  #  #  ####  ##
+    //  ##   ##     #    #  #   #     #    #  #   # #   #    ##    # ##  #  #    ##
+    // #      ##     ##  #  #  ###   ###   ###     #    #     ##    # #  #  #  ###
+    //  ###                                       #
+    /**
+     * Gets all of two teams' challenges.
+     * @param {Team} team1 The first team to check.
+     * @param {Team} team2 The second team to check.
+     * @returns {Promise<Challenge[]>} A promise that resolves with an array of the team's challenges.
+     */
+    static async getAllByTeams(team1, team2) {
+        let challenges;
         try {
+            challenges = await Db.getChallengesByTeams(team1, team2);
+
             return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
-            throw new Exception("There was a database error loading a team's challenges.", err);
+            throw new Exception("There was a database error getting the teams' challenges.", err);
         }
     }
 
@@ -320,6 +340,29 @@ class Challenge {
         }
 
         return new Challenge({id: +id, challengingTeam, challengedTeam});
+    }
+
+    //              #    ###         ###      #
+    //              #    #  #         #       #
+    //  ###   ##   ###   ###   #  #   #     ###
+    // #  #  # ##   #    #  #  #  #   #    #  #
+    //  ##   ##     #    #  #   # #   #    #  #
+    // #      ##     ##  ###     #   ###    ###
+    //  ###                     #
+    /**
+     * Gets a challenge by its ID.
+     * @param {number} id The challenge ID.
+     * @returns {Promise<Challenge>} The challenge.
+     */
+    static async getById(id) {
+        let data;
+        try {
+            data = await Db.getChallengeById(id);
+        } catch (err) {
+            throw new Exception("There was a database error getting a challenge by ID.", err);
+        }
+
+        return data ? new Challenge({id: data.id, challengingTeam: await Team.getById(data.challengingTeamId), challengedTeam: await Team.getById(data.challengedTeamId)}) : void 0;
     }
 
     //              #    ###         ###
@@ -493,14 +536,7 @@ class Challenge {
                     throw new Exception("There was a database error voiding a challenge.", err);
                 }
 
-                try {
-                    await this.channel.delete("An admin voided the challenge.");
-
-                    await Discord.queue(`An admin voided the challenge against **${this.challengedTeam.name}**.  No penalties were assessed.`, this.challengingTeam.teamChannel);
-                    await Discord.queue(`An admin voided the challenge against **${this.challengingTeam.name}**.  No penalties were assessed.`, this.challengedTeam.teamChannel);
-                } catch (err) {
-                    throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
-                }
+                await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
 
                 break;
             case "extend":
@@ -516,7 +552,7 @@ class Challenge {
                 this.details.dateClockDeadlineNotified = void 0;
 
                 try {
-                    await Discord.queue("An admin has extended the deadline of this challenge.  You have 14 days to get the match scheduled.", this.channel);
+                    await Discord.queue(`${member} has extended the deadline of this challenge.  You have 14 days to get the match scheduled.`, this.channel);
 
                     await this.updateTopic();
                 } catch (err) {
@@ -535,21 +571,18 @@ class Challenge {
                 }
 
                 try {
-                    await this.channel.delete("An admin voided the challenge.");
-
-                    await Discord.queue(`An admin voided the challenge against **${this.challengedTeam.name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.`, this.challengingTeam.teamChannel);
-                    await Discord.queue(`An admin voided the challenge against **${this.challengingTeam.name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.`, this.challengedTeam.teamChannel);
+                    await Discord.queue(`${member} has voided this challenge.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  An admin will close this channel soon.`, this.channel);
 
                     for (const penalizedTeam of penalizedTeams) {
                         if (penalizedTeam.first) {
-                            await Discord.queue("This penalty means that your next three games will automatically give home map and home server to your opponent.  If you are penalized again, the team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.", penalizedTeam.team.teamChannel);
+                            await Discord.queue(`${member} voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map and home server advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, penalizedTeam.team.teamChannel);
                         } else {
                             const oldCaptains = penalizedTeam.team.members.filter((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
 
                             await penalizedTeam.team.disbandTeam(member);
 
                             for (const captain of oldCaptains) {
-                                await Discord.queue(`An admin voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
+                                await Discord.queue(`${member} voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
                             }
                         }
                     }
@@ -658,11 +691,11 @@ class Challenge {
                 fields: [
                     {
                         name: "Post a screenshot",
-                        value: "Remember, OTL matches are only official with player statistics from a screenshot.  Be sure that at least one player posts the screenshot showing full match details, including each players' kills, assists, and deaths."
+                        value: "Remember, OTL matches are only official with pilot statistics from a screenshot.  Be sure that at least one pilot posts the screenshot showing full match details, including each pilots' kills, assists, and deaths."
                     },
                     {
                         name: "This channel is now closed",
-                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an administrator immediately.  This channel will be closed once the stats have been posted."
+                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be closed once the stats have been posted."
                     }
                 ]
             });
@@ -908,9 +941,10 @@ class Challenge {
     // ###    ##    ##   #  #
     /**
      * Locks a challenge.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the challenge is locked.
      */
-    async lock() {
+    async lock(member) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -924,7 +958,7 @@ class Challenge {
         this.details.adminCreated = true;
 
         try {
-            await Discord.queue("This challenge has been locked by an admin, match parameters can no longer be set.", this.channel);
+            await Discord.queue(`This challenge has been locked by ${member}.  Match parameters can no longer be set.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1108,10 +1142,11 @@ class Challenge {
     //                                                        #
     /**
      * Sets the home map team.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Team} team The team to set as the home team.
      * @returns {Promise} A promise that resolves when the home map team has been set.
      */
-    async setHomeMapTeam(team) {
+    async setHomeMapTeam(member, team) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1128,7 +1163,7 @@ class Challenge {
         this.details.map = void 0;
 
         try {
-            await Discord.queue(`An admin has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1144,10 +1179,11 @@ class Challenge {
     // ###     ##     ##  #  #   ##   #  #   ##    ##    ##   #      #     ##   #      #     ##    # #  #  #
     /**
      * Sets the home server team.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Team} team The team to set as the home team.
      * @returns {Promise} A promise that resolves when the home server team has been set.
      */
-    async setHomeServerTeam(team) {
+    async setHomeServerTeam(member, team) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1162,7 +1198,7 @@ class Challenge {
         this.details.usingHomeServerTeam = true;
 
         try {
-            await Discord.queue(`An admin has made **${team.tag}** the home server team.`, this.channel);
+            await Discord.queue(`${member} has made **${team.tag}** the home server team.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1179,10 +1215,11 @@ class Challenge {
     //                                #
     /**
      * Sets the map for the challenge.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {string} map The name of the map.
      * @returns {Promise} A promise that resolves when the map has been saved.
      */
-    async setMap(map) {
+    async setMap(member, map) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1196,7 +1233,7 @@ class Challenge {
         this.details.map = map;
 
         try {
-            await Discord.queue(`An admin has set the map for this match to **${this.details.map}**.`, this.channel);
+            await Discord.queue(`${member} has set the map for this match to **${this.details.map}**.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1212,9 +1249,10 @@ class Challenge {
     // ###     ##     ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
     /**
      * Sets a neutral server for this match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the neutral server has been set.
      */
-    async setNeutralServer() {
+    async setNeutralServer(member) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1228,7 +1266,7 @@ class Challenge {
         this.details.usingHomeServerTeam = false;
 
         try {
-            await Discord.queue("An admin has set the server for this match to be neutral.", this.channel);
+            await Discord.queue(`${member} has set the server for this match to be neutral.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1268,11 +1306,11 @@ class Challenge {
                 fields: [
                     {
                         name: "Post a screenshot",
-                        value: "Remember, OTL matches are only official with player statistics from a screenshot.  Be sure that at least one player posts the screenshot showing full match details, including each players' kills, assists, and deaths."
+                        value: "Remember, OTL matches are only official with pilot statistics from a screenshot.  Be sure that at least one pilot posts the screenshot showing full match details, including each pilots' kills, assists, and deaths."
                     },
                     {
                         name: "This channel is now closed",
-                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an administrator immediately.  This channel will be closed once the stats have been posted."
+                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be closed once the stats have been posted."
                     }
                 ]
             });
@@ -1339,10 +1377,11 @@ class Challenge {
     // ###     ##     ##   #    ###   #  #   ##
     /**
      * Sets the time of the match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Date} date The time of the match.
      * @returns {Promise} A promise that resolves when the time has been set.
      */
-    async setTime(date) {
+    async setTime(member, date) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1359,8 +1398,8 @@ class Challenge {
 
         try {
             const times = {};
-            for (const member of this.channel.members.values()) {
-                const timezone = await member.getTimezone(),
+            for (const pilot of this.channel.members.values()) {
+                const timezone = await pilot.getTimezone(),
                     yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
@@ -1394,7 +1433,7 @@ class Challenge {
             });
 
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                description: "An admin has set the time for this match.",
+                description: `${member} has set the time for this match.`,
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
 
@@ -1592,9 +1631,10 @@ class Challenge {
     //  ###  #  #  ###    ##    ##   #  #
     /**
      * Unlocks a challenge.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the challenge is unlocked.
      */
-    async unlock() {
+    async unlock(member) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1608,7 +1648,7 @@ class Challenge {
         this.details.adminCreated = false;
 
         try {
-            await Discord.queue("This challenge has been unlocked by an admin.  You may now use `!suggestmap` to suggest a neutral map, `!suggestneutralserver` to suggest the map be played on a neutral server, and `!suggesttime` to suggest the match time.", this.channel);
+            await Discord.queue(`This challenge has been unlocked by ${member}.  You may now use \`!suggestmap\` to suggest a neutral map, \`!suggestneutralserver\` to suggest the map be played on a neutral server, and \`!suggesttime\` to suggest the match time.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1638,51 +1678,125 @@ class Challenge {
 
         let topic = `${this.challengingTeam.name} vs ${this.challengedTeam.name}`;
 
-        if (this.details.dateClockDeadline) {
-            topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam}`;
-        }
-
-        topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
-
-        topic = `${topic}\n\nHome Map Team: ${this.details.usingHomeMapTeam ? this.details.homeMapTeam.tag : "Neutral"}`;
-
-        if (this.details.map) {
-            topic = `${topic}\nChosen Map: ${this.details.map}`;
-        } else if (this.details.suggestedMap) {
-            topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
-        }
-
-        topic = `${topic}\n\nHome Server Team: ${this.details.usingHomeServerTeam ? this.details.homeServerTeam.tag : "Neutral"}`;
-
-        if (this.details.suggestedNeutralServerTeam) {
-            topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam}`;
-        }
-
-        if (this.details.teamSize) {
-            topic = `${topic}\n\nTeam Size: ${this.details.teamSize}v${this.details.teamSize}`;
-            if (this.details.suggestedTeamSize) {
-                topic = `${topic}\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
+        if (this.details.dateVoided) {
+            topic = `${topic}\n\nThis match has been voided.`;
+        } else {
+            if (this.details.dateClockDeadline) {
+                topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam}`;
             }
-        } else if (this.details.suggestedTeamSize) {
-            topic = `${topic}\n\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
-        }
 
-        if (this.details.matchTime) {
-            topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
-            if (this.details.suggestedTime) {
+            topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
+
+            topic = `${topic}\n\nHome Map Team: ${this.details.usingHomeMapTeam ? this.details.homeMapTeam.tag : "Neutral"}`;
+
+            if (this.details.map) {
+                topic = `${topic}\nChosen Map: ${this.details.map}`;
+            } else if (this.details.suggestedMap) {
+                topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
+            }
+
+            topic = `${topic}\n\nHome Server Team: ${this.details.usingHomeServerTeam ? this.details.homeServerTeam.tag : "Neutral"}`;
+
+            if (this.details.suggestedNeutralServerTeam) {
+                topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam}`;
+            }
+
+            if (this.details.teamSize) {
+                topic = `${topic}\n\nTeam Size: ${this.details.teamSize}v${this.details.teamSize}`;
+                if (this.details.suggestedTeamSize) {
+                    topic = `${topic}\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
+                }
+            } else if (this.details.suggestedTeamSize) {
+                topic = `${topic}\n\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
+            }
+
+            if (this.details.matchTime) {
+                topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                if (this.details.suggestedTime) {
+                    topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                }
+            } else if (this.details.suggestedTime) {
                 topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
             }
-        } else if (this.details.suggestedTime) {
-            topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
-        }
 
-        if (this.details.dateReported && !this.details.dateConfirmed) {
-            topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}, reported by ${this.details.reportingTeam.tag}`;
-        } else if (this.details.dateConfirmed) {
-            topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}`;
+            if (this.details.dateReported && !this.details.dateConfirmed) {
+                topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}, reported by ${this.details.reportingTeam.tag}`;
+            } else if (this.details.dateConfirmed) {
+                topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}`;
+            }
         }
 
         await this.channel.setTopic(topic);
+    }
+
+    //                          #       #
+    //                                  #
+    // #  #  ###   # #    ##   ##     ###
+    // #  #  #  #  # #   #  #   #    #  #
+    // #  #  #  #  # #   #  #   #    #  #
+    //  ###  #  #   #     ##   ###    ###
+    /**
+     * Unvoids a match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that resolves when the match is unvoided.
+     */
+    async unvoid(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.unvoidChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error unvoiding a challenge.", err);
+        }
+
+        this.details.dateVoided = void 0;
+
+        if (this.channel) {
+            try {
+                await Discord.queue(`${member} has unvoided this challenge.`, this.channel);
+
+                await this.updateTopic();
+            } catch (err) {
+                throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
+            }
+        }
+    }
+
+    //              #       #
+    //                      #
+    // # #    ##   ##     ###
+    // # #   #  #   #    #  #
+    // # #   #  #   #    #  #
+    //  #     ##   ###    ###
+    /**
+     * Voids a match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that resolves when the match is voided.
+     */
+    async void(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.voidChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error voiding a challenge.", err);
+        }
+
+        this.details.dateVoided = new Date();
+
+        if (this.channel) {
+            try {
+                await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
+
+                await this.updateTopic();
+            } catch (err) {
+                throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
+            }
+        }
     }
 }
 
