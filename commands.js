@@ -228,6 +228,48 @@ class Commands {
         }
     }
 
+    //       #                 #      ##   #           ##    ##                             ##    #           #            ##                     ##           #
+    //       #                 #     #  #  #            #     #                            #  #   #           #           #  #                     #           #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #    ###    ###  ###    ###   #      ##   # #   ###    #     ##   ###    ##
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##    #    #    #  #   #    ##     #     #  #  ####  #  #   #    # ##   #    # ##
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #   #    # ##   #      ##   #  #  #  #  #  #  #  #   #    ##     #    ##
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##    ##     ##   # #    ##  ###     ##    ##   #  #  ###   ###    ##     ##   ##
+    //                                                                          ###                                                         #
+    /**
+     * Checks to ensure sufficient stats have been posted to the challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeStatsComplete(challenge, member, channel) {
+        let challengingTeamStats;
+        try {
+            challengingTeamStats = await challenge.getStatsForTeam(challenge.challengingTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challengingTeamStats.length !== challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${challengingTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+            throw new Warning("Insufficient number of stats.");
+        }
+
+        let challengedTeamStats;
+        try {
+            challengedTeamStats = await challenge.getStatsForTeam(challenge.challengedTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (challengedTeamStats.length !== challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${challengedTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+            throw new Warning("Insufficient number of stats.");
+        }
+    }
+
     //       #                 #      ##   #           ##    ##                            ###                      ##    #           #
     //       #                 #     #  #  #            #     #                             #                      #  #   #           #
     //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ##    ###  # #    #    ###    ###  ###    ###
@@ -4232,23 +4274,54 @@ class Commands {
         return true;
     }
 
-    // !closegame
-    /*
-     * Pilot must be an admin.
-     * Must be done in a challenge channel.
-     * Challenge must have a score confirmed, or must have been voided.
-     * Sufficient stats must have been added to the game.
-     *
-     * Success:
-     * Record match as official in the database.
-     * Close challenge channel
+    //       ##
+    //        #
+    //  ##    #     ##    ###    ##    ###   ###  # #    ##
+    // #      #    #  #  ##     # ##  #  #  #  #  ####  # ##
+    // #      #    #  #    ##   ##     ##   # ##  #  #  ##
+    //  ##   ###    ##   ###     ##   #      # #  #  #   ##
+    //                                 ###
+    /**
+     * Closes a game.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
+    async closegame(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!closegame` command by itself to close a channel where the match has been completed or voided.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (!challenge.details.dateVoided) {
+            await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+            await Commands.checkChallengeStatsComplete(challenge, member, channel);
+        }
+
+        try {
+            await challenge.close(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     // Match Results
     /*
      * Post closed games to match results.
-     * Post voided games that were completed to match results.
-     * Post unvoided games that were completed to match results.
+     * Post voided games that were closed to match results.
+     * Post unvoided games that were closed to match results.
      */
 
     // Penalties

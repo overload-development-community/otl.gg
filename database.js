@@ -455,6 +455,22 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].ClockedChallenges || 0;
     }
 
+    //       ##                        ##   #           ##    ##
+    //        #                       #  #  #            #     #
+    //  ##    #     ##    ###    ##   #     ###    ###   #     #     ##   ###    ###   ##
+    // #      #    #  #  ##     # ##  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #      #    #  #    ##   ##    #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ##   ###    ##   ###     ##    ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                           ###
+    /**
+     * Closes a challenge.
+     * @param {Challenge} challenge The challenge to close.
+     * @returns {Promise} A promise that resolves when the challenge is closed.
+     */
+    static async closeChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateClosed = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
     //                     #    #                #  #              ####               ##   #           ##    ##
     //                    # #                    ####              #                 #  #  #            #     #
     //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##

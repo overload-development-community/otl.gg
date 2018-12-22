@@ -630,6 +630,31 @@ class Challenge {
         }
     }
 
+    //       ##
+    //        #
+    //  ##    #     ##    ###    ##
+    // #      #    #  #  ##     # ##
+    // #      #    #  #    ##   ##
+    //  ##   ###    ##   ###     ##
+    /**
+     * Closes a challenge.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that resolves when the challenge is closed.
+     */
+    async close(member) {
+        try {
+            await Db.closeChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error closing a challenge.", err);
+        }
+
+        try {
+            await this.channel.delete(`${member} closed the challenge.`);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //                     #    #                #  #
     //                    # #                    ####
     //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
