@@ -4344,10 +4344,6 @@ class Commands {
      * Alert administrator when a match has been confirmed.
      */
 
-    /*
-     * Overhaul colors to prefer team color, and use a neutral color when none is available.
-     */
-
     // !title <title>
     /*
      * Titles a game.

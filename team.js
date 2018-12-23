@@ -411,7 +411,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Leadership Update",
-                color: 0x008000,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Captain Added",
@@ -468,7 +468,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Pilot Added",
-                color: 0x00FF00,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Pilot Added",
@@ -624,12 +624,10 @@ class Team {
                 await Discord.queue(`Your team **${this.name}** has been disbanded.`, teamMember);
             }
 
-            await this.role.delete(`${member.displayName} disbanded ${this.name}.`);
-
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: `${this.name}`,
                 description: "Team Disbanded",
-                color: 0xFF00FF,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Pilots Removed",
@@ -640,6 +638,8 @@ class Team {
                     text: `disbanded by ${member.displayName}`
                 }
             }), Discord.rosterUpdatesChannel);
+
+            await this.role.delete(`${member.displayName} disbanded ${this.name}.`);
 
             this.disbanded = true;
         } catch (err) {
@@ -869,7 +869,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Leadership Update",
-                color: 0x800000,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Old Founder",
@@ -937,7 +937,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Pilot Left",
-                color: 0xFF0000,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Pilot Left",
@@ -1038,7 +1038,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Leadership Update",
-                color: 0x800000,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Captain Removed",
@@ -1102,7 +1102,7 @@ class Team {
                 await Discord.richQueue(new DiscordJs.RichEmbed({
                     title: this.name,
                     description: "Pilot Removed",
-                    color: 0xFF0000,
+                    color: this.role.color,
                     fields: [
                         {
                             name: "Pilot Removed",
@@ -1164,7 +1164,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: `${this.name} (${this.tag})`,
                 description: "Team renamed",
-                color: 0xFFFF00,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Old Name",
@@ -1243,7 +1243,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Leadership Update",
-                color: 0x800000,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Old Founder",
@@ -1314,7 +1314,7 @@ class Team {
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: `${this.name} (${this.tag})`,
                 description: "Team tag renamed",
-                color: 0xFFFF00,
+                color: this.role.color,
                 fields: [
                     {
                         name: "Old Tag",
@@ -1477,7 +1477,6 @@ class Team {
         await Discord.richQueue(new DiscordJs.RichEmbed({
             title: `${this.name} (${this.tag})`,
             description: reinstating ? "Team Reinstated" : "New Team",
-            color: 0x0000FF,
             fields: [
                 {
                     name: "Founder Added",
@@ -1491,7 +1490,6 @@ class Team {
 
         const msg1 = await Discord.richQueue(new DiscordJs.RichEmbed({
             title: "Founder commands",
-            color: 0x00FF00,
             fields: [
                 {
                     name: "!color ([light|dark]) [red|orange|yellow|green|indigo|blue|purple]",
@@ -1526,7 +1524,6 @@ class Team {
 
         const msg2 = await Discord.richQueue(new DiscordJs.RichEmbed({
             title: "Captain commands",
-            color: 0x00FF00,
             fields: [
                 {
                     name: "!home [1|2|3] <map>",

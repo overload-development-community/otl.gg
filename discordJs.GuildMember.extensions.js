@@ -368,7 +368,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
     await Discord.richQueue(new DiscordJs.RichEmbed({
         title: team.name,
         description: "Pilot Left",
-        color: 0xFF0000,
+        color: team.role.color,
         fields: [
             {
                 name: "Pilot Left",
@@ -493,7 +493,7 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
     await Discord.richQueue(new DiscordJs.RichEmbed({
         title: team.name,
         description: "Pilot Name Change",
-        color: 0xFFFF00,
+        color: team.role.color,
         fields: [
             {
                 name: "Old Name",

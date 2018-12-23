@@ -91,7 +91,6 @@ class NewTeam {
 
             const msg = await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: "Team creation commands",
-                color: 0x00FF00,
                 fields: [
                     {
                         name: "!name <name>",
