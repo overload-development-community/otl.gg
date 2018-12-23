@@ -468,7 +468,51 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     static async closeChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateClosed = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(`
+            DECLARE @challengingTeamId INT
+            DECLARE @challengedTeamId INT
+
+            SELECT @challengingTeamId = ChallengingTeamId FROM tblChallenge WHERE ChallengeId = @challengeId
+            SELECT @challengedTeamId = ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @challengeId
+
+            UPDATE tblChallenge SET DateClosed = GETUTCDATE() WHERE ChallengeId = @challengeId
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @challengingTeamId)
+            BEGIN
+                IF (
+                    SELECT COUNT(ChallengeId)
+                    FROM tblChallenge
+                    WHERE (ChallengingTeamId = @challengingTeamId or ChallengedTeamId = @challengingTeamId)
+                        AND DateCompleted IS NOT NULL
+                        AND DateConfirmed IS NOT NULL
+                        AND DateVoided IS NULL
+                        AND MatchTime > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengingTeamId)
+                        AND DateConfirmed > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengingTeamId)
+                        AND ChallengeId <> @challengeId
+                ) >= 10
+                BEGIN
+                    DELETE FROM tblTeamPenalty WHERE TeamId = @challengingTeamId
+                END
+            END
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @challengedTeamId)
+            BEGIN
+                IF (
+                    SELECT COUNT(ChallengeId)
+                    FROM tblChallenge
+                    WHERE (ChallengingTeamId = @challengedTeamId or ChallengedTeamId = @challengedTeamId)
+                        AND DateCompleted IS NOT NULL
+                        AND DateConfirmed IS NOT NULL
+                        AND DateVoided IS NULL
+                        AND MatchTime > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengedTeamId)
+                        AND DateConfirmed > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengedTeamId)
+                        AND ChallengeId <> @challengeId
+                ) >= 10
+                BEGIN
+                    DELETE FROM tblTeamPenalty WHERE TeamId = @challengedTeamId
+                END
+            END
+            `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                     #    #                #  #              ####               ##   #           ##    ##
@@ -715,10 +759,14 @@ class Database {
     /**
      * Disbands a team.
      * @param {Team} team The team to disband.
-     * @returns {Promise} A promise that resolves when the team is disbanded.
+     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need to be voided due to the team being disbanded.
      */
     static async disbandTeam(team) {
-        await db.query(`
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         */
+        const data = await db.query(`
             UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @teamId
 
             DELETE FROM cs
@@ -728,10 +776,32 @@ class Database {
                 AND c.DateVoided IS NULL
                 AND cs.PlayerId IN (SELECT PlayerId FROM tblRoster WHERE TeamId = @teamId)
 
+            DELETE FROM tb
+            FROM tblTeamBan tb
+            INNER JOIN tblRoster r
+                ON tb.TeamId = r.TeamId
+                AND tb.PlayerId = r.PlayerId
+            WHERE r.TeamId = @teamId
+                AND Captain = 1
+
+            INSERT INTO tblTeamBan (TeamId, PlayerId)
+            SELECT @teamId, PlayerId
+            FROM tblRoster
+            WHERE TeamId = @teamId
+                AND Captain = 1
+    
             DELETE FROM tblRoster WHERE TeamId = @teamId
             DELETE FROM tblRequest WHERE TeamId = @teamId
             DELETE FROM tblInvite WHERE TeamId = @teamId
+
+            SELECT ChallengeId
+            FROM tblChallenge
+            WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
+                AND DateConfirmed IS NULL
+                AND DateClosed IS NULL
+                AND DateVoided IS NULL
         `, {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
     }
 
     //              #                   #   ##   #           ##    ##
@@ -2310,10 +2380,9 @@ class Database {
      * Voids a challenge and assesses penalties.
      * @param {Challenge} challenge The challenge to void.
      * @param {Team[]} teams The teams to assess penalties to.
-     * @returns {Promise} A promise that resolves when the challenge is voided and penalties are assessed.
+     * @returns {Promise<{teamId: number, first: boolean}[]>} A promise that resolves with a list of teams that were penalized along with whether it was their first penalty.
      */
     static async voidChallengeWithPenalties(challenge, teams) {
-        // TODO: Actually return data.
         const params = {challengeId: {type: Db.INT, value: challenge.id}};
         let sql = `
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
@@ -2329,6 +2398,10 @@ class Database {
                 UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
                 UPDATE tblChallenge SET ChallengedTeamPenalized = 0 WHERE ChallengeId = @challengeId
             END
+
+            SELECT t.TeamId, CAST(CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty tp WHERE tp.TeamId = t.TeamId) THEN 0 ELSE 1 END AS BIT) First
+            FROM tblTeam t
+            WHERE t.TeamId IN (${teams.map((t) => `@team${t.id}Id`).join(", ")})
         `;
 
         teams.forEach((team, index) => {
@@ -2337,25 +2410,17 @@ class Database {
             sql = `${sql}
                 IF (SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)
                 BEGIN
+                    UPDATE tblTeamPenalty
+                    SET PenaltiesRemaining = PenaltiesRemaining + 3,
+                        DatePenalized = GETUTCDATE()
+                    WHERE TeamId = @team${index}Id
+
                     INSERT INTO tblLeadershipPenalty
                     (PlayerId, DatePenalized)
                     SELECT PlayerId, GETUTCDATE()
                     FROM tblRoster
                     WHERE TeamId = @team${index}Id
                         AND (Founder = 1 OR Captain = 1)
-
-                    UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @team${index}Id
-
-                    DELETE FROM cs
-                    FROM tblChallengeStreamer cs
-                    INNER JOIN tblChallenge c ON cs.ChallengeId = c.ChallengeId
-                    WHERE c.DateConfirmed IS NULL
-                        AND c.DateVoided IS NULL
-                        AND cs.PlayerId IN (SELECT PlayerId FROM tblRoster WHERE TeamId = @team${index}Id)
-
-                    DELETE FROM tblRoster WHERE TeamId = @team${index}Id
-                    DELETE FROM tblRequest WHERE TeamId = @team${index}Id
-                    DELETE FROM tblInvite WHERE TeamId = @team${index}Id
                 END
                 ELSE
                 BEGIN
@@ -2366,7 +2431,11 @@ class Database {
             `;
         });
 
-        await db.query(sql, params);
+        /**
+         * @type {{recordsets: [{TeamId: number, First: boolean}[]]}}
+         */
+        const data = await db.query(sql, params);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, first: row.First})) || [];
     }
 
     //                    ###                      #                        ##                #           #           ##         ####                       #               ##     #   ###

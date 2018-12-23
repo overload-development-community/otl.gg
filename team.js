@@ -566,9 +566,10 @@ class Team {
      * @param {DiscordJs.GuildMember} member The pilot disbanding the team.
      * @returns {Promise} A promise that resolves when the team is disbanded.
      */
-    async disbandTeam(member) {
+    async disband(member) {
+        let challengeIds;
         try {
-            await Db.disbandTeam(this);
+            challengeIds = await Db.disbandTeam(this);
         } catch (err) {
             throw new Exception("There was a database error disbanding a team.", err);
         }
@@ -643,6 +644,13 @@ class Team {
             this.disbanded = true;
         } catch (err) {
             throw new Exception("There was a critical Discord error disbanding a team.  Please resolve this manually as soon as possible.", err);
+        }
+
+        for (const challengeId of challengeIds) {
+            const challenge = await Challenge.getById(challengeId);
+            if (challenge) {
+                challenge.void(member, this);
+            }
         }
     }
 

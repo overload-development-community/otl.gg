@@ -341,27 +341,6 @@ class Commands {
         return true;
     }
 
-    //       #                 #     ###    #    ##           #     ##         ###
-    //       #                 #     #  #         #           #    #  #         #
-    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   #  #  ###    #     ##    ###  # #
-    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #  #  #  #   #    # ##  #  #  ####
-    // #     #  #  ##    #     # #   #      #     #    #  #   #    #  #  #  #   #    ##    # ##  #  #
-    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##   ##   #  #   #     ##    # #  #  #
-    /**
-     * Checks to ensure the pilot is on the specified team.
-     * @param {Team} team The team.
-     * @param {DiscordJs.GuildMember} pilot The pilot to check.
-     * @param {DiscordJs.GuildMember} member The member issuing the command.
-     * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise} A promise that resolves when the check has completed.
-     */
-    static async checkPilotOnTeam(team, pilot, member, channel) {
-        if (!team.role.members.find((m) => m.id === pilot.id)) {
-            await Discord.queue(`Sorry, ${member}, but this pilot is not on **${team.name}**.`, channel);
-            throw new Warning("Pilot is not on the correct team.");
-        }
-    }
-
     //       #                 #     #  #              #                  ##               ###          ##                #           #
     //       #                 #     ####              #                 #  #              #  #        #  #               #
     //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   #      ###  ###   ###    ##   #      ###  ###   ###    ###  ##    ###
@@ -500,6 +479,34 @@ class Commands {
     static checkMemberIsOwner(member) {
         if (!Discord.isOwner(member)) {
             throw new Warning("Owner permission required to perform this command.");
+        }
+    }
+
+    //       #                 #     #  #              #                 #  #         #    ###                              #  ####                    ###
+    //       #                 #     ####              #                 ## #         #    #  #                             #  #                        #
+    //  ##   ###    ##    ##   # #   ####   ##   # #   ###    ##   ###   ## #   ##   ###   ###    ###  ###   ###    ##    ###  ###   ###    ##   # #    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    #  #  # ##  ####  #  #  # ##  #  #  # ##  #  #   #    #  #  #  #  #  #  #  #  # ##  #  #  #     #  #  #  #  ####   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #  #  ##    #  #  #  #  ##    #     # ##  #  #   #    #  #  # ##  #  #  #  #  ##    #  #  #     #     #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #  #   ##   #  #  ###    ##   #     #  #   ##     ##  ###    # #  #  #  #  #   ##    ###  #     #      ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the member is not banned from a team.
+     * @param {DiscordJs.GuildMember} member The member to check.
+     * @param {Team} team The team to check.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on,
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkMemberNotBannedFromTeam(member, team, channel) {
+        let bannedUntil;
+        try {
+            bannedUntil = await member.bannedFromTeamUntil(team);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (bannedUntil) {
+            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You will be able to join this team again on ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
+            throw new Warning("Pilot not allowed to accept an invite from this team.");
         }
     }
 
@@ -733,6 +740,27 @@ class Commands {
         }
 
         return {pilot, confirm};
+    }
+
+    //       #                 #     ###    #    ##           #     ##         ###
+    //       #                 #     #  #         #           #    #  #         #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   #  #  ###    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##   ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the pilot is on the specified team.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember} member The member issuing the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkPilotOnTeam(team, pilot, member, channel) {
+        if (!team.role.members.find((m) => m.id === pilot.id)) {
+            await Discord.queue(`Sorry, ${member}, but this pilot is not on **${team.name}**.`, channel);
+            throw new Warning("Pilot is not on the correct team.");
+        }
     }
 
     //       #                 #     ###                     ####         #            #
@@ -1439,7 +1467,7 @@ class Commands {
         }
 
         try {
-            await team.disbandTeam(member);
+            await team.disband(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1557,6 +1585,7 @@ class Commands {
 
         await Commands.checkMemberCanBeCaptain(member, channel);
         await Commands.checkMemberCanJoinATeam(member, channel);
+        await Commands.checkMemberNotBannedFromTeam(member, team, channel);
 
         if (!confirm) {
             await Discord.queue(`${member}, are you sure you wish to reinstate this team?  Type \`!reinstate ${team.name} confirm\` to confirm that you wish to reinstate this team.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
@@ -1833,19 +1862,7 @@ class Commands {
         }
 
         await Commands.checkMemberCanJoinATeam(member, channel);
-
-        let bannedUntil;
-        try {
-            bannedUntil = await member.bannedFromTeamUntil(team);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (bannedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You will be able to join this team again on ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
-            throw new Warning("Pilot not allowed to accept an invite from this team.");
-        }
+        await Commands.checkMemberNotBannedFromTeam(member, team, channel);
 
         if (!confirm) {
             await Discord.queue(`${member}, are you sure you want to join **${team.name}**?  Type \`!accept ${team.tag.toUpperCase()} confirm\` to confirm.  Note that you will not be able to accept another invitation or create a team for 28 days.`, channel);
@@ -4319,17 +4336,12 @@ class Commands {
         return true;
     }
 
-    // Penalties
-    /*
-     * On team disband, void games and return penalty games to penalized teams.
-     * After 10 consecutive completed games after a team's first penalty, delete the first penalty.
-     */
-
     // Automation
     /*
      * Alert administrator when 28 days have passed since a challenge was clocked.
      * Alert administrator when an hour has passed since a challenge was supposed to be played.
      * Alert teams half an hour before their match is scheduled to begin.
+     * Alert administrator when a match has been confirmed.
      */
 
     /*

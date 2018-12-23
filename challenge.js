@@ -575,15 +575,17 @@ class Challenge {
                     await Discord.queue(`${member} has voided this challenge.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  An admin will close this channel soon.`, this.channel);
 
                     for (const penalizedTeam of penalizedTeams) {
+                        const team = await Team.getById(penalizedTeam.teamId);
+
                         if (penalizedTeam.first) {
-                            await Discord.queue(`${member} voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map and home server advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, penalizedTeam.team.teamChannel);
+                            await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map and home server advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, team.teamChannel);
                         } else {
-                            const oldCaptains = penalizedTeam.team.members.filter((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
+                            const oldCaptains = team.role.members.filter((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
 
-                            await penalizedTeam.team.disbandTeam(member);
+                            await team.disband(member);
 
-                            for (const captain of oldCaptains) {
-                                await Discord.queue(`${member} voided the challenge against **${(penalizedTeam.team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
+                            for (const captain of oldCaptains.values()) {
+                                await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
                             }
                         }
                     }
@@ -1847,9 +1849,10 @@ class Challenge {
     /**
      * Voids a match.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @param {Team} [teamDisbanding] The team that is disbanding.
      * @returns {Promise} A promise that resolves when the match is voided.
      */
-    async void(member) {
+    async void(member, teamDisbanding) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1864,7 +1867,11 @@ class Challenge {
 
         try {
             if (this.channel) {
-                await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
+                if (teamDisbanding) {
+                    await Discord.queue(`${teamDisbanding.name} has disbanded, and thus this challenge has been automatically voided.  An admin will close this channel soon.`, this.channel);
+                } else {
+                    await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
+                }
 
                 await this.updateTopic();
             }
