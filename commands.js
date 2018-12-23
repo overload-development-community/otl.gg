@@ -4321,8 +4321,7 @@ class Commands {
 
     // Penalties
     /*
-     * On voided games, return penalty games to penalized teams.
-     * On team disband, return penalty games to penalized teams.
+     * On team disband, void games and return penalty games to penalized teams.
      * After 10 consecutive completed games after a team's first penalty, delete the first penalty.
      */
 

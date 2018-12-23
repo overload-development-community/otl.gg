@@ -2282,7 +2282,21 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is voided.
      */
     static async voidChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(`
+            UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengingTeamPenalized = 1)
+            BEGIN
+                UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengingTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
+                UPDATE tblChallenge SET ChallengingTeamPenalized = 0 WHERE ChallengeId = @challengeId
+            END
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengedTeamPenalized = 1)
+            BEGIN
+                UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
+                UPDATE tblChallenge SET ChallengedTeamPenalized = 0 WHERE ChallengeId = @challengeId
+            END
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //              #       #   ##   #           ##    ##                            #  #   #     #    #     ###                     ##     #     #
@@ -2301,7 +2315,21 @@ class Database {
     static async voidChallengeWithPenalties(challenge, teams) {
         // TODO: Actually return data.
         const params = {challengeId: {type: Db.INT, value: challenge.id}};
-        let sql = "UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId";
+        let sql = `
+            UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengingTeamPenalized = 1)
+            BEGIN
+                UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengingTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
+                UPDATE tblChallenge SET ChallengingTeamPenalized = 0 WHERE ChallengeId = @challengeId
+            END
+
+            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengedTeamPenalized = 1)
+            BEGIN
+                UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
+                UPDATE tblChallenge SET ChallengedTeamPenalized = 0 WHERE ChallengeId = @challengeId
+            END
+        `;
 
         teams.forEach((team, index) => {
             params[`team${index}Id`] = {type: Db.INT, value: team.id};
