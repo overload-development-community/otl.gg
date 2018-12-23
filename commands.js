@@ -4336,6 +4336,39 @@ class Commands {
         return true;
     }
 
+    //  #     #     #    ##
+    //  #           #     #
+    // ###   ##    ###    #     ##
+    //  #     #     #     #    # ##
+    //  #     #     #     #    ##
+    //   ##  ###     ##  ###    ##
+    /**
+     * Assigns a title to a game.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async title(member, channel, message) {
+        await Commands.checkMemberIsOwner(member);
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+
+        try {
+            await challenge.title(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
     // Automation
     /*
      * Alert administrator when 28 days have passed since a challenge was clocked.

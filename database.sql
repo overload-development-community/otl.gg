@@ -128,6 +128,7 @@ CREATE TABLE dbo.tblTeamPenalty (
 
 CREATE TABLE dbo.tblChallenge (
     ChallengeId INT IDENTITY(1, 1) NOT NULL,
+    Title VARCHAR(100) NULL,
     ChallengingTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_ChallengingTeamId_tblTeam_TeamId FOREIGN KEY (ChallengingTeamId) REFERENCES dbo.tblTeam (TeamId),
     ChallengedTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_ChallengedTeamId_tblTeam_TeamId FOREIGN KEY (ChallengedTeamId) REFERENCES dbo.tblTeam (TeamId),
     OrangeTeamId INT NOT NULL CONSTRAINT FK_tblChallenge_OrangeTeamId_tblTeam_TeamId FOREIGN KEY (OrangeTeamId) REFERENCES dbo.tblTeam (TeamId),

@@ -789,7 +789,7 @@ class Database {
             FROM tblRoster
             WHERE TeamId = @teamId
                 AND Captain = 1
-    
+
             DELETE FROM tblRoster WHERE TeamId = @teamId
             DELETE FROM tblRequest WHERE TeamId = @teamId
             DELETE FROM tblInvite WHERE TeamId = @teamId
@@ -918,15 +918,16 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(`
             SELECT
+                c.Title,
                 c.OrangeTeamId,
                 c.BlueTeamId,
                 c.Map,
@@ -967,6 +968,7 @@ class Database {
             SELECT Map FROM tblChallengeHome WHERE ChallengeId = @challengeId ORDER BY Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
+            title: data.recordsets[0][0].Title,
             orangeTeamId: data.recordsets[0][0].OrangeTeamId,
             blueTeamId: data.recordsets[0][0].BlueTeamId,
             map: data.recordsets[0][0].Map,
@@ -2129,6 +2131,26 @@ class Database {
         await db.query("UPDATE tblTeam SET Timezone = @timezone WHERE TeamId = @teamId", {
             teamId: {type: Db.INT, value: team.id},
             timezone: {type: Db.VARCHAR(50), value: timezone}
+        });
+    }
+
+    //               #    ###    #     #    ##          ####               ##   #           ##    ##
+    //               #     #           #     #          #                 #  #  #            #     #
+    //  ###    ##   ###    #    ##    ###    #     ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #     #     #     #     #    # ##  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #     #     #     #     #    ##    #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##   #    ###     ##  ###    ##   #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                               ###
+    /**
+     * Sets a title for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {string} title The title.
+     * @returns {Promise} A promise that resolves when the title is set.
+     */
+    static async setTitleForChallenge(challenge, title) {
+        await db.query("UPDATE tblChallenge SET Title = CASE WHEN ISNULL(@title, '') = '' THEN NULL ELSE @title END WHERE ChallengeId = @challengeId", {
+            title: {type: Db.VARCHAR(100), value: title},
+            challengeId: {type: Db.INT, value: challenge.id}
         });
     }
 

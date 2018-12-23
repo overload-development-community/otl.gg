@@ -968,6 +968,7 @@ class Challenge {
         }
 
         this.details = {
+            title: details.title,
             orangeTeam: details.orangeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             blueTeam: details.blueTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             map: details.map,
@@ -1695,6 +1696,42 @@ class Challenge {
         }
     }
 
+    //  #     #     #    ##
+    //  #           #     #
+    // ###   ##    ###    #     ##
+    //  #     #     #     #    # ##
+    //  #     #     #     #    ##
+    //   ##  ###     ##  ###    ##
+    /**
+     * Assigns a title to a game.
+     * @param {string} title The title.
+     * @returns {Promise} A promise that resolves when the title has been set.
+     */
+    async title(title) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setTitleForChallenge(title);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a time for a challenge.", err);
+        }
+
+        this.details.title = title && title.length > 0 ? title : void 0;
+
+        try {
+            if (this.details.title) {
+                await Discord.queue(`The title of this match has been updated to **${title}**.`, this.channel);
+            } else {
+                await Discord.queue("The title of this match has been unset.", this.channel);
+            }
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //             ##                #
     //              #                #
     // #  #  ###    #     ##    ##   # #
@@ -1748,7 +1785,7 @@ class Challenge {
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
             challengedTeamTimezone = await this.challengedTeam.getTimezone();
 
-        let topic = `${this.challengingTeam.name} vs ${this.challengedTeam.name}`;
+        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}`;
 
         if (this.details.dateVoided) {
             topic = `${topic}\n\nThis match has been voided.`;
