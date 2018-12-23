@@ -240,34 +240,35 @@ class Commands {
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise} A promise that resolves when the check has completed.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the stats for the game.
      */
     static async checkChallengeStatsComplete(challenge, member, channel) {
-        let challengingTeamStats;
+        const stats = {};
         try {
-            challengingTeamStats = await challenge.getStatsForTeam(challenge.challengingTeam);
+            stats.challengingTeamStats = await challenge.getStatsForTeam(challenge.challengingTeam);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (challengingTeamStats.length !== challenge.details.teamSize) {
-            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${challengingTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+        if (stats.challengingTeamStats.length !== challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${stats.challengingTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
         }
 
-        let challengedTeamStats;
         try {
-            challengedTeamStats = await challenge.getStatsForTeam(challenge.challengedTeam);
+            stats.challengedTeamStats = await challenge.getStatsForTeam(challenge.challengedTeam);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (challengedTeamStats.length !== challenge.details.teamSize) {
-            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${challengedTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+        if (stats.challengedTeamStats.length !== challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${stats.challengedTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
         }
+
+        return stats;
     }
 
     //       #                 #      ##   #           ##    ##                            ###                      ##    #           #
@@ -4302,13 +4303,14 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
+        let stats;
         if (!challenge.details.dateVoided) {
             await Commands.checkChallengeIsConfirmed(challenge, member, channel);
-            await Commands.checkChallengeStatsComplete(challenge, member, channel);
+            stats = await Commands.checkChallengeStatsComplete(challenge, member, channel);
         }
 
         try {
-            await challenge.close(member);
+            await challenge.close(member, stats);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4316,13 +4318,6 @@ class Commands {
 
         return true;
     }
-
-    // Match Results
-    /*
-     * Post closed games to match results.
-     * Post voided games that were closed to match results.
-     * Post unvoided games that were closed to match results.
-     */
 
     // Penalties
     /*
@@ -4336,6 +4331,15 @@ class Commands {
      * Alert administrator when 28 days have passed since a challenge was clocked.
      * Alert administrator when an hour has passed since a challenge was supposed to be played.
      * Alert teams half an hour before their match is scheduled to begin.
+     */
+
+    /*
+     * Overhaul colors to prefer team color, and use a neutral color when none is available.
+     */
+
+    // !title <title>
+    /*
+     * Titles a game.
      */
 }
 

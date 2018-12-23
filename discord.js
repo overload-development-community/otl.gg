@@ -23,6 +23,11 @@ let captainRole;
 let founderRole;
 
 /**
+ * @type {DiscordJs.TextChannel}
+ */
+let matchResultsChannel;
+
+/**
  * @type {DiscordJs.Guild}
  */
 let otlGuild;
@@ -110,6 +115,20 @@ class Discord {
         return void 0;
     }
 
+    //              #          #     ###                      ##     #            ##   #                             ##
+    //              #          #     #  #                      #     #           #  #  #                              #
+    // # #    ###  ###    ##   ###   #  #   ##    ###   #  #   #    ###    ###   #     ###    ###  ###   ###    ##    #
+    // ####  #  #   #    #     #  #  ###   # ##  ##     #  #   #     #    ##     #     #  #  #  #  #  #  #  #  # ##   #
+    // #  #  # ##   #    #     #  #  # #   ##      ##   #  #   #     #      ##   #  #  #  #  # ##  #  #  #  #  ##     #
+    // #  #   # #    ##   ##   #  #  #  #   ##   ###     ###  ###     ##  ###     ##   #  #   # #  #  #  #  #   ##   ###
+    /**
+     * Returns the match results channel.
+     * @returns {DiscordJs.TextChannel} The match results channel.
+     */
+    static get matchResultsChannel() {
+        return matchResultsChannel;
+    }
+
     //                     #                #  #           #         #                  ##   #                             ##
     //                     #                #  #           #         #                 #  #  #                              #
     // ###    ##    ###   ###    ##   ###   #  #  ###    ###   ###  ###    ##    ###   #     ###    ###  ###   ###    ##    #
@@ -149,6 +168,7 @@ class Discord {
             captainRole = otlGuild.roles.find((r) => r.name === "Captain");
             founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
+            matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
             rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
         });
 

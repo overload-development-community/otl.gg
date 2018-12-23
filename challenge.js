@@ -6,6 +6,7 @@ const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
     Exception = require("./exception"),
+    settings = require("./settings"),
     Team = require("./team"),
 
     channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/,
@@ -639,9 +640,14 @@ class Challenge {
     /**
      * Closes a challenge.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @param {{challengingTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
-    async close(member) {
+    async close(member, stats) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
         try {
             await Db.closeChallenge(this);
         } catch (err) {
@@ -650,6 +656,45 @@ class Challenge {
 
         try {
             await this.channel.delete(`${member} closed the challenge.`);
+
+            if (this.details.dateConfirmed && !this.details.dateVoided) {
+                await Discord.richQueue(new DiscordJs.RichEmbed({
+                    title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}`,
+                    description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})} in ${this.details.map}`,
+                    color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
+                    fields: [
+                        {
+                            name: `${this.challengingTeam.name} Stats`,
+                            value: `${stats.challengingTeamStats.sort((a, b) => {
+                                if (a.kills !== b.kills) {
+                                    return b.kills - a.kills;
+                                }
+                                if (a.assists !== b.assists) {
+                                    return b.assists - a.assists;
+                                }
+                                if (a.deaths !== b.deaths) {
+                                    return a.deaths - b.deaths;
+                                }
+                                return a.pilot.displayName.localeCompare(b.pilot.displayName);
+                            }).map((stat) => `${stat.pilot.displayName}: ${stat.kills}-${stat.assists}-${stat.deaths}`).join("\n")}`
+                        }, {
+                            name: `${this.challengedTeam.name} Stats`,
+                            value: `${stats.challengedTeamStats.sort((a, b) => {
+                                if (a.kills !== b.kills) {
+                                    return b.kills - a.kills;
+                                }
+                                if (a.assists !== b.assists) {
+                                    return b.assists - a.assists;
+                                }
+                                if (a.deaths !== b.deaths) {
+                                    return a.deaths - b.deaths;
+                                }
+                                return a.pilot.displayName.localeCompare(b.pilot.displayName);
+                            }).map((stat) => `${stat.pilot.displayName}: ${stat.kills}-${stat.assists}-${stat.deaths}`).join("\n")}`
+                        }
+                    ]
+                }), Discord.matchResultsChannel);
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1778,14 +1823,18 @@ class Challenge {
 
         this.details.dateVoided = void 0;
 
-        if (this.channel) {
-            try {
+        try {
+            if (this.channel) {
                 await Discord.queue(`${member} has unvoided this challenge.`, this.channel);
 
                 await this.updateTopic();
-            } catch (err) {
-                throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
             }
+
+            if (this.details.dateConfirmed && this.details.dateClosed) {
+                await Discord.queue(`The following match from ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} was restored: **${this.challengingTeam.name}** ${this.details.challengingTeamScore}, **${this.challengedTeam.name}** ${this.details.challengedTeamScore}`, Discord.matchResultsChannel);
+            }
+        } catch (err) {
+            throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1813,14 +1862,18 @@ class Challenge {
 
         this.details.dateVoided = new Date();
 
-        if (this.channel) {
-            try {
+        try {
+            if (this.channel) {
                 await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
 
                 await this.updateTopic();
-            } catch (err) {
-                throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
             }
+
+            if (this.details.dateConfirmed && this.details.dateClosed) {
+                await Discord.queue(`The following match from ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} was voided: **${this.challengingTeam.name}** ${this.details.challengingTeamScore}, **${this.challengedTeam.name}** ${this.details.challengedTeamScore}`, Discord.matchResultsChannel);
+            }
+        } catch (err) {
+            throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 }
