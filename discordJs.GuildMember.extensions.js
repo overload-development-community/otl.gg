@@ -1,5 +1,6 @@
 const DiscordJs = require("discord.js"),
 
+    Challenge = require("./challenge"),
     Db = require("./database"),
     Exception = require("./exception"),
     NewTeam = require("./newTeam"),
@@ -510,6 +511,11 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
             text: "pilot changed name"
         }
     }), Discord.rosterUpdatesChannel);
+
+    const challenges = await Challenge.getAllByTeam(team);
+    for (const challenge of challenges) {
+        await challenge.updateTopic();
+    }
 
     await team.updateChannels();
 };

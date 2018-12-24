@@ -19,7 +19,7 @@ const tz = require("timezone-js"),
     idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
     mapMatch = /^([123]) (.+)$/,
-    nameConfirmParse = /^@?(.+?)(?: (confirm|[^ ]*))?$/,
+    nameConfirmParse = /^@?(.+?)(?: (confirm))?$/,
     numberMatch = /^(?:[1-9][0-9]*)$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
@@ -930,7 +930,7 @@ class Commands {
 
         const {1: id, 2: command, 3: newMessage} = idMessageParse.exec(message);
         if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) === -1) {
-            return false;
+            throw new Warning("Invalid command.");
         }
 
         const newMember = await Discord.findGuildMemberById(id);
@@ -1063,7 +1063,7 @@ class Commands {
 
         if (!teamNameMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to prevent abuse, you can only use alphanumeric characters and spaces, and names must be between 6 and 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`, channel);
-            throw new Warning("Pilot used non-alphanumeric characters in their team name.");
+            throw new Warning("Invalid team name.");
         }
 
         if (Team.nameExists(message)) {
@@ -1107,7 +1107,7 @@ class Commands {
 
         if (!teamTagMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you can only use alphanumeric characters, and are limited to 5 characters.`, channel);
-            throw new Warning("Pilot used non-alphanumeric characters in their team tag.");
+            throw new Warning("Invalid team tag.");
         }
 
         if (Team.tagExists(message)) {
@@ -1388,16 +1388,16 @@ class Commands {
 
         await Commands.checkPilotOnTeam(team, captain, member, channel);
 
-        const captainCount = team.captainCount();
-        if (captainCount >= 2) {
-            await Discord.queue(`Sorry, ${member}, but you already have ${captainCount} captains, and the limit is 2.`, channel);
-            throw new Warning("Captain count limit reached.");
-        }
-
         const isCaptain = captain.isCaptainOrFounder();
         if (isCaptain) {
             await Discord.queue(`Sorry, ${member}, but ${captain.displayName} is already a captain!`, channel);
             throw new Warning("Pilot is already a captain.");
+        }
+
+        const captainCount = team.captainCount();
+        if (captainCount >= 2) {
+            await Discord.queue(`Sorry, ${member}, but you already have ${captainCount} captains, and the limit is 2.`, channel);
+            throw new Warning("Captain count limit reached.");
         }
 
         await Commands.checkPilotCanBeCaptain(captain, member, channel);
@@ -1661,8 +1661,10 @@ class Commands {
             throw new Warning("Pilot is not a founder or captain.");
         }
 
-        const team = await Commands.checkMemberOnTeam(member, channel),
-            {1: number, 2: mapToCheck} = mapMatch.exec(message);
+        const {1: number, 2: mapToCheck} = mapMatch.exec(message),
+            map = await Commands.checkMapIsValid(mapToCheck, member, channel),
+            team = await Commands.checkMemberOnTeam(member, channel);
+
         let homes;
         try {
             homes = await team.getHomeMaps();
@@ -1670,8 +1672,6 @@ class Commands {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
-
-        const map = await Commands.checkMapIsValid(mapToCheck, member, channel);
 
         if (homes.indexOf(map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but you already have this map set as your home.`, channel);
@@ -1771,12 +1771,11 @@ class Commands {
     async invite(member, channel, message) {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        const team = await Commands.checkMemberOnTeam(member, channel);
-
         if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to invite.", channel)) {
             return false;
         }
 
+        const team = await Commands.checkMemberOnTeam(member, channel);
         let pilotCount;
         try {
             pilotCount = await team.getPilotAndInvitedCount();
@@ -2141,19 +2140,6 @@ class Commands {
             throw new Warning("Team is disbanded.");
         }
 
-        let opponentHomeMaps;
-        try {
-            opponentHomeMaps = await opponent.getHomeMaps();
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (opponentHomeMaps.length !== 3) {
-            await Discord.queue(`Sorry, ${member}, but your opponents must have 3 home maps set before you can challenge them.`, channel);
-            throw new Warning("Opponent does not have 3 home maps set.");
-        }
-
         let opponentPilotCount;
         try {
             opponentPilotCount = await opponent.getPilotCount();
@@ -2165,6 +2151,19 @@ class Commands {
         if (opponentPilotCount < 2) {
             await Discord.queue(`Sorry, ${member}, but your opponents must have 2 or more pilots to be challenged.`, channel);
             throw new Warning("Opponent only has one member.");
+        }
+
+        let opponentHomeMaps;
+        try {
+            opponentHomeMaps = await opponent.getHomeMaps();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (opponentHomeMaps.length !== 3) {
+            await Discord.queue(`Sorry, ${member}, but your opponents must have 3 home maps set before you can challenge them.`, channel);
+            throw new Warning("Opponent does not have 3 home maps set.");
         }
 
         let existingChallenge;
@@ -2399,7 +2398,7 @@ class Commands {
 
         if (challenge.details.suggestedNeutralServerTeam) {
             await Discord.queue(`Sorry, ${member}, but **${challenge.details.suggestedNeutralServerTeam.name}** has already suggested for this game to be played on a neutral server.  The other team must use the \`!confirmneutralserver\` command to confirm.`, channel);
-            throw new Warning("Map has already been set.");
+            throw new Warning("Neutral server already suggested.");
         }
 
         try {
@@ -3108,11 +3107,11 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cast(member, channel, message) {
-        await Commands.checkMemberHasTwitchName(member, channel);
-
         if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the two tags of the teams in the match you wish to cast, for example `!cast CF JO`.", channel)) {
             return false;
         }
+
+        await Commands.checkMemberHasTwitchName(member, channel);
 
         if (!twoTeamTagMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
@@ -3134,7 +3133,7 @@ class Commands {
 
         if (!challenge) {
             await Discord.queue(`Sorry, ${member}, but I can't find an active challenge between those two teams.`, channel);
-            throw new Warning("Invalid team tag.");
+            throw new Warning("Invalid challenge.");
         }
 
         await Commands.checkChallengeDetails(challenge, member, channel);
@@ -3143,7 +3142,7 @@ class Commands {
 
         if (challenge.details.caster) {
             await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} is already scheduled to cast this match.`, channel);
-            throw new Warning("");
+            throw new Warning("Caster is already set.");
         }
 
         if (!challenge.details.matchTime) {
@@ -3323,7 +3322,7 @@ class Commands {
 
         const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (!await Commands.checkNoParameters(message, member, "You must specify a time zone with this command.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You must specify a time zone with this command.", channel)) {
             return false;
         }
 
@@ -3362,14 +3361,12 @@ class Commands {
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: teamTag, 2: teamName} = teamTagTeamNameMatch.exec(message);
-
+        const {1: teamTag, 2: teamName} = teamTagTeamNameMatch.exec(message),
+            team = await Commands.checkTeamExists(teamTag, member, channel);
         if (Team.nameExists(teamName)) {
             await Discord.queue(`Sorry, ${member}, but there is already a team named ${teamName}.`, channel);
             throw new Warning("Team name already exists.");
         }
-
-        const team = await Commands.checkTeamExists(teamTag, member, channel);
 
         try {
             await team.rename(teamName, member);
@@ -3407,14 +3404,12 @@ class Commands {
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: oldTeamTag, 2: newTeamTag} = twoTeamTagMatch.exec(message);
-
+        const {1: oldTeamTag, 2: newTeamTag} = twoTeamTagMatch.exec(message),
+            team = await Commands.checkTeamExists(oldTeamTag, member, channel);
         if (Team.tagExists(newTeamTag)) {
             await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${newTeamTag}.`, channel);
             throw new Warning("Team tag already exists.");
         }
-
-        const team = await Commands.checkTeamExists(oldTeamTag, member, channel);
 
         try {
             await team.retag(newTeamTag, member);
@@ -3546,6 +3541,12 @@ class Commands {
             throw new Warning("Pilot is not on a team.");
         }
 
+        const isFounder = pilot.isFounder();
+        if (isFounder) {
+            await Discord.queue(`Sorry, ${member}, but ${pilot.displayName} is the founder.  Use the \`!replacefounder\` command for this team before ejecting this pilot.`, channel);
+            throw new Warning("Pilot is the team's founder.");
+        }
+
         try {
             await team.removePilot(member, pilot);
         } catch (err) {
@@ -3673,12 +3674,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async lockmatch(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!lockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -3715,12 +3716,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async unlockmatch(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!unlockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -3758,12 +3759,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcehomemapteam(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcehomemapteam` along with the team you want to be the home map team.", channel)) {
             return false;
@@ -3798,18 +3799,18 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcemap(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcemap` with either the letter of the home map to use or with a neutral home map.", channel)) {
             return false;
         }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
 
         if (["a", "b", "c"].indexOf(message) !== -1) {
             try {
@@ -3853,12 +3854,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forceneutralserver(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!forceneutralserver` by itself to force this match to be played on a neutral server.", channel)) {
             return false;
@@ -3888,12 +3889,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcehomeserverteam(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcehomeserverteam` along with the team you want to be the home server team.", channel)) {
             return false;
@@ -3927,12 +3928,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forceteamsize(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!message || ["2", "3", "4", "2v2", "3v3", "4v4", "2V2", "3V3", "4V4"].indexOf(message) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
@@ -3963,12 +3964,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcetime(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To force a time, use `!forcetime` along with the date and time.", channel)) {
             return false;
@@ -4012,12 +4013,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcereport(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To force a score, use `!forcereport` followed by the score of the challenging team, and then the score of the challenged team.  Separate the scores with a space.", channel)) {
             return false;
@@ -4025,7 +4026,7 @@ class Commands {
 
         if (!scoreMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
-            return false;
+            throw new Warning("Invalid parameters.");
         }
 
         const matches = scoreMatch.exec(message),
@@ -4057,19 +4058,19 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async adjudicate(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
 
-        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!adjudicate` command followed by how you wish to adjudicate this match, either `cancel`, `extend`, or `penalize`.  If you penalize a team, include the name of the team.", channel)) {
             return false;
         }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (!adjudicateMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!adjudicate\` command followed by how you wish to adjudicate this match, either \`cancel\`, \`extend\`, or \`penalize\`.  If you penalize a team, include the name of the team.`, channel);
@@ -4088,9 +4089,9 @@ class Commands {
             throw new Warning("Match time not passed yet.");
         }
 
-        if (!challenge.details.matchTime && challenge.details.dateClockDeadline && challenge.details.dateClockDeadline > new Date()) {
-            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate an unscheduled match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
-            throw new Warning("Match unscheduled, but clock deadline not passed yet.");
+        if (challenge.details.dateClockDeadline && challenge.details.dateClockDeadline > new Date()) {
+            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate a match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            throw new Warning("Match clock deadline not passed yet.");
         }
 
         const {1: decision, 2: teamTag} = adjudicateMatch.exec(message);
@@ -4135,12 +4136,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async addstat(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!pilotstat` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
             return false;
@@ -4159,7 +4160,6 @@ class Commands {
             team = await Commands.checkTeamExists(teamName, member, channel);
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
-
         await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
 
         try {
@@ -4186,12 +4186,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removestat(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!removestat` command followed by the pilot whose stat you are removing.", channel)) {
             return false;
@@ -4348,12 +4348,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async closegame(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!closegame` command by itself to close a channel where the match has been completed or voided.", channel)) {
             return false;
@@ -4391,12 +4391,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async title(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
-
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
         }
+
+        await Commands.checkMemberIsOwner(member);
 
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 

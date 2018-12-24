@@ -934,6 +934,12 @@ class Team {
             await Discord.queue(`${member.displayName} has left the team.`, captainsChannel);
             await Discord.queue(`${member.displayName} has left the team.`, teamChannel);
 
+            const challenges = await Challenge.getAllByTeam(this);
+            for (const challenge of challenges) {
+                await challenge.updateTopic();
+            }
+            await this.updateChannels();
+
             await Discord.richQueue(new DiscordJs.RichEmbed({
                 title: this.name,
                 description: "Pilot Left",

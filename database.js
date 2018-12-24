@@ -416,7 +416,7 @@ class Database {
          * @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}}
          */
         const data = await db.query(`
-            UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, UTCDATE()), ClockTeamId = @teamId WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, UTCDATE()), ClockTeamId = @teamId, DateClockDeadlineNotified = NULL WHERE ChallengeId = @challengeId
 
             SELECT DateClocked, DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
@@ -584,7 +584,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested time has been confirmed.
      */
     static async confirmTimeForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query("UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                          #           ##   #           ##    ##
@@ -826,7 +826,10 @@ class Database {
                 DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, UTCDATE()) END,
                 MatchTime = NULL,
                 SuggestedTime = NULL,
-                SuggestedTimeTeamId = NULL
+                SuggestedTimeTeamId = NULL,
+                DateMatchTimeNotified = NULL,
+                DateMatchTimePassedNotified = NULL,
+                DateClockDeadlineNotified = NULL
             WHERE ChallengeId = @challengeId
 
             SELECT DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
@@ -1896,6 +1899,9 @@ class Database {
                 END
             END
 
+            DELETE FROM tblChallengeStreamer cs
+            WHERE PlayerId = @playerId
+
             DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @playerId
         `, {
@@ -2234,7 +2240,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the time has been set.
      */
     static async setTimeForChallenge(challenge, date) {
-        await db.query("UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL WHERE ChallengeId = @challengeId", {
+        await db.query("UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId", {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
         });
