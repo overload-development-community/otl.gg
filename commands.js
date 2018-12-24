@@ -4409,14 +4409,6 @@ class Commands {
 
         return true;
     }
-
-    // Automation
-    /*
-     * Alert administrator when 28 days have passed since a challenge was clocked.
-     * Alert administrator when an hour has passed since a challenge was supposed to be played.
-     * Alert teams half an hour before their match is scheduled to begin.
-     * Alert administrator when a match has been confirmed.
-     */
 }
 
 module.exports = Commands;

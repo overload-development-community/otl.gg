@@ -34,3 +34,6 @@ const tz = require("timezone-js"),
 process.on("unhandledRejection", (reason) => {
     Log.exception("Unhandled promise rejection caught.", reason);
 });
+
+// Begin notifications.
+require("./notify");

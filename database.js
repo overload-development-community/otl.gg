@@ -1438,6 +1438,88 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TwitchName || void 0;
     }
 
+    //              #    #  #                     #     #      #    #             #  ####               #                   #   ##   ##                #
+    //              #    #  #                     #           # #                 #  #                                      #  #  #   #                #
+    //  ###   ##   ###   #  #  ###   ###    ##   ###   ##     #    ##     ##    ###  ###   #  #  ###   ##    ###    ##    ###  #      #     ##    ##   # #    ###
+    // #  #  # ##   #    #  #  #  #  #  #  #  #   #     #    ###    #    # ##  #  #  #      ##   #  #   #    #  #  # ##  #  #  #      #    #  #  #     ##    ##
+    //  ##   ##     #    #  #  #  #  #  #  #  #   #     #     #     #    ##    #  #  #      ##   #  #   #    #     ##    #  #  #  #   #    #  #  #     # #     ##
+    // #      ##     ##   ##   #  #  #  #   ##     ##  ###    #    ###    ##    ###  ####  #  #  ###   ###   #      ##    ###   ##   ###    ##    ##   #  #  ###
+    //  ###                                                                                      #
+    /**
+     * Gets challenges with expired clocks that have not been notified yet.
+     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need notifying.
+     */
+    static async getUnnotifiedExpiredClocks() {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId
+            FROM tblChallenge
+            WHERE DateClockDeadline < GETUTCDATE()
+                AND DateClockDeadlineNotified IS NULL
+                AND DateClosed IS NULL
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
+    }
+
+    //              #    #  #                     #     #      #    #             #  #  #   #                           #  #  #         #          #
+    //              #    #  #                     #           # #                 #  ####                               #  ####         #          #
+    //  ###   ##   ###   #  #  ###   ###    ##   ###   ##     #    ##     ##    ###  ####  ##     ###    ###    ##    ###  ####   ###  ###    ##   ###    ##    ###
+    // #  #  # ##   #    #  #  #  #  #  #  #  #   #     #    ###    #    # ##  #  #  #  #   #    ##     ##     # ##  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    //  ##   ##     #    #  #  #  #  #  #  #  #   #     #     #     #    ##    #  #  #  #   #      ##     ##   ##    #  #  #  #  # ##   #    #     #  #  ##      ##
+    // #      ##     ##   ##   #  #  #  #   ##     ##  ###    #    ###    ##    ###  #  #  ###   ###    ###     ##    ###  #  #   # #    ##   ##   #  #   ##   ###
+    //  ###
+    /**
+     * Gets unconfirmed challenges with starting times that happened an hour ago that have not been notified yet.
+     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need notifying.
+     */
+    static async getUnnotifiedMissedMatches() {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId
+            FROM tblChallenge
+            WHERE MatchTime >= DATEADD(HOUR, -1, GETUTCDATE())
+                AND DateMatchTimePassedNotified IS NULL
+                AND DateConfirmed IS NULL
+                AND DateVoided IS NULL
+                AND DateClosed IS NULL
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
+    }
+
+    //              #    #  #                     #     #      #    #             #   ##    #                 #     #                #  #         #          #
+    //              #    #  #                     #           # #                 #  #  #   #                 #                      ####         #          #
+    //  ###   ##   ###   #  #  ###   ###    ##   ###   ##     #    ##     ##    ###   #    ###    ###  ###   ###   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
+    // #  #  # ##   #    #  #  #  #  #  #  #  #   #     #    ###    #    # ##  #  #    #    #    #  #  #  #   #     #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    //  ##   ##     #    #  #  #  #  #  #  #  #   #     #     #     #    ##    #  #  #  #   #    # ##  #      #     #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
+    // #      ##     ##   ##   #  #  #  #   ##     ##  ###    #    ###    ##    ###   ##     ##   # #  #       ##  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
+    //  ###                                                                                                                     ###
+    /**
+     * Gets challenges with starting times happening within 30 minutes that have not been notified yet.
+     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need notifying.
+     */
+    static async getUnnotifiedStartingMatches() {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         */
+        const data = await db.query(`
+            SELECT ChallengeId
+            FROM tblChallenge
+            WHERE MatchTime >= DATEADD(MINUTE, 30, GETUTCDATE())
+                AND DateMatchTimeNotified IS NULL
+                AND DateConfirmed IS NULL
+                AND DateVoided IS NULL
+                AND DateClosed IS NULL
+    `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
+    }
+
     // #                  ###                     ###                #     #             #  ###         ###
     // #                  #  #                     #                       #             #   #           #
     // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #
@@ -1606,6 +1688,54 @@ class Database {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             teamId: {type: Db.INT, value: team.id}
         });
+    }
+
+    //              #     #      #          ##   ##                #     ####               #                   #  ####               ##   #           ##    ##
+    //              #           # #        #  #   #                #     #                                      #  #                 #  #  #            #     #
+    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #   ###   #  #  ###   ##    ###    ##    ###  ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    #      ##   #  #   #    #  #  # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #   #      ##   #  #   #    #     ##    #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ####  #  #  ###   ###   #      ##    ###  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                #                                              #                                                                                          ###
+    /**
+     * Records the notification for a clock deadline expiration.
+     * @param {Challenge} challenge The challenge with the expired clock deadline.
+     * @returns {Promise} A promise that resolves when the notification has been recorded.
+     */
+    static async notifyClockExpiredForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateClockDeadlineNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //              #     #      #         #  #         #          #     #  #   #                           #  ####               ##   #           ##    ##
+    //              #           # #        ####         #          #     ####                               #  #                 #  #  #            #     #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###   ####  ##     ###    ###    ##    ###  ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  #  #   #    ##     ##     # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #      ##     ##   ##    #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #  #  #  ###   ###    ###     ##    ###  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                #                                                                                                                                     ###
+    /**
+     * Records the notification for a missed match.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the notification has been recorded.
+     */
+    static async notifyMatchMissedForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateMatchTimePassedNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //              #     #      #         #  #         #          #      ##    #                 #     #                ####               ##   #           ##    ##
+    //              #           # #        ####         #          #     #  #   #                 #                      #                 #  #  #            #     #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###  ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #    #    #    #  #  #  #   #     #    #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #    # ##  #      #     #    #  #   ##   #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##     ##   # #  #       ##  ###   #  #  #     #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                #                                                                             ###                                                               ###
+    /**
+     * Records the notification for a match starting soon.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the notification has been recorded.
+     */
+    static async notifyMatchStartingForChallenge(challenge) {
+        await db.query("UPDATE tblChallenge SET DateMatchTimeNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //        #          #     #  #              ####               ##   #           ##    ##

@@ -180,6 +180,8 @@ CREATE TABLE dbo.tblChallenge (
     DateClocked DATETIME NULL,
     ClockTeamId INT NULL CONSTRAINT FK_tblChallenge_ClockTeamId_tblTeam_TeamId FOREIGN KEY (ClockTeamId) REFERENCES dbo.tblTeam (TeamId),
     DateClockDeadline DATETIME NULL,
+    DateMatchTimeNotified DATETIME NULL,
+    DateMatchTimePassedNotified DATETIME NULL,
     DateClockDeadlineNotified DATETIME NULL,
     DateReported DATETIME NULL,
     DateConfirmed DATETIME NULL,

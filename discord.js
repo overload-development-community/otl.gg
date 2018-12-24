@@ -13,6 +13,11 @@ const DiscordJs = require("discord.js"),
 let readied = false;
 
 /**
+ * @type {DiscordJs.TextChannel}
+ */
+let alertsChannel;
+
+/**
  * @type {DiscordJs.Role}
  */
 let captainRole;
@@ -50,6 +55,20 @@ require("./discordJs.GuildMember.extensions");
  * A static class that handles all Discord.js interctions.
  */
 class Discord {
+    //       ##                 #            ##   #                             ##
+    //        #                 #           #  #  #                              #
+    //  ###   #     ##   ###   ###    ###   #     ###    ###  ###   ###    ##    #
+    // #  #   #    # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##   #
+    // # ##   #    ##    #      #      ##   #  #  #  #  # ##  #  #  #  #  ##     #
+    //  # #  ###    ##   #       ##  ###     ##   #  #   # #  #  #  #  #   ##   ###
+    /**
+     * Returns the alerts channel.
+     * @returns {DiscordJs.TextChannel} The alerts channel.
+     */
+    static get alertsChannel() {
+        return alertsChannel;
+    }
+
     //                    #           #          ###         ##
     //                    #                      #  #         #
     //  ##    ###  ###   ###    ###  ##    ###   #  #   ##    #     ##
@@ -168,6 +187,7 @@ class Discord {
             captainRole = otlGuild.roles.find((r) => r.name === "Captain");
             founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
+            alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otl-alerts")); // eslint-disable-line no-extra-parens
             matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
             rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
         });

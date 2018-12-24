@@ -788,6 +788,8 @@ class Challenge {
 
             await Discord.richQueue(embed, this.channel);
 
+            await Discord.queue(`The match at ${this.channel} has been confirmed.  Please add stats and close the channel.`, Discord.alertsChannel);
+
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a reported match.  Please resolve this manually as soon as possible.", err);
@@ -1039,6 +1041,81 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error locking a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //              #     #      #          ##   ##                #     ####               #                   #
+    //              #           # #        #  #   #                #     #                                      #
+    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #   ###   #  #  ###   ##    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    #      ##   #  #   #    #  #  # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #   #      ##   #  #   #    #     ##    #  #
+    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ####  #  #  ###   ###   #      ##    ###
+    //                                #                                              #
+    /**
+     * Notifies an admin that the challenge's clock has expired.
+     * @returns {Promise} A promise that resolves when the notification has been sent.
+     */
+    async notifyClockExpired() {
+        try {
+            await Db.notifyClockExpiredForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue(`The clock deadline has been passed in ${this.channel}.`, Discord.alertsChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a clock expired for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //              #     #      #         #  #         #          #     #  #   #                           #
+    //              #           # #        ####         #          #     ####                               #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###   ####  ##     ###    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  #  #   #    ##     ##     # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #      ##     ##   ##    #  #
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #  #  #  ###   ###    ###     ##    ###
+    //                                #
+    /**
+     * Notifies an admin that the challenge's match time was missed.
+     * @returns {Promise} A promise that resolves when the notification has been sent.
+     */
+    async notifyMatchMissed() {
+        try {
+            await Db.notifyMatchMissedForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue(`The match time was missed in ${this.channel}.`, Discord.alertsChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a match was missed for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //              #     #      #         #  #         #          #      ##    #                 #     #
+    //              #           # #        ####         #          #     #  #   #                 #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #    #    #    #  #  #  #   #     #    #  #  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #    # ##  #      #     #    #  #   ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##     ##   # #  #       ##  ###   #  #  #
+    //                                #                                                                             ###
+    /**
+     * Notifies the challenge channel that the match is about to start.
+     * @returns {Promise} A promise that resolves when the notification has been sent.
+     */
+    async notifyMatchStarting() {
+        try {
+            await Db.notifyMatchStartingForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a match starting for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue("Polish your gunships, this match begins in 30 minutes!", this.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1926,6 +2003,8 @@ class Challenge {
                 } else {
                     await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
                 }
+
+                await Discord.queue(`The match at ${this.channel} has been voided.  Please close the channel.`, Discord.alertsChannel);
 
                 await this.updateTopic();
             }
