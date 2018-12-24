@@ -8,6 +8,7 @@ const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
     Challenge = require("./challenge"),
+    Db = require("./database"),
     pjson = require("./package.json"),
     Team = require("./team"),
     Warning = require("./warning"),
@@ -339,6 +340,37 @@ class Commands {
         }
 
         return true;
+    }
+
+    //       #                 #     #  #              ###          #  #        ##     #       #
+    //       #                 #     ####               #           #  #         #             #
+    //  ##   ###    ##    ##   # #   ####   ###  ###    #     ###   #  #   ###   #    ##     ###
+    // #     #  #  # ##  #     ##    #  #  #  #  #  #   #    ##     #  #  #  #   #     #    #  #
+    // #     #  #  ##    #     # #   #  #  # ##  #  #   #      ##    ##   # ##   #     #    #  #
+    //  ##   #  #   ##    ##   #  #  #  #   # #  ###   ###   ###     ##    # #  ###   ###    ###
+    //                                           #
+    /**
+     * Checks to ensure a map is valid.
+     * @param {string} map The map to check.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<string>} A promise that resolves with the chosen map, properly cased.
+     */
+    static async checkMapIsValid(map, member, channel) {
+        let correctedMap;
+        try {
+            correctedMap = Db.validateMap(map);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!correctedMap) {
+            await Discord.queue(`Sorry, ${member}, but you that is not a map you can use.  You can only use valid multiplayer maps that you can pick in the game client.`, channel);
+            throw new Warning("Pilot is penalized from being captain.");
+        }
+
+        return correctedMap;
     }
 
     //       #                 #     #  #              #                  ##               ###          ##                #           #
@@ -1618,7 +1650,6 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async home(member, channel, message) {
-        // TODO: Only allow home levels from a valid map list.
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`.", channel)) {
@@ -1631,7 +1662,7 @@ class Commands {
         }
 
         const team = await Commands.checkMemberOnTeam(member, channel),
-            {1: number, 2: map} = mapMatch.exec(message);
+            {1: number, 2: mapToCheck} = mapMatch.exec(message);
         let homes;
         try {
             homes = await team.getHomeMaps();
@@ -1639,6 +1670,8 @@ class Commands {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
+
+        const map = await Commands.checkMapIsValid(mapToCheck, member, channel);
 
         if (homes.indexOf(map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but you already have this map set as your home.`, channel);
@@ -2230,7 +2263,6 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestmap(member, channel, message) {
-        // TODO: Only allow home levels from a valid map list.
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2252,13 +2284,15 @@ class Commands {
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
         await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
-        if (challenge.details.homeMaps.indexOf(message) !== -1) {
+        const map = await Commands.checkMapIsValid(message, member, channel);
+
+        if (challenge.details.homeMaps.indexOf(map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
             throw new Warning("Pilot suggested one of the home options.");
         }
 
         try {
-            await challenge.suggestMap(team, message);
+            await challenge.suggestMap(team, map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3771,6 +3805,8 @@ class Commands {
             return false;
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
+
         if (!await Commands.checkHasParameters(message, member, "Use `!forcemap` with either the letter of the home map to use or with a neutral home map.", channel)) {
             return false;
         }
@@ -3786,10 +3822,15 @@ class Commands {
             return true;
         }
 
-        // TODO: Only allow home levels from a valid map list.
+        const map = await Commands.checkMapIsValid(message, member, channel);
+
+        if (challenge.details.homeMaps.indexOf(map) !== -1) {
+            await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
+            throw new Warning("Pilot suggested one of the home options.");
+        }
 
         try {
-            await challenge.setMap(member, message);
+            await challenge.setMap(member, map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4375,11 +4416,6 @@ class Commands {
      * Alert administrator when an hour has passed since a challenge was supposed to be played.
      * Alert teams half an hour before their match is scheduled to begin.
      * Alert administrator when a match has been confirmed.
-     */
-
-    // !title <title>
-    /*
-     * Titles a game.
      */
 }
 

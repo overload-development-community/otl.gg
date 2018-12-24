@@ -1563,7 +1563,6 @@ class Team {
      * @returns {Promise} A promise that resolves when the team's channels have been updated.
      */
     async updateChannels() {
-        // TODO: Add penalty status to captain topic.
         try {
             const captainsChannel = this.captainsChannel;
             if (!captainsChannel) {
@@ -1621,6 +1620,10 @@ class Team {
                 teamInfo.recentMatches.forEach((match) => {
                     channelTopic += `\n${match.date} - ${match.result} - ${match.score}-${match.opponentScore} - ${match.opponent} - ${match.map}`;
                 });
+            }
+
+            if (typeof teamInfo.penaltiesRemaining === "number") {
+                channelTopic += `\n\nTeam has been penalized.  Penalized games remaining: ${teamInfo.penaltiesRemaining}`;
             }
 
             if (teamInfo.requests && teamInfo.requests.length > 0) {

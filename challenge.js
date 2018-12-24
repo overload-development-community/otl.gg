@@ -224,8 +224,8 @@ class Challenge {
                         value: "Get the amount of time until the clock deadline."
                     },
                     {
-                        name: "!streaming <URL>",
-                        value: "Indicate that you will be streaming this match with the specified URL."
+                        name: "!streaming",
+                        value: "Indicate that you will be streaming this match."
                     },
                     {
                         name: "!notstreaming",
@@ -697,6 +697,9 @@ class Challenge {
                     ]
                 }), Discord.matchResultsChannel);
             }
+
+            await this.challengingTeam.updateChannels();
+            await this.challengedTeam.updateChannels();
         } catch (err) {
             throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1713,7 +1716,7 @@ class Challenge {
         }
 
         try {
-            await Db.setTitleForChallenge(title);
+            await Db.setTitleForChallenge(this, title);
         } catch (err) {
             throw new Exception("There was a database error suggesting a time for a challenge.", err);
         }
@@ -1777,9 +1780,15 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the topic is updated.
      */
     async updateTopic() {
-        // TODO: List who will be streaming and casting the match.
         if (!this.details) {
             await this.loadDetails();
+        }
+
+        let streamers;
+        try {
+            streamers = await Db.getStreamersForChallenge(this);
+        } catch (err) {
+            streamers = [];
         }
 
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
@@ -1832,6 +1841,14 @@ class Challenge {
                 topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}, reported by ${this.details.reportingTeam.tag}`;
             } else if (this.details.dateConfirmed) {
                 topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}`;
+            }
+
+            if (this.details.caster) {
+                topic = `${topic}\n\nCaster: ${this.details.caster.displayName}`;
+            }
+
+            if (streamers.length > 0) {
+                topic = `${topic}\n\nStreamers:\n${streamers.map((s) => `${Discord.findGuildMemberById(s.discordId).displayName} - https://twitch.tv/${s.twitchName}`).join("\n")}`;
             }
         }
 

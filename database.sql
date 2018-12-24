@@ -1,4 +1,4 @@
-DROP TABLE dbo.tblStats
+DROP TABLE dbo.tblStat
 DROP TABLE dbo.tblChallengeStreamer
 DROP TABLE dbo.tblChallengeHome
 DROP TABLE dbo.tblChallenge
@@ -15,6 +15,27 @@ DROP TABLE dbo.tblInvite
 DROP TABLE dbo.tblCaptainHistory
 DROP TABLE dbo.tblTeam
 DROP TABLE dbo.tblPlayer
+DROP TABLE dbo.tblAllowedMap
+
+CREATE TABLE dbo.tblAllowedMap (
+    MapId INT IDENTITY(1, 1) NOT NULL,
+    Map VARCHAR(100) NOT NULL    
+)
+
+INSERT INTO dbo.tblAllowedMap
+(Map)
+VALUES
+('Wraith'),
+('Vault'),
+('Terminal'),
+('Blizzard'),
+('Backfire'),
+('Centrifuge'),
+('Labyrinth'),
+('Hive'),
+('Syrinx'),
+('Foundry'),
+('Roundabout')
 
 CREATE TABLE dbo.tblPlayer (
     PlayerId INT IDENTITY(1, 1) NOT NULL,
@@ -154,10 +175,10 @@ CREATE TABLE dbo.tblChallenge (
     ReportingTeamId INT NULL CONSTRAINT FK_tblChallenge_ReportingTeamId_tblTeam_TeamId FOREIGN KEY (ReportingTeamId) REFERENCES dbo.tblTeam (TeamId),
     ChallengingTeamScore INT NULL,
     ChallengedTeamScore INT NULL,
-    CasterPlayerId INT NULL CONSTRAINT FK_tblChallenge_CasterPlayerId_tblPlayer_PlayerId FOREIGN KEY (PlayerId) REFERENCES dbo.tblPlayer (PlayerId),
+    CasterPlayerId INT NULL CONSTRAINT FK_tblChallenge_CasterPlayerId_tblPlayer_PlayerId FOREIGN KEY (CasterPlayerId) REFERENCES dbo.tblPlayer (PlayerId),
     DateAdded DATETIME NOT NULL CONSTRAINT DF_tblChallenge_DateAdded DEFAULT(getutcdate()),
     DateClocked DATETIME NULL,
-    ClockTeamId INT NULL CONSTRAINT FK_tblChallenge_ClockTeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
+    ClockTeamId INT NULL CONSTRAINT FK_tblChallenge_ClockTeamId_tblTeam_TeamId FOREIGN KEY (ClockTeamId) REFERENCES dbo.tblTeam (TeamId),
     DateClockDeadline DATETIME NULL,
     DateClockDeadlineNotified DATETIME NULL,
     DateReported DATETIME NULL,
@@ -181,7 +202,7 @@ CREATE TABLE dbo.tblChallengeStreamer (
     PRIMARY KEY (StreamerId ASC)
 )
 
-CREATE TABLE dbo.tblStats (
+CREATE TABLE dbo.tblStat (
     StatId INT IDENTITY(1, 1) NOT NULL,
     ChallengeId INT NOT NULL CONSTRAINT FK_tblStat_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
     TeamId INT NOT NULL CONSTRAINT FK_tblStat_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),

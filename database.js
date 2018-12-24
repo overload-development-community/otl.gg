@@ -6,7 +6,7 @@
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
  * @typedef {import("./team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[]}} TeamInfo
+ * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[], penaltiesRemaining?: number}} TeamInfo
  */
 
 const Db = require("node-database"),
@@ -137,7 +137,7 @@ class Database {
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            MERGE tblStats s
+            MERGE tblStat s
                 USING (VALUES (@challengeId, @teamId, @kills, @assists, @deaths, @playerId)) AS v (ChallengeId, TeamId, Kills, Assists, Deaths, PlayerId)
                 ON s.ChallengeId = v.ChallengeId AND s.TeamId = v.TeamId AND s.Kills = v.Kills AND s.Assists = v.Assists AND s.Deaths = v.Deaths AND s.PlayerId = v.PlayerId
             WHEN MATCHED THEN
@@ -1147,6 +1147,32 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.TeamId, name: row.Name, tag: row.Tag})) || void 0;
     }
 
+    //              #     ##    #                                               ####               ##   #           ##    ##
+    //              #    #  #   #                                               #                 #  #  #            #     #
+    //  ###   ##   ###    #    ###   ###    ##    ###  # #    ##   ###    ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##   #      #    #    #  #  # ##  #  #  ####  # ##  #  #  ##     #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  ##   ##     #    #  #   #    #     ##    # ##  #  #  ##    #       ##   #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##     ##   ##     ##  #      ##    # #  #  #   ##   #     ###    #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //  ###                                                                                                                                  ###
+    /**
+     * Gets the pilots who will be streaming the challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<{discordId: string, twitchName: string}[]>} A promise that resolves with the list of streamers for the challenge.
+     */
+    static async getStreamersForChallenge(challenge) {
+
+        /**
+         * @type {{recordsets: [{DiscordId: string, TwitchName: string}[]]}}
+         */
+        const data = await db.query(`
+            SELECT p.DiscordId, p.TwitchName
+            FROM tblPlayer p
+            INNER JOIN tblChallengeStreamer cs ON p.PlayerId = cs.PlayerId
+            WHERE cs.ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({discordId: row.DiscordId, twitchName: row.TwitchName})) || [];
+    }
+
     //              #    ###                     ###         ###      #
     //              #     #                      #  #         #       #
     //  ###   ##   ###    #     ##    ###  # #   ###   #  #   #     ###
@@ -1237,7 +1263,7 @@ class Database {
     static async getTeamInfo(team) {
 
         /**
-         * @type {{recordsets: [{Map: string}[], {Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[]]}}
+         * @type {{recordsets: [{Map: string}[], {Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
          */
         const data = await db.query(`
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
@@ -1260,12 +1286,15 @@ class Database {
             INNER JOIN tblPlayer p ON i.PlayerId = p.PlayerId
             WHERE i.TeamId = @teamId
             ORDER BY i.DateInvited
+
+            SELECT PenaltiesRemaining FROM tblTeamPenalty WHERE TeamId = @teamId
         `, {teamId: {type: Db.INT, value: team.id}});
         return {
             homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [],
             members: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({name: row.Name, role: row.Captain ? "Captain" : row.Founder ? "Founder" : void 0})) || [],
             requests: data && data.recordsets && data.recordsets[2] && data.recordsets[2].map((row) => ({name: row.Name, date: row.DateRequested})) || [],
-            invites: data && data.recordsets && data.recordsets[3] && data.recordsets[3].map((row) => ({name: row.Name, date: row.DateInvited})) || []
+            invites: data && data.recordsets && data.recordsets[3] && data.recordsets[3].map((row) => ({name: row.Name, date: row.DateInvited})) || [],
+            penaltiesRemaining: data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].PenaltiesRemaining || void 0
         };
     }
 
@@ -1335,7 +1364,7 @@ class Database {
          */
         const data = await db.query(`
             SELECT p.DiscordId, s.Kills, s.Assists, s.Deaths
-            FROM tblStats s
+            FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE s.ChallengeId = @challengeId
                 AND s.TeamId = @teamId
@@ -1716,7 +1745,7 @@ class Database {
 
                 IF EXISTS (
                     SELECT TOP 1 1
-                    FROM tblStats s
+                    FROM tblStat s
                     INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
                     INNER JOIN tblRoster r ON s.PlayerId = r.PlayerId
                     WHERE s.PlayerId = @playerId
@@ -1764,7 +1793,7 @@ class Database {
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            DELETE FROM tblStats WHERE ChallengeId = @challengeId AND PlayerId = @playerId
+            DELETE FROM tblStat WHERE ChallengeId = @challengeId AND PlayerId = @playerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: pilot.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -2293,7 +2322,6 @@ class Database {
      */
     static async teamHasClockedTeamThisSeason(team1, team2) {
 
-        // TODO: Check season, not full history.
         /**
          * @type {{recordsets: [{HasClocked: boolean}[]]}}
          */
@@ -2303,6 +2331,7 @@ class Database {
             WHERE ClockTeamId = @team1Id
                 AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
                 AND Voided IS NULL
+                AND DateClocked >= CAST(CAST(((MONTH(GETUTCDATE()) - 1) / 6) * 6 + 1 AS VARCHAR) + '/1/' + CAST(YEAR(GETUTCDATE()) AS VARCHAR) AS DATETIME)
         `, {
             team1id: {type: Db.INT, value: team1.id},
             team2id: {type: Db.INT, value: team2.id}
@@ -2359,6 +2388,27 @@ class Database {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName}
         });
+    }
+
+    //             ##     #       #         #          #  #
+    //              #             #         #          ####
+    // # #    ###   #    ##     ###   ###  ###    ##   ####   ###  ###
+    // # #   #  #   #     #    #  #  #  #   #    # ##  #  #  #  #  #  #
+    // # #   # ##   #     #    #  #  # ##   #    ##    #  #  # ##  #  #
+    //  #     # #  ###   ###    ###   # #    ##   ##   #  #   # #  ###
+    //                                                             #
+    /**
+     * Validates a map.
+     * @param {string} map The map.
+     * @returns {Promise<string>} A promise that resolves with the validated map.
+     */
+    static async validateMap(map) {
+
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query("SELECT Map FROM tblAllowedMap WHERE Map = @map", {map: {type: Db.VARCHAR(100), value: map}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
 
     //              #       #   ##   #           ##    ##
