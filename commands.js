@@ -8,7 +8,7 @@ const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
     Challenge = require("./challenge"),
-    Db = require("./database"),
+    Otl = require("./otl"),
     pjson = require("./package.json"),
     Team = require("./team"),
     Warning = require("./warning"),
@@ -359,7 +359,7 @@ class Commands {
     static async checkMapIsValid(map, member, channel) {
         let correctedMap;
         try {
-            correctedMap = Db.validateMap(map);
+            correctedMap = await Otl.validateMap(map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4404,6 +4404,84 @@ class Commands {
             await challenge.title(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                     #
+    //                     #
+    // ###    ##    ###   ###    ###    ##    ###   ###    ##   ###
+    // #  #  #  #  ##      #    ##     # ##  #  #  ##     #  #  #  #
+    // #  #  #  #    ##    #      ##   ##    # ##    ##   #  #  #  #
+    // ###    ##   ###      ##  ###     ##    # #  ###     ##   #  #
+    // #
+    /**
+     * Sets a match to be a postseason match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async postseason(member, channel, message) {
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!postseason` command by itself to set this challenge as a postseason match.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+
+        try {
+            await challenge.setPostseason();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                         ##
+    //                          #
+    // ###    ##    ###  #  #   #     ###  ###    ###    ##    ###   ###    ##   ###
+    // #  #  # ##  #  #  #  #   #    #  #  #  #  ##     # ##  #  #  ##     #  #  #  #
+    // #     ##     ##   #  #   #    # ##  #       ##   ##    # ##    ##   #  #  #  #
+    // #      ##   #      ###  ###    # #  #     ###     ##    # #  ###     ##   #  #
+    //              ###
+    /**
+     * Sets a match to be a regular season match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async regularseason(member, channel, message) {
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!regularseason` command by itself to set this challenge as a regular season match.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+
+        try {
+            await challenge.setRegularSeason();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
         }
 

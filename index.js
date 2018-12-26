@@ -1,8 +1,16 @@
-const tz = require("timezone-js"),
+const compression = require("compression"),
+    express = require("express"),
+    minify = require("express-minify"),
+    tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
     Discord = require("./discord"),
-    Log = require("./log");
+    Log = require("./log"),
+    Notify = require("./notify"),
+    settings = require("./settings"),
+    Web = require("./web"),
+
+    app = express();
 
 //         #                 #
 //         #                 #
@@ -29,11 +37,23 @@ const tz = require("timezone-js"),
     // Startup Discord.
     Discord.startup();
     Discord.connect();
+
+    // Begin notifications.
+    setInterval(Notify.notify, 60 * 1000);
+
+    // Web server routes.
+    app.use(compression());
+    app.use(minify());
+    app.use(express.static("public"));
+    app.get("/", Web.Home);
+
+    // Startup web server.
+    const port = process.env.PORT || settings.express.port;
+
+    app.listen(port);
+    console.log(`Web server listening on port ${port}.`);
 }());
 
 process.on("unhandledRejection", (reason) => {
     Log.exception("Unhandled promise rejection caught.", reason);
 });
-
-// Begin notifications.
-require("./notify");

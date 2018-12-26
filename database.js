@@ -40,7 +40,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the captain has been added.
      */
     static async addCaptain(team, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -72,7 +72,7 @@ class Database {
      * @returns {Promise} A promise that resolves when a caster is added to a challenge.
      */
     static async addCasterToChallenge(challenge, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -97,7 +97,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the pilot has been added to the team.
      */
     static async addPilotToTeam(member, team) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -132,7 +132,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the stat is added to the database.
      */
     static async addStatToChallenge(challenge, team, pilot, kills, assists, deaths) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -172,7 +172,7 @@ class Database {
      * @returns {Promise} A promise that resolves when a streamer is added to a challenge.
      */
     static async addStreamerToChallenge(challenge, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -201,7 +201,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the Twitch name has been added to the profile.
      */
     static async addTwitchName(member, name) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -236,7 +236,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the home map has been applied.
      */
     static async applyHomeMap(team, number, map) {
-        await db.query(`
+        await db.query(/* sql */`
             MERGE tblTeamHome th
                 USING (VALUES (@teamId, @number, @map)) AS v (TeamId, Number, Map)
                 ON th.TeamId = v.TeamId AND th.Number = v.Number
@@ -265,7 +265,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team name is updated.
      */
     static async applyTeamName(newTeam, name) {
-        await db.query("UPDATE tblNewTeam SET Name = @name WHERE NewTeamId = @newTeamId", {name: {type: Db.VARCHAR(25), value: name}, newTeamId: {type: Db.INT, value: newTeam.id}});
+        await db.query(/* sql */`
+            UPDATE tblNewTeam SET Name = @name WHERE NewTeamId = @newTeamId
+        `, {name: {type: Db.VARCHAR(25), value: name}, newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
     //                   ##          ###                     ###
@@ -282,7 +284,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team tag is updated.
      */
     static async applyTeamTag(newTeam, tag) {
-        await db.query("UPDATE tblNewTeam SET Tag = @tag WHERE NewTeamId = @newTeamId", {tag: {type: Db.VARCHAR(25), value: tag}, newTeamId: {type: Db.INT, value: newTeam.id}});
+        await db.query(/* sql */`
+            UPDATE tblNewTeam SET Tag = @tag WHERE NewTeamId = @newTeamId
+        `, {tag: {type: Db.VARCHAR(25), value: tag}, newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
     // #                                #  ####                    ###                     #  #         #     #    ##
@@ -302,7 +306,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateExpires: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT tb.DateExpires
             FROM tblTeamBan tb
             INNER JOIN tblPlayer p ON tb.PlayerId = p.PlayerId
@@ -332,7 +336,7 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblLeadershipPenalty lp
             INNER JOIN tblPlayer p ON lp.PlayerId = p.PlayerId
@@ -358,7 +362,7 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
             DECLARE @pilotPlayerId INT
             DECLARE @teamId INT
@@ -394,7 +398,9 @@ class Database {
      * @returns {Promise} A promise that resolves when team creation is cancelled.
      */
     static async cancelCreateTeam(newTeam) {
-        await db.query("DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId", {newTeamId: {type: Db.INT, value: newTeam.id}});
+        await db.query(/* sql */`
+            DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId
+        `, {newTeamId: {type: Db.INT, value: newTeam.id}});
     }
 
     //       ##                #      ##   #           ##    ##
@@ -415,7 +421,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, UTCDATE()), ClockTeamId = @teamId, DateClockDeadlineNotified = NULL WHERE ChallengeId = @challengeId
 
             SELECT DateClocked, DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
@@ -443,7 +449,7 @@ class Database {
         /**
          * @type {{recordsets: [{ClockedChallenges: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT COUNT(ChallengeId) ClockedChallenges
             FROM tblChallenge
             WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
@@ -468,7 +474,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     static async closeChallenge(challenge) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @challengingTeamId INT
             DECLARE @challengedTeamId INT
 
@@ -528,7 +534,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
      */
     static async confirmMapForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                     #    #                #  #         #          #
@@ -547,7 +555,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateConfirmed: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateConfirmed = GETUTCDATE() WHERE ChallengeId = @challengeId
 
             SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
@@ -568,7 +576,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested team size has been confirmed.
      */
     static async confirmTeamSizeForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                     #    #                ###    #                ####               ##   #           ##    ##
@@ -584,7 +594,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested time has been confirmed.
      */
     static async confirmTimeForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                          #           ##   #           ##    ##
@@ -606,7 +618,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, HomeServerTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @OrangeTeamId INT
             DECLARE @BlueTeamId INT
             DECLARE @HomeMapTeamId INT
@@ -714,7 +726,7 @@ class Database {
         /**
          * @type {{recordsets: [{TeamId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
             DECLARE @teamId INT
 
@@ -766,7 +778,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @teamId
 
             DELETE FROM cs
@@ -821,7 +833,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateClockDeadline: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, UTCDATE()) END,
                 MatchTime = NULL,
@@ -854,7 +866,9 @@ class Database {
         /**
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean}[]]}}
          */
-        const data = await db.query("SELECT TeamId, Name, Tag, Disbanded, Locked FROM tblTeam WHERE Name = @text OR Tag = @text", {text: {type: Db.VARCHAR(25), value: text}});
+        const data = await db.query(/* sql */`
+            SELECT TeamId, Name, Tag, Disbanded, Locked FROM tblTeam WHERE Name = @text OR Tag = @text
+        `, {text: {type: Db.VARCHAR(25), value: text}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded, locked: !!data.recordsets[0][0].Locked} || void 0;
     }
 
@@ -875,7 +889,9 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
          */
-        const data = await db.query("SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @id", {id: {type: Db.INT, value: id}});
+        const data = await db.query(/* sql */`
+            SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @id
+        `, {id: {type: Db.INT, value: id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].ChallengeId, challengingTeamId: data.recordsets[0][0].ChallengingTeamId, challengedTeamId: data.recordsets[0][0].ChallengedTeamId} || void 0;
     }
 
@@ -897,7 +913,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
             WHERE ((ChallengingTeamId = @team1Id AND ChallengedTeamId = @team2Id) OR (ChallengingTeamId = @team2Id AND ChallengedTeamId = @team1Id))
@@ -928,7 +944,7 @@ class Database {
         /**
          * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT
                 c.Title,
                 c.OrangeTeamId,
@@ -1026,7 +1042,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
             WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
@@ -1057,7 +1073,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
             WHERE (ChallengingTeamId = @team1Id OR ChallengedTeamId = @team1Id)
@@ -1087,7 +1103,7 @@ class Database {
         /**
          * @type {{recordsets: [{NewTeamId: number, Name: string, Tag: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT nt.NewTeamId, nt.Name, nt.Tag
             FROM tblNewTeam nt
             INNER JOIN tblPlayer p ON nt.PlayerId = p.PlayerId
@@ -1113,7 +1129,9 @@ class Database {
         /**
          * @type {{recordsets: [{NextDate: Date}[]]}}
          */
-        const data = await db.query("SELECT DATEADD(DAY, 28, MAX(DateClocked)) NextDate FROM tblChallenge WHERE ClockTeamId = @teamId AND DateVoided IS NULL", {teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query(/* sql */`
+            SELECT DATEADD(DAY, 28, MAX(DateClocked)) NextDate FROM tblChallenge WHERE ClockTeamId = @teamId AND DateVoided IS NULL
+        `, {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].NextDate || void 0;
     }
 
@@ -1134,7 +1152,7 @@ class Database {
         /**
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1148,6 +1166,74 @@ class Database {
                 )
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.TeamId, name: row.Name, tag: row.Tag})) || void 0;
+    }
+
+    //              #     ##                                  ###          #          ####                     ##   #           ##    ##
+    //              #    #  #                                 #  #         #          #                       #  #  #            #     #
+    //  ###   ##   ###    #     ##    ###   ###    ##   ###   #  #   ###  ###    ###  ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##   #      #   # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  ##   ##     #    #  #  ##    # ##    ##   #  #  #  #  #  #  # ##   #    # ##  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##     ##   ##    ##    # #  ###     ##   #  #  ###    # #    ##   # #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //  ###                                                                                                                                              ###
+    /**
+     * Gets the season data from a challenge that is in the desired season.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<{matches: {challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
+     */
+    static async getSeasonDataFromChallenge(challenge) {
+
+        /**
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @matchTime DATETIME
+            DECLARE @k FLOAT
+            DECLARE @dateStart DATETIME
+            DECLARE @dateEnd DATETIME
+
+            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
+
+            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+            BEGIN
+                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+            END
+
+            WHILE NOT EXISTS(SELECT TOP 1 1 FROM tblSeason WHERE DateStart <= @matchTime And DateEnd > @matchTime)
+            BEGIN
+                INSERT INTO tblSeason
+                (Season, K, DateStart, DateEnd)
+                SELECT TOP 1
+                    Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
+                FROM tblSeason
+                ORDER BY Season DESC
+            END
+
+            SELECT @k = K, @dateStart = DateStart, @dateEnd = DateEnd FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
+
+            SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                ChallengingTeamScore,
+                ChallengedTeamScore
+            FROM tblChallenge
+            WHERE MatchTime >= @dateStart
+                AND MatchTime < @dateEnd
+                AND Postseason = 0
+                AND DateConfirmed IS NOT NULL
+                AND DateClosed IS NOT NULL
+                AND DateVoided IS NULL
+
+            SELECT @k K
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && {
+            matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamScore: row.ChallengedTeamScore
+            })) || [],
+            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
+        };
     }
 
     //              #     ##    #                                               ####               ##   #           ##    ##
@@ -1167,7 +1253,7 @@ class Database {
         /**
          * @type {{recordsets: [{DiscordId: string, TwitchName: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT p.DiscordId, p.TwitchName
             FROM tblPlayer p
             INNER JOIN tblChallengeStreamer cs ON p.PlayerId = cs.PlayerId
@@ -1193,7 +1279,7 @@ class Database {
         /**
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Locked: boolean}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT TeamId, Name, Tag, Locked
             FROM tblTeam
             WHERE TeamId = @teamId
@@ -1218,7 +1304,7 @@ class Database {
         /**
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, IsFounder: boolean, Locked: boolean}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1247,7 +1333,9 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await db.query("SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number", {teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query(/* sql */`
+            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+        `, {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
@@ -1268,7 +1356,7 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[], {Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
 
             SELECT p.Name, r.Captain, r.Founder
@@ -1318,7 +1406,7 @@ class Database {
         /**
          * @type {{recordsets: [{Members: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT
                 (SELECT COUNT(*) FROM tblRoster WHERE TeamId = @teamId) +
                 (SELECT COUNT(*) FROM tblInvite WHERE TeamId = @teamId) Members
@@ -1343,7 +1431,9 @@ class Database {
         /**
          * @type {{recordsets: [{Members: number}[]]}}
          */
-        const data = await db.query("SELECT COUNT(*) Members FROM tblRoster WHERE TeamId = @teamId", {teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query(/* sql */`
+            SELECT COUNT(*) Members FROM tblRoster WHERE TeamId = @teamId
+        `, {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Members || 0;
     }
 
@@ -1365,7 +1455,7 @@ class Database {
         /**
          * @type {{recordsets: [{DiscordId: string, Kills: number, Assists: number, Deaths: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT p.DiscordId, s.Kills, s.Assists, s.Deaths
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -1395,7 +1485,9 @@ class Database {
         /**
          * @type {{recordsets: [{Timezone: string}[]]}}
          */
-        const data = await db.query("SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        const data = await db.query(/* sql */`
+            SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
     }
 
@@ -1416,7 +1508,9 @@ class Database {
         /**
          * @type {{recordsets: [{Timezone: string}[]]}}
          */
-        const data = await db.query("SELECT Timezone FROM tblTeam WHERE TeamId = @teamId", {teamId: {type: Db.INT, value: team.id}});
+        const data = await db.query(/* sql */`
+            SELECT Timezone FROM tblTeam WHERE TeamId = @teamId
+        `, {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
     }
 
@@ -1437,7 +1531,9 @@ class Database {
         /**
          * @type {{recordsets: [{TwitchName: string}[]]}}
          */
-        const data = await db.query("SELECT TwitchName FROM tblPlayer WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        const data = await db.query(/* sql */`
+            SELECT TwitchName FROM tblPlayer WHERE DiscordId = @discordId
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TwitchName || void 0;
     }
 
@@ -1457,7 +1553,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId
             FROM tblChallenge
             WHERE DateClockDeadline < GETUTCDATE()
@@ -1483,7 +1579,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId
             FROM tblChallenge
             WHERE MatchTime >= DATEADD(HOUR, -1, GETUTCDATE())
@@ -1511,7 +1607,7 @@ class Database {
         /**
          * @type {{recordsets: [{ChallengeId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT ChallengeId
             FROM tblChallenge
             WHERE MatchTime >= DATEADD(MINUTE, 30, GETUTCDATE())
@@ -1540,7 +1636,7 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblInvite i
             INNER JOIN tblPlayer p ON i.PlayerId = p.PlayerId
@@ -1571,7 +1667,7 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblRequest r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
@@ -1597,7 +1693,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the pilot is invited to the pilot's team.
      */
     static async invitePilotToTeam(team, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1636,7 +1732,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateExpires: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT jb.DateExpires
             FROM tblJoinBan jb
             INNER JOIN tblPlayer p ON jb.PlayerId = p.PlayerId
@@ -1658,7 +1754,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is locked.
      */
     static async lockChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET AdminCreated = 1 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET AdminCreated = 1 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //             #           ####                       #
@@ -1674,7 +1772,7 @@ class Database {
      * @returns {Promise} A promise that resolves when ownership has been transferred.
      */
     static async makeFounder(team, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1706,7 +1804,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the notification has been recorded.
      */
     static async notifyClockExpiredForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateClockDeadlineNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DateClockDeadlineNotified = GETUTCDATE() WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //              #     #      #         #  #         #          #     #  #   #                           #  ####               ##   #           ##    ##
@@ -1722,7 +1822,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the notification has been recorded.
      */
     static async notifyMatchMissedForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateMatchTimePassedNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DateMatchTimePassedNotified = GETUTCDATE() WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //              #     #      #         #  #         #          #      ##    #                 #     #                ####               ##   #           ##    ##
@@ -1738,7 +1840,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the notification has been recorded.
      */
     static async notifyMatchStartingForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateMatchTimeNotified = GETUTCDATE() WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DateMatchTimeNotified = GETUTCDATE() WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //        #          #     #  #              ####               ##   #           ##    ##
@@ -1759,7 +1863,7 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE c
             SET Map = ch.Map,
                 UsingHomeMapTeam = 1
@@ -1789,7 +1893,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the team is reinstated.
      */
     static async reinstateTeam(member, team) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1821,7 +1925,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the captain has been removed.
      */
     static async removeCaptain(team, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1846,7 +1950,9 @@ class Database {
      * @returns {Promise} A promise that resolves when a caster is removed from a challenge.
      */
     static async removeCasterFromChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET CasterPlayerId = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET CasterPlayerId = NULL WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                                     ###    #    ##           #    ####                    ###
@@ -1862,7 +1968,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
     static async removePilotFromTeam(member, team) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1924,7 +2030,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the stat has been removed.
      */
     static async removeStatFromChallenge(challenge, pilot) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1950,7 +2056,7 @@ class Database {
      * @returns {Promise} A promise that resolves when a streamer is removed from a challenge.
      */
     static async removeStreamerFromChallenge(challenge, member) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1976,7 +2082,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the Twitch name has been removed from the profile.
      */
     static async removeTwitchName(member) {
-        await db.query("UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId", {discordId: {type: Db.VARCHAR(24), value: member.id}});
+        await db.query(/* sql */`
+            UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @DiscordId
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
     }
 
     //                                     ###
@@ -1992,7 +2100,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team has been renamed.
      */
     static async renameTeam(team, name) {
-        await db.query("UPDATE tblTeam SET Name = @name WHERE TeamId = @teamId", {
+        await db.query(/* sql */`
+            UPDATE tblTeam SET Name = @name WHERE TeamId = @teamId
+        `, {
             name: {type: Db.VARCHAR(25), value: name},
             teamId: {type: Db.INT, value: team.id}
         });
@@ -2018,7 +2128,7 @@ class Database {
         /**
          * @type {{recordsets: [{DateReported: Date}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = @reportingTeamId,
                 ChallengingTeamScore = @challengingTeamScore,
@@ -2051,7 +2161,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the request has been made.
      */
     static async requestTeam(member, team) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -2087,7 +2197,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team tag has been renamed.
      */
     static async retagTeam(team, tag) {
-        await db.query("UPDATE tblTeam SET Tag = @tag WHERE TeamId = @teamId", {
+        await db.query(/* sql */`
+            UPDATE tblTeam SET Tag = @tag WHERE TeamId = @teamId
+        `, {
             tag: {type: Db.VARCHAR(5), value: tag},
             teamId: {type: Db.INT, value: team.id}
         });
@@ -2111,7 +2223,7 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET HomeMapTeamId = @teamId, UsingHomeMapTeam = 1, Map = NULL WHERE ChallengeId = @challengeId
 
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
@@ -2136,7 +2248,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the home server team has been set.
      */
     static async setHomeServerTeamForChallenge(challenge, team) {
-        await db.query("UPDATE tblChallenge SET HomeServerTeamId = @teamId, UsingHomeServerTeam = 1 WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET HomeServerTeamId = @teamId, UsingHomeServerTeam = 1 WHERE ChallengeId = @challengeId
+        `, {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
@@ -2156,7 +2270,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the map has been set.
      */
     static async setMapForChallenge(challenge, map) {
-        await db.query("UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0 FROM tblChallenge WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0 FROM tblChallenge WHERE ChallengeId = @challengeId
+        `, {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: map}
         });
@@ -2175,7 +2291,45 @@ class Database {
      * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
      */
     static async setNeutralServerForChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //               #    ###                 #                                          ####               ##   #           ##    ##
+    //               #    #  #                #                                          #                 #  #  #            #     #
+    //  ###    ##   ###   #  #   ##    ###   ###    ###    ##    ###   ###    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    ###   #  #  ##      #    ##     # ##  #  #  ##     #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #     #  #    ##    #      ##   ##    # ##    ##   #  #  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #      ##   ###      ##  ###     ##    # #  ###     ##   #  #  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                ###
+    /**
+     * Sets a match to be a postseason match.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the match is set as a postseason match.
+     */
+    static async setPostseasonForChallenge(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Postseason = 1 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //               #    ###                     ##                 ##                                  ####               ##   #           ##    ##
+    //               #    #  #                     #                #  #                                 #                 #  #  #            #     #
+    //  ###    ##   ###   #  #   ##    ###  #  #   #     ###  ###    #     ##    ###   ###    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    ###   # ##  #  #  #  #   #    #  #  #  #    #   # ##  #  #  ##     #  #  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    # #   ##     ##   #  #   #    # ##  #     #  #  ##    # ##    ##   #  #  #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   ##   #      ###  ###    # #  #      ##    ##    # #  ###     ##   #  #  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                 ###                                                                                                                            ###
+    /**
+     * Sets a match to be a regular season match.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the match is set as a postseason match.
+     */
+    static async setRegularSeasonForChallenge(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Postseason = 0 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //               #     ##                           ####               ##   #           ##    ##
@@ -2193,7 +2347,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the score is set.
      */
     static async setScoreForChallenge(challenge, challengingTeamScore, challengedTeamScore) {
-        await db.query(`
+        await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
                 ChallengingTeamScore = @challengingTeamScore,
@@ -2220,7 +2374,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team size has been set.
      */
     static async setTeamSizeForChallenge(challenge, size) {
-        await db.query("UPDATE tblChallenge SET TeamSize = @size, , SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET TeamSize = @size, , SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
+        `, {
             size: {type: Db.INT, value: size},
             challengeId: {type: Db.INT, value: challenge.id}
         });
@@ -2240,7 +2396,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the time has been set.
      */
     static async setTimeForChallenge(challenge, date) {
-        await db.query("UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
+        `, {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
         });
@@ -2259,7 +2417,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
     static async setTimezoneForPilot(member, timezone) {
-        await db.query(`
+        await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -2293,7 +2451,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
     static async setTimezoneForTeam(team, timezone) {
-        await db.query("UPDATE tblTeam SET Timezone = @timezone WHERE TeamId = @teamId", {
+        await db.query(/* sql */`
+            UPDATE tblTeam SET Timezone = @timezone WHERE TeamId = @teamId
+        `, {
             teamId: {type: Db.INT, value: team.id},
             timezone: {type: Db.VARCHAR(50), value: timezone}
         });
@@ -2313,7 +2473,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the title is set.
      */
     static async setTitleForChallenge(challenge, title) {
-        await db.query("UPDATE tblChallenge SET Title = CASE WHEN ISNULL(@title, '') = '' THEN NULL ELSE @title END WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Title = CASE WHEN ISNULL(@title, '') = '' THEN NULL ELSE @title END WHERE ChallengeId = @challengeId
+        `, {
             title: {type: Db.VARCHAR(100), value: title},
             challengeId: {type: Db.INT, value: challenge.id}
         });
@@ -2335,7 +2497,7 @@ class Database {
         /**
          * @type {{recordsets: [{NewTeamId: number}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -2373,7 +2535,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the map has been suggested.
      */
     static async suggestMapForChallenge(challenge, team, map) {
-        await db.query("UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
             map: {type: Db.VARCHAR(100), value: map},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -2394,7 +2558,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the neutral server has been suggested.
      */
     static async suggestNeutralServerForChallenge(challenge, team) {
-        await db.query("UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedNeutralServerTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
@@ -2415,7 +2581,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the team size has been suggested.
      */
     static async suggestTeamSizeForChallenge(challenge, team, size) {
-        await db.query("UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
             size: {type: Db.INT, value: size},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -2437,7 +2605,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the time has been suggested.
      */
     static async suggestTimeForChallenge(challenge, team, date) {
-        await db.query("UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId", {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
             date: {type: Db.DATETIME, value: date},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -2461,7 +2631,7 @@ class Database {
         /**
          * @type {{recordsets: [{HasClocked: boolean}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             SELECT CAST(CASE WHEN COUNT(ChallengeId) > 0 THEN 1 ELSE 0 END AS BIT) HasClocked
             FROM tblChallenge
             WHERE ClockTeamId = @team1Id
@@ -2488,7 +2658,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is unlocked.
      */
     static async unlockChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET AdminCreated = 0 WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET AdminCreated = 0 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                          #       #   ##   #           ##    ##
@@ -2504,7 +2676,9 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is unvoided.
      */
     static async unvoidChallenge(challenge) {
-        await db.query("UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId", {challengeId: {type: Db.INT, value: challenge.id}});
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 
     //                #         #          #  #
@@ -2520,10 +2694,63 @@ class Database {
      * @returns {Promise} A promise that resolves when the name has been updated.
      */
     static async updateName(member) {
-        await db.query("UPDATE tblPlayer SET Name = @name WHERE DiscordId = @discordId", {
+        await db.query(/* sql */`
+            UPDATE tblPlayer SET Name = @name WHERE DiscordId = @discordId
+        `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(64), value: member.displayName}
         });
+    }
+
+    //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
+    //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
+    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #    #   # ##  #  #  ##     #  #  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #  #  #     #  #  ##    # ##    ##   #  #  #  #  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //       #                                                            ###                                                                                                                                   ###
+    /**
+     * Updates the ratins for the season based on the challenge supplied.
+     * @param {Challenge} challenge The challenge in the season to update ratings for.
+     * @param {Object<number, number>} ratings The ratings.
+     * @returns {Promise} A promise that resolves when the ratings are updated.
+     */
+    static async updateRatingsForSeasonFromChallenge(challenge, ratings) {
+        let sql = /* sql */`
+            DECLARE @matchTime DATETIME
+            DECLARE @season INT
+
+            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
+
+            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+            BEGIN
+                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+            END
+
+            SELECT @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
+
+            DELETE FROM tblTeamRating WHERE Season = @season
+        `;
+
+        const params = {
+            challengeId: {type: Db.INT, value: challenge.id}
+        };
+
+        for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: r, rating: ratings[r], index: i}))) {
+            sql = /* sql */`
+                ${sql}
+
+                INSERT INTO tblTeamRating
+                (Season, TeamId, Rating)
+                VALUES
+                (@season, @team${index}Id, @rating${index})
+            `;
+
+            params[`team${index}id`] = {type: Db.INT, value: teamId};
+            params[`rating${index}`] = {type: Db.FLOAT, value: rating};
+        }
+
+        await db.query(sql, params);
     }
 
     //             ##     #       #         #          #  #
@@ -2543,7 +2770,9 @@ class Database {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
-        const data = await db.query("SELECT Map FROM tblAllowedMap WHERE Map = @map", {map: {type: Db.VARCHAR(100), value: map}});
+        const data = await db.query(/* sql */`
+            SELECT Map FROM tblAllowedMap WHERE Map = @map
+        `, {map: {type: Db.VARCHAR(100), value: map}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
 
@@ -2560,7 +2789,7 @@ class Database {
      * @returns {Promise} A promise that resolves when the challenge is voided.
      */
     static async voidChallenge(challenge) {
-        await db.query(`
+        await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
 
             IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengingTeamPenalized = 1)
@@ -2592,7 +2821,7 @@ class Database {
      */
     static async voidChallengeWithPenalties(challenge, teams) {
         const params = {challengeId: {type: Db.INT, value: challenge.id}};
-        let sql = `
+        let sql = /* sql */`
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
 
             IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengingTeamPenalized = 1)
@@ -2615,7 +2844,9 @@ class Database {
         teams.forEach((team, index) => {
             params[`team${index}Id`] = {type: Db.INT, value: team.id};
 
-            sql = `${sql}
+            sql = /* sql */`
+                ${sql}
+
                 IF (SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)
                 BEGIN
                     UPDATE tblTeamPenalty
@@ -2664,7 +2895,7 @@ class Database {
         /**
          * @type {{recordsets: [{}[]]}}
          */
-        const data = await db.query(`
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId

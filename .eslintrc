@@ -57,6 +57,7 @@
         "no-nested-ternary": "off",
         "no-param-reassign": "off",
         "no-plusplus": "off",
+        "no-process-env": "off",
         "no-return-assign": "off",
         "no-ternary": "off",
         "no-trailing-spaces": [

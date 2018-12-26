@@ -108,6 +108,4 @@ class Notify {
     }
 }
 
-setInterval(Notify.notify, 60 * 1000);
-
 module.exports = Notify;

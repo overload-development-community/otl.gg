@@ -2,6 +2,7 @@ DROP TABLE dbo.tblStat
 DROP TABLE dbo.tblChallengeStreamer
 DROP TABLE dbo.tblChallengeHome
 DROP TABLE dbo.tblChallenge
+DROP TABLE dbo.tblTeamRating
 DROP TABLE dbo.tblTeamPenalty
 DROP TABLE dbo.tblTeamHome
 DROP TABLE dbo.tblTeamBan
@@ -14,12 +15,14 @@ DROP TABLE dbo.tblJoinBan
 DROP TABLE dbo.tblInvite
 DROP TABLE dbo.tblCaptainHistory
 DROP TABLE dbo.tblTeam
+DROP TABLE dbo.tblSeason
 DROP TABLE dbo.tblPlayer
 DROP TABLE dbo.tblAllowedMap
 
 CREATE TABLE dbo.tblAllowedMap (
     MapId INT IDENTITY(1, 1) NOT NULL,
-    Map VARCHAR(100) NOT NULL    
+    Map VARCHAR(100) NOT NULL,
+    PRIMARY KEY (MapId ASC)
 )
 
 INSERT INTO dbo.tblAllowedMap
@@ -46,6 +49,19 @@ CREATE TABLE dbo.tblPlayer (
     DateAdded DATETIME NOT NULL CONSTRAINT DF_tblPlayer_DateAdded DEFAULT (getutcdate()),
     PRIMARY KEY (PlayerId ASC)
 )
+
+CREATE TABLE dbo.tblSeason (
+    Season INT NOT NULL,
+    K FLOAT NOT NULL,
+    DateStart DATETIME NOT NULL,
+    DateEnd DATETIME NOT NULL,
+    PRIMARY KEY (Season ASC)
+)
+
+INSERT INTO tblSeason
+(Season, K, DateStart, DateEnd)
+VALUES
+(1, 50, '1/1/2019', '7/1/2019')
 
 CREATE TABLE dbo.tblTeam (
     TeamId INT IDENTITY(1, 1) NOT NULL,
@@ -147,6 +163,14 @@ CREATE TABLE dbo.tblTeamPenalty (
     PRIMARY KEY (PenaltyId ASC)
 )
 
+CREATE TABLE dbo.tblTeamRating (
+    RatingId INT IDENTITY(1, 1) NOT NULL,
+    Season INT NOT NULL CONSTRAINT FK_tblTeamRating_Season_tblSeason_Season FOREIGN KEY (Season) REFERENCES dbo.tblSeason (Season),
+    TeamId INT NOT NULL CONSTRAINT FK_tblTeamRating_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
+    Rating FLOAT NOT NULL,
+    PRIMARY KEY (RatingId ASC)
+)
+
 CREATE TABLE dbo.tblChallenge (
     ChallengeId INT IDENTITY(1, 1) NOT NULL,
     Title VARCHAR(100) NULL,
@@ -157,6 +181,7 @@ CREATE TABLE dbo.tblChallenge (
     Map VARCHAR(100) NULL,
     TeamSize INT NULL,
     MatchTime DATETIME NULL,
+    Postseason BIT NOT NULL CONSTRAINT DF_tblChallenge_Postseason DEFAULT(0),
     HomeMapTeamId INT NULL CONSTRAINT FK_tblChallenge_HomeMapTeamId_tblTeam_TeamId FOREIGN KEY (HomeMapTeamId) REFERENCES dbo.tblTeam (TeamId),
     HomeServerTeamId INT NULL CONSTRAINT FK_tblChallenge_HomeServerTeamId_tblTeam_TeamId FOREIGN KEY (HomeServerTeamId) REFERENCES dbo.tblTeam (TeamId),
     AdminCreated BIT NOT NULL CONSTRAINT DF_tblChallenge_AdminCreated DEFAULT(0),

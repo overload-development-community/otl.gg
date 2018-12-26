@@ -6,6 +6,7 @@ const DiscordJs = require("discord.js"),
 
     Db = require("./database"),
     Exception = require("./exception"),
+    Otl = require("./otl"),
     settings = require("./settings"),
     Team = require("./team"),
 
@@ -703,6 +704,8 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
         }
+
+        await Otl.updateRatingsForSeasonFromChallenge(this);
     }
 
     //                     #    #                #  #
@@ -1427,6 +1430,47 @@ class Challenge {
         }
     }
 
+    //               #    ###                 #
+    //               #    #  #                #
+    //  ###    ##   ###   #  #   ##    ###   ###    ###    ##    ###   ###    ##   ###
+    // ##     # ##   #    ###   #  #  ##      #    ##     # ##  #  #  ##     #  #  #  #
+    //   ##   ##     #    #     #  #    ##    #      ##   ##    # ##    ##   #  #  #  #
+    // ###     ##     ##  #      ##   ###      ##  ###     ##    # #  ###     ##   #  #
+    /**
+     * Sets a challenge to be a postseason match.
+     * @returns {Promise} A promise that resolves when the challenge is set as a postseason match.
+     */
+    async setPostseason() {
+        try {
+            await Db.setPostseasonForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
+        }
+
+        await Discord.queue("This challenge is now a postseason match.  All stats will count towards postseason stats for the previous season.", this.channel);
+    }
+
+    //               #    ###                     ##                 ##
+    //               #    #  #                     #                #  #
+    //  ###    ##   ###   #  #   ##    ###  #  #   #     ###  ###    #     ##    ###   ###    ##   ###
+    // ##     # ##   #    ###   # ##  #  #  #  #   #    #  #  #  #    #   # ##  #  #  ##     #  #  #  #
+    //   ##   ##     #    # #   ##     ##   #  #   #    # ##  #     #  #  ##    # ##    ##   #  #  #  #
+    // ###     ##     ##  #  #   ##   #      ###  ###    # #  #      ##    ##    # #  ###     ##   #  #
+    //                                 ###
+    /**
+     * Sets a challenge to be a regular season match.
+     * @returns {Promise} A promise that resolves when the challenge is set as a regular season match.
+     */
+    async setRegularSeason() {
+        try {
+            await Db.setRegularSeasonForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
+        }
+
+        await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
+    }
+
     //               #     ##
     //               #    #  #
     //  ###    ##   ###    #     ##    ##   ###    ##
@@ -1969,6 +2013,10 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
         }
+
+        if (this.details.dateClosed) {
+            await Otl.updateRatingsForSeasonFromChallenge(this);
+        }
     }
 
     //              #       #
@@ -2014,6 +2062,10 @@ class Challenge {
             }
         } catch (err) {
             throw new Exception("There was a critical Discord error voiding a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+
+        if (this.details.dateClosed) {
+            await Otl.updateRatingsForSeasonFromChallenge(this);
         }
     }
 }
