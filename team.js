@@ -625,7 +625,7 @@ class Team {
             }
 
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: `${this.name}`,
+                title: `${this.name} (${this.tag})`,
                 description: "Team Disbanded",
                 color: this.role.color,
                 fields: [
@@ -1437,6 +1437,9 @@ class Team {
             }, {
                 id: teamRole.id,
                 allow: ["VIEW_CHANNEL"]
+            }, {
+                id: Discord.founderRole,
+                allow: ["MANAGE_MESSAGES"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 

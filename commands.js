@@ -23,7 +23,7 @@ const tz = require("timezone-js"),
     numberMatch = /^(?:[1-9][0-9]*)$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
-    teamNameMatch = /^[0-9a-zA-Z ]{6,25}$/,
+    teamNameMatch = /^[0-9a-zA-Z' -]{6,25}$/,
     teamPilotMatch = /^(.+) <@!?([0-9]+)>$/,
     teamTagMatch = /^[0-9A-Z]{1,5}$/,
     teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
@@ -334,7 +334,7 @@ class Commands {
      * @returns {Promise<boolean>} A promise that returns with whether the check passed.
      */
     static async checkHasParameters(message, member, text, channel) {
-        if (message) {
+        if (!message) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  ${text}`, channel);
             return false;
         }
@@ -537,7 +537,7 @@ class Commands {
         }
 
         if (bannedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You will be able to join this team again on ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You cannot use this command until ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
             throw new Warning("Pilot not allowed to accept an invite from this team.");
         }
     }
@@ -650,7 +650,7 @@ class Commands {
 
         if (!newTeam) {
             await Discord.queue(`Sorry, ${member}, but you can only use this command when you're in the process of creating a new team.`, channel);
-            throw new Warning("Pilot is already in the process of starting a team.");
+            throw new Warning("Pilot is not in the process of starting a team.");
         }
 
         return newTeam;
@@ -2046,7 +2046,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you have removed ${pilot.displayName}.`, member);
+        await Discord.queue(`${member}, you have removed ${pilot.displayName}.`, channel);
         return true;
     }
 
@@ -4437,7 +4437,6 @@ class Commands {
         }
 
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         try {
             await challenge.setPostseason();
@@ -4476,7 +4475,6 @@ class Commands {
         }
 
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         try {
             await challenge.setRegularSeason();

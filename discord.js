@@ -363,7 +363,7 @@ class Discord {
         }
 
         if (!embed.color) {
-            embed.setColor(0x16F6F8); // TODO: Update to use OTL color.
+            embed.setColor(0xFF6600);
         }
 
         if (!embed.timestamp) {

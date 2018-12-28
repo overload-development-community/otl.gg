@@ -794,13 +794,13 @@ class Database {
                 ON tb.TeamId = r.TeamId
                 AND tb.PlayerId = r.PlayerId
             WHERE r.TeamId = @teamId
-                AND Captain = 1
+                AND Founder = 1
 
             INSERT INTO tblTeamBan (TeamId, PlayerId)
             SELECT @teamId, PlayerId
             FROM tblRoster
             WHERE TeamId = @teamId
-                AND Captain = 1
+                AND Founder = 1
 
             DELETE FROM tblRoster WHERE TeamId = @teamId
             DELETE FROM tblRequest WHERE TeamId = @teamId
@@ -2005,9 +2005,7 @@ class Database {
                 END
             END
 
-            DELETE FROM tblChallengeStreamer cs
-            WHERE PlayerId = @playerId
-
+            DELETE FROM tblChallengeStreamer WHERE PlayerId = @playerId
             DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @playerId
         `, {
