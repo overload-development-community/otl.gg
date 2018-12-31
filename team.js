@@ -409,7 +409,7 @@ class Team {
             await Discord.queue(`Welcome **${captain}** as the newest team captain!`, captainsChannel);
             await Discord.queue(`**${captain}** is now a team captain!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
+                title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
                 fields: [
@@ -466,7 +466,7 @@ class Team {
             await Discord.queue(`**${member}** has accepted your invitation to join the team!`, captainsChannel);
             await Discord.queue(`**${member}** has joined the team!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
+                title: `${this.name} (${this.tag})`,
                 description: "Pilot Added",
                 color: this.role.color,
                 fields: [
@@ -628,12 +628,12 @@ class Team {
                 title: `${this.name} (${this.tag})`,
                 description: "Team Disbanded",
                 color: this.role.color,
-                fields: [
+                fields: memberList.length > 0 ? [
                     {
                         name: "Pilots Removed",
                         value: `${memberList.join(", ")}`
                     }
-                ],
+                ] : void 0,
                 footer: {
                     text: `disbanded by ${member.displayName}`
                 }
@@ -867,19 +867,17 @@ class Team {
             await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
+                title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
                 fields: [
                     {
                         name: "Old Founder",
-                        value: `${member}`,
-                        inline: true
+                        value: `${member}`
                     },
                     {
                         name: "New Founder",
-                        value: `${pilot}`,
-                        inline: true
+                        value: `${pilot}`
                     }
                 ],
                 footer: {
@@ -904,6 +902,8 @@ class Team {
      * @returns {Promise} A promise that resolves when the pilot is removed.
      */
     async pilotLeft(member) {
+        const team = await member.getTeam();
+
         try {
             await Db.removePilotFromTeam(member, this);
         } catch (err) {
@@ -911,49 +911,47 @@ class Team {
         }
 
         try {
-            const captainsChannel = this.captainsChannel;
-            if (!captainsChannel) {
-                throw new Error("Captain's channel does not exist for the team.");
-            }
-
-            const teamChannel = this.teamChannel;
-            if (!teamChannel) {
-                throw new Error("Team's channel does not exist.");
-            }
-
-            await member.removeRole(Discord.captainRole, `${member.displayName} left the team.`);
-
-            await captainsChannel.overwritePermissions(
-                member,
-                {"VIEW_CHANNEL": null},
-                `${member.displayName} left the team.`
-            );
-
-            await member.removeRole(this.role, `${member.displayName} left the team.`);
-
-            await Discord.queue(`${member.displayName} has left the team.`, captainsChannel);
-            await Discord.queue(`${member.displayName} has left the team.`, teamChannel);
-
-            const challenges = await Challenge.getAllByTeam(this);
-            for (const challenge of challenges) {
-                await challenge.updateTopic();
-            }
-            await this.updateChannels();
-
-            await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
-                description: "Pilot Left",
-                color: this.role.color,
-                fields: [
-                    {
-                        name: "Pilot Left",
-                        value: `${member}`
-                    }
-                ],
-                footer: {
-                    text: "pilot left team"
+            if (team) {
+                const captainsChannel = this.captainsChannel;
+                if (!captainsChannel) {
+                    throw new Error("Captain's channel does not exist for the team.");
                 }
-            }), Discord.rosterUpdatesChannel);
+
+                const teamChannel = this.teamChannel;
+                if (!teamChannel) {
+                    throw new Error("Team's channel does not exist.");
+                }
+
+                if (Discord.findGuildMemberById(member.id)) {
+                    await member.removeRole(Discord.captainRole, `${member.displayName} left the team.`);
+                    await member.removeRole(this.role, `${member.displayName} left the team.`);
+                }
+
+                await Discord.queue(`${member.displayName} has left the team.`, captainsChannel);
+                await Discord.queue(`${member.displayName} has left the team.`, teamChannel);
+
+                const challenges = await Challenge.getAllByTeam(this);
+                for (const challenge of challenges) {
+                    await challenge.updateTopic();
+                }
+
+                await Discord.richQueue(new DiscordJs.RichEmbed({
+                    title: `${this.name} (${this.tag})`,
+                    description: "Pilot Left",
+                    color: this.role.color,
+                    fields: [
+                        {
+                            name: "Pilot Left",
+                            value: `${member}`
+                        }
+                    ],
+                    footer: {
+                        text: "pilot left team"
+                    }
+                }), Discord.rosterUpdatesChannel);
+            }
+
+            await this.updateChannels();
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a pilot from a team.  Please resolve this manually as soon as possible.", err);
         }
@@ -1042,7 +1040,7 @@ class Team {
             await Discord.queue(`${captain.displayName} is no longer a team captain.`, captainsChannel);
             await Discord.queue(`${captain.displayName} is no longer a team captain.`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
+                title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
                 fields: [
@@ -1106,7 +1104,7 @@ class Team {
                 await Discord.queue(`${pilot.displayName} has been removed from the team by ${member.displayName}.`, teamChannel);
 
                 await Discord.richQueue(new DiscordJs.RichEmbed({
-                    title: this.name,
+                    title: `${this.name} (${this.tag})`,
                     description: "Pilot Removed",
                     color: this.role.color,
                     fields: [
@@ -1247,19 +1245,17 @@ class Team {
             await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
             await Discord.richQueue(new DiscordJs.RichEmbed({
-                title: this.name,
+                title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
                 fields: [
                     {
                         name: "Old Founder",
-                        value: `${oldFounder || "Position Vacated"}`,
-                        inline: true
+                        value: `${oldFounder || "Position Vacated"}`
                     },
                     {
                         name: "New Founder",
-                        value: `${pilot}`,
-                        inline: true
+                        value: `${pilot}`
                     }
                 ],
                 footer: {

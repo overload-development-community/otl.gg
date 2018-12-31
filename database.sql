@@ -225,7 +225,6 @@ CREATE TABLE dbo.tblChallengeHome (
 CREATE TABLE dbo.tblChallengeStreamer (
     StreamerId INT IDENTITY(1, 1) NOT NULL,
     ChallengeId INT NOT NULL CONSTRAINT FK_tblChallengeStreamer_ChallengeId_tblChallenge_ChallengeId FOREIGN KEY (ChallengeId) REFERENCES dbo.tblChallenge (ChallengeId),
-    TeamId INT NOT NULL CONSTRAINT FK_tblChallengeStreamer_TeamId_tblTeam_TeamId FOREIGN KEY (TeamId) REFERENCES dbo.tblTeam (TeamId),
     PlayerId INT NOT NULL CONSTRAINT FK_tblChallengeStreamer_PlayerId_tblPlayer_PlayerId FOREIGN KEY (PlayerId) REFERENCES dbo.tblPlayer (PlayerId),
     PRIMARY KEY (StreamerId ASC)
 )

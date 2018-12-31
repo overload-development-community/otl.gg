@@ -23,6 +23,11 @@ let alertsChannel;
 let captainRole;
 
 /**
+ * @type {DiscordJs.CategoryChannel}
+ */
+let challengesCategory;
+
+/**
  * @type {DiscordJs.Role}
  */
 let founderRole;
@@ -82,6 +87,21 @@ class Discord {
      */
     static get captainRole() {
         return captainRole;
+    }
+
+    //       #           ##    ##                                    ##          #
+    //       #            #     #                                   #  #         #
+    //  ##   ###    ###   #     #     ##   ###    ###   ##    ###   #      ###  ###    ##    ###   ##   ###   #  #
+    // #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  ##     #     #  #   #    # ##  #  #  #  #  #  #  #  #
+    // #     #  #  # ##   #     #    ##    #  #   ##   ##      ##   #  #  # ##   #    ##     ##   #  #  #      # #
+    //  ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###     ##    # #    ##   ##   #      ##   #       #
+    //                                            ###                                        ###               #
+    /**
+     * Returns the challenges category.
+     * @returns {DiscordJs.CategoryChannel} The challenges category.
+     */
+    static get challengesCategory() {
+        return challengesCategory;
     }
 
     //   #                        #              ###         ##
@@ -187,9 +207,11 @@ class Discord {
             captainRole = otlGuild.roles.find((r) => r.name === "Captain");
             founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
-            alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otl-alerts")); // eslint-disable-line no-extra-parens
+            alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
             matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
             rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
+
+            challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (otlGuild.channels.find((c) => c.name === "Challenges")); // eslint-disable-line no-extra-parens
         });
 
         discord.on("disconnect", (ev) => {

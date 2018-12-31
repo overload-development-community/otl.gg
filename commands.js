@@ -24,8 +24,8 @@ const tz = require("timezone-js"),
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
     teamNameMatch = /^[0-9a-zA-Z' -]{6,25}$/,
-    teamPilotMatch = /^(.+) <@!?([0-9]+)>$/,
-    teamTagMatch = /^[0-9A-Z]{1,5}$/,
+    teamPilotMatch = /^(.+) (<@!?[0-9]+>)$/,
+    teamTagMatch = /^[0-9A-Za-z]{1,5}$/,
     teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
     twoTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/;
 
@@ -161,7 +161,7 @@ class Commands {
      */
     static async checkChallengeIsNotLocked(challenge, member, channel) {
         if (challenge.details.adminCreated) {
-            await Discord.queue(`Sorry, ${member}, but this match was created by an admin, and this command is not available.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this match is locked, and this command is not available.`, channel);
             throw new Warning("Match is locked by admin.");
         }
     }
@@ -229,6 +229,48 @@ class Commands {
         }
     }
 
+    //       #                 #      ##   #           ##    ##                            #  #              ###           ##          #
+    //       #                 #     #  #  #            #     #                            ####               #           #  #         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   ####   ###  ###    #     ###    #     ##   ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #  #  #   #    ##       #   # ##   #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  # ##  #  #   #      ##   #  #  ##     #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #   # #  ###   ###   ###     ##    ##     ##
+    //                                                                          ###                    #
+    /**
+     * Checks to ensure the challenge map is set.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeMapIsSet(challenge, member, channel) {
+        if (!challenge.details.map) {
+            await Discord.queue(`Sorry, ${member}, but the map for this match has not been set yet.`, channel);
+            throw new Warning("Map not set.");
+        }
+    }
+
+    //       #                 #      ##   #           ##    ##                            #  #         #          #     ###    #                ###           ##          #
+    //       #                 #     #  #  #            #     #                            ####         #          #      #                       #           #  #         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   ####   ###  ###    ##   ###    #    ##    # #    ##    #     ###    #     ##   ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #   #    #     #  #   #     #    ####  # ##   #    ##       #   # ##   #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  # ##   #    #     #  #   #     #    #  #  ##     #      ##   #  #  ##     #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #   # #    ##   ##   #  #   #    ###   #  #   ##   ###   ###     ##    ##     ##
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge match time is set.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeMatchTimeIsSet(challenge, member, channel) {
+        if (!challenge.details.matchTime) {
+            await Discord.queue(`Sorry, ${member}, but the time for this match has not been set yet.`, channel);
+            throw new Warning("Match time not set.");
+        }
+    }
+
     //       #                 #      ##   #           ##    ##                             ##    #           #            ##                     ##           #
     //       #                 #     #  #  #            #     #                            #  #   #           #           #  #                     #           #
     //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #    ###    ###  ###    ###   #      ##   # #   ###    #     ##   ###    ##
@@ -253,7 +295,7 @@ class Commands {
         }
 
         if (stats.challengingTeamStats.length !== challenge.details.teamSize) {
-            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${stats.challengingTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${stats.challengingTeamStats.length}** player stats and this match requires **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
         }
 
@@ -265,11 +307,32 @@ class Commands {
         }
 
         if (stats.challengedTeamStats.length !== challenge.details.teamSize) {
-            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${stats.challengedTeamStats.length}** players stats and this match only supports **${challenge.details.teamSize}**.`, channel);
+            await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${stats.challengedTeamStats.length}** player stats and this match requires **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
         }
 
         return stats;
+    }
+
+    //       #                 #      ##   #           ##    ##                            ###                      ##    #                ###           ##          #
+    //       #                 #     #  #  #            #     #                             #                      #  #                     #           #  #         #
+    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##    #     ##    ###  # #    #    ##    ####   ##    #     ###    #     ##   ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    # ##  #  #  ####    #    #      #   # ##   #    ##       #   # ##   #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #    ##    # ##  #  #  #  #   #     #    ##     #      ##   #  #  ##     #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##    #     ##    # #  #  #   ##   ###   ####   ##   ###   ###     ##    ##     ##
+    //                                                                          ###
+    /**
+     * Checks to ensure the challenge team size is set.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkChallengeTeamSizeIsSet(challenge, member, channel) {
+        if (!challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but the team size for this match has not been set yet.`, channel);
+            throw new Warning("Team size not set.");
+        }
     }
 
     //       #                 #      ##   #           ##    ##                            ###                      ##    #           #
@@ -893,7 +956,7 @@ class Commands {
      */
     static async checkTimezoneIsValid(message, member, channel) {
         if (!tzdata.zones[message]) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.  See #timezone-faq for a complete list of time zones.`, channel);
             throw new Warning("Invalid time zone.");
         }
 
@@ -901,7 +964,7 @@ class Commands {
         try {
             time = new Date().toLocaleString("en-US", {timeZone: message, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"});
         } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.`, channel);
+            await Discord.queue(`Sorry, ${member}, but that time zone is not recognized.  Please note that this command is case sensitive.  See #timezone-faq for a complete list of time zones.`, channel);
             throw new Warning("Invalid time zone.");
         }
 
@@ -2445,6 +2508,11 @@ class Commands {
         await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
 
+        if (!challenge.details.usingHomeServerTeam) {
+            await Discord.queue(`Sorry, ${member}, but this match is already set to use a neutral server.`, channel);
+            throw new Warning("Neutral server already confirmed.");
+        }
+
         if (!challenge.details.suggestedNeutralServerTeam) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral server for this match yet!  Use the \`!suggestneutralserver\` command to do so.`, channel);
             throw new Warning("Neutral server not suggested yet.");
@@ -2607,7 +2675,7 @@ class Commands {
             throw new Warning("Invalid date.");
         }
 
-        if (!date) {
+        if (!date || isNaN(date.valueOf())) {
             await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
             throw new Warning("Invalid date.");
         }
@@ -2710,6 +2778,11 @@ class Commands {
         if (challenge.details.dateClocked) {
             await Discord.queue(`Sorry, ${member}, but this challenge is already on the clock!`, channel);
             throw new Warning("Match already clocked.");
+        }
+
+        if (challenge.details.matchTime) {
+            await Discord.queue(`Sorry, ${member}, but this challenge has already been scheduled and doesn't need to be clocked.`, channel);
+            throw new Warning("Match already scheduled.");
         }
 
         if (challenge.challengingTeam.locked || challenge.challengedTeam.locked) {
@@ -2816,7 +2889,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.matchTime) {
-            await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
+            await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
         } else {
             await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
         }
@@ -2851,16 +2924,16 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.matchTime) {
-            const difference = challenge.details.matchTime.getDate() - new Date().getDate(),
-                days = Math.abs(difference) / (24 * 60 * 60 * 1000),
-                hours = Math.abs(difference) / (60 * 60 * 1000) % 24,
-                minutes = Math.abs(difference) / (60 * 1000) % 60 % 60,
-                seconds = Math.abs(difference) / 1000 % 60;
+            const difference = challenge.details.matchTime.getTime() - new Date().getTime(),
+                days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
             if (difference > 0) {
-                await Discord.queue(`${member}, this match is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
+                await Discord.queue(`${member}, this match is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`, channel);
             } else {
-                await Discord.queue(`${member}, this match was scheduled to begin ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `} ago.`, channel);
+                await Discord.queue(`${member}, this match was scheduled to begin ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"} `} ago.`, channel);
             }
         } else {
             await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
@@ -2896,7 +2969,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.dateClockDeadline) {
-            await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}.`, channel);
+            await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
         } else {
             await Discord.queue(`${member}, this match has not yet been put on the clock.`, channel);
         }
@@ -2931,14 +3004,14 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.dateClockDeadline) {
-            const difference = challenge.details.dateClockDeadline.getDate() - new Date().getDate(),
-                days = Math.abs(difference) / (24 * 60 * 60 * 1000),
-                hours = Math.abs(difference) / (60 * 60 * 1000) % 24,
-                minutes = Math.abs(difference) / (60 * 1000) % 60 % 60,
-                seconds = Math.abs(difference) / 1000 % 60;
+            const difference = challenge.details.dateClockDeadline.getTime() - new Date().getTime(),
+                days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
             if (difference > 0) {
-                await Discord.queue(`${member}, this match's clock deadline expires in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `}.`, channel);
+                await Discord.queue(`${member}, this match's clock deadline expires in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"},`}.`, channel);
             } else {
                 await Discord.queue(`${member}, this match's clock deadline expired ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}, `} ago.`, channel);
             }
@@ -3107,14 +3180,14 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cast(member, channel, message) {
-        if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the two tags of the teams in the match you wish to cast, for example `!cast CF JO`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the two tags of the teams in the match you wish to cast, for example `!cast CF JOA`.", channel)) {
             return false;
         }
 
         await Commands.checkMemberHasTwitchName(member, channel);
 
         if (!twoTeamTagMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JO\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JOA\`.`, channel);
             return false;
         }
 
@@ -3137,8 +3210,6 @@ class Commands {
         }
 
         await Commands.checkChallengeDetails(challenge, member, channel);
-        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (challenge.details.caster) {
             await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} is already scheduled to cast this match.`, channel);
@@ -3157,7 +3228,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` in ${challenge.channel}`, channel);
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, channel);
 
         return true;
     }
@@ -3233,6 +3304,9 @@ class Commands {
         await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeMapIsSet(challenge, member, channel);
+        await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
+        await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
         if (!scoreMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
@@ -3335,6 +3409,8 @@ class Commands {
             throw err;
         }
 
+        await Discord.queue(`${member}, your team's time zone is now set.`, channel);
+
         return true;
     }
 
@@ -3352,12 +3428,12 @@ class Commands {
     async rename(member, channel, message) {
         await Commands.checkMemberIsOwner(member);
 
-        if (!await Commands.checkHasParameters(message, member, "You must specify the team tag followed by the new team name to rename a team, for example `!rename CF Juno Offworld`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team tag followed by the new team name to rename a team, for example `!rename CF Juno Offworld Automation`.", channel)) {
             return false;
         }
 
         if (!teamTagTeamNameMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must specify the team tag followed by the new team name to rename a team, for example \`!rename CF Juno Offworld\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must specify the team tag followed by the new team name to rename a team, for example \`!rename CF Juno Offworld Automation\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
@@ -3395,24 +3471,27 @@ class Commands {
     async retag(member, channel, message) {
         await Commands.checkMemberIsOwner(member);
 
-        if (!await Commands.checkHasParameters(message, member, "You must specify the old team tag followed by the new team tag to rename a team tag, for example `!retag CF JO`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You must specify the old team tag followed by the new team tag to rename a team tag, for example `!retag CF JOA`.", channel)) {
             return false;
         }
 
         if (!twoTeamTagMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JO\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JOA\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
         const {1: oldTeamTag, 2: newTeamTag} = twoTeamTagMatch.exec(message),
             team = await Commands.checkTeamExists(oldTeamTag, member, channel);
-        if (Team.tagExists(newTeamTag)) {
-            await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${newTeamTag}.`, channel);
+
+        const tag = newTeamTag.toUpperCase();
+
+        if (Team.tagExists(tag)) {
+            await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${tag}.`, channel);
             throw new Warning("Team tag already exists.");
         }
 
         try {
-            await team.retag(newTeamTag, member);
+            await team.retag(tag, member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -3510,6 +3589,8 @@ class Commands {
             throw err;
         }
 
+        await Discord.queue(`${member}, ${captain.displayName} has been removed as a captain.`, channel);
+
         return true;
     }
 
@@ -3554,6 +3635,8 @@ class Commands {
             throw err;
         }
 
+        await Discord.queue(`${member}, ${pilot.displayName} has been removed from their team.`, channel);
+
         return true;
     }
 
@@ -3578,7 +3661,7 @@ class Commands {
         }
 
         if (!twoTeamTagMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JO\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must specify the two teams to create a match for.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
@@ -3983,7 +4066,7 @@ class Commands {
             throw new Warning("Invalid date.");
         }
 
-        if (!date) {
+        if (!date || isNaN(date.valueOf())) {
             await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
             throw new Warning("Invalid date.");
         }
@@ -4029,6 +4112,11 @@ class Commands {
             throw new Warning("Invalid parameters.");
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeMapIsSet(challenge, member, channel);
+        await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
+        await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
+
         const matches = scoreMatch.exec(message),
             score1 = +matches[1],
             score2 = +matches[2];
@@ -4069,6 +4157,7 @@ class Commands {
             return false;
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
@@ -4147,6 +4236,7 @@ class Commands {
             return false;
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
@@ -4197,10 +4287,31 @@ class Commands {
             return false;
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        const pilot = await Commands.checkPilotExists(message, member, channel);
+        const pilot = await Commands.checkPilotExists(message, member, channel),
+            stats = {};
+
+        try {
+            stats.challengingTeamStats = await challenge.getStatsForTeam(challenge.challengingTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        try {
+            stats.challengedTeamStats = await challenge.getStatsForTeam(challenge.challengedTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (!stats.challengingTeamStats.find((s) => s.pilot.id === pilot.id) && !stats.challengedTeamStats.find((s) => s.pilot.id === pilot.id)) {
+            await Discord.queue(`Sorry, ${member}, but ${pilot.displayName} does not have a recorded stat for this match.`, channel);
+            throw new Warning("No stat for pilot.");
+        }
 
         try {
             await challenge.removeStat(pilot);
@@ -4279,6 +4390,8 @@ class Commands {
                     await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
                     throw err;
                 }
+
+                await Discord.queue(`${member}, the specified challenge has been voided.`, channel);
             } else {
                 await Discord.queue(`Sorry, ${member}, but you must use the \`!voidgame\` command with the team tags of the two teams for which you wish to look up a match to void.`, channel);
                 throw new Warning("Invalid parameters.");
@@ -4398,8 +4511,6 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-
         try {
             await challenge.title(message);
         } catch (err) {
@@ -4436,8 +4547,6 @@ class Commands {
             return false;
         }
 
-        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
-
         try {
             await challenge.setPostseason();
         } catch (err) {
@@ -4473,8 +4582,6 @@ class Commands {
         if (!await Commands.checkNoParameters(message, member, "Use the `!regularseason` command by itself to set this challenge as a regular season match.", channel)) {
             return false;
         }
-
-        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         try {
             await challenge.setRegularSeason();

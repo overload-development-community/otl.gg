@@ -422,7 +422,7 @@ class Database {
          * @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}}
          */
         const data = await db.query(/* sql */`
-            UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, UTCDATE()), ClockTeamId = @teamId, DateClockDeadlineNotified = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, GETUTCDATE()), ClockTeamId = @teamId, DateClockDeadlineNotified = NULL WHERE ChallengeId = @challengeId
 
             SELECT DateClocked, DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
@@ -489,7 +489,7 @@ class Database {
                     SELECT COUNT(ChallengeId)
                     FROM tblChallenge
                     WHERE (ChallengingTeamId = @challengingTeamId or ChallengedTeamId = @challengingTeamId)
-                        AND DateCompleted IS NOT NULL
+                        AND DateClosed IS NOT NULL
                         AND DateConfirmed IS NOT NULL
                         AND DateVoided IS NULL
                         AND MatchTime > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengingTeamId)
@@ -507,7 +507,7 @@ class Database {
                     SELECT COUNT(ChallengeId)
                     FROM tblChallenge
                     WHERE (ChallengingTeamId = @challengedTeamId or ChallengedTeamId = @challengedTeamId)
-                        AND DateCompleted IS NOT NULL
+                        AND DateClosed IS NOT NULL
                         AND DateConfirmed IS NOT NULL
                         AND DateVoided IS NULL
                         AND MatchTime > (SELECT DatePenalized FROM tblTeamPenalty WHERE TeamId = @challengedTeamId)
@@ -619,21 +619,21 @@ class Database {
          * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, HomeServerTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
-            DECLARE @OrangeTeamId INT
-            DECLARE @BlueTeamId INT
-            DECLARE @HomeMapTeamId INT
-            DECLARE @HomeServerTeamId INT
-            DECLARE @Team1Penalized BIT
-            DECLARE @Team2Penalized BIT
-            DECLARE @ChallengeId INT
+            DECLARE @orangeTeamId INT
+            DECLARE @blueTeamId INT
+            DECLARE @homeMapTeamId INT
+            DECLARE @homeServerTeamId INT
+            DECLARE @team1Penalized BIT
+            DECLARE @team2Penalized BIT
+            DECLARE @challengeId INT
 
             SELECT
-                @OrangeTeamId = CASE WHEN Team1Orange < Team2Orange THEN @team1Id WHEN Team1Orange > Team2Orange THEN @team2Id WHEN @colorSeed < 0.5 THEN @team1Id ELSE @team2Id END,
-                @BlueTeamId = CASE WHEN Team1Orange > Team2Orange THEN @team1Id WHEN Team1Orange < Team2Orange THEN @team2Id WHEN @colorSeed >= 0.5 THEN @team1Id ELSE @team2Id END,
-                @HomeMapTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeMap < Team2HomeMap THEN @team1Id WHEN Team1HomeMap > Team2HomeMap THEN @team2Id WHEN @mapSeed < 0.5 THEN @team1Id ELSE @team2Id END,
-                @HomeServerTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeServer < Team2HomeServer THEN @team1Id WHEN Team1HomeServer > Team2HomeServer THEN @team2Id WHEN @ServerSeed < 0.5 THEN @team1Id ELSE @team2Id END,
-                @Team1Penalized = CASE WHEN Team1Penalties > 0 THEN 1 ELSE 0 END,
-                @Team2Penalized = CASE WHEN Team2Penalties > 0 THEN 1 ELSE 0 END
+                @orangeTeamId = CASE WHEN Team1Orange < Team2Orange THEN @team1Id WHEN Team1Orange > Team2Orange THEN @team2Id WHEN @colorSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @blueTeamId = CASE WHEN Team1Orange > Team2Orange THEN @team1Id WHEN Team1Orange < Team2Orange THEN @team2Id WHEN @colorSeed >= 0.5 THEN @team1Id ELSE @team2Id END,
+                @homeMapTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeMap < Team2HomeMap THEN @team1Id WHEN Team1HomeMap > Team2HomeMap THEN @team2Id WHEN @mapSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @homeServerTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeServer < Team2HomeServer THEN @team1Id WHEN Team1HomeServer > Team2HomeServer THEN @team2Id WHEN @serverSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @team1Penalized = CASE WHEN Team1Penalties > 0 THEN 1 ELSE 0 END,
+                @team2Penalized = CASE WHEN Team2Penalties > 0 THEN 1 ELSE 0 END
             FROM (
                 SELECT ISNULL(SUM(CASE WHEN OrangeTeamId = @team1Id THEN 1 ELSE 0 END), 0) Team1Orange,
                     ISNULL(SUM(CASE WHEN OrangeTeamId = @team2Id THEN 1 ELSE 0 END), 0) Team2Orange,
@@ -662,12 +662,12 @@ class Database {
             ) VALUES (
                 @team1Id,
                 @team2Id,
-                @OrangeTeamId,
-                @BlueTeamId,
-                @HomeMapTeamId,
-                @HomeServerTeamId,
-                @Team1Penalized,
-                @Team2Penalized,
+                @orangeTeamId,
+                @blueTeamId,
+                @homeMapTeamId,
+                @homeServerTeamId,
+                @team1Penalized,
+                @team2Penalized,
                 @adminCreated
             )
 
@@ -676,21 +676,21 @@ class Database {
             WHERE (TeamId = @team1Id OR TeamId = @team2Id)
                 AND PenaltiesRemaining > 0
 
-            SET @ChallengeId = SCOPE_IDENTITY()
+            SET @challengeId = SCOPE_IDENTITY()
 
-            INSERT INTO tblChallengeMap (ChallengeId, Number, Map)
-            SELECT @ChallengeId, Number, Map
+            INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
+            SELECT @challengeId, Number, Map
             FROM tblTeamHome
-            WHERE TeamId = @HomeMapTeamId
+            WHERE TeamId = @homeMapTeamId
 
             SELECT
-                @ChallengeId ChallengeId,
-                @OrangeTeamId OrangeTeamId,
-                @BlueTeamId BlueTeamId,
-                @HomeMapTeamId HomeMapTeamId,
-                @HomeServerTeamId HomeServerTeamId,
-                @Team1Penalized Team1Penalized,
-                @Team2Penalized Team2Penalized
+                @challengeId ChallengeId,
+                @orangeTeamId OrangeTeamId,
+                @blueTeamId BlueTeamId,
+                @homeMapTeamId HomeMapTeamId,
+                @homeServerTeamId HomeServerTeamId,
+                @team1Penalized Team1Penalized,
+                @team2Penalized Team2Penalized
         `, {
             team1Id: {type: Db.INT, value: team1.id},
             team2Id: {type: Db.INT, value: team2.id},
@@ -749,7 +749,7 @@ class Database {
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId
 
-            SELECT @TeamId TeamId
+            SELECT @teamId TeamId
         `, {
             discordId: {type: Db.VARCHAR(24), value: newTeam.member.id},
             name: {type: Db.VARCHAR(25), value: newTeam.name},
@@ -857,7 +857,7 @@ class Database {
     // #      ##     ##  #  #  #  #    #    #     ##    # #  #  #  ###     #   #  #   # #  #  #   ##    ##   #      #     # #  #
     //  ###                           #                                   #                                                     ###
     /**
-     * Gets a team by name or tag.  Team can be disbanded
+     * Gets a team by name or tag.
      * @param {string} text The name or tag of the team.
      * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
@@ -870,6 +870,33 @@ class Database {
             SELECT TeamId, Name, Tag, Disbanded, Locked FROM tblTeam WHERE Name = @text OR Tag = @text
         `, {text: {type: Db.VARCHAR(25), value: text}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded, locked: !!data.recordsets[0][0].Locked} || void 0;
+    }
+
+    //              #     ##                 #             #   ##   #           ##    ##                            ###      #         ####              ###    #    ##           #
+    //              #    #  #                #             #  #  #  #            #     #                             #       #         #                 #  #         #           #
+    //  ###   ##   ###   #      ###   ###   ###    ##    ###  #     ###    ###   #     #     ##   ###    ###   ##    #     ###   ###   ###    ##   ###   #  #  ##     #     ##   ###
+    // #  #  # ##   #    #     #  #  ##      #    # ##  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##   #    #  #  ##     #     #  #  #  #  ###    #     #    #  #   #
+    //  ##   ##     #    #  #  # ##    ##    #    ##    #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##     #    #  #    ##   #     #  #  #     #      #     #    #  #   #
+    // #      ##     ##   ##    # #  ###      ##   ##    ###   ##   #  #   # #  ###   ###    ##   #  #  #      ##   ###    ###  ###    #      ##   #     #     ###   ###    ##     ##
+    //  ###                                                                                              ###
+    /**
+     * Gets the challenge IDs for the matches the pilot is casting.
+     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs they are casting.
+     */
+    static async getCastedChallengeIdsForPilot(pilot) {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT c.ChallengeId
+            FROM tblChallenge c
+            INNER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
+            WHERE p.DiscordId = @discordId
+                AND c.DateClosed IS NULL
+        `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
     }
 
     //              #     ##   #           ##    ##                            ###         ###      #
@@ -937,12 +964,12 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -952,6 +979,7 @@ class Database {
                 c.Map,
                 c.TeamSize,
                 c.MatchTime,
+                c.Postseason,
                 c.HomeMapTeamId,
                 c.HomeServerTeamId,
                 c.AdminCreated,
@@ -993,6 +1021,7 @@ class Database {
             map: data.recordsets[0][0].Map,
             teamSize: data.recordsets[0][0].TeamSize,
             matchTime: data.recordsets[0][0].MatchTime,
+            postseason: data.recordsets[0][0].Postseason,
             homeMapTeamId: data.recordsets[0][0].HomeMapTeamId,
             homeServerTeamId: data.recordsets[0][0].HomeServerTeamId,
             adminCreated: data.recordsets[0][0].AdminCreated,
@@ -1193,39 +1222,43 @@ class Database {
 
             SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
 
-            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+            IF @matchTime IS NOT NULL
             BEGIN
-                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+                IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+                BEGIN
+                    SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+                END
+
+                WHILE NOT EXISTS(SELECT TOP 1 1 FROM tblSeason WHERE DateStart <= @matchTime And DateEnd > @matchTime)
+                BEGIN
+                    INSERT INTO tblSeason
+                    (Season, K, DateStart, DateEnd)
+                    SELECT TOP 1
+                        Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
+                    FROM tblSeason
+                    ORDER BY Season DESC
+                END
+
+                SELECT @k = K, @dateStart = DateStart, @dateEnd = DateEnd FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
+
+                SELECT
+                    ChallengingTeamId,
+                    ChallengedTeamId,
+                    ChallengingTeamScore,
+                    ChallengedTeamScore
+                FROM tblChallenge
+                WHERE MatchTime >= @dateStart
+                    AND MatchTime < @dateEnd
+                    AND Postseason = 0
+                    AND DateConfirmed IS NOT NULL
+                    AND DateClosed IS NOT NULL
+                    AND DateVoided IS NULL
+                ORDER BY MatchTime, ChallengeId
+
+                SELECT @k K
             END
-
-            WHILE NOT EXISTS(SELECT TOP 1 1 FROM tblSeason WHERE DateStart <= @matchTime And DateEnd > @matchTime)
-            BEGIN
-                INSERT INTO tblSeason
-                (Season, K, DateStart, DateEnd)
-                SELECT TOP 1
-                    Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
-                FROM tblSeason
-                ORDER BY Season DESC
-            END
-
-            SELECT @k = K, @dateStart = DateStart, @dateEnd = DateEnd FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
-
-            SELECT
-                ChallengingTeamId,
-                ChallengedTeamId,
-                ChallengingTeamScore,
-                ChallengedTeamScore
-            FROM tblChallenge
-            WHERE MatchTime >= @dateStart
-                AND MatchTime < @dateEnd
-                AND Postseason = 0
-                AND DateConfirmed IS NOT NULL
-                AND DateClosed IS NOT NULL
-                AND DateVoided IS NULL
-
-            SELECT @k K
         `, {challengeId: {type: Db.INT, value: challenge.id}});
-        return data && data.recordsets && {
+        return data && data.recordsets && data.recordsets.length === 2 && {
             matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
                 challengingTeamId: row.ChallengingTeamId,
                 challengedTeamId: row.ChallengedTeamId,
@@ -1233,7 +1266,7 @@ class Database {
                 challengedTeamScore: row.ChallengedTeamScore
             })) || [],
             k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
-        };
+        } || void 0;
     }
 
     //              #     ##    #                                               ####               ##   #           ##    ##
@@ -1582,7 +1615,7 @@ class Database {
         const data = await db.query(/* sql */`
             SELECT ChallengeId
             FROM tblChallenge
-            WHERE MatchTime >= DATEADD(HOUR, -1, GETUTCDATE())
+            WHERE MatchTime <= DATEADD(HOUR, -1, GETUTCDATE())
                 AND DateMatchTimePassedNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
@@ -1610,7 +1643,7 @@ class Database {
         const data = await db.query(/* sql */`
             SELECT ChallengeId
             FROM tblChallenge
-            WHERE MatchTime >= DATEADD(MINUTE, 30, GETUTCDATE())
+            WHERE MatchTime <= DATEADD(MINUTE, 30, GETUTCDATE())
                 AND DateMatchTimeNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
@@ -2059,7 +2092,7 @@ class Database {
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
-            DELETE FROM tblChallengeStreamer cs
+            DELETE FROM tblChallengeStreamer
             WHERE ChallengeId = @challengeId
                 AND PlayerId = @playerId
         `, {
@@ -2081,7 +2114,7 @@ class Database {
      */
     static async removeTwitchName(member) {
         await db.query(/* sql */`
-            UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @DiscordId
+            UPDATE tblPlayer SET TwitchName = NULL WHERE DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
     }
 
@@ -2224,6 +2257,13 @@ class Database {
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET HomeMapTeamId = @teamId, UsingHomeMapTeam = 1, Map = NULL WHERE ChallengeId = @challengeId
 
+            DELETE FROM tblChallengeHome WHERE ChallengeId = @challengeId
+
+            INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
+            SELECT @challengeId, Number, Map
+            FROM tblTeamHome
+            WHERE TeamId = @teamId
+
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
         `, {
             teamId: {type: Db.INT, value: team.id},
@@ -2349,7 +2389,8 @@ class Database {
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
                 ChallengingTeamScore = @challengingTeamScore,
-                ChallengedTeamScore = @challengedTeamScore
+                ChallengedTeamScore = @challengedTeamScore,
+                DateConfirmed = GETUTCDATE()
             WHERE ChallengeId = @challengeId
         `, {
             challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
@@ -2373,7 +2414,7 @@ class Database {
      */
     static async setTeamSizeForChallenge(challenge, size) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET TeamSize = @size, , SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
         `, {
             size: {type: Db.INT, value: size},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -2395,7 +2436,7 @@ class Database {
      */
     static async setTimeForChallenge(challenge, date) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET MatchTime = @time, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET MatchTime = @date, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
@@ -2634,11 +2675,12 @@ class Database {
             FROM tblChallenge
             WHERE ClockTeamId = @team1Id
                 AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
-                AND Voided IS NULL
+                AND DateVoided IS NULL
+                AND DateClocked IS NOT NULL
                 AND DateClocked >= CAST(CAST(((MONTH(GETUTCDATE()) - 1) / 6) * 6 + 1 AS VARCHAR) + '/1/' + CAST(YEAR(GETUTCDATE()) AS VARCHAR) AS DATETIME)
         `, {
-            team1id: {type: Db.INT, value: team1.id},
-            team2id: {type: Db.INT, value: team2.id}
+            team1Id: {type: Db.INT, value: team1.id},
+            team2Id: {type: Db.INT, value: team2.id}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
     }

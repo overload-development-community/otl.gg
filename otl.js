@@ -37,6 +37,10 @@ class Otl {
             throw new Exception("There was a database error getting the season's matches.", err);
         }
 
+        if (!data) {
+            return;
+        }
+
         const ratings = Elo.calculateRatings(data.matches, data.k);
 
         try {

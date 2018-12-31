@@ -314,6 +314,20 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
         throw new Exception(`There was a database error getting a team for a pilot.  Please remove ${this.displayName} manually.`, err);
     }
 
+    let castedChallengeIds;
+    try {
+        castedChallengeIds = await Db.getCastedChallengeIdsForPilot(this);
+    } catch (err) {
+        throw new Exception("There was a database error getting a pilot's casted matches.", err);
+    }
+
+    for (const challengeId of castedChallengeIds) {
+        const challenge = await Challenge.getById(challengeId);
+
+        await challenge.removeCaster(this);
+        await challenge.updateTopic();
+    }
+
     if (!team) {
         let requestedTeams;
         try {
@@ -340,49 +354,20 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
         return;
     }
 
-    const captainsChannel = team.captainsChannel;
-    if (captainsChannel) {
-        try {
-            await captainsChannel.overwritePermissions(
-                this,
-                {"VIEW_CHANNEL": null},
-                `${this.displayName} left the team.`
-            );
-        } catch {}
-
-        await Discord.queue(`${this.displayName} has left the team.`, captainsChannel);
-    }
-
-    const teamChannel = team.teamChannel;
-    if (teamChannel) {
-        await Discord.queue(`${this.displayName} has left the team.`, teamChannel);
-    }
-
     try {
         await team.pilotLeft(this);
     } catch (err) {
-        throw new Exception(`There was a database error removing ${this.displayName} from ${team.name}.  Please remove ${this.displayName} manually.`, err);
+        throw err;
     }
 
     await team.updateChannels();
 
-    await Discord.richQueue(new DiscordJs.RichEmbed({
-        title: team.name,
-        description: "Pilot Left",
-        color: team.role.color,
-        fields: [
-            {
-                name: "Pilot Left",
-                value: `${this.displayName}`
-            }
-        ],
-        footer: {
-            text: "pilot left server"
+    if (team.founder && team.founder.id === this.id) {
+        if (await team.getPilotCount() === 0) {
+            await team.disband(this);
+        } else {
+            Discord.queue(`${this.displayName} has left the server, but was the founder of ${team.name}.  Please resolve team ownership manually.`, Discord.alertsChannel);
         }
-    }), Discord.rosterUpdatesChannel);
-
-    if (team.founder.id === this.id) {
-        throw new Error(`${this.displayName} has left the server, but was the founder of ${team.name}.  Please resolve team ownership manually.`);
     }
 };
 
@@ -475,6 +460,19 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
         throw new Exception("There was a database error updating the pilot's name.", err);
     }
 
+    let castedChallengeIds;
+    try {
+        castedChallengeIds = await Db.getCastedChallengeIdsForPilot(this);
+    } catch (err) {
+        throw new Exception("There was a database error getting a pilot's casted matches.", err);
+    }
+
+    for (const challengeId of castedChallengeIds) {
+        const challenge = await Challenge.getById(challengeId);
+
+        await challenge.updateTopic();
+    }
+
     const team = await Team.getByPilot(this);
 
     if (!team) {
@@ -498,13 +496,11 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
         fields: [
             {
                 name: "Old Name",
-                value: `${oldMember.displayName}`,
-                inline: true
+                value: `${oldMember.displayName}`
             },
             {
                 name: "New Name",
-                value: `${this.displayName}`,
-                inline: true
+                value: `${this.displayName}`
             }
         ],
         footer: {

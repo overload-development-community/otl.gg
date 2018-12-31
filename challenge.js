@@ -10,7 +10,7 @@ const DiscordJs = require("discord.js"),
     settings = require("./settings"),
     Team = require("./team"),
 
-    channelParse = /^([0-9A-Z]{1,5})-([0-9A-Z]{1,5})-([1-9][0-9]*)$/,
+    channelParse = /^([0-9a-z]{1,5})-([0-9a-z]{1,5})-([1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (.*)$/;
 
 /**
@@ -92,7 +92,9 @@ class Challenge {
                 }
             ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
-            await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengedTeam.name}\n\nOrange Team: ${data.orangeTeam.tag}\nBlue Team: ${data.blueTeam.tag}\n\nHome Map Team: ${data.homeMapTeam.tag}\nHome Server Team: ${data.homeServerTeam.tag}`);
+            await challenge.channel.setParent(Discord.challengesCategory);
+
+            await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengedTeam.name}\n\nOrange Team: ${data.orangeTeam.tag}\nBlue Team: ${data.blueTeam.tag}\n\nHome Map Team: ${data.homeMapTeam.tag}\n\nHome Server Team: ${data.homeServerTeam.tag}`);
 
             const mapEmbed = new DiscordJs.RichEmbed({
                 title: "Challenge commands - Map",
@@ -145,7 +147,7 @@ class Challenge {
                 await serverMsg.pin();
             }
 
-            const optionsMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
+            const optionsEmbed = new DiscordJs.RichEmbed({
                 title: "Challenge commands - Options",
                 description: "Challenges must also have a team size and scheduled time to play.",
                 fields: [
@@ -157,10 +159,10 @@ class Challenge {
                         value: "Confirms a team size suggested by the other team."
                     }
                 ]
-            }), challenge.channel);
+            });
 
             if (!adminCreated) {
-                serverEmbed.fields.push({
+                optionsEmbed.fields.push({
                     name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
                     value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
                 }, {
@@ -172,13 +174,15 @@ class Challenge {
                 });
             }
 
-            serverEmbed.fields.push({
+            optionsEmbed.fields.push({
                 name: "!streaming",
                 value: "Indicates that a pilot will be streaming the match live."
             }, {
                 name: "!notstreaming",
                 value: "Indicates that a pilot will not be streaming the match live, which is the default setting."
             });
+
+            const optionsMsg = await Discord.richQueue(optionsEmbed, challenge.channel);
 
             if (optionsMsg) {
                 await optionsMsg.pin();
@@ -452,7 +456,7 @@ class Challenge {
 
             await this.updateTopic();
 
-            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, this.channel);
+            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -622,6 +626,7 @@ class Challenge {
             throw new Exception("There was a database error clocking a challenge.", err);
         }
 
+        this.details.clockTeam = team;
         this.details.dateClocked = dates.clocked;
         this.details.dateClockDeadline = dates.clockDeadline;
 
@@ -982,6 +987,7 @@ class Challenge {
             map: details.map,
             teamSize: details.teamSize,
             matchTime: details.matchTime,
+            postseason: details.postseason,
             homeMapTeam: details.homeMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             homeServerTeam: details.homeServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             adminCreated: details.adminCreated,
@@ -1179,11 +1185,13 @@ class Challenge {
         this.details.caster = void 0;
 
         try {
-            await this.channel.overwritePermissions(
-                member,
-                {"VIEW_CHANNEL": null},
-                `${member} is no longer scheduled to cast this match.`
-            );
+            if (Discord.findGuildMemberById(member.id)) {
+                await this.channel.overwritePermissions(
+                    member,
+                    {"VIEW_CHANNEL": null},
+                    `${member} is no longer scheduled to cast this match.`
+                );
+            }
 
             await this.updateTopic();
 
@@ -1387,6 +1395,7 @@ class Challenge {
         }
 
         this.details.map = map;
+        this.details.usingHomeMapTeam = false;
 
         try {
             await Discord.queue(`${member} has set the map for this match to **${this.details.map}**.`, this.channel);
@@ -1447,7 +1456,13 @@ class Challenge {
             throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
         }
 
-        await Discord.queue("This challenge is now a postseason match.  All stats will count towards postseason stats for the previous season.", this.channel);
+        try {
+            await Discord.queue("This challenge is now a postseason match.  All stats will count towards postseason stats for the previous season.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a challenge to be a postseason match.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //               #    ###                     ##                 ##
@@ -1465,10 +1480,16 @@ class Challenge {
         try {
             await Db.setRegularSeasonForChallenge(this);
         } catch (err) {
-            throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
+            throw new Exception("There was a database error setting a challenge to be a regular season match.", err);
         }
 
-        await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
+        try {
+            await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a challenge to be a regular season match.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //               #     ##
@@ -1777,26 +1798,26 @@ class Challenge {
             const times = {};
             for (const member of this.channel.members.values()) {
                 const timezone = await member.getTimezone(),
-                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+                    yearWithTimezone = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
                     const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
-                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                        times[timezoneName] = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
                     }
                 }
             }
 
             for (const challengeTeam of [this.challengingTeam, this.challengedTeam]) {
                 const timezone = await challengeTeam.getTimezone(),
-                    yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+                    yearWithTimezone = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
                     const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
-                        times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                        times[timezoneName] = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
                     }
                 }
             }
@@ -1839,7 +1860,7 @@ class Challenge {
         try {
             await Db.setTitleForChallenge(this, title);
         } catch (err) {
-            throw new Exception("There was a database error suggesting a time for a challenge.", err);
+            throw new Exception("There was a database error changing the title for a challenge.", err);
         }
 
         this.details.title = title && title.length > 0 ? title : void 0;
@@ -1852,7 +1873,7 @@ class Challenge {
             }
             await this.updateTopic();
         } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error changing the title for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1901,6 +1922,12 @@ class Challenge {
      * @returns {Promise} A promise that resolves when the topic is updated.
      */
     async updateTopic() {
+        const channel = this.channel;
+
+        if (!channel) {
+            return;
+        }
+
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1915,13 +1942,13 @@ class Challenge {
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
             challengedTeamTimezone = await this.challengedTeam.getTimezone();
 
-        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}`;
+        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}`;
 
         if (this.details.dateVoided) {
             topic = `${topic}\n\nThis match has been voided.`;
         } else {
             if (this.details.dateClockDeadline) {
-                topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam}`;
+                topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam.tag}`;
             }
 
             topic = `${topic}\n\nOrange Team: ${this.details.orangeTeam.tag}\nBlue Team: ${this.details.blueTeam.tag}`;
@@ -1936,8 +1963,8 @@ class Challenge {
 
             topic = `${topic}\n\nHome Server Team: ${this.details.usingHomeServerTeam ? this.details.homeServerTeam.tag : "Neutral"}`;
 
-            if (this.details.suggestedNeutralServerTeam) {
-                topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam}`;
+            if (this.details.usingHomeServerTeam && this.details.suggestedNeutralServerTeam) {
+                topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam.tag}`;
             }
 
             if (this.details.teamSize) {
@@ -1950,12 +1977,12 @@ class Challenge {
             }
 
             if (this.details.matchTime) {
-                topic = `${topic}\n\nMatch Time: ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                topic = `${topic}\n\nMatch Time:\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
                 if (this.details.suggestedTime) {
-                    topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                    topic = `${topic}\nSuggested Time:\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
                 }
             } else if (this.details.suggestedTime) {
-                topic = `${topic}\nSuggested Time: ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                topic = `${topic}\nSuggested Time:\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
             }
 
             if (this.details.dateReported && !this.details.dateConfirmed) {
@@ -1973,7 +2000,7 @@ class Challenge {
             }
         }
 
-        await this.channel.setTopic(topic);
+        await channel.setTopic(topic);
     }
 
     //                          #       #
