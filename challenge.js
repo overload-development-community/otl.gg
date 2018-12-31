@@ -542,6 +542,8 @@ class Challenge {
                     throw new Exception("There was a database error voiding a challenge.", err);
                 }
 
+                this.details.dateVoided = new Date();
+
                 await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
 
                 break;
@@ -584,6 +586,8 @@ class Challenge {
 
                         if (penalizedTeam.first) {
                             await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map and home server advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, team.teamChannel);
+
+                            await team.updateChannels();
                         } else {
                             const oldCaptains = team.role.members.filter((m) => !!m.roles.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
 
@@ -601,6 +605,8 @@ class Challenge {
                 break;
             }
         }
+
+        await this.updateTopic();
     }
 
     //       ##                #
@@ -704,8 +710,13 @@ class Challenge {
                 }), Discord.matchResultsChannel);
             }
 
-            await this.challengingTeam.updateChannels();
-            await this.challengedTeam.updateChannels();
+            if (!this.challengingTeam.disbanded) {
+                await this.challengingTeam.updateChannels();
+            }
+
+            if (!this.challengedTeam.disbanded) {
+                await this.challengedTeam.updateChannels();
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1910,6 +1921,49 @@ class Challenge {
         }
     }
 
+    //                          #       #
+    //                                  #
+    // #  #  ###   # #    ##   ##     ###
+    // #  #  #  #  # #   #  #   #    #  #
+    // #  #  #  #  # #   #  #   #    #  #
+    //  ###  #  #   #     ##   ###    ###
+    /**
+     * Unvoids a match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that resolves when the match is unvoided.
+     */
+    async unvoid(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.unvoidChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error unvoiding a challenge.", err);
+        }
+
+        this.details.dateVoided = void 0;
+
+        try {
+            if (this.channel) {
+                await Discord.queue(`${member} has unvoided this challenge.`, this.channel);
+
+                await this.updateTopic();
+            }
+
+            if (this.details.dateConfirmed && this.details.dateClosed) {
+                await Discord.queue(`The following match from ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} was restored: **${this.challengingTeam.name}** ${this.details.challengingTeamScore}, **${this.challengedTeam.name}** ${this.details.challengedTeamScore}`, Discord.matchResultsChannel);
+            }
+        } catch (err) {
+            throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+
+        if (this.details.dateClosed) {
+            await Otl.updateRatingsForSeasonFromChallenge(this);
+        }
+    }
+
     //                #         #          ###                #
     //                #         #           #
     // #  #  ###    ###   ###  ###    ##    #     ##   ###   ##     ##
@@ -2001,49 +2055,6 @@ class Challenge {
         }
 
         await channel.setTopic(topic);
-    }
-
-    //                          #       #
-    //                                  #
-    // #  #  ###   # #    ##   ##     ###
-    // #  #  #  #  # #   #  #   #    #  #
-    // #  #  #  #  # #   #  #   #    #  #
-    //  ###  #  #   #     ##   ###    ###
-    /**
-     * Unvoids a match.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @returns {Promise} A promise that resolves when the match is unvoided.
-     */
-    async unvoid(member) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.unvoidChallenge(this);
-        } catch (err) {
-            throw new Exception("There was a database error unvoiding a challenge.", err);
-        }
-
-        this.details.dateVoided = void 0;
-
-        try {
-            if (this.channel) {
-                await Discord.queue(`${member} has unvoided this challenge.`, this.channel);
-
-                await this.updateTopic();
-            }
-
-            if (this.details.dateConfirmed && this.details.dateClosed) {
-                await Discord.queue(`The following match from ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} was restored: **${this.challengingTeam.name}** ${this.details.challengingTeamScore}, **${this.challengedTeam.name}** ${this.details.challengedTeamScore}`, Discord.matchResultsChannel);
-            }
-        } catch (err) {
-            throw new Exception("There was a critical Discord error unvoiding a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-
-        if (this.details.dateClosed) {
-            await Otl.updateRatingsForSeasonFromChallenge(this);
-        }
     }
 
     //              #       #

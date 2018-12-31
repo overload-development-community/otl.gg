@@ -835,7 +835,7 @@ class Database {
          */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
-                DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, UTCDATE()) END,
+                DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, GETUTCDATE()) END,
                 MatchTime = NULL,
                 SuggestedTime = NULL,
                 SuggestedTimeTeamId = NULL,
@@ -2878,7 +2878,7 @@ class Database {
 
             SELECT t.TeamId, CAST(CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty tp WHERE tp.TeamId = t.TeamId) THEN 0 ELSE 1 END AS BIT) First
             FROM tblTeam t
-            WHERE t.TeamId IN (${teams.map((t) => `@team${t.id}Id`).join(", ")})
+            WHERE t.TeamId IN (${teams.map((t, index) => `@team${index}Id`).join(", ")})
         `;
 
         teams.forEach((team, index) => {
@@ -2887,7 +2887,7 @@ class Database {
             sql = /* sql */`
                 ${sql}
 
-                IF (SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)
+                IF EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty WHERE TeamId = @team${index}Id)
                 BEGIN
                     UPDATE tblTeamPenalty
                     SET PenaltiesRemaining = PenaltiesRemaining + 3,

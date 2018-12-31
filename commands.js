@@ -13,7 +13,7 @@ const tz = require("timezone-js"),
     Team = require("./team"),
     Warning = require("./warning"),
 
-    adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}) )?$/,
+    adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}))?$/,
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     idParse = /^<@!?([0-9]+)>$/,
     idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
@@ -182,7 +182,7 @@ class Commands {
      */
     static async checkChallengeIsNotPenalized(challenge, member, channel) {
         if (challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized) {
-            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized || challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, this command is not available.`, channel);
+            await Discord.queue(`Sorry, ${member}, but due to penalties to ${challenge.details.challengingTeamPenalized && challenge.details.challengedTeamPenalized ? "both teams" : challenge.details.challengingTeamPenalized ? `**${challenge.challengingTeam.name}**` : `**${challenge.challengedTeam.name}**`}, this command is not available.`, channel);
             throw new Warning("Penalties apply.");
         }
     }
@@ -4196,8 +4196,8 @@ class Commands {
 
                 teams = [team];
             } else {
-                await Discord.queue(`Sorry, ${member}, but you cannot adjudicate an unscheduled match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
-                throw new Warning("You must specifiy a team to penalize.");
+                await Discord.queue(`Sorry, ${member}, but you must specify a team to penalize.`, channel);
+                throw new Warning("Team to penalize not included.");
             }
         }
 
