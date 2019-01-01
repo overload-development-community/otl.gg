@@ -26,11 +26,32 @@ body {
 
 #menu li {
     display: inline-block;
-    padding: 5px 15px 10px 15px;
+    padding: 5px 15px;
 }
 
 #menu li:hover {
     background-color: #333333;
+}
+
+#header {
+    display: grid;
+    grid-template-columns: 168px auto;
+    align-items: center;
+    background-position: center;
+}
+
+#header #logo {
+    margin: 20px;
+    width: 128px;
+    height: 128px;
+    background-image: url("/images/otl.png");
+    background-size: 128px 128px;
+}
+
+#header #title {
+    font-size: 64px;
+    color: #ff6600;
+    text-shadow: 2px 2px 5px black;
 }
 
 #copyright {
@@ -50,5 +71,9 @@ body {
     color: #ff6600;
     font-size: 24px;
     font-weight: bold;
-    padding: 10px;
+    padding: 20px 10px 10px 10px;
+}
+
+div > .section:first-child {
+    padding-top: 10px;
 }

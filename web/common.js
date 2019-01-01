@@ -18,10 +18,11 @@ class Common {
     // #            ###
     /**
      * Generates a webpage from the provided HTML using a common template.
+     * @param {string} head The HTML to insert into the header.
      * @param {string} html The HTML to make a full web page from.
      * @returns {string} The HTML of the full web page.
      */
-    static page(html) {
+    static page(head, html) {
         const year = new Date().getFullYear();
 
         return /* html */`
@@ -30,8 +31,8 @@ class Common {
                     <title>Overload Teams League</title>
                     <link rel="stylesheet" href="/css/reset.css">
                     <link rel="stylesheet" href="/css/common.css">
-                    <link rel="stylesheet" href="/css/home.css">
                     <script src="/js/common.js"></script>
+                    ${head}
                 </head>
                 <body>
                     <div id="page">
@@ -45,6 +46,11 @@ class Common {
                                 <li><a href="/about">About</a></li>
                             </ul>
                         </div>
+                        <div id="header">
+                            <div id="logo"></div>
+                            <div id="title">Overload Teams League</div>
+                        </div>
+                        <script>document.getElementById("header").style.backgroundImage = "url(/images/" + randomBackground() + ")";</script>
                         ${html}
                         <div id="copyright">
                             <div class="left">

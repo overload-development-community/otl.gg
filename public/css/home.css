@@ -90,26 +90,6 @@
     color: white;
 }
 
-#header {
-    display: grid;
-    grid-template-columns: 168px auto;
-    align-items: center;
-    background-position: center;
-}
-
-#header #logo {
-    margin: 20px;
-    width: 128px;
-    height: 128px;
-    background-image: url("/images/otl.png");
-    background-size: 128px 128px;
-}
-
-#header #title {
-    font-size: 64px;
-    color: #ff6600;
-}
-
 #body {
     background-color: black;
 }

@@ -46,6 +46,7 @@ const compression = require("compression"),
     app.use(minify());
     app.use(express.static("public"));
     app.get("/", Web.Home);
+    app.get("/standings", Web.Standings);
 
     // Startup web server.
     const port = process.env.PORT || settings.express.port;

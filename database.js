@@ -2286,7 +2286,7 @@ class Database {
                 FROM tblTeam t
                 LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
             ) a
-            ORDER BY Rating DESC, Wins DESC, Losses ASC
+            ORDER BY Rating DESC, Wins DESC, Losses ASC, Name ASC
         `, {
             season: {type: Db.INT, value: season}
         });
@@ -2812,7 +2812,8 @@ class Database {
                     MatchTime,
                     Map
                 FROM tblChallenge
-                WHERE MatchTime <= GETUTCDATE()
+                WHERE MatchTime IS NOT NULL
+                    AND MatchTime <= GETUTCDATE()
                     AND DateVoided IS NULL
                 ORDER BY MatchTime DESC
             ) a
@@ -2824,7 +2825,8 @@ class Database {
                 MatchTime,
                 Map
             FROM tblChallenge
-            WHERE MatchTime > GETUTCDATE()
+            WHERE MatchTime IS NOT NULL
+                AND MatchTime > GETUTCDATE()
                 AND DateVoided IS NULL
             ORDER BY MatchTime
         `);

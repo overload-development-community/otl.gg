@@ -64,10 +64,8 @@ class Home {
         });
 
         const html = Common.page(/* html */`
-            <div id="header">
-                <div id="logo"></div>
-                <div id="title">Overload Teams League</div>
-            </div>
+            <link rel="stylesheet" href="/css/home.css">
+        `, /* html */`
             <div id="matches">
                 ${matches.map((m) => /* html */`
                     <div class="match">
@@ -83,7 +81,7 @@ class Home {
                             </div>
                         ` : /* html */`
                             <div class="record1">
-                                ${m.challengingTeamStandings.rating ? `${Math.round(m.challengingTeamStandings.rating)}` : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
+                                ${m.challengingTeamStandings.rating ? Math.round(m.challengingTeamStandings.rating) : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
                             </div>
                         `}
                         ${typeof m.challengedTeamScore === "number" ? /* html */`
@@ -92,7 +90,7 @@ class Home {
                             </div>
                         ` : /* html */`
                             <div class="record2">
-                                ${m.challengedTeamStandings.rating ? `${Math.round(m.challengedTeamStandings.rating)}` : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
+                                ${m.challengedTeamStandings.rating ? Math.round(m.challengedTeamStandings.rating) : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
                             </div>
                         `}
                         <div class="date">
@@ -106,7 +104,6 @@ class Home {
                     </div>
                 `).join("")}
             </div>
-            <script>document.getElementById("header").style.backgroundImage = "url(/images/" + randomBackground() + ")";</script>
             <div id="body">
                 <div class="section">Season Top Teams</div>
                 <div id="standings">
