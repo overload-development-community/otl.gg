@@ -1,7 +1,6 @@
 #matches {
     display: grid;
-    grid-auto-columns: 50% 50%;
-    background-color: black;
+    grid-template-columns: 50% 50%;
 }
 
 #matches .diamond {
@@ -37,10 +36,6 @@
     -ms-transform-origin: 0 100%;
     -o-transform-origin: 0 100%;
     transform-origin: 0 100%;
-}
-
-#matches #completed {
-    grid-column: 1;
 }
 
 #matches .match {
@@ -128,10 +123,6 @@
 #matches #completed .match .winner {
     font-weight: bold;
     color: white;
-}
-
-#matches #pending {
-    grid-column: 2;
 }
 
 #matches #pending .match .tag1 {

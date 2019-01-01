@@ -45,12 +45,16 @@ const compression = require("compression"),
     app.use(compression());
     app.use(minify());
     app.use(express.static("public"));
+
     app.get("/", Web.Home);
+    app.get("/about", Web.About);
     app.get("/discord", (req, res) => {
         res.redirect("http://ronc.li/otl-discord");
     });
     app.get("/matches", Web.Matches);
+    app.get("/players", Web.Players);
     app.get("/standings", Web.Standings);
+    app.get("/team/:tag", Web.Team);
 
     // Startup web server.
     const port = process.env.PORT || settings.express.port;

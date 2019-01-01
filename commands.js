@@ -1023,7 +1023,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue(`${member}, see the documentation at https://github.com/roncli/otl-bot/blob/master/README.md.`, channel);
+        await Discord.queue(`${member}, see the about page at http://otl.gg/about.`, channel);
         return true;
     }
 
@@ -1067,7 +1067,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue("Website pending!", channel);
+        await Discord.queue("Visit our website at http://otl.gg for league standings, matches, and stats!", channel);
         return true;
     }
 
@@ -4081,7 +4081,40 @@ class Commands {
         return true;
     }
 
-    // TODO: !cleartime
+    //       ##                       #     #
+    //        #                       #
+    //  ##    #     ##    ###  ###   ###   ##    # #    ##
+    // #      #    # ##  #  #  #  #   #     #    ####  # ##
+    // #      #    ##    # ##  #      #     #    #  #  ##
+    //  ##   ###    ##    # #  #       ##  ###   #  #   ##
+    /**
+     * Clears the time for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async cleartime(member, channel, message) {
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!cleartime` by itself to clear the match time.", channel)) {
+            return false;
+        }
+
+        try {
+            await challenge.clearTime(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
 
     //   #                                                          #
     //  # #                                                         #

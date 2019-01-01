@@ -609,6 +609,39 @@ class Challenge {
         await this.updateTopic();
     }
 
+    //       ##                      ###    #
+    //        #                       #
+    //  ##    #     ##    ###  ###    #    ##    # #    ##
+    // #      #    # ##  #  #  #  #   #     #    ####  # ##
+    // #      #    ##    # ##  #      #     #    #  #  ##
+    //  ##   ###    ##    # #  #      #    ###   #  #   ##
+    /**
+     * Clears the time of the match.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that resolves when the time has been cleared.
+     */
+    async clearTime(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setTimeForChallenge(this, void 0);
+        } catch (err) {
+            throw new Exception("There was a database error setting the time for a challenge.", err);
+        }
+
+        this.details.matchTime = void 0;
+
+        try {
+            await Discord.queue(`${member} has cleared the match time for this match.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //       ##                #
     //        #                #
     //  ##    #     ##    ##   # #

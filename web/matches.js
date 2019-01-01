@@ -77,10 +77,10 @@ class Matches {
                     ${matches.completed.map((m) => /* html */`
                         <div class="match">
                             <div class="tag1">
-                                <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengingTeamStandings.team.tag}
+                                <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.tag}</a>
                             </div>
                             <div class="team1">
-                                ${m.challengingTeamStandings.team.name}
+                                <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.name}</a>
                             </div>
                             <div class="record1">
                                 ${Math.round(m.challengingTeamStandings.rating)} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : m.challengingTeamStandings.ties}
@@ -89,10 +89,10 @@ class Matches {
                                 ${m.challengingTeamScore}
                             </div>
                             <div class="tag2">
-                                <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengedTeamStandings.team.tag}
+                                <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.tag}</a>
                             </div>
                             <div class="team2">
-                                ${m.challengedTeamStandings.team.name}
+                                <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.name}</a>
                             </div>
                             <div class="record2">
                                 ${Math.round(m.challengedTeamStandings.rating)} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : m.challengedTeamStandings.ties}
@@ -114,19 +114,19 @@ class Matches {
                     ${matches.pending.map((m) => /* html */`
                         <div class="match">
                             <div class="tag1">
-                                <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengingTeamStandings.team.tag}
+                                <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.tag}</a>
                             </div>
                             <div class="team1">
-                                ${m.challengingTeamStandings.team.name}
+                                <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.name}</a>
                             </div>
                             <div class="record1">
                                 ${m.challengingTeamStandings.rating ? Math.round(m.challengingTeamStandings.rating) : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : m.challengingTeamStandings.ties}
                             </div>
                             <div class="tag2">
-                                <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengedTeamStandings.team.tag}
+                                <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.tag}</a>
                             </div>
                             <div class="team2">
-                                ${m.challengedTeamStandings.team.name}
+                                <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.name}</a>
                             </div>
                             <div class="record2">
                                 ${m.challengedTeamStandings.rating ? Math.round(m.challengedTeamStandings.rating) : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : m.challengedTeamStandings.ties}

@@ -1913,6 +1913,77 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
 
+    //       ##                             ##                                   ##    #           #
+    //        #                            #  #                                 #  #   #           #
+    // ###    #     ###  #  #   ##   ###    #     ##    ###   ###    ##   ###    #    ###    ###  ###    ###
+    // #  #   #    #  #  #  #  # ##  #  #    #   # ##  #  #  ##     #  #  #  #    #    #    #  #   #    ##
+    // #  #   #    # ##   # #  ##    #     #  #  ##    # ##    ##   #  #  #  #  #  #   #    # ##   #      ##
+    // ###   ###    # #    #    ##   #      ##    ##    # #  ###     ##   #  #   ##     ##   # #    ##  ###
+    // #                  #
+    /**
+     * Gets player stats for the specified season.
+     * @param {number} [season] The season number, or void for the latest season.
+     * @returns {Promise<{name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
+     */
+    static async playerSeasonStats(season) {
+
+        /**
+         * @type {{recordsets: [{Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @dateStart DATETIME
+            DECLARE @dateEnd DATETIME
+
+            SELECT TOP 1
+                @season = Season,
+                @dateStart = DateStart,
+                @dateEnd = DateEnd
+            FROM tblSeason
+            WHERE (@season IS NULL OR Season = @season)
+                AND DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
+            SELECT
+                p.Name,
+                r.TeamId,
+                t.Name TeamName,
+                t.Tag,
+                t.Disbanded,
+                t.Locked,
+                AVG(CAST(s.Kills AS FLOAT)) AvgKills,
+                AVG(CAST(s.Assists AS FLOAT)) AvgAssists,
+                AVG(CAST(s.Deaths AS FLOAT)) AvgDeaths,
+                CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END KDA
+            FROM tblStat s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT JOIN (
+                tblRoster r
+                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
+            ) ON p.PlayerId = r.PlayerId
+            WHERE c.MatchTime IS NOT NULL
+                AND @dateStart <= c.MatchTime
+                AND @dateEnd > c.MatchTime
+                AND c.DateVoided IS NULL
+                AND c.DateConfirmed IS NOT NULL
+                AND c.DateClosed IS NOT NULL
+            GROUP BY p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+        `, {season: {type: Db.INT, value: season}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            name: row.Name,
+            teamId: row.TeamId,
+            teamName: row.TeamName,
+            tag: row.Tag,
+            disbanded: row.Disbanded,
+            locked: row.Locked,
+            avgKills: row.AvgKills,
+            avgAssists: row.AvgAssists,
+            avgDeaths: row.AvgDeaths,
+            kda: row.KDA
+        })) || [];
+    }
+
     //              #                  #           #          ###
     //                                 #           #           #
     // ###    ##   ##    ###    ###   ###    ###  ###    ##    #     ##    ###  # #

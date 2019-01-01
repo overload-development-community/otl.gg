@@ -1,0 +1,35 @@
+#about {
+    color: white;
+}
+
+#about .text {
+    padding: 10px;
+}
+
+#commands {
+    display: grid;
+    grid-gap: 10px;
+    grid-template-columns: auto auto auto;
+    padding-top: 10px;
+}
+
+#commands > div {
+    margin: 0 7px;
+}
+
+#commands .header {
+    font-size: 18px;
+    color: #ff6600;
+}
+
+#commands .section {
+    grid-column-end: span 3;
+    font-size: 18px;
+    padding: 5px;
+    color: white;
+}
+
+#commands .command, #commands .example {
+    font-family: monospace;
+    background-color: #333333;
+}

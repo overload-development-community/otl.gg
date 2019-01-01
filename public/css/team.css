@@ -1,14 +1,12 @@
-#body #standings {
-    display: grid;
-    grid-template-columns: auto auto auto auto auto;
+#team {
     padding: 10px;
 }
 
-#body #standings .diamond {
+#team .diamond {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    margin-right: 10px;
+    width: 24px;
+    height: 24px;
+    margin: 0 20px 0 10px;
     -webkit-transform: translate(5px, 2px) rotate(-45deg);
     -moz-transform: translate(5px, 2px) rotate(-45deg);
     -ms-transform: translate(5px, 2px) rotate(-45deg);
@@ -21,12 +19,12 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .diamond-empty {
+#team .diamond-empty {
     display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin-right: 10px;
-    border: solid 2px white;
+    width: 16px;
+    height: 16px;
+    margin: 0 20px 0 10px;
+    border: solid 4px white;
     -webkit-transform: translate(5px, 2px) rotate(-45deg);
     -moz-transform: translate(5px, 2px) rotate(-45deg);
     -ms-transform: translate(5px, 2px) rotate(-45deg);
@@ -39,27 +37,25 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .tag {
+#team #teamname {
+    font-size: 20px;
+    color: #ff6600
+}
+
+#team #teamname #tag {
+    display: inline-block;
+    font-size: 48px;
     white-space: nowrap;
 }
 
-#body #standings div.header, #body #disbanded div.header {
-    font-size: 24px;
+#team #teamname #name {
+    display: inline-block;
+    font-size: 48px;
+    margin-left: 40px;
+}
+
+#team #roster {
+    margin-top: 20px;
+    font-size: 16px;
     color: white;
-}
-
-#body #standings div, #body #disbanded div {
-    font-size: 20px;
-    color: #999999;
-    margin: 1px 3px;
-}
-
-#body #standings .provisional, #body #disbanded .provisional {
-    font-style: italic;
-}
-
-#body #disbanded {
-    display: grid;
-    grid-template-columns: auto auto auto auto;
-    padding: 10px;
 }

@@ -1,5 +1,4 @@
 #matches {
-    background-color: black;
     white-space: nowrap;
     overflow-x: auto;
     font-size: 14px;
@@ -91,10 +90,6 @@
     color: white;
 }
 
-#body {
-    background-color: black;
-}
-
 #body #standings {
     display: grid;
     grid-template-columns: auto auto auto auto auto;
@@ -153,10 +148,6 @@
 
 #body #standings .provisional {
     font-style: italic;
-}
-
-#news {
-    background-color: black;
 }
 
 #news #articles {

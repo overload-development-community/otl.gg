@@ -1,6 +1,7 @@
 /**
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
+ * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[], penaltiesRemaining?: number}} TeamInfo
  */
 
 const DiscordJs = require("discord.js"),
@@ -689,6 +690,25 @@ class Team {
             return await Db.getTeamHomeMaps(this);
         } catch (err) {
             throw new Exception("There was a database error getting the home maps for the team the pilot is on.", err);
+        }
+    }
+
+    //              #    ###           #
+    //              #     #           # #
+    //  ###   ##   ###    #    ###    #     ##
+    // #  #  # ##   #     #    #  #  ###   #  #
+    //  ##   ##     #     #    #  #   #    #  #
+    // #      ##     ##  ###   #  #   #     ##
+    //  ###
+    /**
+     * Gets the team info.
+     * @returns {Promise<TeamInfo>} A promise that resolves with the team's info.
+     */
+    async getInfo() {
+        try {
+            return await Db.getTeamInfo(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the team info.", err);
         }
     }
 
@@ -1591,7 +1611,7 @@ class Team {
                 return;
             }
 
-            let topic = `${this.name}\nhttp://overloadteamsleague.org/team/${this.tag}\n\nRoster:`;
+            let topic = `${this.name}\nhttp://otl.gg/team/${this.tag}\n\nRoster:`;
 
             teamInfo.members.forEach((member) => {
                 topic += `\n${member.name}`;

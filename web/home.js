@@ -74,10 +74,10 @@ class Home {
                 ${matches.map((m) => /* html */`
                     <div class="match">
                         <div class="team1">
-                            <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengingTeamStandings.team.tag}
+                            <div class="diamond${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengingTeamStandings.team.role && m.challengingTeamStandings.team.role.color ? `style="background-color: ${m.challengingTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.tag}</a>
                         </div>
                         <div class="team2">
-                            <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengedTeamStandings.team.tag}
+                            <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.tag}</a>
                         </div>
                         ${typeof m.challengingTeamScore === "number" ? /* html */`
                             <div class="score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
@@ -118,8 +118,8 @@ class Home {
                     <div class="header">Record</div>
                     ${standings.filter((s) => !s.disbanded && (s.wins > 0 || s.losses > 0 || s.ties > 0)).map((s, index) => /* html */`
                         <div>${index + 1}</div>
-                        <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> ${s.team.tag}</div>
-                        <div>${s.team.name}</div>
+                        <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
+                        <div><a href="/team/${s.team.tag}">${s.team.name}</a></div>
                         <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${Math.round(s.rating)}</div>
                         <div>${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}</div>
                     `).slice(0, 5).join("")}

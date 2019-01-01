@@ -14,9 +14,6 @@ a:hover {
 #page {
     max-width: 1200px;
     margin: 0 auto;
-}
-
-#menu {
     background-color: black;
 }
 
@@ -65,34 +62,9 @@ a:hover {
     text-shadow: 2px 2px 5px black;
 }
 
-#copyright {
-    height: 20px;
-    margin-top: 10px;
-}
-
-#copyright .left {
-    float: left;
-}
-
-#copyright .right {
-    float: right;
-}
-
-.section {
-    color: #ff6600;
-    font-size: 24px;
-    font-weight: bold;
-    padding: 20px 10px 10px 10px;
-}
-
-div > .section:first-child {
-    padding-top: 10px;
-}
-
 #discord {
     display: grid;
-    background-color: black;
-    grid-auto-columns: auto 396px;
+    grid-template-columns: auto 396px;
     padding-right: 10px;
 }
 
@@ -118,4 +90,28 @@ div > .section:first-child {
     grid-row: 1 / span 2;
     align-self: end;
     padding-bottom: 10px;
+}
+
+#copyright {
+    padding-top: 10px;
+    background-color: white;
+}
+
+#copyright .left {
+    float: left;
+}
+
+#copyright .right {
+    float: right;
+}
+
+.section {
+    color: #ff6600;
+    font-size: 24px;
+    font-weight: bold;
+    padding: 20px 10px 10px 10px;
+}
+
+div > .section:first-child {
+    padding-top: 10px;
 }
