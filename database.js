@@ -2787,12 +2787,12 @@ class Database {
     //       #                                    ###
     /**
      * Gets the upcoming matches.
-     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[]>} A promise that resolves with the upcoming matches.
      */
     static async upcomingMatches() {
 
         /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -2801,16 +2801,18 @@ class Database {
                 ChallengingTeamScore,
                 ChallengedTeamScore,
                 MatchTime,
-                Map
+                Map,
+                DateClosed
             FROM
             (
                 SELECT TOP 5
                     ChallengingTeamId,
                     ChallengedTeamId,
-                    CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
-                    CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                    CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                    CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                     MatchTime,
-                    Map
+                    Map,
+                    DateClosed
                 FROM tblChallenge
                 WHERE MatchTime IS NOT NULL
                     AND MatchTime <= GETUTCDATE()
@@ -2820,17 +2822,18 @@ class Database {
             UNION SELECT
                 ChallengingTeamId,
                 ChallengedTeamId,
-                CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
-                CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                 MatchTime,
-                Map
+                Map,
+                DateClosed
             FROM tblChallenge
             WHERE MatchTime IS NOT NULL
                 AND MatchTime > GETUTCDATE()
                 AND DateVoided IS NULL
             ORDER BY MatchTime
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId, challengingTeamScore: row.ChallengingTeamScore, challengedTeamScore: row.ChallengedTeamScore, matchTime: row.MatchTime, map: row.Map})) || [];
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId, challengingTeamScore: row.ChallengingTeamScore, challengedTeamScore: row.ChallengedTeamScore, matchTime: row.MatchTime, map: row.Map, dateClosed: row.DateClosed})) || [];
     }
 
     //                #         #          #  #

@@ -54,7 +54,7 @@ class Home {
         });
 
         /**
-         * @type {{challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string}[]}
+         * @type {{challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[]}
          */
         const matches = await Db.upcomingMatches();
 
@@ -76,7 +76,7 @@ class Home {
                             <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> ${m.challengedTeamStandings.team.tag}
                         </div>
                         ${typeof m.challengingTeamScore === "number" ? /* html */`
-                            <div class="score1 ${m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
+                            <div class="score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
                                 ${m.challengingTeamScore}
                             </div>
                         ` : /* html */`
@@ -85,7 +85,7 @@ class Home {
                             </div>
                         `}
                         ${typeof m.challengedTeamScore === "number" ? /* html */`
-                            <div class="score2 ${m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
+                            <div class="score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
                                 ${m.challengedTeamScore}
                             </div>
                         ` : /* html */`
