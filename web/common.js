@@ -52,18 +52,38 @@ class Common {
                         </div>
                         <script>document.getElementById("header").style.backgroundImage = "url(/images/" + randomBackground() + ")";</script>
                         ${html}
+                        <div id="discord">
+                            <div class="title">Join the OTL on Discord!</div>
+                            <div class="text">Interested in joining?  The Overload Teams League coordinates all of our matches and team communication via the OTL Discord server.  Join today and compete with pilots from all over the world.</div>
+                            <div class="link"><a href="/discord" target="_blank"><img src="/images/discord.png" /></a></div>
+                        </div>
                         <div id="copyright">
                             <div class="left">
                                 Version ${pjson.version}, &copy;${+year > 2019 ? "2019-" : ""}${year} roncli Productions
                             </div>
                             <div class="right">
-                                Bugs?  <a href="https://github.com/roncli/otl-bot/issues">Report on GitHub</a>
+                                Bugs?  <a href="https://github.com/roncli/otl-bot/issues" target="_blank">Report on GitHub</a>
                             </div>
                         </div>
                     </div>
                 </body>
             </html>
         `;
+    }
+
+    // #      #          ##    ####                       #
+    // #      #           #    #                          #
+    // ###   ###   # #    #    ###   ###    ##    ##    ###   ##
+    // #  #   #    ####   #    #     #  #  #     #  #  #  #  # ##
+    // #  #   #    #  #   #    #     #  #  #     #  #  #  #  ##
+    // #  #    ##  #  #  ###   ####  #  #   ##    ##    ###   ##
+    /**
+     * HTML-encodes a string.
+     * @param {string} str The string.
+     * @returns {string} The encoded string.
+     */
+    static htmlEncode(str) {
+        return str.replace(/[\u0080-\uFFFF<>&]/gim, (i) => `&#${i.charCodeAt(0)};`);
     }
 }
 

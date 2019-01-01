@@ -4081,6 +4081,8 @@ class Commands {
         return true;
     }
 
+    // TODO: !cleartime
+
     //   #                                                          #
     //  # #                                                         #
     //  #     ##   ###    ##    ##   ###    ##   ###    ##   ###   ###

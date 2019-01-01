@@ -2,6 +2,7 @@
     background-color: black;
     white-space: nowrap;
     overflow-x: auto;
+    font-size: 14px;
 }
 
 #matches .match {
@@ -152,4 +153,29 @@
 
 #body #standings .provisional {
     font-style: italic;
+}
+
+#news {
+    background-color: black;
+}
+
+#news #articles {
+    display: grid;
+    padding: 10px;
+}
+
+#news #articles .author {
+    color: #999999;
+    font-size: 14px;
+    margin-top: 10px;
+    text-decoration: underline;
+}
+
+#news #articles .author:first-child {
+    margin-top: 0;    
+}
+
+#news #articles .body {
+    color: white;
+    font-size: 16px;
 }

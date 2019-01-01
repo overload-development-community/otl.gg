@@ -2,6 +2,15 @@ body {
     background-color: white;
 }
 
+a:any-link {
+    color: #ff6600;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
 #page {
     max-width: 1200px;
     margin: 0 auto;
@@ -11,11 +20,13 @@ body {
     background-color: black;
 }
 
-#menu a:any-link {
-    color: #ff6600;
+#menu a {
     font-size: 18px;
-    text-decoration: none;
     font-weight: bold;
+}
+
+#menu a:hover {
+    text-decoration: none;
 }
 
 #menu ul {
@@ -76,4 +87,35 @@ body {
 
 div > .section:first-child {
     padding-top: 10px;
+}
+
+#discord {
+    display: grid;
+    background-color: black;
+    grid-auto-columns: auto 396px;
+    padding-right: 10px;
+}
+
+#discord .title {
+    color: #ff6600;
+    font-size: 24px;
+    font-weight: bold;
+    grid-column: 1;
+    grid-row: 1;
+    padding: 10px;
+}
+
+#discord .text {
+    color: white;
+    font-size: 14px;
+    grid-column: 1;
+    grid-row: 2;
+    padding: 10px;
+}
+
+#discord .link {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: end;
+    padding-bottom: 10px;
 }

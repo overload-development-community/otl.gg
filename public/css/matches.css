@@ -1,0 +1,201 @@
+#matches {
+    display: grid;
+    grid-auto-columns: 50% 50%;
+    background-color: black;
+}
+
+#matches .diamond {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin: 0 10px 0 5px;
+    -webkit-transform: translate(5px, 2px) rotate(-45deg);
+    -moz-transform: translate(5px, 2px) rotate(-45deg);
+    -ms-transform: translate(5px, 2px) rotate(-45deg);
+    -o-transform: translate(5px, 2px) rotate(-45deg);
+    transform: translate(5px, 2px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#matches .diamond-empty {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 10px 0 5px;
+    border: solid 2px white;
+    -webkit-transform: translate(5px, 2px) rotate(-45deg);
+    -moz-transform: translate(5px, 2px) rotate(-45deg);
+    -ms-transform: translate(5px, 2px) rotate(-45deg);
+    -o-transform: translate(5px, 2px) rotate(-45deg);
+    transform: translate(5px, 2px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#matches #completed {
+    grid-column: 1;
+}
+
+#matches .match {
+    display: grid;
+    color: white;
+    padding: 0 100px;
+    margin-top: 20px;
+}
+
+#matches .match:first-child {
+    margin-top: 0;
+}
+
+#matches #completed .match .tag1 {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 24px;
+}
+
+#matches #completed .match .team1 {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 14px;
+}
+
+#matches #completed .match .record1 {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#matches #completed .match .score1 {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    font-size: 48px;
+    text-align: right;
+    align-self: center;
+}
+
+#matches #completed .match .tag2 {
+    grid-column: 1;
+    grid-row: 4;
+    font-size: 24px;
+}
+
+#matches #completed .match .team2 {
+    grid-column: 1;
+    grid-row: 5;
+    font-size: 14px;
+}
+
+#matches #completed .match .record2 {
+    grid-column: 1;
+    grid-row: 6;
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#matches #completed .match .score2 {
+    grid-column: 2;
+    grid-row: 4 / span 3;
+    font-size: 48px;
+    text-align: right;
+    align-self: center;
+}
+
+#matches #completed .match .map {
+    grid-column: 1;
+    grid-row: 7;
+    font-size: 18px;
+    margin-top: 3px;
+}
+
+#matches #completed .match .date {
+    grid-column: 2;
+    grid-row: 7;
+    font-size: 18px;
+    text-align: right;
+    margin-top: 3px;
+}
+
+#matches #completed .match .winner {
+    font-weight: bold;
+    color: white;
+}
+
+#matches #pending {
+    grid-column: 2;
+}
+
+#matches #pending .match .tag1 {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 24px;
+}
+
+#matches #pending .match .team1 {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 14px;
+}
+
+#matches #pending .match .record1 {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    font-size: 20px;
+    color: #999999;
+    font-style: italic;
+    text-align: right;
+    align-self: center;
+}
+
+#matches #pending .match .tag2 {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 24px;
+}
+
+#matches #pending .match .team2 {
+    grid-column: 1;
+    grid-row: 4;
+    font-size: 14px;
+}
+
+#matches #pending .match .record2 {
+    grid-column: 2;
+    grid-row: 3 / span 2;
+    font-size: 20px;
+    color: #999999;
+    font-style: italic;
+    text-align: right;
+    align-self: center;
+}
+
+#matches #pending .match .map {
+    grid-column: 1;
+    grid-row: 5;
+    font-size: 18px;
+    margin-top: 3px;
+}
+
+#matches #pending .match .date {
+    grid-column: 2;
+    grid-row: 5;
+    font-size: 18px;
+    text-align: right;
+    margin-top: 3px;
+}
+
+#matches #pending .match .caster {
+    grid-column: 1 / span 2;
+    grid-row: 6;
+    font-size: 14px;
+    text-align: center;
+}

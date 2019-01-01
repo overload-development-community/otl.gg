@@ -2236,6 +2236,88 @@ class Database {
         });
     }
 
+    //                                       #  #         #          #
+    //                                       ####         #          #
+    //  ###    ##    ###   ###    ##   ###   ####   ###  ###    ##   ###    ##    ###
+    // ##     # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    //   ##   ##    # ##    ##   #  #  #  #  #  #  # ##   #    #     #  #  ##      ##
+    // ###     ##    # #  ###     ##   #  #  #  #   # #    ##   ##   #  #   ##   ###
+    /**
+     * Gets the matches for the specified season.
+     * @param {number} [season] The season number, or void for the latest season.
+     * @returns {Promise<{completed: {challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[]}>} A promise that resolves with the season's matches.
+     */
+    static async seasonMatches(season) {
+
+        /**
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date}[], {ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @dateStart DATETIME
+            DECLARE @dateEnd DATETIME
+
+            SELECT TOP 1
+                @season = Season,
+                @dateStart = DateStart,
+                @dateEnd = DateEnd
+            FROM tblSeason
+            WHERE (@season IS NULL OR Season = @season)
+                AND DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
+            SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                ChallengingTeamScore,
+                ChallengedTeamScore,
+                MatchTime,
+                Map,
+                DateClosed
+            FROM tblChallenge
+            WHERE MatchTime IS NOT NULL
+                AND @dateStart <= MatchTime
+                AND @dateEnd > MatchTime
+                AND DateVoided IS NULL
+                AND DateConfirmed IS NOT NULL
+                AND DateClosed IS NOT NULL
+            ORDER BY MatchTime DESC
+
+            SELECT
+                c.ChallengingTeamId,
+                c.ChallengedTeamId,
+                c.MatchTime,
+                c.Map,
+                p.TwitchName
+            FROM tblChallenge c
+            LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
+            WHERE MatchTime IS NOT NULL
+                AND @dateStart <= MatchTime
+                AND DateVoided IS NULL
+                AND DateConfirmed IS NULL
+                AND DateClosed IS NULL
+            ORDER BY MatchTime
+        `, {season: {type: Db.INT, value: season}});
+        return data && data.recordsets && data.recordsets.length === 2 && {
+            completed: data.recordsets[0].map((row) => ({
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamScore: row.ChallengedTeamScore,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                dateClosed: row.DateClosed
+            })),
+            pending: data.recordsets[1].map((row) => ({
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                twitchName: row.TwitchName
+            }))
+        } || {completed: [], pending: []};
+    }
+
     //                                        ##    #                   #   #
     //                                       #  #   #                   #
     //  ###    ##    ###   ###    ##   ###    #    ###    ###  ###    ###  ##    ###    ###   ###
@@ -2244,8 +2326,8 @@ class Database {
     // ###     ##    # #  ###     ##   #  #   ##     ##   # #  #  #   ###  ###   #  #  #     ###
     //                                                                                  ###
     /**
-     * Gets the season standings for the latest season.
-     * @param {number} [season] The season number, or void for latest season.
+     * Gets the season standings for the specified season.
+     * @param {number} [season] The season number, or void for the latest season.
      * @returns {Promise<{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]>} A promise that resolves with the season standings.
      */
     static async seasonStandings(season) {
@@ -2287,9 +2369,7 @@ class Database {
                 LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
             ) a
             ORDER BY Rating DESC, Wins DESC, Losses ASC, Name ASC
-        `, {
-            season: {type: Db.INT, value: season}
-        });
+        `, {season: {type: Db.INT, value: season}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties})) || [];
     }
 

@@ -1,8 +1,10 @@
-const {minify} = require("html-minifier"),
+const HtmlMinifier = require("html-minifier"),
+    DiscordMarkdown = require("discord-markdown"),
 
     Common = require("./common"),
 
     Db = require("../database"),
+    Discord = require("../discord"),
     settings = require("../settings"),
     Team = require("../team");
 
@@ -63,6 +65,8 @@ class Home {
             match.challengedTeamStandings = standings.find((s) => s.teamId === match.challengedTeamId);
         });
 
+        const news = await Discord.announcementsChannel.fetchMessages({limit: 5});
+
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/home.css">
         `, /* html */`
@@ -121,9 +125,18 @@ class Home {
                     `).slice(0, 5).join("")}
                 </div>
             </div>
+            <div id="news">
+                <div class="section">News</div>
+                <div id="articles">
+                    ${news.map((n) => /* html */`
+                        <div class="author">Posted by ${Common.htmlEncode(Discord.findGuildMemberById(n.author.id).displayName)}, <span><script>document.write(formatDate(new Date(${n.createdTimestamp})));</script></span></div>
+                        <div class="body">${DiscordMarkdown.toHTML(n.content, {discordCallback: {user: (user) => `@${Discord.findGuildMemberById(user.id).displayName}`, channel: (channel) => `#${Discord.findChannelById(channel.id).name}`, role: (role) => `@${Discord.findRoleById(role.id).name}`, emoji: () => ""}})}</div>
+                    `).join("")}
+                </div>
+            </div>
         `);
 
-        res.status(200).send(minify(html, settings.htmlMinifier));
+        res.status(200).send(HtmlMinifier.minify(html, settings.htmlMinifier));
     }
 }
 

@@ -46,6 +46,10 @@ const compression = require("compression"),
     app.use(minify());
     app.use(express.static("public"));
     app.get("/", Web.Home);
+    app.get("/discord", (req, res) => {
+        res.redirect("http://ronc.li/otl-discord");
+    });
+    app.get("/matches", Web.Matches);
     app.get("/standings", Web.Standings);
 
     // Startup web server.

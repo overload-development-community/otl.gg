@@ -18,6 +18,11 @@ let readied = false;
 let alertsChannel;
 
 /**
+ * @type {DiscordJs.TextChannel}
+ */
+let announcementsChannel;
+
+/**
  * @type {DiscordJs.Role}
  */
 let captainRole;
@@ -72,6 +77,20 @@ class Discord {
      */
     static get alertsChannel() {
         return alertsChannel;
+    }
+
+    //                                                                    #            ##   #                             ##
+    //                                                                    #           #  #  #                              #
+    //  ###  ###   ###    ##   #  #  ###    ##    ##   # #    ##   ###   ###    ###   #     ###    ###  ###   ###    ##    #
+    // #  #  #  #  #  #  #  #  #  #  #  #  #     # ##  ####  # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##   #
+    // # ##  #  #  #  #  #  #  #  #  #  #  #     ##    #  #  ##    #  #   #      ##   #  #  #  #  # ##  #  #  #  #  ##     #
+    //  # #  #  #  #  #   ##    ###  #  #   ##    ##   #  #   ##   #  #    ##  ###     ##   #  #   # #  #  #  #  #   ##   ###
+    /**
+     * Returns the announcements channel.
+     * @returns {DiscordJs.TextChannel} The announcements channel.
+     */
+    static get announcementsChannel() {
+        return announcementsChannel;
     }
 
     //                    #           #          ###         ##
@@ -208,6 +227,7 @@ class Discord {
             founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
             alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
+            announcementsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "announcements")); // eslint-disable-line no-extra-parens
             matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
             rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
 
@@ -437,6 +457,22 @@ class Discord {
         return otlGuild.createRole(data, reason);
     }
 
+    //   #    #             #   ##   #                             ##    ###         ###      #
+    //  # #                 #  #  #  #                              #    #  #         #       #
+    //  #    ##    ###    ###  #     ###    ###  ###   ###    ##    #    ###   #  #   #     ###
+    // ###    #    #  #  #  #  #     #  #  #  #  #  #  #  #  # ##   #    #  #  #  #   #    #  #
+    //  #     #    #  #  #  #  #  #  #  #  # ##  #  #  #  #  ##     #    #  #   # #   #    #  #
+    //  #    ###   #  #   ###   ##   #  #   # #  #  #  #  #   ##   ###   ###     #   ###    ###
+    //                                                                          #
+    /**
+     * Finds a Discord channel by its ID.
+     * @param {string} id The ID of the channel.
+     * @returns {DiscordJs.GuildChannel} The Discord channel.
+     */
+    static findChannelById(id) {
+        return otlGuild.channels.find((c) => c.id === id);
+    }
+
     //   #    #             #   ##   #                             ##    ###         #  #
     //  # #                 #  #  #  #                              #    #  #        ## #
     //  #    ##    ###    ###  #     ###    ###  ###   ###    ##    #    ###   #  #  ## #   ###  # #    ##
@@ -483,6 +519,22 @@ class Discord {
      */
     static findGuildMemberById(id) {
         return otlGuild.members.find((m) => m.id === id);
+    }
+
+    //   #    #             #  ###         ##          ###         ###      #
+    //  # #                 #  #  #         #          #  #         #       #
+    //  #    ##    ###    ###  #  #   ##    #     ##   ###   #  #   #     ###
+    // ###    #    #  #  #  #  ###   #  #   #    # ##  #  #  #  #   #    #  #
+    //  #     #    #  #  #  #  # #   #  #   #    ##    #  #   # #   #    #  #
+    //  #    ###   #  #   ###  #  #   ##   ###    ##   ###     #   ###    ###
+    //                                                        #
+    /**
+     * Finds a Discord role by its ID.
+     * @param {string} id The ID of the role.
+     * @returns {DiscordJs.Role} The Discord role.
+     */
+    static findRoleById(id) {
+        return otlGuild.roles.find((r) => r.id === id);
     }
 
     //   #    #             #  ###         ##          ###         #  #

@@ -1,4 +1,4 @@
-const {minify} = require("html-minifier"),
+const HtmlMinifier = require("html-minifier"),
 
     Common = require("./common"),
 
@@ -92,7 +92,7 @@ class Standings {
             </div>
         `);
 
-        res.status(200).send(minify(html, settings.htmlMinifier));
+        res.status(200).send(HtmlMinifier.minify(html, settings.htmlMinifier));
     }
 }
 
