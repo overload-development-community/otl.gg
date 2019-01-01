@@ -1,7 +1,7 @@
 #matches {
     background-color: black;
     white-space: nowrap;
-    overflow-x: scroll;
+    overflow-x: auto;
 }
 
 #matches .match {
@@ -79,6 +79,12 @@
     text-align: center;
 }
 
+#matches .map {
+    grid-column: 1 / span 2;
+    grid-row: 4;
+    text-align: center;
+}
+
 #matches .winner {
     font-weight: bold;
     color: white;
@@ -88,6 +94,7 @@
     display: grid;
     grid-template-columns: 168px auto;
     align-items: center;
+    background-position: center;
 }
 
 #header #logo {
@@ -161,4 +168,8 @@
     font-size: 20px;
     color: #999999;
     margin: 1px 3px;
+}
+
+#body #standings .provisional {
+    font-style: italic;
 }

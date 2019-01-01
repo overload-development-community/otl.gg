@@ -31,7 +31,7 @@ class Common {
                     <link rel="stylesheet" href="/css/reset.css">
                     <link rel="stylesheet" href="/css/common.css">
                     <link rel="stylesheet" href="/css/home.css">
-                    <script src="/js/time.js"></script>
+                    <script src="/js/common.js"></script>
                 </head>
                 <body>
                     <div id="page">

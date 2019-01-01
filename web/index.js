@@ -1,3 +1,4 @@
 module.exports = {
-    Home: require("./home")
+    Home: require("./home"),
+    Standings: require("./standings")
 };

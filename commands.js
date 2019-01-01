@@ -4443,6 +4443,8 @@ class Commands {
             throw err;
         }
 
+        await Discord.queue(`${member}, the specified challenge has been unvoided.`, channel);
+
         return true;
     }
 

@@ -78,7 +78,7 @@ class Elo {
      * @return {number} The new rating.
      */
     static update(expected, actual, rating, k) {
-        return Math.round(rating + k * (actual - expected));
+        return rating + k * (actual - expected);
     }
 
     //             ##                ##           #          ###          #     #

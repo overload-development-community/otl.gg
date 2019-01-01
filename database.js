@@ -2236,6 +2236,63 @@ class Database {
         });
     }
 
+    //                                        ##    #                   #   #
+    //                                       #  #   #                   #
+    //  ###    ##    ###   ###    ##   ###    #    ###    ###  ###    ###  ##    ###    ###   ###
+    // ##     # ##  #  #  ##     #  #  #  #    #    #    #  #  #  #  #  #   #    #  #  #  #  ##
+    //   ##   ##    # ##    ##   #  #  #  #  #  #   #    # ##  #  #  #  #   #    #  #   ##     ##
+    // ###     ##    # #  ###     ##   #  #   ##     ##   # #  #  #   ###  ###   #  #  #     ###
+    //                                                                                  ###
+    /**
+     * Gets the season standings for the latest season.
+     * @param {number} [season] The season number, or void for latest season.
+     * @returns {Promise<{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]>} A promise that resolves with the season standings.
+     */
+    static async seasonStandings(season) {
+
+        /**
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @dateStart DATETIME
+            DECLARE @dateEnd DATETIME
+
+            SELECT TOP 1
+                @season = Season,
+                @dateStart = DateStart,
+                @dateEnd = DateEnd
+            FROM tblSeason
+            WHERE (@season IS NULL OR Season = @season)
+                AND DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
+            SELECT
+                TeamId, Name, Tag, Disbanded, Locked,
+                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Wins, Losses, Ties
+            FROM
+            (
+                SELECT
+                    t.TeamId,
+                    t.Name,
+                    t.Tag,
+                    t.Disbanded,
+                    t.Locked,
+                    tr.Rating,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE @dateStart <= c.MatchTime AND @dateEnd > c.MatchTime AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE @dateStart <= c.MatchTime AND @dateEnd > c.MatchTime AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE @dateStart <= c.MatchTime AND @dateEnd > c.MatchTime AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                FROM tblTeam t
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
+            ) a
+            ORDER BY Rating DESC, Wins DESC, Losses ASC
+        `, {
+            season: {type: Db.INT, value: season}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties})) || [];
+    }
+
     //               #    #  #                    #  #              ###                     ####               ##   #           ##    ##
     //               #    #  #                    ####               #                      #                 #  #  #            #     #
     //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -2719,6 +2776,59 @@ class Database {
         await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //                                #                #  #         #          #
+    //                                                 ####         #          #
+    // #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
+    // #  #  #  #  #     #  #  ####   #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    // #  #  #  #  #     #  #  #  #   #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
+    //  ###  ###    ##    ##   #  #  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
+    //       #                                    ###
+    /**
+     * Gets the upcoming matches.
+     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string}[]>} A promise that resolves with the upcoming matches.
+     */
+    static async upcomingMatches() {
+
+        /**
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                ChallengingTeamScore,
+                ChallengedTeamScore,
+                MatchTime,
+                Map
+            FROM
+            (
+                SELECT TOP 5
+                    ChallengingTeamId,
+                    ChallengedTeamId,
+                    CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                    CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                    MatchTime,
+                    Map
+                FROM tblChallenge
+                WHERE MatchTime <= GETUTCDATE()
+                    AND DateVoided IS NULL
+                ORDER BY MatchTime DESC
+            ) a
+            UNION SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                CASE WHEN DateClosed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                MatchTime,
+                Map
+            FROM tblChallenge
+            WHERE MatchTime > GETUTCDATE()
+                AND DateVoided IS NULL
+            ORDER BY MatchTime
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId, challengingTeamScore: row.ChallengingTeamScore, challengedTeamScore: row.ChallengedTeamScore, matchTime: row.MatchTime, map: row.Map})) || [];
     }
 
     //                #         #          #  #

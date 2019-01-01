@@ -1,3 +1,4 @@
+DROP VIEW dbo.vwCompletedChallenge
 DROP TABLE dbo.tblStat
 DROP TABLE dbo.tblChallengeStreamer
 DROP TABLE dbo.tblChallengeHome
@@ -239,3 +240,10 @@ CREATE TABLE dbo.tblStat (
     Deaths INT NOT NULL,
     PRIMARY KEY (StatId ASC)
 )
+
+CREATE VIEW dbo.vwCompletedChallenge AS
+SELECT *
+FROM tblChallenge
+WHERE DateVoided IS NULL
+    AND DateConfirmed IS NOT NULL
+    AND DateClosed IS NOT NULL

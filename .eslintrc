@@ -105,5 +105,24 @@
                 }
             }
         ]
-    }
+    },
+    "overrides": [
+        {
+            "files": ["public/**/*.js"],
+            "env": {
+                "es6": false,
+                "node": false,
+                "browser": true
+            },
+            "parserOptions": {
+                "ecmaVersion": 5,
+                "sourceType": "script"
+            },
+            "rules": {
+                "no-var": "off",
+                "prefer-arrow-callback": "off",
+                "prefer-template": "off"
+            }
+        }
+    ]
 }
