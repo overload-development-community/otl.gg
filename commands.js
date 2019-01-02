@@ -430,7 +430,7 @@ class Commands {
 
         if (!correctedMap) {
             await Discord.queue(`Sorry, ${member}, but you that is not a map you can use.  You can only use valid multiplayer maps that you can pick in the game client.`, channel);
-            throw new Warning("Pilot is penalized from being captain.");
+            throw new Warning("Invalid map.");
         }
 
         return correctedMap;
