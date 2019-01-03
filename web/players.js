@@ -95,7 +95,7 @@ class Players {
                     </div>
                 </div>
                 <div id="deaths">
-                    <div class="section">Lest Deaths per Game</div>
+                    <div class="section">Least Deaths per Game</div>
                     <div class="stats">
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
