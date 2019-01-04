@@ -1,14 +1,9 @@
-/**
- * @typedef {(import("ws").CloseEvent)} CloseEvent
- * @typedef {{type: string, date: Date, obj?: Error|CloseEvent, message?: string}} LogItem
- */
-
 const util = require("util"),
 
     DiscordJs = require("discord.js");
 
 /**
- * @type {LogItem[]}
+ * @type {{type: string, date: Date, obj?: Error, message?: string}[]}
  */
 const queue = [];
 
@@ -82,7 +77,7 @@ class Log {
     /**
      * Logs an exception.
      * @param {string} message The message describing the error.
-     * @param {Error|CloseEvent} [obj] The object to log.
+     * @param {Error} [obj] The object to log.
      * @returns {void}
      */
     static exception(message, obj) {
