@@ -364,12 +364,11 @@ class Discord {
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
     static async queue(message, channel) {
-        let msg;
-
         if (channel.id === discord.user.id) {
             return void 0;
         }
 
+        let msg;
         try {
             msg = await Discord.richQueue(new DiscordJs.RichEmbed({description: message}), channel);
         } catch {}
