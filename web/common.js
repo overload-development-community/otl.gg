@@ -1,4 +1,10 @@
-const pjson = require("../package.json");
+const pjson = require("../package.json"),
+
+    nameAngledBracketTagStart = /^<.*> /,
+    nameBraceTagStart = /^\{.*\} /,
+    nameBracketTagStart = /^\[.*\] /,
+    nameDesignaterEnd = / - .*$/,
+    nameParenthesisTagStart = /^\(.*\) /;
 
 //   ###
 //  #   #
@@ -83,6 +89,21 @@ class Common {
      */
     static htmlEncode(str) {
         return str.replace(/[\u0080-\uFFFF<>&]/gim, (i) => `&#${i.charCodeAt(0)};`);
+    }
+
+    //                               ##     #                #  #
+    //                                #                      ## #
+    // ###    ##   ###   # #    ###   #    ##    ####   ##   ## #   ###  # #    ##
+    // #  #  #  #  #  #  ####  #  #   #     #      #   # ##  # ##  #  #  ####  # ##
+    // #  #  #  #  #     #  #  # ##   #     #     #    ##    # ##  # ##  #  #  ##
+    // #  #   ##   #     #  #   # #  ###   ###   ####   ##   #  #   # #  #  #   ##
+    /**
+     * Normalizes a player name so that it doesn't start with a tag or end with a position designater.
+     * @param {string} name The player's name.
+     * @returns {string} The normalized name.
+     */
+    static normalizeName(name) {
+        return name.replace(nameParenthesisTagStart, "").replace(nameBracketTagStart, "").replace(nameBraceTagStart, "").replace(nameAngledBracketTagStart, "").replace(nameDesignaterEnd, "");
     }
 }
 
