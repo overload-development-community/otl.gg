@@ -53,7 +53,7 @@ class TeamPage {
                     </div>
                     <div id="roster">
                         ${teamInfo.members.map((m) => /* html */`
-                            <div class="member">${Common.htmlEncode(Common.normalizeName(m.name))} ${m.role ? `- ${m.role}` : ""}</div>
+                            <div class="member">${Common.htmlEncode(Common.normalizeName(m.name, team.tag))} ${m.role ? `- ${m.role}` : ""}</div>
                         `).join("")}
                     </div>
                 </div>

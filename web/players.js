@@ -72,7 +72,7 @@ class Players {
                             <div class="tag">${s.team ? /* html */`
                                 <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
                             ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name))}</div>
+                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
                             <div class="value">${s.avgKills.toFixed(2)}</div>
                         `).join("")}
                     </div>
@@ -89,7 +89,7 @@ class Players {
                             <div class="tag">${s.team ? /* html */`
                                 <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
                             ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name))}</div>
+                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
                             <div class="value">${s.avgAssists.toFixed(2)}</div>
                         `).join("")}
                     </div>
@@ -106,7 +106,7 @@ class Players {
                             <div class="tag">${s.team ? /* html */`
                                 <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
                             ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name))}</div>
+                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
                             <div class="value">${s.avgDeaths.toFixed(2)}</div>
                         `).join("")}
                     </div>
@@ -123,7 +123,7 @@ class Players {
                             <div class="tag">${s.team ? /* html */`
                                 <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
                             ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name))}</div>
+                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
                             <div class="value">${s.kda.toFixed(2)}</div>
                         `).join("")}
                     </div>
