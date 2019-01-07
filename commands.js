@@ -4267,7 +4267,7 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        if (!await Commands.checkHasParameters(message, member, "Use the `!pilotstat` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "Use the `!addstat` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
             return false;
         }
 
@@ -4276,7 +4276,7 @@ class Commands {
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
         if (!statMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use the \`!pilotstat\` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.`, channel);
             throw new Warning("Invalid parameters.");
         }
 

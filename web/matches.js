@@ -83,7 +83,7 @@ class Matches {
                                 <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.name}</a>
                             </div>
                             <div class="record1">
-                                ${Math.round(m.challengingTeamStandings.rating)} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : m.challengingTeamStandings.ties}
+                                ${Math.round(m.challengingTeamStandings.rating)} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
                             </div>
                             <div class="score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
                                 ${m.challengingTeamScore}
@@ -95,7 +95,7 @@ class Matches {
                                 <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.name}</a>
                             </div>
                             <div class="record2">
-                                ${Math.round(m.challengedTeamStandings.rating)} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : m.challengedTeamStandings.ties}
+                                ${Math.round(m.challengedTeamStandings.rating)} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
                             </div>
                             <div class="score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
                                 ${m.challengedTeamScore}
@@ -120,7 +120,7 @@ class Matches {
                                 <a href="/team/${m.challengingTeamStandings.team.tag}">${m.challengingTeamStandings.team.name}</a>
                             </div>
                             <div class="record1">
-                                ${m.challengingTeamStandings.rating ? Math.round(m.challengingTeamStandings.rating) : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : m.challengingTeamStandings.ties}
+                                ${m.challengingTeamStandings.rating ? Math.round(m.challengingTeamStandings.rating) : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
                             </div>
                             <div class="tag2">
                                 <div class="diamond${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? "" : "-empty"}" ${m.challengedTeamStandings.team.role && m.challengedTeamStandings.team.role.color ? `style="background-color: ${m.challengedTeamStandings.team.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.tag}</a>
@@ -129,7 +129,7 @@ class Matches {
                                 <a href="/team/${m.challengedTeamStandings.team.tag}">${m.challengedTeamStandings.team.name}</a>
                             </div>
                             <div class="record2">
-                                ${m.challengedTeamStandings.rating ? Math.round(m.challengedTeamStandings.rating) : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : m.challengedTeamStandings.ties}
+                                ${m.challengedTeamStandings.rating ? Math.round(m.challengedTeamStandings.rating) : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
                             </div>
                             ${m.map ? /* html */`
                                 <div class="map">

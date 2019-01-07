@@ -2351,7 +2351,6 @@ class Database {
                 AND @dateEnd > MatchTime
                 AND DateVoided IS NULL
                 AND DateConfirmed IS NOT NULL
-                AND DateClosed IS NOT NULL
             ORDER BY MatchTime DESC
 
             SELECT
