@@ -1,7 +1,7 @@
 /**
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[], penaltiesRemaining?: number}} TeamInfo
+ * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[], penaltiesRemaining: number}} TeamInfo
  */
 
 const DiscordJs = require("discord.js"),

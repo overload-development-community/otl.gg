@@ -2,6 +2,7 @@ const HtmlMinifier = require("html-minifier"),
 
     Common = require("./common"),
 
+    Discord = require("../discord"),
     Db = require("../database"),
     settings = require("../settings"),
     Team = require("../team");
@@ -38,6 +39,7 @@ class Players {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
+        const freeAgents = (await Db.freeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId));
 
         /**
          * @type {{team?: Team, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]}
@@ -59,7 +61,36 @@ class Players {
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/players.css">
         `, /* html */`
+            ${freeAgents ? /* html */ `
+                <div id="free-agents">
+                    <div class="section">Free Agents</div>
+                    <div class="text">The following pilots are available free agents for you to recruit to your team.</div>
+                    <div class="players">
+                        ${freeAgents.map((f) => /* html */`
+                            <div>${Common.htmlEncode(f.name)}</div>
+                            <div>${f.timezone}</div>
+                        `).join("")}
+                    </div>
+                </div>
+            ` : ""}
             <div id="stats">
+                <div id="kda">
+                    <div class="section">Best KDA Ratio</div>
+                    <div class="stats">
+                        <div class="header">Pos</div>
+                        <div class="header">Team</div>
+                        <div class="header">Name</div>
+                        <div class="header">KDA</div>
+                        ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.kda - a.kda).map((s, index) => /* html */`
+                            <div class="pos">${index + 1}</div>
+                            <div class="tag">${s.team ? /* html */`
+                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
+                            ` : ""}</div>
+                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                            <div class="value">${s.kda.toFixed(3)}</div>
+                        `).join("")}
+                    </div>
+                </div>
                 <div id="kills">
                     <div class="section">Most Kills per Game</div>
                     <div class="stats">
@@ -108,23 +139,6 @@ class Players {
                             ` : ""}</div>
                             <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
                             <div class="value">${s.avgDeaths.toFixed(2)}</div>
-                        `).join("")}
-                    </div>
-                </div>
-                <div id="kda">
-                    <div class="section">Best KDA Ratio</div>
-                    <div class="stats">
-                        <div class="header">Pos</div>
-                        <div class="header">Team</div>
-                        <div class="header">Name</div>
-                        <div class="header">KDA</div>
-                        ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.kda - a.kda).map((s, index) => /* html */`
-                            <div class="pos">${index + 1}</div>
-                            <div class="tag">${s.team ? /* html */`
-                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
-                            ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
-                            <div class="value">${s.kda.toFixed(2)}</div>
                         `).join("")}
                     </div>
                 </div>

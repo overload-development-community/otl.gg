@@ -90,13 +90,24 @@
     color: white;
 }
 
+#body {
+    display: grid;
+    grid-template-columns: 50% 50%;
+}
+
 #body #standings {
     display: grid;
     grid-template-columns: auto auto auto auto auto;
     padding: 10px;
 }
 
-#body #standings .diamond {
+#body #players {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    padding: 10px;
+}
+
+#body .diamond {
     display: inline-block;
     width: 12px;
     height: 12px;
@@ -113,7 +124,7 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .diamond-empty {
+#body .diamond-empty {
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -131,22 +142,27 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .tag {
+#body .tag {
     white-space: nowrap;
 }
 
-#body #standings div.header {
+#body div.header {
     font-size: 24px;
     color: white;
 }
 
-#body #standings div {
-    font-size: 20px;
+#body #standings div.header, #body #players div.header {
     color: #999999;
+}
+
+#body #standings div, #body #players div {
+    font-size: 20px;
+    color: white;
     margin: 1px 3px;
 }
 
 #body #standings .provisional {
+    color: #999999;
     font-style: italic;
 }
 

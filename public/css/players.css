@@ -1,7 +1,23 @@
+#free-agents {
+    color: white;
+}
+
+#free-agents .text {
+    color: #999999;
+    padding: 0 10px;
+}
+
+#free-agents .players {
+    display: inline-grid;
+    grid-template-columns: auto auto;
+    column-gap: 10px;
+    grid-column-gap: 10px;
+    padding: 10px;
+}
+
 #stats {
     display: grid;
     grid-template-columns: 25% 25% 25% 25%;
-    padding: 10px;
 }
 
 #stats .diamond {
@@ -42,13 +58,13 @@
 #stats .stats {
     display: grid;
     grid-template-columns: auto auto auto auto;
-    color: #999999;
+    color: white;
     font-size: 14px;
     padding: 0 10px;
 }
 
 #stats .stats .header {
-    color: white;
+    color: #999999;
     font-size: 18px;
 }
 

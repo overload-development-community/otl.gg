@@ -317,7 +317,10 @@ class Discord {
         const member = otlGuild.members.find((m) => m.id === user.id);
 
         if (!member) {
-            await Discord.queue(`Sorry, ${user}, but you are not part of the OTL!`, channel);
+            return;
+        }
+
+        if (channel instanceof DiscordJs.TextChannel && channel.guild.name !== settings.guild) {
             return;
         }
 

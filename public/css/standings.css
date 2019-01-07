@@ -1,6 +1,28 @@
+#options {
+    padding: 10px;
+    color: white;
+}
+
+#options .grey {
+    color: #999999;
+}
+
+#body #standings .header.before {
+    grid-column-end: span 5;
+}
+
+#body #disbanded .header.before {
+    grid-column-end: span 4;
+}
+
+#body .header.records {
+    grid-column-end: span 3;
+    text-align: center;
+}
+
 #body #standings {
     display: grid;
-    grid-template-columns: auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto;
     padding: 10px;
 }
 
@@ -45,21 +67,22 @@
 
 #body #standings div.header, #body #disbanded div.header {
     font-size: 24px;
-    color: white;
+    color: #999999;
 }
 
 #body #standings div, #body #disbanded div {
     font-size: 20px;
-    color: #999999;
+    color: white;
     margin: 1px 3px;
 }
 
 #body #standings .provisional, #body #disbanded .provisional {
+    color: #999999;
     font-style: italic;
 }
 
 #body #disbanded {
     display: grid;
-    grid-template-columns: auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto;
     padding: 10px;
 }

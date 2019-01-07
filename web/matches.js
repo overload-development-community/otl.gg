@@ -54,7 +54,7 @@ class Matches {
         });
 
         /**
-         * @type {{completed: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[]}}
+         * @type {{completed: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengeId: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengeId: number, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {team?: Team, challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
          */
         const matches = await Db.seasonMatches();
 
@@ -66,6 +66,11 @@ class Matches {
         matches.pending.forEach((match) => {
             match.challengingTeamStandings = standings.find((s) => s.teamId === match.challengingTeamId);
             match.challengedTeamStandings = standings.find((s) => s.teamId === match.challengedTeamId);
+        });
+
+        matches.stats.forEach((stat) => {
+            stat.team = standings.find((s) => s.teamId === stat.teamId).team;
+            stat.kda = (stat.kills + stat.assists) / Math.max(1, stat.deaths);
         });
 
         const html = Common.page(/* html */`
@@ -106,6 +111,24 @@ class Matches {
                             <div class="date">
                                 <script>document.write(formatDate(new Date("${m.matchTime}")));</script>
                             </div>
+                        </div>
+                        <div class="stats">
+                            <div class="header">Team</div>
+                            <div class="header">Name</div>
+                            <div class="header">KDA</div>
+                            <div class="header">Kills</div>
+                            <div class="header">Assists</div>
+                            <div class="header">Deaths</div>
+                            ${matches.stats.filter((s) => s.challengeId === m.challengeId).sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
+                                <div class="tag">${s.team ? /* html */`
+                                    <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
+                                ` : ""}</div>
+                                <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                                <div class="kda">${s.kda.toFixed(3)}</div>
+                                <div class="kills">${s.kills}</div>
+                                <div class="assists">${s.assists}</div>
+                                <div class="deaths">${s.deaths}</div>
+                            `).join("")}
                         </div>
                     `).join("")}
                 </div>

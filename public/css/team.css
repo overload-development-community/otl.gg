@@ -1,5 +1,54 @@
+span.grey {
+    color: #999999;
+}
+
+.diamond {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 8px 0 3px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+.diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 8px 0 3px;
+    border: solid 2px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+.header {
+    color: #999999;
+}
+
 #team {
+    display: grid;
     padding: 10px;
+}
+
+#team .section {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 #team .diamond {
@@ -38,6 +87,8 @@
 }
 
 #team #teamname {
+    grid-row: 1;
+    grid-column: 1 / span 3;
     font-size: 20px;
     color: #ff6600
 }
@@ -55,7 +106,152 @@
 }
 
 #team #roster {
-    margin-top: 20px;
+    grid-row: 2;
+    grid-column: 1;
     font-size: 16px;
     color: white;
+}
+
+#team #homes {
+    grid-row: 2;
+    grid-column: 2;
+    font-size: 16px;
+    color: white;
+}
+
+#team #timezone {
+    grid-row: 2;
+    grid-column: 3;
+    font-size: 16px;
+    color: white;
+}
+
+#options {
+    font-size: 14px;
+    color: white;
+    padding: 0 10px;
+}
+
+#records {
+    font-size: 20px;
+    color: white;
+    padding: 10px;
+}
+
+#records .provisional {
+    color: #999999;
+    font-style: italic;
+}
+
+#records .overall {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    justify-items: center;
+    font-size: 36px;
+    padding: 10px;
+}
+
+#records .splits {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    justify-items: center;
+    padding: 10px;
+}
+
+#records .breakdown {
+    display: grid;
+    grid-template-columns: 50% 50%;
+    padding: 10px;
+    justify-items: center;
+    font-size: 18px;
+}
+
+#records .breakdown .opponents {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-column-gap: 10px;
+    column-gap: 10px;
+}
+
+#records .breakdown .maps {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-column-gap: 10px;
+    column-gap: 10px;
+}
+
+#matches {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    grid-column-gap: 10px;
+    column-gap: 10px;
+    padding: 10px;
+    color: white;
+    font-size: 18px;
+}
+
+#matches .score {
+    color: #999999;
+}
+
+#matches .score.winner {
+    color: white;
+    font-weight: bold;
+}
+
+#matches .header.team {
+    grid-column-end: span 3;
+}
+
+#matches .header.player {
+    grid-column-end: span 3;
+}
+
+#stats {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    color: white;
+    font-size: 14px;
+}
+
+#stats .diamond {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 7px 0 1px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#stats .diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 7px 0 1px;
+    border: solid 1px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#stats .header.best {
+    grid-column-end: span 4;
 }

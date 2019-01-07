@@ -5,9 +5,9 @@
 
 #matches .diamond {
     display: inline-block;
-    width: 12px;
-    height: 12px;
-    margin: 0 10px 0 5px;
+    width: 14px;
+    height: 14px;
+    margin: 0 12px 0 5px;
     -webkit-transform: translate(5px, 2px) rotate(-45deg);
     -moz-transform: translate(5px, 2px) rotate(-45deg);
     -ms-transform: translate(5px, 2px) rotate(-45deg);
@@ -22,9 +22,9 @@
 
 #matches .diamond-empty {
     display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin: 0 10px 0 5px;
+    width: 10px;
+    height: 10px;
+    margin: 0 12px 0 5px;
     border: solid 2px white;
     -webkit-transform: translate(5px, 2px) rotate(-45deg);
     -moz-transform: translate(5px, 2px) rotate(-45deg);
@@ -43,6 +43,10 @@
     color: white;
     padding: 0 100px;
     margin-top: 20px;
+}
+
+#matches > div > div:last-child {
+    margin-bottom: 20px;
 }
 
 #matches .match:first-child {
@@ -123,6 +127,61 @@
 #matches #completed .match .winner {
     font-weight: bold;
     color: white;
+}
+
+#matches #completed .stats {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto;
+    color: white;
+    font-size: 14px;
+    padding: 0 100px;
+    margin-top: 5px;
+}
+
+#matches #completed .stats .header {
+    color: #999999;
+    font-size: 14px;
+}
+
+#matches #completed .stats .diamond {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    margin-left: 2px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#matches #completed .stats .diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 7px;
+    margin-left: 2px;
+    border: solid 1px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#matches #completed .stats .tag {
+    white-space: nowrap;
 }
 
 #matches #pending .match .tag1 {
