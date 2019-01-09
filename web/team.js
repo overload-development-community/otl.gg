@@ -183,7 +183,7 @@ class TeamPage {
                             <div><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                             <div class="tag"><div class="diamond${m.statTeam.role && m.statTeam.role.color ? "" : "-empty"}" ${m.statTeam.role && m.statTeam.role.color ? `style="background-color: ${m.statTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.statTeam.tag}">${m.statTeam.tag}</a></div>
                             <div>${Common.htmlEncode(Common.normalizeName(m.name, m.statTeam.tag))}</div>
-                            <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills}-${m.assists}-${m.deaths})</div>
+                            <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
                         `).join("")}
                     </div>
                     <div class="section">Season Player Stats</div>
@@ -211,7 +211,7 @@ class TeamPage {
                             <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
                             <div>${s.map}</div>
                             <div><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
-                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(2)} KDA (${s.kills}-${s.assists}-${s.deaths})</div>
+                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(2)} KDA (${s.kills} K, ${s.assists} A, ${s.deaths} D)</div>
                         `).join("")}
                     </div>
                 ` : ""}

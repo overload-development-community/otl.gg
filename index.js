@@ -48,6 +48,7 @@ const compression = require("compression"),
 
     app.get("/", Web.Home);
     app.get("/about", Web.About);
+    app.get("/cast/:challengeId", Web.Cast);
     app.get("/discord", (req, res) => {
         res.redirect("http://ronc.li/otl-discord");
     });
