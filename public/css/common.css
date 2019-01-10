@@ -72,7 +72,7 @@ a:hover {
     color: #ff6600;
     font-size: 24px;
     font-weight: bold;
-    grid-column: 1;
+    grid-column: 1 / span 2;
     grid-row: 1;
     padding: 10px;
 }
@@ -90,6 +90,22 @@ a:hover {
     grid-row: 1 / span 2;
     align-self: end;
     padding-bottom: 10px;
+}
+
+@media only screen and (max-width: 800px) {
+    #discord {
+        grid-template-columns: auto;
+    }
+
+    #discord .title {
+        grid-column: 1;
+    }
+
+    #discord .link {
+        grid-column: 1;
+        grid-row: 3;
+        padding-left: 10px;
+    }
 }
 
 #copyright {

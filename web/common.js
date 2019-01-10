@@ -6,6 +6,10 @@ const pjson = require("../package.json"),
     nameDesignaterEnd = / - .*$/,
     nameParenthesisTagStart = /^\(.*\) /;
 
+/**
+ * @typedef {import("express").Request} Express.Request
+ */
+
 //   ###
 //  #   #
 //  #       ###   ## #   ## #    ###   # ##
@@ -26,15 +30,23 @@ class Common {
      * Generates a webpage from the provided HTML using a common template.
      * @param {string} head The HTML to insert into the header.
      * @param {string} html The HTML to make a full web page from.
+     * @param {Express.Request} req The request of the page.
      * @returns {string} The HTML of the full web page.
      */
-    static page(head, html) {
+    static page(head, html, req) {
         const year = new Date().getFullYear();
 
         return /* html */`
             <html>
                 <head>
                     <title>Overload Teams League</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                    <meta name="og:image" content="http://otl.gg/images/otl.png">
+                    <meta name="og:title" content="Overload Teams League">
+                    <meta name="og:type" content="website">
+                    <meta name="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}">
+                    <meta name="twitter:card" content="summary">
+                    <meta name="twitter:creator" content="@roncli">
                     <link rel="stylesheet" href="/css/reset.css">
                     <link rel="stylesheet" href="/css/common.css">
                     <script src="/js/common.js"></script>

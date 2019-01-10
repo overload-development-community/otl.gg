@@ -4,8 +4,7 @@ const HtmlMinifier = require("html-minifier"),
 
     Challenge = require("../challenge"),
     Db = require("../database"),
-    settings = require("../settings"),
-    Team = require("../team");
+    settings = require("../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -193,7 +192,7 @@ class Cast {
         } else {
             const html = Common.page("", /* html */`
                 <div class="section">Challenge Not Found</div>
-            `);
+            `, req);
 
             res.status(404).send(HtmlMinifier.minify(html, settings.htmlMinifier));
         }

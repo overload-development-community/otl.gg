@@ -20,7 +20,7 @@
     grid-template-columns: 25% 25% 25% 25%;
 }
 
-@media only screen and (max-width: 1000px) {
+@media only screen and (max-width: 800px) {
     #stats {
         grid-template-columns: 50% 50%;
     }

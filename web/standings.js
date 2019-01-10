@@ -153,7 +153,7 @@ class Standings {
                     </div>
                 ` : ""}
             </div>
-        `);
+        `, req);
 
         res.status(200).send(HtmlMinifier.minify(html, settings.htmlMinifier));
     }

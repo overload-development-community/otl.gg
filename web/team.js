@@ -215,13 +215,13 @@ class TeamPage {
                         `).join("")}
                     </div>
                 ` : ""}
-            `);
+            `, req);
 
             res.status(200).send(HtmlMinifier.minify(html, settings.htmlMinifier));
         } else {
             const html = Common.page("", /* html */`
                 <div class="section">Team Not Found</div>
-            `);
+            `, req);
 
             res.status(404).send(HtmlMinifier.minify(html, settings.htmlMinifier));
         }
