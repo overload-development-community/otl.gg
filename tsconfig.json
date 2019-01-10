@@ -9,5 +9,8 @@
         "outDir": "./.vscode/ts",
         "resolveJsonModule": true,
         "target": "es2017"
-    }
+    },
+    "exclude": [
+        "public/**/*"
+    ]
 }

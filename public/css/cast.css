@@ -4,6 +4,10 @@ body {
     overflow: hidden;
 }
 
+.hidden {
+    display: none;
+}
+
 .diamond {
     display: inline-block;
     width: 24px;
@@ -250,6 +254,42 @@ body {
     color: #ff6600;
 }
 
+#left-viewing {
+    position: absolute;
+    bottom: 502px;
+    right: 1133px;
+    text-align: right;
+    font-size: 14px;
+    color: white;
+    border: solid 1px;
+    padding: 5px;
+}
+
+#right-viewing {
+    position: absolute;
+    bottom: 502px;
+    left: 1133px;
+    font-size: 14px;
+    color: white;
+    border: solid 1px;
+    padding: 5px;
+}
+
+.twitch-image {
+    display: inline-block;
+    background-image: url(/images/twitch.png);
+    background-size: 16px 16px;
+    width: 16px;
+    height: 16px;
+}
+
+#left-viewing .player, #right-viewing .player {
+    font-size: 36px;
+}
+#left-viewing .twitch, #right-viewing .twitch {
+    font-size: 24px;
+}
+
 #left-frame {
     position: absolute;
     left: 5px;
@@ -266,6 +306,11 @@ body {
     bottom: 50px;
     border: 2px solid;
     padding: 5px;
+    width: 768px;
+    height: 432px;
+}
+
+#left-player, #right-player {
     width: 768px;
     height: 432px;
 }

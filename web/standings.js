@@ -96,7 +96,7 @@ class Standings {
                 ${maps.length > 0 ? /* html */`
                     <span class="grey">Map:</span> ${map ? /* html */`<a href="/standings?map=none${req.query.season ? `&season=${req.query.season}` : ""}${req.query.records ? `&records=${req.query.records}` : ""}">None</a>` : "None"} | ${maps.map((mapName) => /* html */`
                         ${map === mapName ? mapName : /* html */`<a href="/standings?map=${mapName}${req.query.season ? `&season=${req.query.season}` : ""}${req.query.records ? `&records=${req.query.records}` : ""}">${mapName}</a>`}
-                    `)}
+                    `).join(" | ")}
                 ` : ""}
             </div>
             <div id="body">

@@ -91,6 +91,22 @@ class Common {
         return str.replace(/[\u0080-\uFFFF<>&]/gim, (i) => `&#${i.charCodeAt(0)};`);
     }
 
+    //   #          ####                       #
+    //              #                          #
+    //   #    ###   ###   ###    ##    ##    ###   ##
+    //   #   ##     #     #  #  #     #  #  #  #  # ##
+    //   #     ##   #     #  #  #     #  #  #  #  ##
+    // # #   ###    ####  #  #   ##    ##    ###   ##
+    //  #
+    /**
+     * Javascript-encodes a string.
+     * @param {*} str The string.
+     * @returns {string} The encoded string.
+     */
+    static jsEncode(str) {
+        return str.replace(/"/gim, "\\\"");
+    }
+
     //                               ##     #                #  #
     //                                #                      ## #
     // ###    ##   ###   # #    ###   #    ##    ####   ##   ## #   ###  # #    ##

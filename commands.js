@@ -3228,7 +3228,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, channel);
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use http://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
 
         return true;
     }

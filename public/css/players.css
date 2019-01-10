@@ -20,6 +20,12 @@
     grid-template-columns: 25% 25% 25% 25%;
 }
 
+@media only screen and (max-width: 1000px) {
+    #stats {
+        grid-template-columns: 50% 50%;
+    }
+}
+
 #stats .diamond {
     display: inline-block;
     width: 8px;
@@ -61,12 +67,6 @@
     color: white;
     font-size: 14px;
     padding: 0 10px;
-}
-
-@media only screen and (max-width: 800px) {
-    #stats {
-        grid-template-columns: 50% 50%;
-    }
 }
 
 #stats .stats .header {

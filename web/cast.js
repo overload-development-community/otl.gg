@@ -47,7 +47,7 @@ class Cast {
         if (challenge && challenge.details.map /* && !challenge.details.dateClosed */) {
 
             /**
-             * @type {{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number}[]}}
+             * @type {{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[]}}
              */
             const data = await Db.getChallengeDataForCast(challenge),
                 challengingTeamColor = challenge.challengingTeam.role && challenge.challengingTeam.role.color ? challenge.challengingTeam.role.hexColor : "white",
@@ -60,9 +60,25 @@ class Cast {
                 <html>
                     <head>
                         <title>${challenge.challengingTeam.name} vs ${challenge.challengedTeam.name}</title>
+                        <script src="https://player.twitch.tv/js/embed/v1.js"></script>
                         <script src="/js/common.js"></script>
+                        <script src="/js/cast.js"></script>
                         <link rel="stylesheet" href="/css/reset.css">
                         <link rel="stylesheet" href="/css/cast.css">
+                        <script>
+                            ${data.challengingTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
+                                leftStreamers.push({
+                                    name: "${Common.jsEncode(Common.normalizeName(p.name, challenge.challengingTeam.tag))}",
+                                    twitch: "${p.twitchName ? Common.jsEncode(p.twitchName) : ""}"
+                                });
+                            `).join("")}
+                            ${data.challengedTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
+                                rightStreamers.push({
+                                    name: "${Common.jsEncode(Common.normalizeName(p.name, challenge.challengedTeam.tag))}",
+                                    twitch: "${p.twitchName ? Common.jsEncode(p.twitchName) : ""}"
+                                });
+                            `).join("")}
+                        </script>
                     <head>
                     <body style="background-image: url(/images/${challenge.details.map.toLowerCase()}.jpg);">
                         <div id="shade">
@@ -124,7 +140,9 @@ class Cast {
                                 <div class="header">APG</div>
                                 <div class="header">DPG</div>
                                 ${data.challengingTeamRoster.map((p) => /* html */`
-                                    <div>${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
+                                    <div>${p.twitchName ? /* html */`
+                                        <div class="twitch-image"></div>&nbsp;
+                                    ` : ""}${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                     <div>${p.games}</div>
                                     <div>${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                     <div>${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
@@ -140,7 +158,9 @@ class Cast {
                                 <div class="header">APG</div>
                                 <div class="header">DPG</div>
                                 ${data.challengedTeamRoster.map((p) => /* html */`
-                                    <div>${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
+                                    <div>${p.twitchName ? /* html */`
+                                    <div class="twitch-image"></div>&nbsp;
+                                ` : ""}${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
                                     <div>${p.games}</div>
                                     <div>${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                     <div>${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
@@ -148,9 +168,21 @@ class Cast {
                                     <div>${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
                                 `).join("")}
                             </div>
+                            <div id="left-viewing" style="border-color: ${challengingTeamColor};">
+                                Now viewing:<br />
+                                <span id="left-name" class="player"></span><br />
+                                <div class="twitch-image"></div>&nbsp;<span id="left-twitch" class="twitch"></span>
+                            </div>
+                            <div id="right-viewing" style="border-color: ${challengedTeamColor};">
+                                Now viewing:<br />
+                                <span id="right-name" class="player"></span><br />
+                                <div class="twitch-image"></div>&nbsp;<span id="right-twitch" class="twitch"></span>
+                            </div>
                             <div id="left-frame" style="border-color: ${challengingTeamColor};">
+                                <div id="left-player"></div>
                             </div>
                             <div id="right-frame" style="border-color: ${challengedTeamColor};">
+                                <div id="right-player"></div>
                             </div>
                         </div>
                     </body>

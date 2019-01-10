@@ -58,8 +58,10 @@ table {
     border-spacing: 0;
 }
 
-
-
 * {
     font-family: "Industry Medium";
+}
+
+body {
+    font-size: 16px;
 }
