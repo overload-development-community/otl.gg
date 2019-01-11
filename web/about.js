@@ -78,8 +78,8 @@ class About {
                     <div>Unsets your Twitch channel.</div>
                     <div class="example">!removetwitch</div>
 
-                    <div class="command">!cast &lt;team1> &lt;team2></div>
-                    <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You will join the challenge channel and be able to coordinate your efforts with both teams.</div>
+                    <div class="command">!cast &lt;challengeId></div>
+                    <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You can get the challenge ID from the #scheduled-matches channel on Discord.  You will join the challenge channel and be able to coordinate your efforts with both teams.</div>
                     <div class="example">!cast CF JOA</div>
 
                     <div class="command">!uncast</div>

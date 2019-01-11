@@ -2876,20 +2876,28 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async matchtime(member, channel, message) {
-        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
-        if (!challenge) {
-            return false;
-        }
+        let challenge;
 
-        if (!await Commands.checkNoParameters(message, member, "Use `!matchtime` by itself to get the match's time in your local time zone.", channel)) {
-            return false;
+        if (message) {
+            const challengeId = +message || 0;
+
+            challenge = await Commands.checkChallengeIdExists(challengeId, member, channel);
+        } else {
+            challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+            if (!challenge) {
+                return false;
+            }
         }
 
         await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.matchTime) {
-            await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            if (message) {
+                await Discord.queue(`${member}, the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}** ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            } else {
+                await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            }
         } else {
             await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
         }
@@ -2911,13 +2919,17 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async countdown(member, channel, message) {
-        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
-        if (!challenge) {
-            return false;
-        }
+        let challenge;
 
-        if (!await Commands.checkNoParameters(message, member, "Use `!countdown` by itself to get the time remaining until the match begins.", channel)) {
-            return false;
+        if (message) {
+            const challengeId = +message || 0;
+
+            challenge = await Commands.checkChallengeIdExists(challengeId, member, channel);
+        } else {
+            challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+            if (!challenge) {
+                return false;
+            }
         }
 
         await Commands.checkChallengeDetails(challenge, member, channel);
@@ -2930,7 +2942,13 @@ class Commands {
                 minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                 seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-            if (difference > 0) {
+            if (message) {
+                if (difference > 0) {
+                    await Discord.queue(`${member}, the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}** is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`, channel);
+                } else {
+                    await Discord.queue(`${member}, the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}** was scheduled to begin ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"} `} ago.`, channel);
+                }
+            } else if (difference > 0) {
                 await Discord.queue(`${member}, this match is scheduled to begin in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`, channel);
             } else {
                 await Discord.queue(`${member}, this match was scheduled to begin ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"} `} ago.`, channel);
@@ -3186,26 +3204,16 @@ class Commands {
 
         await Commands.checkMemberHasTwitchName(member, channel);
 
-        if (!twoTeamTagMatch.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the two tags of the teams in the match you wish to cast, for example \`!cast CF JOA\`.`, channel);
+        if (!numberMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the challenge ID of the match you wish to cast, for example \`!cast 1\`.`, channel);
             return false;
         }
 
-        const {1: tag1, 2: tag2} = twoTeamTagMatch.exec(message);
-
-        const team1 = await Commands.checkTeamExists(tag1, member, channel);
-        const team2 = await Commands.checkTeamExists(tag2, member, channel);
-
-        let challenge;
-        try {
-            challenge = await Challenge.getByTeams(team1, team2);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        const challengeId = +message || 0,
+            challenge = await Commands.checkChallengeIdExists(challengeId, member, channel);
 
         if (!challenge) {
-            await Discord.queue(`Sorry, ${member}, but I can't find an active challenge between those two teams.`, channel);
+            await Discord.queue(`Sorry, ${member}, but I can't find an active challenge with that ID.`, channel);
             throw new Warning("Invalid challenge.");
         }
 
@@ -3228,7 +3236,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${team1.name}** and **${team2.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use http://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use http://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
 
         return true;
     }

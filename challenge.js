@@ -980,6 +980,20 @@ class Challenge {
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
 
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                description: `This match is scheduled for ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`,
+                fields: [
+                    {
+                        name: "Match Time",
+                        value: `Use \`!matchtime ${this.id}\` to get the time of this match in your own time zone, or \`!countdown ${this.id}\` to get the amount of time remaining until the start of the match.`
+                    }, {
+                        name: "Casting",
+                        value: `Use \`!cast ${this.id}\` if you wish to cast this match.`
+                    }
+                ]
+            }), Discord.scheduledMatchesChannel);
+
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested time for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -1698,6 +1712,20 @@ class Challenge {
                 description: `${member} has set the time for this match.`,
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
+
+            await Discord.richQueue(new DiscordJs.RichEmbed({
+                title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                description: `This match is scheduled for ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`,
+                fields: [
+                    {
+                        name: "Match Time",
+                        value: `Use \`!matchtime ${this.id}\` to get the time of this match in your own time zone, or \`!countdown ${this.id}\` to get the amount of time remaining until the start of the match.`
+                    }, {
+                        name: "Casting",
+                        value: `Use \`!cast ${this.id}\` if you wish to cast this match.`
+                    }
+                ]
+            }), Discord.scheduledMatchesChannel);
 
             await this.updateTopic();
         } catch (err) {

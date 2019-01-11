@@ -52,6 +52,11 @@ let otlGuild;
  */
 let rosterUpdatesChannel;
 
+/**
+ * @type {DiscordJs.TextChannel}
+ */
+let scheduledMatchesChannel;
+
 require("./discordJs.GuildMember.extensions");
 
 //  ####     #                                    #
@@ -202,6 +207,20 @@ class Discord {
         return rosterUpdatesChannel;
     }
 
+    //              #              #        ##             #  #  #         #          #                   ##   #                             ##
+    //              #              #         #             #  ####         #          #                  #  #  #                              #
+    //  ###    ##   ###    ##    ###  #  #   #     ##    ###  ####   ###  ###    ##   ###    ##    ###   #     ###    ###  ###   ###    ##    #
+    // ##     #     #  #  # ##  #  #  #  #   #    # ##  #  #  #  #  #  #   #    #     #  #  # ##  ##     #     #  #  #  #  #  #  #  #  # ##   #
+    //   ##   #     #  #  ##    #  #  #  #   #    ##    #  #  #  #  # ##   #    #     #  #  ##      ##   #  #  #  #  # ##  #  #  #  #  ##     #
+    // ###     ##   #  #   ##    ###   ###  ###    ##    ###  #  #   # #    ##   ##   #  #   ##   ###     ##   #  #   # #  #  #  #  #   ##   ###
+    /**
+     * Returns the scheduled matches channel.
+     * @returns {DiscordJs.TextChannel} The scheduled matches channel.
+     */
+    static get scheduledMatchesChannel() {
+        return scheduledMatchesChannel;
+    }
+
     //         #                 #
     //         #                 #
     //  ###   ###    ###  ###   ###   #  #  ###
@@ -230,6 +249,7 @@ class Discord {
             announcementsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "announcements")); // eslint-disable-line no-extra-parens
             matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
             rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
+            scheduledMatchesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "scheduled-matches")); // eslint-disable-line no-extra-parens
 
             challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (otlGuild.channels.find((c) => c.name === "Challenges")); // eslint-disable-line no-extra-parens
         });

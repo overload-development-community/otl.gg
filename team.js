@@ -1,7 +1,7 @@
 /**
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], upcomingMatches?: object[], recentMatches?: object[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
 const DiscordJs = require("discord.js"),
@@ -1627,23 +1627,6 @@ class Team {
                 channelTopic += "\n\nHome Maps:";
                 teamInfo.homes.forEach((home) => {
                     channelTopic += `\n${home}`;
-                });
-            }
-
-            if (teamInfo.upcomingMatches && teamInfo.upcomingMatches.length > 0) {
-                channelTopic += "\n\nUpcoming matches:";
-                teamInfo.upcomingMatches.forEach((match) => {
-                    channelTopic += `\n${match.opponent} - ${match.date.toLocaleTimeString("en-us", {timeZone: timezone, hour12: true, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", timeZoneName: "short"})}`;
-                    if (match.map) {
-                        channelTopic += ` - ${match.map}`;
-                    }
-                });
-            }
-
-            if (teamInfo.recentMatches && teamInfo.recentMatches.length > 0) {
-                channelTopic += "\n\nRecentMatches:";
-                teamInfo.recentMatches.forEach((match) => {
-                    channelTopic += `\n${match.date} - ${match.result} - ${match.score}-${match.opponentScore} - ${match.opponent} - ${match.map}`;
                 });
             }
 
