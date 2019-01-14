@@ -211,7 +211,7 @@ class TeamPage {
                             <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
                             <div>${s.map}</div>
                             <div><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
-                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(2)} KDA (${s.kills} K, ${s.assists} A, ${s.deaths} D)</div>
+                            <div>${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
                         `).join("")}
                     </div>
                 ` : ""}
