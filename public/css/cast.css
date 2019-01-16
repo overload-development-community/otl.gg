@@ -157,7 +157,7 @@ body {
 #previous .grid {
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 35% 15% 15% 35%;
+    grid-template-columns: 30% 20% 20% 30%;
     max-width: 350px;
 }
 
