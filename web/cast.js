@@ -127,7 +127,7 @@ class Cast {
                                         <div class="map">${data.data.map}</div>
                                         <div class="date"><script>document.write(formatDate(new Date("${data.data.matchTime}")));</script></div>
                                         <div class="best">Best Performer</div>
-                                        <div class="best-stats">${(data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${data.data.name}<br />${((data.data.kills + data.data.assists) / Math.max(1, data.data.deaths)).toFixed(2)} KDA (${data.data.kills} K, ${data.data.assists} A, ${data.data.deaths} D)</div>
+                                        <div class="best-stats">${(data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${Common.htmlEncode(Common.normalizeName(data.data.name, (data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br />${((data.data.kills + data.data.assists) / Math.max(1, data.data.deaths)).toFixed(2)} KDA (${data.data.kills} K, ${data.data.assists} A, ${data.data.deaths} D)</div>
                                     </div>
                                 </div>
                             ` : ""}
