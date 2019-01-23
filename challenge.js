@@ -507,7 +507,7 @@ class Challenge {
         }
 
         try {
-            await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}!`, this.channel);
+            await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
