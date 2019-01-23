@@ -8,6 +8,8 @@
     display: inline-grid;
     padding: 5px 10px;
     color: white;
+    grid-column-gap: 5px;
+    column-gap: 5px;
 }
 
 #matches .diamond {
