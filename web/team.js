@@ -99,8 +99,8 @@ class TeamPage {
             `, /* html */`
                 <div id="team">
                     <div id="teamname">
-                        <div id="tag"><div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> ${team.tag}</div>
-                        <div id="name">${team.name}</div>
+                        <div class="tag"><div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> ${team.tag}</div>
+                        <div class="name">${team.name}</div>
                     </div>
                     <div id="roster">
                         <div class="section">Current Roster</div>

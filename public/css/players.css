@@ -61,6 +61,10 @@
     transform-origin: 0 100%;
 }
 
+#stats .tag {
+    white-space: nowrap;
+}
+
 #stats .stats {
     display: grid;
     grid-template-columns: auto auto auto auto;

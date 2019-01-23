@@ -93,13 +93,13 @@ span.grey {
     color: #ff6600
 }
 
-#team #teamname #tag {
+#team #teamname .tag {
     display: inline-block;
     font-size: 48px;
     white-space: nowrap;
 }
 
-#team #teamname #name {
+#team #teamname .name {
     display: inline-block;
     font-size: 48px;
     margin-left: 40px;
@@ -136,6 +136,10 @@ span.grey {
     font-size: 20px;
     color: white;
     padding: 10px;
+}
+
+#records .tag {
+    white-space: nowrap;
 }
 
 #records .provisional {
@@ -188,6 +192,10 @@ span.grey {
     padding: 10px;
     color: white;
     font-size: 18px;
+}
+
+#matches .tag {
+    white-space: nowrap;
 }
 
 #matches .score {
@@ -250,6 +258,10 @@ span.grey {
     -ms-transform-origin: 0 100%;
     -o-transform-origin: 0 100%;
     transform-origin: 0 100%;
+}
+
+#stats .tag {
+    white-space: nowrap;
 }
 
 #stats .header.best {
