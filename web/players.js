@@ -59,7 +59,7 @@ class Players {
         });
 
         const html = Common.page(/* html */`
-            <link rel="stylesheet" href="/css/players.css">
+            <link rel="stylesheet" href="/css/players.css" />
         `, /* html */`
             ${freeAgents ? /* html */ `
                 <div id="free-agents">

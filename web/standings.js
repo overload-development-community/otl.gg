@@ -86,7 +86,7 @@ class Standings {
         });
 
         const html = Common.page(/* html */`
-            <link rel="stylesheet" href="/css/standings.css">
+            <link rel="stylesheet" href="/css/standings.css" />
         `, /* html */`
             <div id="options">
                 <span class="grey">Standings for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`

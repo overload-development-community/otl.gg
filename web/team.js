@@ -95,7 +95,7 @@ class TeamPage {
             teamData.stats.sort((a, b) => Common.normalizeName(a.name, team.tag).localeCompare(Common.normalizeName(b.name, team.tag)));
 
             const html = Common.page(/* html */`
-                <link rel="stylesheet" href="/css/team.css">
+                <link rel="stylesheet" href="/css/team.css" />
             `, /* html */`
                 <div id="team">
                     <div id="teamname">

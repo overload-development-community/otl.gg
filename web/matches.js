@@ -54,7 +54,7 @@ class Matches {
         });
 
         /**
-         * @type {{completed: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengeId: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengeId: number, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {team?: Team, challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
+         * @type {{completed: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, challengeId: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: Standing, challengedTeamStandings?: Standing, timeRemaining?: number, challengeId: number, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {team?: Team, challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
          */
         const matches = await Db.seasonMatches();
 
@@ -66,6 +66,7 @@ class Matches {
         matches.pending.forEach((match) => {
             match.challengingTeamStandings = standings.find((s) => s.teamId === match.challengingTeamId);
             match.challengedTeamStandings = standings.find((s) => s.teamId === match.challengedTeamId);
+            match.timeRemaining = match.matchTime.getTime() - new Date().getTime();
         });
 
         matches.stats.forEach((stat) => {
@@ -74,7 +75,8 @@ class Matches {
         });
 
         const html = Common.page(/* html */`
-            <link rel="stylesheet" href="/css/matches.css">
+            <link rel="stylesheet" href="/css/matches.css" />
+            <script src="/js/matches.js"></script>
         `, /* html */`
             <div id="matches">
                 <div id="completed">
@@ -161,6 +163,9 @@ class Matches {
                             ` : ""}
                             <div class="date">
                                 <script>document.write(formatDate(new Date("${m.matchTime}")));</script>
+                            </div>
+                            <div class="countdown">
+                                <script>new Countdown(${m.timeRemaining});</script>
                             </div>
                             ${m.twitchName ? /* html */`
                                 <div class="caster">

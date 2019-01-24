@@ -85,7 +85,7 @@ class Home {
         const news = await Discord.announcementsChannel.fetchMessages({limit: 5});
 
         const html = Common.page(/* html */`
-            <link rel="stylesheet" href="/css/home.css">
+            <link rel="stylesheet" href="/css/home.css" />
         `, /* html */`
             <div id="matches">
                 ${matches.map((m) => /* html */`

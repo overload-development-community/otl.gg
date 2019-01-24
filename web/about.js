@@ -35,7 +35,7 @@ class About {
      */
     static get(req, res) {
         const html = Common.page(/* html */`
-            <link rel="stylesheet" href="/css/about.css">
+            <link rel="stylesheet" href="/css/about.css" />
         `, /* html */`
             <div id="about">
                 <div class="section">About the Overload Teams League</div>

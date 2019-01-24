@@ -247,9 +247,16 @@
     margin-top: 3px;
 }
 
-#matches #pending .match .caster {
+#matches #pending .match .countdown {
     grid-column: 1 / span 2;
     grid-row: 6;
+    font-size: 20px;
+    text-align: center;
+}
+
+#matches #pending .match .caster {
+    grid-column: 1 / span 2;
+    grid-row: 7;
     font-size: 14px;
     text-align: center;
 }

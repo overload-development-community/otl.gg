@@ -62,8 +62,8 @@ class Cast {
                         <script src="https://player.twitch.tv/js/embed/v1.js"></script>
                         <script src="/js/common.js"></script>
                         <script src="/js/cast.js"></script>
-                        <link rel="stylesheet" href="/css/reset.css">
-                        <link rel="stylesheet" href="/css/cast.css">
+                        <link rel="stylesheet" href="/css/reset.css" />
+                        <link rel="stylesheet" href="/css/cast.css" />
                         <script>
                             ${data.challengingTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
                                 leftStreamers.push({

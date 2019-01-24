@@ -40,15 +40,15 @@ class Common {
             <html>
                 <head>
                     <title>Overload Teams League</title>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                    <meta name="og:image" content="http://otl.gg/images/otl.png">
-                    <meta name="og:title" content="Overload Teams League">
-                    <meta name="og:type" content="website">
-                    <meta name="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}">
-                    <meta name="twitter:card" content="summary">
-                    <meta name="twitter:creator" content="@roncli">
-                    <link rel="stylesheet" href="/css/reset.css">
-                    <link rel="stylesheet" href="/css/common.css">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                    <meta name="og:image" content="http://otl.gg/images/otl.png" />
+                    <meta name="og:title" content="Overload Teams League" />
+                    <meta name="og:type" content="website" />
+                    <meta name="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
+                    <meta name="twitter:card" content="summary" />
+                    <meta name="twitter:creator" content="@roncli" />
+                    <link rel="stylesheet" href="/css/reset.css" />
+                    <link rel="stylesheet" href="/css/common.css" />
                     <script src="/js/common.js"></script>
                     ${head}
                 </head>
