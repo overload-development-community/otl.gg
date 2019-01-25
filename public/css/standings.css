@@ -66,7 +66,7 @@
 }
 
 #body #standings div.header, #body #disbanded div.header {
-    font-size: 24px;
+    font-size: 20px;
     color: #999999;
 }
 
@@ -74,6 +74,40 @@
     font-size: 20px;
     color: white;
     margin: 1px 3px;
+}
+
+@media (max-width: 1000px) {
+    #body #standings div.header, #body #disbanded div.header {
+        font-size: 18px;
+    }    
+
+    #body #standings div, #body #disbanded div {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 800px) {
+    #body #standings div.header, #body #disbanded div.header {
+        font-size: 14px;
+    }    
+
+    #body #standings div, #body #disbanded div {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 700px) {
+    #body #standings {
+        grid-template-columns: auto auto auto auto auto auto auto auto;
+    }
+
+    #body #standings .team-name {
+        display: none;
+    }
+
+    #body #standings .header.before {
+        grid-column-end: span 4;
+    }
 }
 
 #body #standings .provisional, #body #disbanded .provisional {

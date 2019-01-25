@@ -107,7 +107,7 @@ class Standings {
                     <div class="header after"></div>
                     <div class="header">Pos</div>
                     <div class="header">Tag</div>
-                    <div class="header">Team Name</div>
+                    <div class="header team-name">Team Name</div>
                     <div class="header">Rating</div>
                     <div class="header">Record</div>
                     <div class="header">${records1}</div>
@@ -117,7 +117,7 @@ class Standings {
                 ${standings.filter((s) => !s.disbanded).map((s, index) => /* html */`
                         <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
                         <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
-                        <div><a href="/team/${s.team.tag}">${s.team.name}</a></div>
+                        <div class="team-name"><a href="/team/${s.team.tag}">${s.team.name}</a></div>
                         <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>
                         <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
                         <div>${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
