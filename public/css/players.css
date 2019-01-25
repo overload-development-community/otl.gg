@@ -20,7 +20,7 @@
     grid-template-columns: 25% 25% 25% 25%;
 }
 
-@media only screen and (max-width: 800px) {
+@media (max-width: 1000px) {
     #stats {
         grid-template-columns: 50% 50%;
     }
@@ -75,7 +75,7 @@
 
 #stats .stats .header {
     color: #999999;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 #stats .stats .value {
