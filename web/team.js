@@ -134,15 +134,21 @@ class TeamPage {
                             <div>Rating: <span ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "class=\"provisional\"" : ""}>${Math.round(teamData.records.rating)}</span></div>
                         </div>
                         <div class="splits">
-                            <div>Home Map Record: ${teamData.records.winsMap1}-${teamData.records.lossesMap1}${teamData.records.tiesMap1 ? `-${teamData.records.tiesMap1}` : ""}</div>
-                            <div>Home Server Record: ${teamData.records.winsServer1}-${teamData.records.lossesServer1}${teamData.records.tiesServer1 ? `-${teamData.records.tiesServer1}` : ""}</div>
-                            <div>2v2 Record: ${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}</div>
-                            <div>Away Map Record: ${teamData.records.winsMap2}-${teamData.records.lossesMap2}${teamData.records.tiesMap2 ? `-${teamData.records.tiesMap2}` : ""}</div>
-                            <div>Away Server Record: ${teamData.records.winsServer2}-${teamData.records.lossesServer2}${teamData.records.tiesServer2 ? `-${teamData.records.tiesServer2}` : ""}</div>
-                            <div>3v3 Record: ${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}</div>
-                            <div>Neutral Map Record: ${teamData.records.winsMap3}-${teamData.records.lossesMap3}${teamData.records.tiesMap3 ? `-${teamData.records.tiesMap3}` : ""}</div>
-                            <div>Neutral Server Record: ${teamData.records.winsServer3}-${teamData.records.lossesServer3}${teamData.records.tiesServer3 ? `-${teamData.records.tiesServer3}` : ""}</div>
-                            <div>4v4 Record: ${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}</div>
+                            <div>
+                                Home Map Record: ${teamData.records.winsMap1}-${teamData.records.lossesMap1}${teamData.records.tiesMap1 ? `-${teamData.records.tiesMap1}` : ""}<br />
+                                Away Map Record: ${teamData.records.winsMap2}-${teamData.records.lossesMap2}${teamData.records.tiesMap2 ? `-${teamData.records.tiesMap2}` : ""}<br />
+                                Neutral Map Record: ${teamData.records.winsMap3}-${teamData.records.lossesMap3}${teamData.records.tiesMap3 ? `-${teamData.records.tiesMap3}` : ""}
+                            </div>
+                            <div>
+                                Home Server Record: ${teamData.records.winsServer1}-${teamData.records.lossesServer1}${teamData.records.tiesServer1 ? `-${teamData.records.tiesServer1}` : ""}<br />
+                                Away Server Record: ${teamData.records.winsServer2}-${teamData.records.lossesServer2}${teamData.records.tiesServer2 ? `-${teamData.records.tiesServer2}` : ""}<br />
+                                Neutral Server Record: ${teamData.records.winsServer3}-${teamData.records.lossesServer3}${teamData.records.tiesServer3 ? `-${teamData.records.tiesServer3}` : ""}
+                            </div>
+                            <div>
+                                2v2 Record: ${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}<br />
+                                3v3 Record: ${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}<br />
+                                4v4 Record: ${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}
+                            </div>
                         </div>
                         <div class="breakdown">
                             <div class="opponents">
@@ -170,20 +176,20 @@ class TeamPage {
                         <div class="header team">Challenging Team</div>
                         <div class="header team">Challenged Team</div>
                         <div class="header">Map</div>
-                        <div class="header">Date</div>
+                        <div class="header date">Date</div>
                         <div class="header player">Top Performer</div>
                         ${teamData.matches.map((m) => /* html */`
                             <div class="tag"><div class="diamond${m.challengingTeam.role && m.challengingTeam.role.color ? "" : "-empty"}" ${m.challengingTeam.role && m.challengingTeam.role.color ? `style="background-color: ${m.challengingTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.challengingTeam.tag}">${m.challengingTeam.tag}</a></div>
-                            <div><a href="/team/${m.challengingTeam.tag}">${m.challengingTeam.name}</a></div>
+                            <div class="team-name"><a href="/team/${m.challengingTeam.tag}">${m.challengingTeam.name}</a></div>
                             <div class="score ${m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">${m.challengingTeamScore}</div>
                             <div class="tag"><div class="diamond${m.challengedTeam.role && m.challengedTeam.role.color ? "" : "-empty"}" ${m.challengedTeam.role && m.challengedTeam.role.color ? `style="background-color: ${m.challengedTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeam.tag}">${m.challengedTeam.tag}</a></div>
-                            <div><a href="/team/${m.challengedTeam.tag}">${m.challengedTeam.name}</a></div>
+                            <div class="team-name"><a href="/team/${m.challengedTeam.tag}">${m.challengedTeam.name}</a></div>
                             <div class="score ${m.challengingTeamScore < m.challengedTeamScore ? "winner" : ""}">${m.challengedTeamScore}</div>
                             <div>${m.map}</div>
-                            <div><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
-                            <div class="tag"><div class="diamond${m.statTeam.role && m.statTeam.role.color ? "" : "-empty"}" ${m.statTeam.role && m.statTeam.role.color ? `style="background-color: ${m.statTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.statTeam.tag}">${m.statTeam.tag}</a></div>
-                            <div>${Common.htmlEncode(Common.normalizeName(m.name, m.statTeam.tag))}</div>
-                            <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
+                            <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
+                            <div class="tag player"><div class="diamond${m.statTeam.role && m.statTeam.role.color ? "" : "-empty"}" ${m.statTeam.role && m.statTeam.role.color ? `style="background-color: ${m.statTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.statTeam.tag}">${m.statTeam.tag}</a></div>
+                            <div class="player">${Common.htmlEncode(Common.normalizeName(m.name, m.statTeam.tag))}</div>
+                            <div class="best-stats">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
                         `).join("")}
                     </div>
                     <div class="section">Season Player Stats</div>
@@ -191,9 +197,9 @@ class TeamPage {
                         <div class="header">Player</div>
                         <div class="header">G</div>
                         <div class="header">KDA</div>
-                        <div class="header">K</div>
-                        <div class="header">A</div>
-                        <div class="header">D</div>
+                        <div class="header totals">K</div>
+                        <div class="header totals">A</div>
+                        <div class="header totals">D</div>
                         <div class="header">KPG</div>
                         <div class="header">APG</div>
                         <div class="header">DPG</div>
@@ -202,16 +208,16 @@ class TeamPage {
                             <div>${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</div>
                             <div>${s.games}</div>
                             <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
-                            <div>${s.kills}</div>
-                            <div>${s.assists}</div>
-                            <div>${s.deaths}</div>
+                            <div class="totals">${s.kills}</div>
+                            <div class="totals">${s.assists}</div>
+                            <div class="totals">${s.deaths}</div>
                             <div>${(s.kills / s.games).toFixed(2)}</div>
                             <div>${(s.assists / s.games).toFixed(2)}</div>
                             <div>${(s.deaths / s.games).toFixed(2)}</div>
-                            <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
-                            <div>${s.map}</div>
-                            <div><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
-                            <div>${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
+                            <div class="tag best"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
+                            <div class="best">${s.map}</div>
+                            <div class="best"><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
+                            <div class="best-stats">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
                         `).join("")}
                     </div>
                 ` : ""}

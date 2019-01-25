@@ -43,6 +43,7 @@ span.grey {
 
 #team {
     display: grid;
+    grid-template-columns: auto auto auto;
     padding: 10px;
 }
 
@@ -87,8 +88,7 @@ span.grey {
 }
 
 #team #teamname {
-    grid-row: 1;
-    grid-column: 1 / span 3;
+    grid-column-end: span 3;
     font-size: 20px;
     color: #ff6600
 }
@@ -106,24 +106,28 @@ span.grey {
 }
 
 #team #roster {
-    grid-row: 2;
-    grid-column: 1;
     font-size: 16px;
     color: white;
 }
 
 #team #homes {
-    grid-row: 2;
-    grid-column: 2;
     font-size: 16px;
     color: white;
 }
 
 #team #timezone {
-    grid-row: 2;
-    grid-column: 3;
     font-size: 16px;
     color: white;
+}
+
+@media (max-width: 700px) {
+    #team {
+        grid-template-columns: auto;
+    }
+
+    #team #teamname {
+        grid-column-end: span 1;
+    }
 }
 
 #options {
@@ -157,14 +161,18 @@ span.grey {
 
 #records .splits {
     display: grid;
-    grid-template-columns: 33% 33% 33%;
+    grid-template-columns: auto auto auto;
     justify-items: center;
     padding: 10px;
 }
 
+#records .splits div {
+    text-align: center;
+}
+
 #records .breakdown {
     display: grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: auto auto;
     padding: 10px;
     justify-items: center;
     font-size: 18px;
@@ -184,6 +192,36 @@ span.grey {
     column-gap: 10px;
 }
 
+@media (max-width: 900px) {
+    #records {
+        font-size: 18px;
+    }
+
+    #records .overall {
+        font-size: 24px;
+    }
+
+    #records .breakdown {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 700px) {
+    #records .splits {
+        grid-template-columns: auto;
+        grid-row-gap: 10px;
+        row-gap: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    #records .breakdown {
+        grid-template-columns: auto;
+        grid-row-gap: 10px;
+        row-gap: 10px;
+    }
+}
+
 #matches {
     display: grid;
     grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
@@ -191,7 +229,7 @@ span.grey {
     column-gap: 10px;
     padding: 10px;
     color: white;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 #matches .tag {
@@ -213,6 +251,54 @@ span.grey {
 
 #matches .header.player {
     grid-column-end: span 3;
+}
+
+@media (max-width: 1100px) {
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    }
+
+    #matches .team-name {
+        display: none;
+    }
+
+    #matches .header.team {
+        grid-column-end: span 2;
+    }
+}
+
+@media (max-width: 900px) {
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto auto auto;
+    }
+
+    #matches .header.player {
+        grid-column-end: span 2;
+    }
+    
+    #matches .best-stats {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto;
+    }
+
+    #matches .player {
+        display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    #matches {
+        grid-template-columns: auto auto auto auto auto;
+    }
+
+    #matches .date {
+        display: none;
+    }
 }
 
 #stats {
@@ -266,4 +352,38 @@ span.grey {
 
 #stats .header.best {
     grid-column-end: span 4;
+}
+
+@media (max-width: 900px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
+    }
+
+    #stats .header.best {
+        grid-column-end: span 3;
+    }
+    
+    #stats .best-stats {
+        display: none;
+    }
+}
+
+@media (max-width: 800px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    }
+
+    #stats .best {
+        display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto;
+    }
+
+    #stats .totals {
+        display: none;
+    }
 }
