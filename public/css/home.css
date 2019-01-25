@@ -94,7 +94,8 @@
 
 #body {
     display: grid;
-    grid-template-columns: 50% 50%;
+    grid-template-columns: auto auto;
+    grid-column-gap: 80px;
 }
 
 #body #standings {
@@ -107,6 +108,22 @@
     display: grid;
     grid-template-columns: auto auto auto auto;
     padding: 10px;
+}
+
+@media (max-width: 1000px) {
+    #body {
+        grid-template-columns: auto;
+    }
+
+    #body #standings {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    #body #players {
+        grid-row: 2;
+        grid-column: 1;
+    }
 }
 
 #body .diamond {
