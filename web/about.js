@@ -222,7 +222,7 @@ class About {
 
                     <div class="command">!suggesttime &lt;date and time&gt;</div>
                     <div>Founder or Captain only.  Suggests a date and time for the challenge.  Uses your personal time zone.</div>
-                    <div class="example">!suggesttime 3/14/19 3:00 PM<br />!suggesttime Mar 14, 2019 15:00</div>
+                    <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00</div>
 
                     <div class="command">!confirmtime</div>
                     <div>Founder or Captain only.  Confirms a match time suggestion from the other team.</div>

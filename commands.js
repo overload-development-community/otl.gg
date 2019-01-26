@@ -2680,6 +2680,13 @@ class Commands {
             throw new Warning("Invalid date.");
         }
 
+        if (date.getFullYear() <= 2001) {
+            date.setFullYear(new Date().getFullYear()); 
+            if (date < new Date()) {
+                date.setFullYear(date.getFullYear() + 1);
+            }
+        }
+
         if (date < new Date()) {
             await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
             throw new Warning("Date is in the past.");
