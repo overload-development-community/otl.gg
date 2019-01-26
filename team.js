@@ -1455,7 +1455,10 @@ class Team {
                 allow: ["VIEW_CHANNEL"]
             }, {
                 id: Discord.founderRole,
-                allow: ["MANAGE_MESSAGES"]
+                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
+            }, {
+                id: Discord.captainRole,
+                allow: ["MENTION_EVERYONE"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
@@ -1468,6 +1471,12 @@ class Team {
             }, {
                 id: founder.id,
                 allow: ["VIEW_CHANNEL"]
+            }, {
+                id: Discord.founderRole,
+                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
+            }, {
+                id: Discord.captainRole,
+                allow: ["MENTION_EVERYONE"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
