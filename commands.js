@@ -2681,7 +2681,7 @@ class Commands {
         }
 
         if (date.getFullYear() <= 2001) {
-            date.setFullYear(new Date().getFullYear()); 
+            date.setFullYear(new Date().getFullYear());
             if (date < new Date()) {
                 date.setFullYear(date.getFullYear() + 1);
             }

@@ -1,59 +1,67 @@
-//   ###                         #         #
-//  #   #                        #         #
-//  #       ###   #   #  # ##   ####    ## #   ###   #   #  # ##
-//  #      #   #  #   #  ##  #   #     #  ##  #   #  #   #  ##  #
-//  #      #   #  #   #  #   #   #     #   #  #   #  # # #  #   #
-//  #   #  #   #  #  ##  #   #   #  #  #  ##  #   #  # # #  #   #
-//   ###    ###    ## #  #   #    ##    ## #   ###    # #   #   #
+//  #   #          #            #
+//  #   #          #            #
+//  ## ##   ###   ####    ###   # ##    ###    ###
+//  # # #      #   #     #   #  ##  #  #   #  #
+//  #   #   ####   #     #      #   #  #####   ###
+//  #   #  #   #   #  #  #   #  #   #  #          #
+//  #   #   ####    ##    ###   #   #   ###   ####
 /**
- * A class that represents a countdown.
+ * A class that handles the matches page.
  */
-class Countdown {
-    //                           #                       #
-    //                           #                       #
-    //  ##    ##   ###    ###   ###   ###   #  #   ##   ###    ##   ###
-    // #     #  #  #  #  ##      #    #  #  #  #  #      #    #  #  #  #
-    // #     #  #  #  #    ##    #    #     #  #  #      #    #  #  #
-    //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
+class Matches {
+    // ###    ##   #  #   ##                #                 #    #                    #           #
+    // #  #  #  #  ####  #  #               #                 #    #                    #           #
+    // #  #  #  #  ####  #      ##   ###   ###    ##   ###   ###   #      ##    ###   ###   ##    ###
+    // #  #  #  #  #  #  #     #  #  #  #   #    # ##  #  #   #    #     #  #  #  #  #  #  # ##  #  #
+    // #  #  #  #  #  #  #  #  #  #  #  #   #    ##    #  #   #    #     #  #  # ##  #  #  ##    #  #
+    // ###    ##   #  #   ##    ##   #  #    ##   ##   #  #    ##  ####   ##    # #   ###   ##    ###
     /**
-     * Creates a new countdown instance.
-     * @param {number} timeRemaining The amount of time remaining, in milliseconds.
-     */
-    constructor(timeRemaining) {
-        this.deadline = new Date(new Date().getTime() + timeRemaining);
-        this.id = ++Countdown.id;
-
-        document.write(`<span id="countdown-${this.id}"></span>`);
-
-        this.update();
-    }
-
-    //                #         #
-    //                #         #
-    // #  #  ###    ###   ###  ###    ##
-    // #  #  #  #  #  #  #  #   #    # ##
-    // #  #  #  #  #  #  # ##   #    ##
-    //  ###  ###    ###   # #    ##   ##
-    //       #
-    /**
-     * Updates the countdown.
+     * Initializes the page.
      * @returns {void}
      */
-    update() {
-        const countdown = document.getElementById(`countdown-${this.id}`),
-            difference = this.deadline.getTime() - new Date().getTime(),
-            days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000));
+    static DOMContentLoaded() {
+        Matches.page = 0;
 
-        if (difference > 0) {
-            countdown.innerText = `Match begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"} ` : ""}${new Date(difference).toLocaleString("en-US", {timeZone: "GMT", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false})}`;
+        Array.from(document.getElementsByClassName("select-page")).forEach((paginator, index) => {
+            paginator.addEventListener("click", (ev) => {
+                if (ev.target.classList.contains("active")) {
+                    return;
+                }
 
-            setTimeout(() => {
-                this.update();
-            }, difference % 1000 + 1);
-        } else {
-            countdown.innerText = "Prepare for Overload!";
-        }
+                Array.from(document.getElementsByClassName("page")).forEach((page) => {
+                    page.classList.add("hidden");
+                });
+
+                Array.from(document.getElementsByClassName(`page-${index}`)).forEach((page) => {
+                    page.classList.remove("hidden");
+                });
+
+                Array.from(document.getElementsByClassName("select-page")).forEach((page) => {
+                    page.classList.remove("active");
+                });
+
+                paginator.classList.add("active");
+
+                Matches.page = +paginator.innerText - 1;
+            });
+        });
+
+        document.getElementById("select-prev").addEventListener("click", () => {
+            const el = document.getElementsByClassName(`select-page-${Matches.page - 1}`)[0];
+
+            if (el) {
+                el.click();
+            }
+        });
+
+        document.getElementById("select-next").addEventListener("click", () => {
+            const el = document.getElementsByClassName(`select-page-${Matches.page + 1}`)[0];
+
+            if (el) {
+                el.click();
+            }
+        });
     }
 }
 
-Countdown.id = 0;
+document.addEventListener("DOMContentLoaded", Matches.DOMContentLoaded);

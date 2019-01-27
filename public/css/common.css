@@ -131,3 +131,7 @@ a:hover {
 div > .section:first-child {
     padding-top: 10px;
 }
+
+.hidden {
+    display: none;
+}
