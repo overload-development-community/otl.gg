@@ -2668,28 +2668,34 @@ class Commands {
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         let date;
-        try {
-            date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
-            throw new Warning("Invalid date.");
-        }
 
-        if (!date || isNaN(date.valueOf())) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
-            throw new Warning("Invalid date.");
-        }
-
-        if (date.getFullYear() <= 2001) {
-            date.setFullYear(new Date().getFullYear());
-            if (date < new Date()) {
-                date.setFullYear(date.getFullYear() + 1);
+        if (message === "now") {
+            date = new Date();
+            date = new Date(date.getTime() + (300000 - date.getTime() % 300000));
+        } else {
+            try {
+                date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                throw new Warning("Invalid date.");
             }
-        }
 
-        if (date < new Date()) {
-            await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
-            throw new Warning("Date is in the past.");
+            if (!date || isNaN(date.valueOf())) {
+                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                throw new Warning("Invalid date.");
+            }
+
+            if (date.getFullYear() <= 2001) {
+                date.setFullYear(new Date().getFullYear());
+                if (date < new Date()) {
+                    date.setFullYear(date.getFullYear() + 1);
+                }
+            }
+
+            if (date < new Date()) {
+                await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
+                throw new Warning("Date is in the past.");
+            }
         }
 
         try {
