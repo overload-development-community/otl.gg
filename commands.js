@@ -3256,11 +3256,23 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cast(member, channel, message) {
-        if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the two tags of the teams in the match you wish to cast, for example `!cast CF JOA`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the challenge ID of the match you wish to cast, for example `!cast 1`.", channel)) {
             return false;
         }
 
         await Commands.checkMemberHasTwitchName(member, channel);
+
+        if (message.toLowerCase() === "next") {
+            const matches = await Otl.upcomingMatches();
+
+            if (matches.length === 0) {
+                await Discord.queue("There are no matches currently scheduled.", channel);
+            } else {
+                await Discord.queue(`The next match is **${matches[0].challengingTeamName}** vs **${matches[0].challengedTeamName}** at ${matches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${matches[0].challengeId}\`.  To see other upcoming matches, enter \`!next\`.`, channel);
+            }
+
+            return true;
+        }
 
         if (!numberMatch.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the challenge ID of the match you wish to cast, for example \`!cast 1\`.`, channel);

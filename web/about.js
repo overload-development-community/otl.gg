@@ -90,9 +90,9 @@ class About {
                     <div>Gets the amount of time until the match begins.</div>
                     <div class="example">!countdown 12</div>
 
-                    <div class="command">!cast &lt;challengeId></div>
-                    <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You can get the challenge ID from the #scheduled-matches channel on Discord.  You will join the challenge channel and be able to coordinate your efforts with both teams.</div>
-                    <div class="example">!cast CF JOA</div>
+                    <div class="command">!cast (&lt;challengeId>|next)</div>
+                    <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You can get the challenge ID from the #scheduled-matches channel on Discord.  You will join the challenge channel and be able to coordinate your efforts with both teams.  You can see what match is next by using the word "next" instead of a challenge ID.</div>
+                    <div class="example">!cast 1<br />!cast next</div>
 
                     <div class="command">!uncast</div>
                     <div>You must use this command in a challenge room you are casting a match for.  Indicates that you no longer wish to cast a scheduled match.</div>
