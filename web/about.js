@@ -78,6 +78,18 @@ class About {
                     <div>Unsets your Twitch channel.</div>
                     <div class="example">!removetwitch</div>
 
+                    <div class="command">!next</div>
+                    <div>List the upcoming scheduled matches.</div>
+                    <div class="example">!next</div>
+
+                    <div class="command">!matchtime &lt;challengeId></div>
+                    <div>Gets the match time in your local time zone.</div>
+                    <div class="example">!matchtime 12</div>
+
+                    <div class="command">!countdown &lt;challengeId></div>
+                    <div>Gets the amount of time until the match begins.</div>
+                    <div class="example">!countdown 12</div>
+
                     <div class="command">!cast &lt;challengeId></div>
                     <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You can get the challenge ID from the #scheduled-matches channel on Discord.  You will join the challenge channel and be able to coordinate your efforts with both teams.</div>
                     <div class="example">!cast CF JOA</div>
@@ -220,9 +232,9 @@ class About {
                     <div>Founder or Captain only.  Confirms a team size suggestion from the other team.</div>
                     <div class="example">!confirmteamsize</div>
 
-                    <div class="command">!suggesttime &lt;date and time&gt;</div>
+                    <div class="command">!suggesttime (&lt;date and time&gt;|now)</div>
                     <div>Founder or Captain only.  Suggests a date and time for the challenge.  Uses your personal time zone.</div>
-                    <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00</div>
+                    <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00<br />!suggesttime now</div>
 
                     <div class="command">!confirmtime</div>
                     <div>Founder or Captain only.  Confirms a match time suggestion from the other team.</div>
