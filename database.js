@@ -1368,6 +1368,285 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].NextDate || void 0;
     }
 
+    //              #    ###                              #
+    //              #    #  #                             #
+    //  ###   ##   ###   #  #   ##    ##    ##   ###    ###   ###
+    // #  #  # ##   #    ###   # ##  #     #  #  #  #  #  #  ##
+    //  ##   ##     #    # #   ##    #     #  #  #     #  #    ##
+    // #      ##     ##  #  #   ##    ##    ##   #      ###  ###
+    //  ###
+    /**
+     * Gets the league records.
+     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[]}>} A promise that resolves with the league records.
+     */
+    static async getRecords() {
+
+        /**
+         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @season INT
+
+            SELECT TOP 1
+                @season = Season
+            FROM tblSeason
+            WHERE DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
+            SELECT s.TeamSize, s.TeamKDA, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (SUM(s.Kills) + SUM(s.Assists)) / CAST(CASE WHEN SUM(s.Deaths) < 1 THEN 1 ELSE SUM(s.Deaths) END AS FLOAT) DESC) Rank,
+                    c.ChallengeId,
+                    c.TeamSize,
+                    s.TeamId,
+                    (SUM(s.Kills) + SUM(s.Assists)) / CAST(CASE WHEN SUM(s.Deaths) < 1 THEN 1 ELSE SUM(s.Deaths) END AS FLOAT) TeamKDA
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE Season = @season
+                GROUP BY c.ChallengeId, c.TeamSize, s.TeamId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE s.Rank = 1
+
+            SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END DESC) Rank,
+                    c.TeamSize,
+                    c.ChallengeId,
+                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END TeamId,
+                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END Score
+                FROM vwCompletedChallenge c
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+                GROUP BY c.TeamSize, c.ChallengeId,
+                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END,
+                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(s.Assists) DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    SUM(s.Assists) Assists
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+                GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(s.Deaths)) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    SUM(s.Deaths) Deaths
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+                GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) KDA
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Kills DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Kills
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Assists DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Assists
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+
+            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Deaths) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Deaths
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+                WHERE se.Season = @season
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+        `);
+        return data && data.recordsets && data.recordsets.length === 8 && {
+            teamKda: data.recordsets[0].map((row) => ({
+                teamSize: row.TeamSize,
+                teamId: row.TeamId,
+                teamKda: row.TeamKDA,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            teamScore: data.recordsets[1].map((row) => ({
+                teamSize: row.TeamSize,
+                score: row.Score,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            teamAssists: data.recordsets[2].map((row) => ({
+                teamSize: row.TeamSize,
+                assists: row.Assists,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            teamDeaths: data.recordsets[3].map((row) => ({
+                teamSize: row.TeamSize,
+                deaths: row.Deaths,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            kda: data.recordsets[4].map((row) => ({
+                teamSize: row.TeamSize,
+                kda: row.KDA,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            kills: data.recordsets[5].map((row) => ({
+                teamSize: row.TeamSize,
+                kills: row.Kills,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            assists: data.recordsets[6].map((row) => ({
+                teamSize: row.TeamSize,
+                assists: row.Assists,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            })),
+            deaths: data.recordsets[7].map((row) => ({
+                teamSize: row.TeamSize,
+                deaths: row.Deaths,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                matchTime: row.MatchTime,
+                map: row.Map
+            }))
+        } || void 0;
+    }
+
     //              #    ###                                   #             #   ##         ###                #     #             #  ###
     //              #    #  #                                  #             #  #  #         #                       #             #   #
     //  ###   ##   ###   #  #   ##    ###  #  #   ##    ###   ###    ##    ###  #  #  ###    #    ###   # #   ##    ###    ##    ###   #     ##    ###  # #    ###
