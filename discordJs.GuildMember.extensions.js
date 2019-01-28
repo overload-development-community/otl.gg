@@ -354,12 +354,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
         return;
     }
 
-    try {
-        await team.pilotLeft(this);
-    } catch (err) {
-        throw err;
-    }
-
+    await team.pilotLeft(this);
     await team.updateChannels();
 
     if (team.founder && team.founder.id === this.id) {
@@ -489,7 +484,7 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
         return;
     }
 
-    await Discord.richQueue(new DiscordJs.RichEmbed({
+    await Discord.richQueue(Discord.richEmbed({
         title: `${team.name} (${team.tag})`,
         description: "Pilot Name Change",
         color: team.role.color,

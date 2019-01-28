@@ -1,6 +1,8 @@
-const util = require("util"),
+/**
+ * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ */
 
-    DiscordJs = require("discord.js");
+const util = require("util");
 
 /**
  * @type {{type: string, date: Date, obj?: Error, message?: string}[]}
@@ -109,7 +111,7 @@ class Log {
         if (Discord.isConnected()) {
 
             queue.forEach((log) => {
-                const message = new DiscordJs.RichEmbed({
+                const message = Discord.richEmbed({
                     color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
                     fields: [],
                     timestamp: log.date

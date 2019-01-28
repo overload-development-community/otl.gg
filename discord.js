@@ -398,6 +398,21 @@ class Discord {
         return msg;
     }
 
+    //        #          #     ####        #              #
+    //                   #     #           #              #
+    // ###   ##     ##   ###   ###   # #   ###    ##    ###
+    // #  #   #    #     #  #  #     ####  #  #  # ##  #  #
+    // #      #    #     #  #  #     #  #  #  #  ##    #  #
+    // #     ###    ##   #  #  ####  #  #  ###    ##    ###
+    /**
+     * Gets a new DiscordJs RichEmbed object.
+     * @param {DiscordJs.RichEmbedOptions} [options] The options to pass.
+     * @returns {DiscordJs.RichEmbed} The RichEmbed object.
+     */
+    static richEmbed(options) {
+        return new DiscordJs.RichEmbed(options);
+    }
+
     //        #          #      ##
     //                   #     #  #
     // ###   ##     ##   ###   #  #  #  #   ##   #  #   ##

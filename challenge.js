@@ -1,10 +1,10 @@
 /**
  * @typedef {{id?: number, challengingTeam: Team, challengedTeam: Team}} ChallengeData
+ * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
+ * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const DiscordJs = require("discord.js"),
-
-    Db = require("./database"),
+const Db = require("./database"),
     Exception = require("./exception"),
     Otl = require("./otl"),
     settings = require("./settings"),
@@ -96,7 +96,7 @@ class Challenge {
 
             await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengedTeam.name}\n\nOrange Team: ${data.orangeTeam.tag}\nBlue Team: ${data.blueTeam.tag}\n\nHome Map Team: ${data.homeMapTeam.tag}\n\nHome Server Team: ${data.homeServerTeam.tag}`);
 
-            const mapEmbed = new DiscordJs.RichEmbed({
+            const mapEmbed = Discord.richEmbed({
                 title: "Challenge commands - Map",
                 description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps()).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
                 color: data.homeMapTeam.role.color,
@@ -124,7 +124,7 @@ class Challenge {
                 await mapMsg.pin();
             }
 
-            const serverEmbed = new DiscordJs.RichEmbed({
+            const serverEmbed = Discord.richEmbed({
                 title: "Challenge commands - Server",
                 description: `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two pilots start the match in an effort to select a specific server.`,
                 color: data.homeServerTeam.role.color,
@@ -147,7 +147,7 @@ class Challenge {
                 await serverMsg.pin();
             }
 
-            const optionsEmbed = new DiscordJs.RichEmbed({
+            const optionsEmbed = Discord.richEmbed({
                 title: "Challenge commands - Options",
                 description: "Challenges must also have a team size and scheduled time to play.",
                 fields: [
@@ -188,7 +188,7 @@ class Challenge {
                 await optionsMsg.pin();
             }
 
-            const reportMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
+            const reportMsg = await Discord.richQueue(Discord.richEmbed({
                 title: "Challenge commands - Reporting",
                 description: "Upon completion of the match, the losing team reports the game.",
                 fields: [
@@ -209,7 +209,7 @@ class Challenge {
                 await reportMsg.pin();
             }
 
-            const otherMsg = await Discord.richQueue(new DiscordJs.RichEmbed({
+            const otherMsg = await Discord.richQueue(Discord.richEmbed({
                 title: "Challenge commands - Other",
                 fields: [
                     {
@@ -705,7 +705,7 @@ class Challenge {
             await this.channel.delete(`${member} closed the challenge.`);
 
             if (this.details.dateConfirmed && !this.details.dateVoided) {
-                await Discord.richQueue(new DiscordJs.RichEmbed({
+                await Discord.richQueue(Discord.richEmbed({
                     title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}`,
                     description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
@@ -813,7 +813,7 @@ class Challenge {
         }
 
         try {
-            const embed = new DiscordJs.RichEmbed({
+            const embed = Discord.richEmbed({
                 title: "Match Confirmed",
                 fields: [
                     {
@@ -975,12 +975,12 @@ class Challenge {
                 return a.timezone.localeCompare(b.timezone);
             });
 
-            await Discord.richQueue(new DiscordJs.RichEmbed({
+            await Discord.richQueue(Discord.richEmbed({
                 description: "The time for this match has been set.",
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
 
-            await Discord.richQueue(new DiscordJs.RichEmbed({
+            await Discord.richQueue(Discord.richEmbed({
                 title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                 description: `This match is scheduled for ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`,
                 fields: [
@@ -1343,7 +1343,7 @@ class Challenge {
             if (winningScore === losingScore) {
                 await Discord.queue(`This match has been reported as a **tie**, **${winningScore}** to **${losingScore}**.  If this is correct, **${winningTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
             } else {
-                await Discord.richQueue(new DiscordJs.RichEmbed({
+                await Discord.richQueue(Discord.richEmbed({
                     description: `This match has been reported as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  If this is correct, **${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
                     color: winningTeam.role.color
                 }), this.channel);
@@ -1577,7 +1577,7 @@ class Challenge {
         this.details.challengedTeamScore = challengedTeamScore;
 
         try {
-            const embed = new DiscordJs.RichEmbed({
+            const embed = Discord.richEmbed({
                 title: "Match Confirmed",
                 fields: [
                     {
@@ -1708,12 +1708,12 @@ class Challenge {
                 return a.timezone.localeCompare(b.timezone);
             });
 
-            await Discord.richQueue(new DiscordJs.RichEmbed({
+            await Discord.richQueue(Discord.richEmbed({
                 description: `${member} has set the time for this match.`,
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
 
-            await Discord.richQueue(new DiscordJs.RichEmbed({
+            await Discord.richQueue(Discord.richEmbed({
                 title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                 description: `This match is scheduled for ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`,
                 fields: [
@@ -1902,7 +1902,7 @@ class Challenge {
                 return a.timezone.localeCompare(b.timezone);
             });
 
-            await Discord.richQueue(new DiscordJs.RichEmbed({
+            await Discord.richQueue(Discord.richEmbed({
                 description: `**${team.name}** is suggesting to play the match at the time listed below.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtime\` to agree to this suggestion.`,
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);

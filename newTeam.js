@@ -1,10 +1,10 @@
 /**
+ * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
+ * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
  */
 
-const DiscordJs = require("discord.js"),
-
-    Db = require("./database"),
+const Db = require("./database"),
     Exception = require("./exception"),
     Team = require("./team");
 
@@ -89,7 +89,7 @@ class NewTeam {
 
             await newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`);
 
-            const msg = await Discord.richQueue(new DiscordJs.RichEmbed({
+            const msg = await Discord.richQueue(Discord.richEmbed({
                 title: "Team creation commands",
                 fields: [
                     {

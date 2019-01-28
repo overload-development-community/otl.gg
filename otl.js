@@ -17,6 +17,28 @@ const Db = require("./database"),
  * A class that handles league-related functions.
  */
 class Otl {
+    //                                #                #  #         #          #
+    //                                                 ####         #          #
+    // #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
+    // #  #  #  #  #     #  #  ####   #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    // #  #  #  #  #     #  #  #  #   #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
+    //  ###  ###    ##    ##   #  #  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
+    //       #                                    ###
+    /**
+     * Gets the list of pending matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string}[]>} A promise that resolves with the list of upcoming matches.
+     */
+    static async upcomingMatches() {
+        let matches;
+        try {
+            matches = await Db.getUpcomingMatches();
+        } catch (err) {
+            throw new Exception("There was a database error getting the upcoming matches.", err);
+        }
+
+        return matches;
+    }
+
     //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
     //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
     // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##

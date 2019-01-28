@@ -2119,6 +2119,49 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
     }
 
+    //              #    #  #                           #                #  #         #          #
+    //              #    #  #                                            ####         #          #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
+    //  ###                    #                                    ###
+    /**
+     * Gets the upcoming scheduled matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string}[]>} A promise that resolves with the upcoming matches.
+     */
+    static async getUpcomingMatches() {
+
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT c.ChallengeId,
+                t1.Tag ChallengingTeamTag,
+                t1.Name ChallengingTeamName,
+                t2.Tag ChallengedTeamTag,
+                t2.Name ChallengedTeamName,
+                c.MatchTime,
+                c.Map
+            FROM tblChallenge c
+            INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
+            INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+            WHERE c.MatchTime IS NOT NULL
+                AND c.DateConfirmed IS NULL
+                AND c.DateClosed IS NULL
+                AND c.DateVoided IS NULL
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            challengeId: row.ChallengeId,
+            challengingTeamTag: row.ChallengingTeamTag,
+            challengingTeamName: row.ChallengingTeamName,
+            challengedTeamTag: row.ChallengedTeamTag,
+            challengedTeamName: row.ChallengedTeamName,
+            matchTime: row.MatchTime,
+            map: row.Map
+        })) || [];
+    }
+
     // #                  ###                     ###                #     #             #  ###         ###
     // #                  #  #                     #                       #             #   #           #
     // ###    ###   ###   ###    ##    ##   ###    #    ###   # #   ##    ###    ##    ###   #     ##    #     ##    ###  # #

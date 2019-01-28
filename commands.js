@@ -2875,6 +2875,51 @@ class Commands {
         return true;
     }
 
+    //                    #
+    //                    #
+    // ###    ##   #  #  ###
+    // #  #  # ##   ##    #
+    // #  #  ##     ##    #
+    // #  #   ##   #  #    ##
+    /**
+     * Gets the list of pending matches and the time until each match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async next(member, channel, message) {
+        if (!await Commands.checkNoParameters(message, member, "Use `!next` by itself to get the list of upcoming matches.", channel)) {
+            return false;
+        }
+
+        const matches = await Otl.upcomingMatches();
+
+        if (matches.length === 0) {
+            await Discord.queue("There are no matches currently scheduled.", channel);
+        } else {
+            const msg = Discord.richEmbed({
+                title: "Upcoming Matches",
+                fields: []
+            });
+            matches.forEach((match) => {
+                const difference = match.matchTime.getTime() - new Date().getTime(),
+                    days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                    hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                    minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                    seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                if (difference > 0) {
+                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\nWatch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.`);
+                } else {
+                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ado.\nWatch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.`);
+                }
+            });
+            await Discord.richQueue(msg, channel);
+        }
+        return true;
+    }
+
     //              #          #      #     #
     //              #          #      #
     // # #    ###  ###    ##   ###   ###   ##    # #    ##
