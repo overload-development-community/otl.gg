@@ -31,8 +31,67 @@
     grid-column-end: span 2;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
+    #records .team-name {
+        display: none;
+    }
+
     #records {
+        grid-template-columns: auto auto auto auto auto auto auto auto;
+    }
+
+    #records .team-tag {
+        grid-column-end: span 2;
+    }
+
+    #records .holder {
+        grid-column-end: span 2;
+    }
+
+    #records .opponent {
+        grid-column-end: span 1;
+    }
+
+    #records .team {
+        grid-column-end: span 1;
+    }
+}
+
+@media (max-width: 800px) {
+    #records .date {
+        display: none;
+    }
+
+    #records {
+        grid-template-columns: auto auto auto auto auto auto auto;
+    }
+}
+
+@media (max-width: 600px) {
+    #records .map {
+        display: none;
+    }
+
+    #records {
+        grid-template-columns: auto auto auto auto auto auto;
+    }
+}
+
+@media (max-width: 500px) {
+    #records .team-tag {
+        grid-column-end: span 1;
+    }
+
+    #records .player-tag {
+        display: none;
+    }
+
+    #records {
+        grid-template-columns: auto auto auto auto auto;
+    }
+
+    #records .holder {
+        grid-column-end: span 1;
     }
 }
 
