@@ -2379,23 +2379,23 @@ class Database {
     //  ###                                                                                                                     ###
     /**
      * Gets challenges with starting times happening within 30 minutes that have not been notified yet.
-     * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need notifying.
+     * @returns {Promise<{challengeId: number, matchTime: Date}[]>} A promise that resolves with the list of challenge IDs that need notifying.
      */
     static async getUnnotifiedStartingMatches() {
 
         /**
-         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, MatchTime: Date}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT ChallengeId
+            SELECT ChallengeId, MatchTime
             FROM tblChallenge
             WHERE MatchTime <= DATEADD(MINUTE, 30, GETUTCDATE())
                 AND DateMatchTimeNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
                 AND DateClosed IS NULL
-    `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengeId: row.ChallengeId, matchTime: row.MatchTime})) || [];
     }
 
     //              #    #  #                           #                #  #         #          #

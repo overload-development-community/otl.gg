@@ -69,13 +69,13 @@ class Notify {
      * @returns {Promise} A promise that resolves when starting match notifications are sent.
      */
     static async notifyStartingMatches() {
-        const challengeIds = await Db.getUnnotifiedStartingMatches();
+        const challenges = await Db.getUnnotifiedStartingMatches();
 
-        for (const challengeId of challengeIds) {
+        for (const challengeInfo of challenges) {
             try {
-                const challenge = await Challenge.getById(challengeId);
+                const challenge = await Challenge.getById(challengeInfo.challengeId);
 
-                await challenge.notifyMatchStarting();
+                await challenge.notifyMatchStarting(challengeInfo.matchTime);
             } catch (err) {
                 Log.exception("There was an error notifying that a challenge match is about to start.", err);
             }

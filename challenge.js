@@ -1170,9 +1170,10 @@ class Challenge {
     //                                #                                                                             ###
     /**
      * Notifies the challenge channel that the match is about to start.
+     * @param {Date} matchTime The time the match is starting.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    async notifyMatchStarting() {
+    async notifyMatchStarting(matchTime) {
         try {
             await Db.notifyMatchStartingForChallenge(this);
         } catch (err) {
@@ -1180,7 +1181,11 @@ class Challenge {
         }
 
         try {
-            await Discord.queue("Polish your gunships, this match begins in 30 minutes!", this.channel);
+            if (Math.round((matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
+                await Discord.queue(`Polish your gunships, this match begins in ${Math.round((matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`, this.channel);
+            } else {
+                await Discord.queue("Polish your gunships, this match begins NOW!", this.channel);
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
         }
