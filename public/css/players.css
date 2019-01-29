@@ -81,3 +81,15 @@
 #stats .stats .value {
     text-align: right;
 }
+
+#stats .separator {
+    grid-column-end: span 4;
+    height: 1px;
+    background-color: #ff6600;
+}
+
+#stats .average {
+    grid-column-end: span 4;
+    color: white;
+    text-align: center;
+}
