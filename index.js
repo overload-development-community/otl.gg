@@ -54,6 +54,7 @@ const compression = require("compression"),
     });
     app.get("/matches", Web.matches);
     app.get("/players", Web.players);
+    app.get("/records", Web.records);
     app.get("/standings", Web.standings);
     app.get("/team/:tag", Web.team);
 

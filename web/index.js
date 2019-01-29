@@ -8,8 +8,10 @@ const fs = require("fs"),
         home: {file: "./home"},
         matches: {file: "./matches"},
         players: {file: "./players"},
+        records: {file: "./records"},
         standings: {file: "./standings"},
-        team: {file: "./team"}
+        team: {file: "./team"},
+        teams: {file: "./teams"}
     };
 
 /**
@@ -64,6 +66,7 @@ Object.keys(pages).forEach((pageName) => {
         Index[pageName] = async (req, res, next) => {
             try {
                 await Index.checkCache("common");
+                await Index.checkCache("teams");
                 await Index.checkCache(pageName);
             } catch (err) {
                 console.log(err);

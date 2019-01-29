@@ -159,17 +159,26 @@
     font-size: 16px;
 }
 
+#matches #completed .paginator .paginator-text {
+    width: 80px;
+    justify-content: left;
+}
+
 #matches #completed .paginator .paginator-page {
     cursor: pointer;
 }
 
 #matches #completed .paginator .paginator-page:hover {
-    background-color: #999999;
+    color: #ff6600;
 }
 
 #matches #completed .paginator .paginator-page.active {
     background-color: #ff6600;
     font-weight: bold;
+}
+
+#matches #completed .paginator .paginator-page.active:hover {
+    color: white;
 }
 
 #matches #completed .match .tag1 {

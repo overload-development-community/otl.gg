@@ -60,6 +60,7 @@ class Common {
                                 <li><a href="/standings">Standings</a></li>
                                 <li><a href="/matches">Matches</a></li>
                                 <li><a href="/players">Players</a></li>
+                                <li><a href="/records">Records</a></li>
                                 <li><a href="/about">About</a></li>
                             </ul>
                         </div>

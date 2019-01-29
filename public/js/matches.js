@@ -44,6 +44,10 @@ class Matches {
 
                 Matches.page = +paginator.innerText - 1;
             });
+
+            paginator.addEventListener("selectstart", (ev) => {
+                ev.preventDefault();
+            });
         });
 
         document.getElementById("select-prev").addEventListener("click", () => {
@@ -54,12 +58,20 @@ class Matches {
             }
         });
 
+        document.getElementById("select-prev").addEventListener("selectstart", (ev) => {
+            ev.preventDefault();
+        });
+
         document.getElementById("select-next").addEventListener("click", () => {
             const el = document.getElementsByClassName(`select-page-${Matches.page + 1}`)[0];
 
             if (el) {
                 el.click();
             }
+        });
+
+        document.getElementById("select-next").addEventListener("selectstart", (ev) => {
+            ev.preventDefault();
         });
     }
 }

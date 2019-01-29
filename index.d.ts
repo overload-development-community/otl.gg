@@ -1,7 +1,7 @@
 import NewTeam from "./newTeam";
 import Team from "./team";
 
-declare module 'discord.js' {
+declare module "discord.js" {
     /**
      * TypeScript definitions for discordJs.GuildMember.extensions.js.
      */

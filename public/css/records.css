@@ -1,0 +1,84 @@
+#records {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    color: white;
+    font-size: 14px;
+    box-sizing: border-box;
+    grid-gap: 1px;
+    margin: 10px;
+}
+
+#records > div {
+    box-shadow: 0 0 0 1px #999999;
+    padding: 1px 3px;
+    display: flex;
+    align-items: center;
+}
+
+#records .category {
+    grid-column-end: span 2;
+}
+
+#records .holder {
+    grid-column-end: span 3;
+}
+
+#records .opponent {
+    grid-column-end: span 2;
+}
+
+#records .team {
+    grid-column-end: span 2;
+}
+
+@media (max-width: 1000px) {
+    #records {
+    }
+}
+
+#records .diamond {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#records .diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 7px;
+    border: solid 1px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#records .tag {
+    white-space: nowrap;
+}
+
+#records .header {
+    color: #999999;
+}
+
+#records .record-header {
+    color: #ff6600;
+}
