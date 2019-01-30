@@ -110,7 +110,7 @@ class Records {
                     ${records.kda.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                         <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</div>
+                        <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
                         <div>${r.kda.toFixed(2)} KDA</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -124,7 +124,7 @@ class Records {
                     ${records.kills.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                         <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</div>
+                        <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
                         <div>${r.kills} Kills</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -138,7 +138,7 @@ class Records {
                     ${records.assists.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                         <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</div>
+                        <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
                         <div>${r.assists} Assists</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -152,7 +152,7 @@ class Records {
                     ${records.deaths.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                         <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</div>
+                        <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
                         <div>${r.deaths} Deaths</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>

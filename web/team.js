@@ -4,7 +4,8 @@ const HtmlMinifier = require("html-minifier"),
 
     Db = require("../database"),
     settings = require("../settings"),
-    Team = require("../team");
+    Team = require("../team"),
+    Teams = require("./teams");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -39,73 +40,37 @@ class TeamPage {
      */
     static async get(req, res) {
         const tag = req.params.tag,
-            team = await Team.getByNameOrTag(tag);
+            pageTeam = await Team.getByNameOrTag(tag);
 
-        if (team) {
-            const teamInfo = await team.getInfo(),
+        if (pageTeam) {
+            const teamInfo = await pageTeam.getInfo(),
                 seasonList = await Db.seasonList(),
-                season = Number.parseInt(req.query.season, 10) || void 0;
-
-            /**
-             * @type {{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, winsServer1: number, lossesServer1: number, tiesServer1: number, winsServer2: number, lossesServer2: number, tiesServer2: number, winsServer3: number, lossesServer3: number, tiesServer3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {team?: Team, teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengingTeam?: Team, challengedTeam?: Team, statTeam?: Team, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, deaths: number, assists: number}[], stats: {team?: Team, playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, teamId: number, teamName: string, teamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}}
-             */
-            const teamData = await Db.getTeamData(team, season);
-
-            teamData.opponents.forEach((opponent) => {
-                opponent.team = new Team({
-                    id: opponent.teamId,
-                    name: opponent.name,
-                    tag: opponent.tag
-                });
-            });
-
-            teamData.matches.forEach((match) => {
-                match.challengingTeam = new Team({
-                    id: match.challengingTeamId,
-                    name: match.challengingTeamName,
-                    tag: match.challengingTeamTag
-                });
-                match.challengedTeam = new Team({
-                    id: match.challengedTeamId,
-                    name: match.challengedTeamName,
-                    tag: match.challengedTeamTag
-                });
-                match.statTeam = new Team({
-                    id: match.statTeamId,
-                    name: match.statTeamName,
-                    tag: match.statTeamTag
-                });
-            });
-
-            teamData.stats.forEach((stat) => {
-                stat.team = new Team({
-                    id: stat.teamId,
-                    name: stat.teamName,
-                    tag: stat.teamTag
-                });
-            });
+                season = Number.parseInt(req.query.season, 10) || void 0,
+                teamData = await Db.getTeamData(pageTeam, season),
+                teams = new Teams();
+            let team;
 
             teamInfo.members.sort((a, b) => {
                 if (a.role !== b.role) {
                     return ["Founder", "Captain", void 0].indexOf(a.role) - ["Founder", "Captain", void 0].indexOf(b.role);
                 }
-                return Common.normalizeName(a.name, team.tag).localeCompare(Common.normalizeName(b.name, team.tag));
+                return Common.normalizeName(a.name, pageTeam.tag).localeCompare(Common.normalizeName(b.name, pageTeam.tag));
             });
 
-            teamData.stats.sort((a, b) => Common.normalizeName(a.name, team.tag).localeCompare(Common.normalizeName(b.name, team.tag)));
+            teamData.stats.sort((a, b) => Common.normalizeName(a.name, pageTeam.tag).localeCompare(Common.normalizeName(b.name, pageTeam.tag)));
 
             const html = Common.page(/* html */`
                 <link rel="stylesheet" href="/css/team.css" />
             `, /* html */`
                 <div id="team">
                     <div id="teamname">
-                        <div class="tag"><div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> ${team.tag}</div>
-                        <div class="name">${team.name}</div>
+                        <div class="tag"><div class="diamond${pageTeam.role && pageTeam.role.color ? "" : "-empty"}" ${pageTeam.role && pageTeam.role.color ? `style="background-color: ${pageTeam.role.hexColor};"` : ""}></div> ${pageTeam.tag}</div>
+                        <div class="name">${pageTeam.name}</div>
                     </div>
                     <div id="roster">
                         <div class="section">Current Roster</div>
                         ${teamInfo.members.map((m) => /* html */`
-                            <div class="member">${Common.htmlEncode(Common.normalizeName(m.name, team.tag))} <span class="grey">${m.role ? `- ${m.role}` : ""}</span></div>
+                            <div class="member">${Common.htmlEncode(Common.normalizeName(m.name, pageTeam.tag))} <span class="grey">${m.role ? `- ${m.role}` : ""}</span></div>
                         `).join("")}
                     </div>
                     <div id="homes">
@@ -116,14 +81,14 @@ class TeamPage {
                     </div>
                     <div id="timezone">
                         <div class="section">Primary Time Zone</div>
-                        <div>${await team.getTimezone()}</div>
+                        <div>${await pageTeam.getTimezone()}</div>
                     </div>
                 </div>
                 <div class="section">Season Records</div>
                 <div id="options">
                     <div class="season">
                         <span class="grey">Standings for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                            ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/team/${team.tag}?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
+                            ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/team/${pageTeam.tag}?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
                         `).join(" | ")}
                     </div>
                 </div>
@@ -156,8 +121,8 @@ class TeamPage {
                                 <div class="header">Opponent</div>
                                 <div class="header">Record</div>
                                 ${teamData.opponents.map((opponent) => /* html */`
-                                    <div class="tag"><div class="diamond${opponent.team.role && opponent.team.role.color ? "" : "-empty"}" ${opponent.team.role && opponent.team.role.color ? `style="background-color: ${opponent.team.role.hexColor};"` : ""}></div> <a href="/team/${opponent.team.tag}">${opponent.team.tag}</a></div>
-                                    <div><a href="/team/${opponent.team.tag}">${opponent.team.name}</a></div>
+                                    <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div>${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
                                 `).join("")}
                             </div>
@@ -179,16 +144,16 @@ class TeamPage {
                         <div class="header date">Date</div>
                         <div class="header player">Top Performer</div>
                         ${teamData.matches.map((m) => /* html */`
-                            <div class="tag"><div class="diamond${m.challengingTeam.role && m.challengingTeam.role.color ? "" : "-empty"}" ${m.challengingTeam.role && m.challengingTeam.role.color ? `style="background-color: ${m.challengingTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.challengingTeam.tag}">${m.challengingTeam.tag}</a></div>
-                            <div class="team-name"><a href="/team/${m.challengingTeam.tag}">${m.challengingTeam.name}</a></div>
+                            <div class="tag"><div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="score ${m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">${m.challengingTeamScore}</div>
-                            <div class="tag"><div class="diamond${m.challengedTeam.role && m.challengedTeam.role.color ? "" : "-empty"}" ${m.challengedTeam.role && m.challengedTeam.role.color ? `style="background-color: ${m.challengedTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.challengedTeam.tag}">${m.challengedTeam.tag}</a></div>
-                            <div class="team-name"><a href="/team/${m.challengedTeam.tag}">${m.challengedTeam.name}</a></div>
+                            <div class="tag"><div class="diamond${(team = teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="score ${m.challengingTeamScore < m.challengedTeamScore ? "winner" : ""}">${m.challengedTeamScore}</div>
                             <div>${m.map}</div>
                             <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
-                            <div class="tag player"><div class="diamond${m.statTeam.role && m.statTeam.role.color ? "" : "-empty"}" ${m.statTeam.role && m.statTeam.role.color ? `style="background-color: ${m.statTeam.role.hexColor};"` : ""}></div> <a href="/team/${m.statTeam.tag}">${m.statTeam.tag}</a></div>
-                            <div class="player">${Common.htmlEncode(Common.normalizeName(m.name, m.statTeam.tag))}</div>
+                            <div class="tag player"><div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="player"><a href="/player/${m.playerId}/${encodeURIComponent(Common.normalizeName(m.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(m.name, team.tag))}</a></div>
                             <div class="best-stats">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
                         `).join("")}
                     </div>
@@ -205,7 +170,7 @@ class TeamPage {
                         <div class="header">DPG</div>
                         <div class="header best">Best Performance Vs.</div>
                         ${teamData.stats.map((s) => /* html */`
-                            <div>${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</div>
+                            <div><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
                             <div>${s.games}</div>
                             <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                             <div class="totals">${s.kills}</div>
@@ -214,7 +179,7 @@ class TeamPage {
                             <div>${(s.kills / s.games).toFixed(2)}</div>
                             <div>${(s.assists / s.games).toFixed(2)}</div>
                             <div>${(s.deaths / s.games).toFixed(2)}</div>
-                            <div class="tag best"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
+                            <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="best">${s.map}</div>
                             <div class="best"><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
                             <div class="best-stats">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>

@@ -41,6 +41,10 @@ class Teams {
      * @returns {Team} The requested team.
      */
     getTeam(id, name, tag, disbanded, locked) {
+        if (!id) {
+            return void 0;
+        }
+
         if (!this.teams[id]) {
             this.teams[id] = new Team({id, name, tag, disbanded, locked});
         }

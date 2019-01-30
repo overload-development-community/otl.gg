@@ -311,6 +311,7 @@ span.grey {
     font-size: 14px;
 }
 
+#matches .diamond,
 #stats .diamond {
     display: inline-block;
     width: 8px;
@@ -328,6 +329,7 @@ span.grey {
     transform-origin: 0 100%;
 }
 
+#matches .diamond-empty,
 #stats .diamond-empty {
     display: inline-block;
     width: 6px;

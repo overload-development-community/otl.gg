@@ -4,7 +4,7 @@ const HtmlMinifier = require("html-minifier"),
 
     Db = require("../database"),
     settings = require("../settings"),
-    Team = require("../team");
+    Teams = require("./teams");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -63,27 +63,15 @@ class Standings {
 
         const seasonList = await Db.seasonList(),
             season = Number.parseInt(req.query.season, 10) || void 0,
-            maps = await Db.playedMapsForSeason(season);
+            maps = await Db.playedMapsForSeason(season),
+            teams = new Teams();
 
-        let map;
+        let map, team;
         if (maps.indexOf(req.query.map) !== -1) {
             map = req.query.map;
         }
 
-        /**
-         * @type {{team?: Team, teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[]}
-         */
         const standings = await Db.seasonStandings(isNaN(season) ? void 0 : season, records, map);
-
-        standings.forEach((standing) => {
-            standing.team = new Team({
-                id: standing.teamId,
-                name: standing.name,
-                tag: standing.tag,
-                disbanded: standing.disbanded,
-                locked: standing.locked
-            });
-        });
 
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/standings.css" />
@@ -116,8 +104,8 @@ class Standings {
                     <div class="header">${map || ""}</div>
                 ${standings.filter((s) => !s.disbanded).map((s, index) => /* html */`
                         <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
-                        <div class="tag"><div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a></div>
-                        <div class="team-name"><a href="/team/${s.team.tag}">${s.team.name}</a></div>
+                        <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                        <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>
                         <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
                         <div>${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
@@ -141,8 +129,8 @@ class Standings {
                         <div class="header">${records3}</div>
                         <div class="header">${map || ""}</div>
                         ${standings.filter((s) => s.disbanded).map((s) => /* html */`
-                            <div><a href="/team/${s.team.tag}">${s.team.tag}</a></div>
-                            <div><a href="/team/${s.team.tag}">${s.team.name}</a></div>
+                            <div><a href="/team/${s.tag}">${s.tag}</a></div>
+                            <div><a href="/team/${s.tag}">${s.name}</a></div>
                             <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>
                             <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
                             <div>${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>

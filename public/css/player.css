@@ -1,0 +1,195 @@
+.diamond {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 8px 0 3px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+.diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 8px 0 3px;
+    border: solid 2px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+.header {
+    color: #999999;
+}
+
+#player {
+    display: grid;
+    grid-template-columns: auto auto;
+    color: white;
+    padding: 10px;
+}
+
+#player .section {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#player #name {
+    grid-column-end: span 2;
+    font-size: 48px;
+    color: #ff6600;
+}
+
+#player #twitch {
+    grid-column-end: span 2;
+    font-size: 24px;
+}
+
+#player #twitch #glitch {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url(/images/twitch.png);
+    background-size: 24px 24px;
+    margin-right: 10px;
+}
+
+#player #team .tag {
+    display: inline;
+    white-space: nowrap;
+}
+
+#player #team .name {
+    display: inline;
+    margin-left: 10px;
+}
+
+#stats {
+    display: grid;
+    color: white;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+#matches {
+    display: grid;
+    color: white;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.team {
+    grid-column-end: span 2;
+}
+
+@media (max-width: 1000px) {
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    }
+
+    #matches .team-name {
+        display: none;
+    }
+
+    #matches .team {
+        grid-column-end: span 1;
+    }
+}
+
+@media (max-width: 700px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    }
+
+    #stats .team-name {
+        display: none;
+    }
+
+    #stats .team {
+        grid-column-end: span 1;
+    }
+
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto auto auto;
+    }
+
+    #matches .date {
+        display: none;
+    }
+}
+
+@media (max-width: 600px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto auto;
+    }
+
+    #stats .totals {
+        display: none;
+    }
+
+    #matches {
+        grid-template-columns: auto auto auto auto auto auto auto;
+    }
+
+    #matches .map {
+        display: none;
+    }
+}
+
+#stats .diamond,
+#matches .diamond {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin: 0 7px 0 1px;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}
+
+#stats .diamond-empty,
+#matches .diamond-empty {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin: 0 7px 0 1px;
+    border: solid 1px white;
+    -webkit-transform: translate(5px, 1px) rotate(-45deg);
+    -moz-transform: translate(5px, 1px) rotate(-45deg);
+    -ms-transform: translate(5px, 1px) rotate(-45deg);
+    -o-transform: translate(5px, 1px) rotate(-45deg);
+    transform: translate(5px, 1px) rotate(-45deg);
+    -webkit-transform-origin: 0 100%;
+    -moz-transform-origin: 0 100%;
+    -ms-transform-origin: 0 100%;
+    -o-transform-origin: 0 100%;
+    transform-origin: 0 100%;
+}

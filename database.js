@@ -858,22 +858,22 @@ class Database {
     //                                ###
     /**
      * Gets the current list of free agents.
-     * @returns {Promise<{name: string, discordId: string, timezone: string}[]>} The list of free agents.
+     * @returns {Promise<{playerId: number, name: string, discordId: string, timezone: string}[]>} The list of free agents.
      */
     static async freeAgents() {
 
         /**
-         * @type {{recordsets: [{Name: string, DiscordId: string, Timezone: string}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, DiscordId: string, Timezone: string}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT Name, DiscordId, Timezone
+            SELECT PlayerId, Name, DiscordId, Timezone
             FROM tblPlayer
             WHERE PlayerId NOT IN (SELECT PlayerId FROM tblRoster)
                 AND PlayerId NOT IN (SELECT PlayerId FROM tblJoinBan WHERE DateExpires > GETUTCDATE())
                 AND Timezone IS NOT NULL
             ORDER BY Name
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
     }
 
     //              #     ##               ###                     ###         #  #                     ##         ###
@@ -897,6 +897,88 @@ class Database {
             SELECT TeamId, Name, Tag, Disbanded, Locked FROM tblTeam WHERE Name = @text OR Tag = @text
         `, {text: {type: Db.VARCHAR(25), value: text}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, disbanded: !!data.recordsets[0][0].Disbanded, locked: !!data.recordsets[0][0].Locked} || void 0;
+    }
+
+    //              #     ##
+    //              #    #  #
+    //  ###   ##   ###   #      ###  ###    ##    ##   ###
+    // #  #  # ##   #    #     #  #  #  #  # ##  # ##  #  #
+    //  ##   ##     #    #  #  # ##  #     ##    ##    #
+    // #      ##     ##   ##    # #  #      ##    ##   #
+    //  ###
+    /**
+     * Gets a player's career data.
+     * @param {number} playerId The player ID to get data for.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number}[], matches: {teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, teamSize: number, matchTime: Date, map: string}[]}>} A promise that resolves with a player's career data.
+     */
+    static async getCareer(playerId) {
+
+        /**
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, TeamSize: number, MatchTime: Date, Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT p.Name, p.TwitchName, p.Timezone, t.TeamId, t.Tag, t.Name TeamName
+            FROM tblPlayer p
+            LEFT OUTER JOIN (
+                tblRoster r
+                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
+            ) ON r.PlayerId = p.PlayerId
+            WHERE p.PlayerId = @PlayerId
+
+            SELECT se.Season, s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblSeason se ON c.MatchTime >= se.DateStart AND c.MatchTime < se.DateEnd
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE s.PlayerID = @PlayerId
+            GROUP BY se.Season, s.TeamId, t.Tag, t.Name, p.Name
+            ORDER BY MIN(c.MatchTime)
+
+            SELECT t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, c.TeamSize, c.MatchTime, c.Map
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE PlayerId = @PlayerId
+            ORDER BY c.MatchTime DESC
+        `, {playerId: {type: Db.INT, value: playerId}});
+        return data && data.recordsets && data.recordsets.length === 3 && data.recordsets[0].length > 0 && {
+            player: {
+                name: data.recordsets[0][0].Name,
+                twitchName: data.recordsets[0][0].TwitchName,
+                timezone: data.recordsets[0][0].Timezone,
+                teamId: data.recordsets[0][0].TeamId,
+                tag: data.recordsets[0][0].Tag,
+                teamName: data.recordsets[0][0].TeamName
+            },
+            career: data.recordsets[1].map((row) => ({
+                season: row.Season,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                games: row.Games,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths
+            })),
+            matches: data.recordsets[2].map((row) => ({
+                teamId: row.TeamId,
+                tag: row.Tag,
+                name: row.Name,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentName: row.OpponentName,
+                teamScore: row.TeamScore,
+                opponentScore: row.OpponentScore,
+                teamSize: row.TeamSize,
+                matchTime: row.MatchTime,
+                map: row.Map
+            }))
+        } || void 0;
     }
 
     //              #     ##                 #             #   ##   #           ##    ##                            ###      #         ####              ###    #    ##           #
@@ -1377,12 +1459,12 @@ class Database {
     //  ###
     /**
      * Gets the league records.
-     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[]}>} A promise that resolves with the league records.
+     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[]}>} A promise that resolves with the league records.
      */
     static async getRecords() {
 
         /**
-         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1467,7 +1549,7 @@ class Database {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             WHERE Rank = 1
 
-            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
                     c.TeamSize,
@@ -1486,7 +1568,7 @@ class Database {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
 
-            SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Kills DESC) Rank,
                     c.TeamSize,
@@ -1505,7 +1587,7 @@ class Database {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
 
-            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Assists DESC) Rank,
                     c.TeamSize,
@@ -1524,7 +1606,7 @@ class Database {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
 
-            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Deaths) Rank,
                     c.TeamSize,
@@ -1598,6 +1680,7 @@ class Database {
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
+                playerId: row.PlayerId,
                 name: row.Name,
                 opponentTeamId: row.OpponentTeamId,
                 opponentTag: row.OpponentTag,
@@ -1611,6 +1694,7 @@ class Database {
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
+                playerId: row.PlayerId,
                 name: row.Name,
                 opponentTeamId: row.OpponentTeamId,
                 opponentTag: row.OpponentTag,
@@ -1624,6 +1708,7 @@ class Database {
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
+                playerId: row.PlayerId,
                 name: row.Name,
                 opponentTeamId: row.OpponentTeamId,
                 opponentTag: row.OpponentTag,
@@ -1637,6 +1722,7 @@ class Database {
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
+                playerId: row.PlayerId,
                 name: row.Name,
                 opponentTeamId: row.OpponentTeamId,
                 opponentTag: row.OpponentTag,
@@ -1950,7 +2036,7 @@ class Database {
                 c.ChallengedTeamScore,
                 c.Map,
                 c.MatchTime,
-                s.TeamId,
+                s.TeamId StatTeamId,
                 tc3.Name StatTeamName,
                 tc3.Tag StatTeamTag,
                 s.PlayerId,
@@ -2756,12 +2842,12 @@ class Database {
     /**
      * Gets player stats for the specified season.
      * @param {number} [season] The season number, or void for the latest season.
-     * @returns {Promise<{name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async playerSeasonStats(season) {
 
         /**
-         * @type {{recordsets: [{Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @dateStart DATETIME
@@ -2778,6 +2864,7 @@ class Database {
             ORDER BY Season DESC
 
             SELECT
+                p.PlayerId,
                 p.Name,
                 r.TeamId,
                 t.Name TeamName,
@@ -2801,9 +2888,10 @@ class Database {
                 AND c.DateVoided IS NULL
                 AND c.DateConfirmed IS NOT NULL
                 AND c.DateClosed IS NOT NULL
-            GROUP BY p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+            GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
         `, {season: {type: Db.INT, value: season}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            playerId: row.PlayerId,
             name: row.Name,
             teamId: row.TeamId,
             teamName: row.TeamName,
@@ -2826,12 +2914,12 @@ class Database {
     // #                  #                                                                 #
     /**
      * Gets player top KDA stats for the current season.
-     * @returns {Promise<{name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]>} A promise that resolves with the stats.
      */
     static async playerSeasonTopKdaStats() {
 
         /**
-         * @type {{recordsets: [{Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -2846,6 +2934,7 @@ class Database {
             ORDER BY Season DESC
 
             SELECT TOP 5
+                p.PlayerId,
                 p.Name,
                 r.TeamId,
                 t.Name TeamName,
@@ -2866,10 +2955,11 @@ class Database {
                 AND c.DateVoided IS NULL
                 AND c.DateConfirmed IS NOT NULL
                 AND c.DateClosed IS NOT NULL
-            GROUP BY p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+            GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
             ORDER BY CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END DESC
         `);
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            playerId: row.PlayerId,
             name: row.Name,
             teamId: row.TeamId,
             teamName: row.TeamName,

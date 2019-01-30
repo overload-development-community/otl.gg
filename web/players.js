@@ -5,7 +5,7 @@ const HtmlMinifier = require("html-minifier"),
     Discord = require("../discord"),
     Db = require("../database"),
     settings = require("../settings"),
-    Team = require("../team");
+    Teams = require("./teams");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -39,31 +39,16 @@ class Players {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const freeAgents = (await Db.freeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId));
-
-        /**
-         * @type {{team?: Team, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]}
-         */
-        const stats = await Db.playerSeasonStats();
-
-        stats.forEach((stat) => {
-            if (stat.teamId) {
-                stat.team = new Team({
-                    id: stat.teamId,
-                    name: stat.teamName,
-                    tag: stat.tag,
-                    disbanded: stat.disbanded,
-                    locked: stat.locked
-                });
-            }
-        });
-
-        const averages = {
-            kda: stats.reduce((acc, cur) => acc + cur.kda, 0) / stats.length,
-            kills: stats.reduce((acc, cur) => acc + cur.avgKills, 0) / stats.length,
-            assists: stats.reduce((acc, cur) => acc + cur.avgAssists, 0) / stats.length,
-            deaths: stats.reduce((acc, cur) => acc + cur.avgDeaths, 0) / stats.length
-        };
+        const freeAgents = (await Db.freeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
+            stats = await Db.playerSeasonStats(),
+            averages = {
+                kda: stats.reduce((acc, cur) => acc + cur.kda, 0) / stats.length,
+                kills: stats.reduce((acc, cur) => acc + cur.avgKills, 0) / stats.length,
+                assists: stats.reduce((acc, cur) => acc + cur.avgAssists, 0) / stats.length,
+                deaths: stats.reduce((acc, cur) => acc + cur.avgDeaths, 0) / stats.length
+            },
+            teams = new Teams();
+        let team;
 
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/players.css" />
@@ -74,7 +59,7 @@ class Players {
                     <div class="text">The following pilots are available free agents for you to recruit to your team.</div>
                     <div class="players">
                         ${freeAgents.map((f) => /* html */`
-                            <div>${Common.htmlEncode(f.name)}</div>
+                            <div><a href="/player/${f.playerId}/${encodeURIComponent(f.name)}">${Common.htmlEncode(f.name)}</a></div>
                             <div>${f.timezone}</div>
                         `).join("")}
                     </div>
@@ -91,10 +76,10 @@ class Players {
                         <div class="header">KDA</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.kda - a.kda).map((s, index, sortedStats) => /* html */`
                             <div class="pos">${index + 1}</div>
-                            <div class="tag">${s.team ? /* html */`
-                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
-                            ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                            <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
                             <div class="value">${s.kda.toFixed(3)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].kda < averages.kda && sortedStats[index].kda >= averages.kda ? /* html */`
                                 <div class="separator"></div>
@@ -112,10 +97,10 @@ class Players {
                         <div class="header">KPG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgKills - a.avgKills).map((s, index, sortedStats) => /* html */`
                             <div class="pos">${index + 1}</div>
-                            <div class="tag">${s.team ? /* html */`
-                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
-                            ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                            <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
                             <div class="value">${s.avgKills.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgKills < averages.kills && sortedStats[index].avgKills >= averages.kills ? /* html */`
                                 <div class="separator"></div>
@@ -133,10 +118,10 @@ class Players {
                         <div class="header">APG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgAssists - a.avgAssists).map((s, index, sortedStats) => /* html */`
                             <div class="pos">${index + 1}</div>
-                            <div class="tag">${s.team ? /* html */`
-                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
-                            ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                            <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
                             <div class="value">${s.avgAssists.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgAssists < averages.assists && sortedStats[index].avgAssists >= averages.assists ? /* html */`
                                 <div class="separator"></div>
@@ -154,10 +139,10 @@ class Players {
                         <div class="header">DPG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : a.avgDeaths - b.avgDeaths).map((s, index, sortedStats) => /* html */`
                             <div class="pos">${index + 1}</div>
-                            <div class="tag">${s.team ? /* html */`
-                                <div class="diamond${s.team.role && s.team.role.color ? "" : "-empty"}" ${s.team.role && s.team.role.color ? `style="background-color: ${s.team.role.hexColor};"` : ""}></div> <a href="/team/${s.team.tag}">${s.team.tag}</a>
-                            ` : ""}</div>
-                            <div class="name">${Common.htmlEncode(Common.normalizeName(s.name, s.team.tag))}</div>
+                            <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
                             <div class="value">${s.avgDeaths.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgDeaths > averages.deaths && sortedStats[index].avgDeaths <= averages.deaths ? /* html */`
                                 <div class="separator"></div>
