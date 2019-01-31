@@ -62,12 +62,16 @@ class Challenge {
      * @param {Team} challengingTeam The challenging team.
      * @param {Team} challengedTeam The challenged team.
      * @param {boolean} [adminCreated] Whether the match is being created by an admin.
+     * @param {Team} [homeMapTeam] The home map team to set.  Leave undefined to let the server pick the home team.
+     * @param {Team} [homeServerTeam] The home server team to set.  Use null for a neutral server, or leave undefined to let the server pick the home team.
+     * @param {number} [teamSize] The team size to set.
+     * @param {boolean} [startNow] Whether to start the match now.
      * @returns {Promise<Challenge>} A promise that resolves with the newly created challenge.
      */
-    static async create(challengingTeam, challengedTeam, adminCreated) {
+    static async create(challengingTeam, challengedTeam, adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow) {
         let data;
         try {
-            data = await Db.createChallenge(challengingTeam, challengedTeam, !!adminCreated);
+            data = await Db.createChallenge(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -93,8 +97,6 @@ class Challenge {
             ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
             await challenge.channel.setParent(Discord.challengesCategory);
-
-            await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengedTeam.name}\n\nOrange Team: ${data.orangeTeam.tag}\nBlue Team: ${data.blueTeam.tag}\n\nHome Map Team: ${data.homeMapTeam.tag}\n\nHome Server Team: ${data.homeServerTeam.tag}`);
 
             const mapEmbed = Discord.richEmbed({
                 title: "Challenge commands - Map",
@@ -126,8 +128,8 @@ class Challenge {
 
             const serverEmbed = Discord.richEmbed({
                 title: "Challenge commands - Server",
-                description: `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two pilots start the match in an effort to select a specific server.`,
-                color: data.homeServerTeam.role.color,
+                description: `${homeServerTeam === null ? "The server home team has been set to be neutral." : `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two pilots start the match in an effort to select a specific server.`}`,
+                color: data.homeServerTeam ? data.homeServerTeam.role.color : void 0,
                 fields: []
             });
 
@@ -150,20 +152,23 @@ class Challenge {
             const optionsEmbed = Discord.richEmbed({
                 title: "Challenge commands - Options",
                 description: "Challenges must also have a team size and scheduled time to play.",
-                fields: [
-                    {
-                        name: "!suggestteamsize <2|3|4>",
-                        value: "Suggests a team size for the match."
-                    }, {
-                        name: "!confirmteamsize",
-                        value: "Confirms a team size suggested by the other team."
-                    }
-                ]
+                fields: []
             });
+
+            if (teamSize) {
+                optionsEmbed.addField("Team size", `The team size has been set to be ${teamSize}v${teamSize}.`);
+            }
+
+            if (startNow) {
+                optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
+            }
+
+            optionsEmbed.addField("!suggestteamsize <2|3|4>", "Suggests a team size for the match.");
+            optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
 
             if (!adminCreated) {
                 optionsEmbed.fields.push({
-                    name: "!suggesttime <month name> <day> <year>, <hh:mm> [AM|PM]",
+                    name: "!suggesttime <month name> <day> <year>, <hh:mm> (AM|PM)",
                     value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command."
                 }, {
                     name: "!confirmtime",
@@ -250,6 +255,8 @@ class Challenge {
             } else if (data.team2Penalized) {
                 await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map and server selection is disabled.`, challenge.channel);
             }
+
+            await challenge.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error creating a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1000,6 +1007,29 @@ class Challenge {
         }
     }
 
+    //                          #          ###                      #          #
+    //                          #          #  #                     #          #
+    //  ##   ###    ##    ###  ###    ##   #  #   ##   # #    ###  ###    ##   ###
+    // #     #  #  # ##  #  #   #    # ##  ###   # ##  ####  #  #   #    #     #  #
+    // #     #     ##    # ##   #    ##    # #   ##    #  #  # ##   #    #     #  #
+    //  ##   #      ##    # #    ##   ##   #  #   ##   #  #   # #    ##   ##   #  #
+    /**
+     * Creates a rematch.
+     * @param {Team} team The team responding to the rematch.
+     * @returns {Promise} A promise that resolves when the rematch has been created.
+     */
+    async createRematch(team) {
+        try {
+            await Db.setRematchedForChallenge(this);
+        } catch (err) {
+            throw new Exception("There was a database error marking a challenge as rematched.", err);
+        }
+
+        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, void 0, this.details.usingHomeServerTeam ? this.details.homeServerTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam : null, this.details.teamSize, true);
+
+        await Discord.queue(`The rematch has been created!  Visit ${challenge.channel} to get started.`, this.channel);
+    }
+
     //              #     ##    #           #           ####              ###
     //              #    #  #   #           #           #                  #
     //  ###   ##   ###    #    ###    ###  ###    ###   ###    ##   ###    #     ##    ###  # #
@@ -1073,6 +1103,9 @@ class Challenge {
             dateReported: details.dateReported,
             dateConfirmed: details.dateConfirmed,
             dateClosed: details.dateClosed,
+            dateRematchRequested: details.dateRematchRequested,
+            rematchTeam: details.rematchTeamId ? details.rematchTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
+            dateRematched: details.dateRematched,
             dateVoided: details.dateVoided,
             homeMaps: details.homeMaps
         };
@@ -1358,6 +1391,28 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error reporting a challenge.  Please resolve this manually as soon as possible.", err);
         }
+    }
+
+    //                                       #    ###                      #          #
+    //                                       #    #  #                     #          #
+    // ###    ##    ###  #  #   ##    ###   ###   #  #   ##   # #    ###  ###    ##   ###
+    // #  #  # ##  #  #  #  #  # ##  ##      #    ###   # ##  ####  #  #   #    #     #  #
+    // #     ##    #  #  #  #  ##      ##    #    # #   ##    #  #  # ##   #    #     #  #
+    // #      ##    ###   ###   ##   ###      ##  #  #   ##   #  #   # #    ##   ##   #  #
+    //                #
+    /**
+     * Requests a rematch for the challenge.
+     * @param {Team} team The team requesting the rematch.
+     * @returns {Promise} A promise that resolves when the rematch has been requested.
+     */
+    async requestRematch(team) {
+        try {
+            await Db.requestRematchForChallenge(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error requesting a rematch.", err);
+        }
+
+        await Discord.queue(`**${team.name}** is requesting a rematch!  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, do you accept?  The match will be scheduled immediately.  Use the \`!rematch\` command, and the new challenge will be created!`, this.channel);
     }
 
     //               #    #  #                    #  #              ###

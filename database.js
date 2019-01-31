@@ -611,9 +611,14 @@ class Database {
      * @param {Team} team1 The first team.
      * @param {Team} team2 The second team.
      * @param {boolean} adminCreated Whether the challenge is admin-created.
+     * @param {Team} [homeMapTeam] The home map team.
+     * @param {Team} [homeServerTeam] The home server team.
+     * @param {number} [teamSize] The team size.
+     * @param {boolean} [startNow] Whether to start the match now.
      * @returns {Promise<{id: number, orangeTeam: Team, blueTeam: Team, homeMapTeam: Team, homeServerTeam: Team, team1Penalized: boolean, team2Penalized: boolean}>} A promise that resolves with the challenge ID.
      */
-    static async createChallenge(team1, team2, adminCreated) {
+    static async createChallenge(team1, team2, adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow) {
+        let date;
 
         /**
          * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, HomeServerTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
@@ -630,10 +635,10 @@ class Database {
             SELECT
                 @orangeTeamId = CASE WHEN Team1Orange < Team2Orange THEN @team1Id WHEN Team1Orange > Team2Orange THEN @team2Id WHEN @colorSeed < 0.5 THEN @team1Id ELSE @team2Id END,
                 @blueTeamId = CASE WHEN Team1Orange > Team2Orange THEN @team1Id WHEN Team1Orange < Team2Orange THEN @team2Id WHEN @colorSeed >= 0.5 THEN @team1Id ELSE @team2Id END,
-                @homeMapTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeMap < Team2HomeMap THEN @team1Id WHEN Team1HomeMap > Team2HomeMap THEN @team2Id WHEN @mapSeed < 0.5 THEN @team1Id ELSE @team2Id END,
-                @homeServerTeamId = CASE WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeServer < Team2HomeServer THEN @team1Id WHEN Team1HomeServer > Team2HomeServer THEN @team2Id WHEN @serverSeed < 0.5 THEN @team1Id ELSE @team2Id END,
-                @team1Penalized = CASE WHEN Team1Penalties > 0 THEN 1 ELSE 0 END,
-                @team2Penalized = CASE WHEN Team2Penalties > 0 THEN 1 ELSE 0 END
+                @homeMapTeamId = CASE WHEN @requestedHomeMapTeamId IS NOT NULL THEN @requestedHomeMapTeamId WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeMap < Team2HomeMap THEN @team1Id WHEN Team1HomeMap > Team2HomeMap THEN @team2Id WHEN @mapSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @homeServerTeamId = CASE WHEN @requestedHomeServerTeamId IS NOT NULL THEN @requestedHomeServerTeamId WHEN Team1Penalties = 0 AND Team2Penalties > 0 THEN @team1Id WHEN Team1Penalties > 0 AND Team2Penalties = 0 THEN @team2Id WHEN Team1HomeServer < Team2HomeServer THEN @team1Id WHEN Team1HomeServer > Team2HomeServer THEN @team2Id WHEN @serverSeed < 0.5 THEN @team1Id ELSE @team2Id END,
+                @team1Penalized = CASE WHEN @adminCreated = 0 AND Team1Penalties > 0 THEN 1 ELSE 0 END,
+                @team2Penalized = CASE WHEN @adminCreated = 0 AND Team2Penalties > 0 THEN 1 ELSE 0 END
             FROM (
                 SELECT ISNULL(SUM(CASE WHEN OrangeTeamId = @team1Id THEN 1 ELSE 0 END), 0) Team1Orange,
                     ISNULL(SUM(CASE WHEN OrangeTeamId = @team2Id THEN 1 ELSE 0 END), 0) Team2Orange,
@@ -671,12 +676,25 @@ class Database {
                 @adminCreated
             )
 
-            UPDATE tblTeamPenalty
-            SET PenaltiesRemaining = PenaltiesRemaining - 1
-            WHERE (TeamId = @team1Id OR TeamId = @team2Id)
-                AND PenaltiesRemaining > 0
-
             SET @challengeId = SCOPE_IDENTITY()
+
+            IF @adminCreated = 0
+            BEGIN
+                UPDATE tblTeamPenalty
+                SET PenaltiesRemaining = PenaltiesRemaining - 1
+                WHERE (TeamId = @team1Id OR TeamId = @team2Id)
+                    AND PenaltiesRemaining > 0
+            END
+
+            IF @teamSize IS NOT NULL
+            BEGIN
+                UPDATE tblChallenge SET TeamSize = @teamSize
+            END
+
+            IF @matchTime IS NOT NULL
+            BEGIN
+                UPDATE tblChallenge SET MatchTime = @matchTime
+            END
 
             INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
             SELECT @challengeId, Number, Map
@@ -697,7 +715,12 @@ class Database {
             colorSeed: {type: Db.FLOAT, value: Math.random()},
             mapSeed: {type: Db.FLOAT, value: Math.random()},
             serverSeed: {type: Db.FLOAT, value: Math.random()},
-            adminCreated: {type: Db.BIT, value: adminCreated}
+            adminCreated: {type: Db.BIT, value: adminCreated},
+            requestedHomeMapTeamId: {type: Db.INT, value: homeMapTeam ? homeMapTeam.id : void 0},
+            requestedHomeServerTeamId: {type: Db.INT, value: homeServerTeam ? homeServerTeam.id : void 0},
+            requestedNeutralServer: {type: Db.BIT, value: homeServerTeam === null},
+            teamSize: {type: Db.INT, value: teamSize},
+            matchTime: {type: Db.DATETIME, value: startNow ? new Date((date = new Date()).getTime() + 300000 - date.getTime() % 300000) : void 0}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             id: data.recordsets[0][0].ChallengeId,
@@ -1250,12 +1273,12 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -1293,6 +1316,9 @@ class Database {
                 c.DateReported,
                 c.DateConfirmed,
                 c.DateClosed,
+                c.DateRematchRequested,
+                c.RematchTeamId,
+                c.DateRematched,
                 c.DateVoided
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
@@ -1336,6 +1362,9 @@ class Database {
             dateConfirmed: data.recordsets[0][0].DateConfirmed,
             dateClosed: data.recordsets[0][0].DateClosed,
             dateVoided: data.recordsets[0][0].DateVoided,
+            dateRematchRequested: data.recordsets[0][0].DateRematchRequested,
+            rematchTeamId: data.recordsets[0][0].RematchTeamId,
+            dateRematched: data.recordsets[0][0].DateRematched,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -3235,6 +3264,28 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateReported || void 0;
     }
 
+    //                                       #    ###                      #          #     ####               ##   #           ##    ##
+    //                                       #    #  #                     #          #     #                 #  #  #            #     #
+    // ###    ##    ###  #  #   ##    ###   ###   #  #   ##   # #    ###  ###    ##   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##  #  #  #  #  # ##  ##      #    ###   # ##  ####  #  #   #    #     #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #     ##    #  #  #  #  ##      ##    #    # #   ##    #  #  # ##   #    #     #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##    ###   ###   ##   ###      ##  #  #   ##   #  #   # #    ##   ##   #  #  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                #                                                                                                                                  ###
+    /**
+     * Logs a request for a rematch for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team requesting the rematch.
+     * @returns {Promise} A promise that resolves when the rematch has been requested.
+     */
+    static async requestRematchForChallenge(challenge, team) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET RematchTeamId = @teamId, DateRematchRequested = GETUTCDATE() WHERE ChallengeId = @challengeId
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+    }
+
     //                                       #    ###
     //                                       #     #
     // ###    ##    ###  #  #   ##    ###   ###    #     ##    ###  # #
@@ -3657,6 +3708,24 @@ class Database {
     static async setRegularSeasonForChallenge(challenge) {
         await db.query(/* sql */`
             UPDATE tblChallenge SET Postseason = 0 WHERE ChallengeId = @challengeId
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //               #    ###                      #          #              #  ####               ##   #           ##    ##
+    //               #    #  #                     #          #              #  #                 #  #  #            #     #
+    //  ###    ##   ###   #  #   ##   # #    ###  ###    ##   ###    ##    ###  ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    ###   # ##  ####  #  #   #    #     #  #  # ##  #  #  #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    # #   ##    #  #  # ##   #    #     #  #  ##    #  #  #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##  #  #   ##   #  #   # #    ##   ##   #  #   ##    ###  #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                       ###
+    /**
+     * Sets a challenge as having been rematched.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the challenge has been set as having been rematched.
+     */
+    static async setRematchedForChallenge(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DateRematched = GETUTCDATE() WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
     }
 

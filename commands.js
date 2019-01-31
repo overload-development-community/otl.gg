@@ -3456,6 +3456,57 @@ class Commands {
         return true;
     }
 
+    //                          #          #
+    //                          #          #
+    // ###    ##   # #    ###  ###    ##   ###
+    // #  #  # ##  ####  #  #   #    #     #  #
+    // #     ##    #  #  # ##   #    #     #  #
+    // #      ##   #  #   # #    ##   ##   #  #
+    /**
+     * Issues a rematch request.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async rematch(member, channel, message) {
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!rematch` by itself to request a rematch.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        if (!challenge.details.dateRematched) {
+            await Discord.queue(`Sorry, ${member}, but a rematch for this challenge has already been created.`, channel);
+            throw new Warning("Already rematched.");
+        }
+
+        if (team.id === challenge.details.rematchTeam.id) {
+            await Discord.queue(`Sorry, ${member}, but your team already requested a rematch, the other team must also request a \`!rematch\` for the new challenge to be created.`, channel);
+            throw new Warning("Can't confirm own report.");
+        }
+
+        if (challenge.details.dateRematchRequested) {
+            await challenge.createRematch(team);
+        } else {
+            await challenge.requestRematch(team);
+        }
+
+        return true;
+    }
+
     //  #                       #     #
     //  #                       #
     // ###    ##    ###  # #   ###   ##    # #    ##   ####   ##   ###    ##
@@ -3812,7 +3863,7 @@ class Commands {
         }
 
         try {
-            Challenge.create(team1, team2, true);
+            await Challenge.create(team1, team2, true, team1, team1);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3985,11 +4036,6 @@ class Commands {
         }
 
         const map = await Commands.checkMapIsValid(message, member, channel);
-
-        if (challenge.details.homeMaps.indexOf(map) !== -1) {
-            await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
-            throw new Warning("Pilot suggested one of the home options.");
-        }
 
         try {
             await challenge.setMap(member, map);

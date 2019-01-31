@@ -251,6 +251,10 @@ class About {
                     <div class="command">!confirm</div>
                     <div>Founder or Captain only.  Confirms the score reported by the other team.</div>
                     <div class="example">!confirm</div>
+
+                    <div class="command">!rematch</div>
+                    <div>Founder or Captain only.  Requests a rematch.  Both teams must enter this command.  Once that happens, this will create a new challenge room with normal parameters, except the home server team will be swapped (or remain neutral if it was neutral for this game), the team size will remain the same as the previous match, and the match time will be set to start immediately.</div>
+                    <div class="example">!rematch</div>
                 </div>
             </div>
         `, req);
