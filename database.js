@@ -2522,12 +2522,12 @@ class Database {
     //  ###                    #                                    ###
     /**
      * Gets the upcoming scheduled matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the upcoming matches.
      */
     static async getUpcomingMatches() {
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId,
@@ -2536,10 +2536,12 @@ class Database {
                 t2.Tag ChallengedTeamTag,
                 t2.Name ChallengedTeamName,
                 c.MatchTime,
-                c.Map
+                c.Map,
+                p.TwitchName
             FROM tblChallenge c
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+            LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND c.DateConfirmed IS NULL
                 AND c.DateClosed IS NULL
@@ -2552,7 +2554,8 @@ class Database {
             challengedTeamTag: row.ChallengedTeamTag,
             challengedTeamName: row.ChallengedTeamName,
             matchTime: row.MatchTime,
-            map: row.Map
+            map: row.Map,
+            twitchName: row.TwitchName
         })) || [];
     }
 
