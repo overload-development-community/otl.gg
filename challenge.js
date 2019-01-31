@@ -839,9 +839,9 @@ class Challenge {
                 winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
 
             if (winningScore === losingScore) {
-                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.`);
+                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.  Interested in playing another right now?  Use the \`!rematch\` command!`);
             } else {
-                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`);
+                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  Interested in playing another right now?  Use the \`!rematch\` command!`);
                 embed.setColor(winningTeam.role.color);
             }
 
@@ -1656,9 +1656,9 @@ class Challenge {
                 winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
 
             if (winningScore === losingScore) {
-                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.`);
+                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.  Interested in playing another right now?  Use the \`!rematch\` command!`);
             } else {
-                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`);
+                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  Interested in playing another right now?  Use the \`!rematch\` command!`);
                 embed.setColor(winningTeam.role.color);
             }
 
