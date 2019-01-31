@@ -3482,12 +3482,12 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        if (!challenge.details.dateRematched) {
+        if (challenge.details.dateRematched) {
             await Discord.queue(`Sorry, ${member}, but a rematch for this challenge has already been created.`, channel);
             throw new Warning("Already rematched.");
         }
 
-        if (team.id === challenge.details.rematchTeam.id) {
+        if (challenge.details.rematchTeam && team.id === challenge.details.rematchTeam.id) {
             await Discord.queue(`Sorry, ${member}, but your team already requested a rematch, the other team must also request a \`!rematch\` for the new challenge to be created.`, channel);
             throw new Warning("Can't confirm own report.");
         }
