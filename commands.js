@@ -2663,7 +2663,6 @@ class Commands {
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         let date;
-
         if (message.toLowerCase() === "now") {
             date = new Date();
             date = new Date(date.getTime() + (300000 - date.getTime() % 300000));
@@ -4192,6 +4191,13 @@ class Commands {
             if (!date || isNaN(date.valueOf())) {
                 await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                 throw new Warning("Invalid date.");
+            }
+
+            if (date.getFullYear() <= 2001) {
+                date.setFullYear(new Date().getFullYear());
+                if (date < new Date()) {
+                    date.setFullYear(date.getFullYear() + 1);
+                }
             }
         }
 
