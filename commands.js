@@ -2196,7 +2196,7 @@ class Commands {
             throw new Warning("Team does not have 3 home maps set.");
         }
 
-        const {team: opponent, confirm} = await Commands.checkTeamExistsWithConfirmation(message, member, channel);
+        const opponent = await Commands.checkTeamExists(message, member, channel);
 
         if (opponent.disbanded) {
             await Discord.queue(`Sorry, ${member}, but that team is disbanded.`, channel);
@@ -2240,11 +2240,6 @@ class Commands {
         if (existingChallenge) {
             await Discord.queue(`Sorry, ${member}, but there is already a pending challenge between these two teams!  Visit ${existingChallenge.channel} for more information about this match.`, channel);
             throw new Warning("Challenge already exists.");
-        }
-
-        if (!confirm) {
-            await Discord.queue(`${member}, are you sure you wish to challenge **${opponent.name}**?  Type \`!challenge ${opponent.tag} confirm\` to confirm.`, channel);
-            return true;
         }
 
         let challenge;
