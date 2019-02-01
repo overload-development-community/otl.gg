@@ -133,7 +133,7 @@ class Common {
      * @returns {string} The normalized name.
      */
     static normalizeName(name, tag) {
-        if (name.toLowerCase().startsWith(`${tag.toLowerCase()} `)) {
+        if (tag && name.toLowerCase().startsWith(`${tag.toLowerCase()} `)) {
             name = name.substring(tag.length + 1);
         }
 
