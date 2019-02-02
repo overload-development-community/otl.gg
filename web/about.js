@@ -98,6 +98,10 @@ class About {
                     <div>You must use this command in a challenge room you are casting a match for.  Indicates that you no longer wish to cast a scheduled match.</div>
                     <div class="example">!uncast</div>
 
+                    <div class="command">!stats [&lt;pilot>]</div>
+                    <div>Gets the current season stats for the player, or yourself if used without mentioning a pilot.</div>
+                    <div class="example">!stats @Kantor<br />!stats</div>
+
                     <div class="command">!request &lt;team></div>
                     <div>Request to join a team.</div>
                     <div class="example">!request CF<br />!request Cronus Frontier</div>

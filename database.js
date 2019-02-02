@@ -1885,14 +1885,28 @@ class Database {
          * @type {{recordsets: [{PlayerId: number, Name: string, Tag: string, Games: number, Kills: number, Assists: number, Deaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
+            DECLARE @season INT
+            DECLARE @dateStart DATETIME
+            DECLARE @dateEnd DATETIME
+
+            SELECT TOP 1
+                @season = Season,
+                @dateStart = DateStart,
+                @dateEnd = DateEnd
+            FROM tblSeason
+            ORDER BY Season DESC
+
             SELECT p.PlayerId, p.Name, t.Tag, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
             FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN (
                 tblRoster r
                 INNER JOIN tblTeam t ON r.TeamId = t.TeamId
             ) ON p.PlayerId = r.PlayerId
             WHERE p.DiscordId = @discordId
+                AND c.MatchTime >= @dateStart
+                AND c.MatchTime < @dateEnd
             GROUP BY p.PlayerId, p.Name, t.Tag
         `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
