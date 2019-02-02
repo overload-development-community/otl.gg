@@ -1867,6 +1867,45 @@ class Database {
         } || void 0;
     }
 
+    //              #     ##    #           #           ####              ###    #    ##           #
+    //              #    #  #   #           #           #                 #  #         #           #
+    //  ###   ##   ###    #    ###    ###  ###    ###   ###    ##   ###   #  #  ##     #     ##   ###
+    // #  #  # ##   #      #    #    #  #   #    ##     #     #  #  #  #  ###    #     #    #  #   #
+    //  ##   ##     #    #  #   #    # ##   #      ##   #     #  #  #     #      #     #    #  #   #
+    // #      ##     ##   ##     ##   # #    ##  ###    #      ##   #     #     ###   ###    ##     ##
+    //  ###
+    /**
+     * Gets the season stats for the specified pilot.
+     * @param {DiscordJs.GuildMember} pilot The pilot to get stats for.
+     * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number}>} A promise that resolves with the player's stats.
+     */
+    static async getStatsForPilot(pilot) {
+
+        /**
+         * @type {{recordsets: [{PlayerId: number, Name: string, Tag: string, Games: number, Kills: number, Assists: number, Deaths: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT p.PlayerId, p.Name, t.Tag, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
+            FROM tblStat s
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN (
+                tblRoster r
+                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
+            ) ON p.PlayerId = r.PlayerId
+            WHERE p.DiscordId = @discordId
+            GROUP BY p.PlayerId, p.Name, t.Tag
+        `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
+            playerId: data.recordsets[0][0].PlayerId,
+            name: data.recordsets[0][0].Name,
+            tag: data.recordsets[0][0].Tag,
+            games: data.recordsets[0][0].Games,
+            kills: data.recordsets[0][0].Kills,
+            assists: data.recordsets[0][0].Assists,
+            deaths: data.recordsets[0][0].Deaths
+        } || void 0;
+    }
+
     //              #     ##    #                                               ####               ##   #           ##    ##
     //              #    #  #   #                                               #                 #  #  #            #     #
     //  ###   ##   ###    #    ###   ###    ##    ###  # #    ##   ###    ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##

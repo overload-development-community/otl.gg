@@ -8,6 +8,7 @@ const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
     Challenge = require("./challenge"),
+    Common = require("./web/common"),
     Otl = require("./otl"),
     pjson = require("./package.json"),
     Team = require("./team"),
@@ -3533,6 +3534,47 @@ class Commands {
         }
 
         await Discord.queue(`${member}, your team's time zone is now set.`, channel);
+
+        return true;
+    }
+
+    //         #           #
+    //         #           #
+    //  ###   ###    ###  ###    ###
+    // ##      #    #  #   #    ##
+    //   ##    #    # ##   #      ##
+    // ###      ##   # #    ##  ###
+    /**
+     * Displays a player's stats.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async stats(member, channel, message) {
+        let pilot;
+        if (message) {
+            pilot = await Commands.checkPilotExists(message, member, channel);
+        } else {
+            pilot = member;
+        }
+
+        const stats = await pilot.getStats();
+
+        if (stats) {
+            Discord.richQueue(Discord.richEmbed({
+                title: `Season Stats for ${Common.normalizeName(pilot.displayName, stats.tag)}`,
+                description: `${((stats.kills + stats.assists) / (stats.deaths < 1 ? 1 : stats.deaths)).toFixed(3)} KDA, ${stats.games} Games, ${stats.kills} Kills, ${stats.assists} Assists, ${stats.deaths} Deaths`,
+                fields: [
+                    {
+                        name: "For more details, visit:",
+                        value: `http://otl.gg/player/${stats.playerId}/${Common.normalizeName(member.displayName, stats.tag)}`
+                    }
+                ]
+            }), channel);
+        } else {
+            Discord.queue(`Sorry, ${member}, but ${pilot} has not played any games this season.`, channel);
+        }
 
         return true;
     }

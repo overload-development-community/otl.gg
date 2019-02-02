@@ -143,6 +143,25 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
     return teams.map((t) => new Team(t));
 };
 
+//              #     ##    #           #
+//              #    #  #   #           #
+//  ###   ##   ###    #    ###    ###  ###    ###
+// #  #  # ##   #      #    #    #  #   #    ##
+//  ##   ##     #    #  #   #    # ##   #      ##
+// #      ##     ##   ##     ##   # #    ##  ###
+//  ###
+/**
+ * Gets the current season stats for the pilot.
+ * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number}>} A promise that resolves with the pilot's stats.
+ */
+DiscordJs.GuildMember.prototype.getStats = async function() {
+    try {
+        return await Db.getStatsForPilot(this);
+    } catch (err) {
+        throw new Exception("There was a database error getting the stats for a pilot.", err);
+    }
+};
+
 //              #    ###
 //              #     #
 //  ###   ##   ###    #     ##    ###  # #
