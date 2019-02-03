@@ -688,12 +688,12 @@ class Database {
 
             IF @teamSize IS NOT NULL
             BEGIN
-                UPDATE tblChallenge SET TeamSize = @teamSize
+                UPDATE tblChallenge SET TeamSize = @teamSize WHERE ChallengeId = @challengeId
             END
 
             IF @matchTime IS NOT NULL
             BEGIN
-                UPDATE tblChallenge SET MatchTime = @matchTime
+                UPDATE tblChallenge SET MatchTime = @matchTime WHERE ChallengeId = @challengeId
             END
 
             INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
