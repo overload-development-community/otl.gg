@@ -1202,8 +1202,10 @@ class Database {
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengingTeamId = r.TeamId
             LEFT JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
-            LEFT JOIN tblStat s ON r.PlayerId = s.PlayerId
-            LEFT JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+            LEFT JOIN (
+                tblStat s 
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+            ) ON r.PlayerId = s.PlayerId
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
             ORDER BY p.Name
@@ -1213,8 +1215,10 @@ class Database {
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengedTeamId = r.TeamId
             LEFT JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
-            LEFT JOIN tblStat s ON r.PlayerId = s.PlayerId
-            LEFT JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+            LEFT JOIN (
+                tblStat s
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+            ) ON r.PlayerId = s.PlayerId
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
             ORDER BY p.Name
