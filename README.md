@@ -4,6 +4,14 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.0.4 - 2/3/2019
+
+* New `!stats` command to view your own stats and get a URL to your stats page.
+* Fixed bug with `!rematch` command that was resetting the match times and team sizes of all challenges.
+* Fixed crash on player stats page for players not on a team.
+* Cast page no longer includes stats from games that aren't yet official.
+* Records page no longer fails when there aren't categories available.
+
 ## v1.0.3 - 1/31/2019
 
 ### Bot:
