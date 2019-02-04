@@ -1526,6 +1526,7 @@ class Database {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             WHERE s.Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1545,6 +1546,7 @@ class Database {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1563,6 +1565,7 @@ class Database {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1581,6 +1584,7 @@ class Database {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1600,6 +1604,7 @@ class Database {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1619,6 +1624,7 @@ class Database {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1638,6 +1644,7 @@ class Database {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
             SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
             FROM (
@@ -1657,6 +1664,7 @@ class Database {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
         `);
         return data && data.recordsets && data.recordsets.length === 8 && {
             teamKda: data.recordsets[0].map((row) => ({
@@ -2603,6 +2611,7 @@ class Database {
                 AND c.DateConfirmed IS NULL
                 AND c.DateClosed IS NULL
                 AND c.DateVoided IS NULL
+            ORDER BY c.MatchTime
         `);
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             challengeId: row.ChallengeId,

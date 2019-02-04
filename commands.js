@@ -3568,7 +3568,7 @@ class Commands {
                 fields: [
                     {
                         name: "For more details, visit:",
-                        value: `http://otl.gg/player/${stats.playerId}/${Common.normalizeName(member.displayName, stats.tag)}`
+                        value: `http://otl.gg/player/${stats.playerId}/${Common.normalizeName(pilot.displayName, stats.tag)}`
                     }
                 ]
             }), channel);
