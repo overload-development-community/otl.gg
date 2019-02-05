@@ -106,6 +106,10 @@ class Matches {
                                         <div class="caster">
                                             Watch at <a href="https://twitch.tv/${encodeURIComponent(m.twitchName)}" target="_blank">https://twitch.tv/${Common.htmlEncode(m.twitchName)}</a>
                                         </div>
+                                    ` : m.map ? /* html */`
+                                        <div class="caster">
+                                            Watch at <a href="http://otl.gg/cast/${m.challengeId}" target="_blank">http://otl.gg/cast/${m.challengeId}</a>
+                                        </div>
                                     ` : ""}
                                 </div>
                             `).join("")}
