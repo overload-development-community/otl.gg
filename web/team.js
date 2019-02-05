@@ -39,7 +39,7 @@ class TeamPage {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const tag = req.params.tag,
+        const tag = req.params.tag.toUpperCase(),
             pageTeam = await Team.getByNameOrTag(tag);
 
         if (pageTeam) {
@@ -138,18 +138,15 @@ class TeamPage {
                     </div>
                     <div class="section">Season Matches</div>
                     <div id="matches">
-                        <div class="header team">Challenging Team</div>
-                        <div class="header team">Challenged Team</div>
+                        <div class="header team">Oppenent</div>
+                        <div class="header">Score</div>
                         <div class="header">Map</div>
                         <div class="header date">Date</div>
                         <div class="header player">Top Performer</div>
                         ${teamData.matches.map((m) => /* html */`
-                            <div class="tag"><div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="tag"><div class="diamond${(team = m.challengingTeamTag === tag ? teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag) : teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div class="score ${m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">${m.challengingTeamScore}</div>
-                            <div class="tag"><div class="diamond${(team = teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                            <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div class="score ${m.challengingTeamScore < m.challengedTeamScore ? "winner" : ""}">${m.challengedTeamScore}</div>
+                            <div>${m.challengingTeamTag === tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} ${m.challengingTeamTag === tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === tag ? m.challengedTeamScore : m.challengingTeamScore}</div>
                             <div>${m.map}</div>
                             <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                             <div class="tag player"><div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
