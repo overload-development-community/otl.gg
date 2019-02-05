@@ -180,6 +180,22 @@
     margin: 1px 3px;
 }
 
+@media (max-width: 600px) {
+    #body #standings div, #body #players div {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 500px) {
+    #body #standings {
+        grid-template-columns: auto auto auto auto;
+    }
+
+    #body #standings .team-name {
+        display: none;
+    }
+}
+
 #body #standings .provisional {
     color: #999999;
     font-style: italic;

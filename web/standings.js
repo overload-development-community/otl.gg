@@ -93,7 +93,7 @@ class Standings {
                     <div class="header before"></div>
                     <div class="header records">${records}</div>
                     <div class="header after"></div>
-                    <div class="header">Pos</div>
+                    <div class="header pos">Pos</div>
                     <div class="header">Tag</div>
                     <div class="header team-name">Team Name</div>
                     <div class="header">Rating</div>
@@ -103,7 +103,7 @@ class Standings {
                     <div class="header">${records3}</div>
                     <div class="header">${map || ""}</div>
                 ${standings.filter((s) => !s.disbanded).map((s, index) => /* html */`
-                        <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
+                        <div class="pos">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>

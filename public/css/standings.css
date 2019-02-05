@@ -110,6 +110,24 @@
     }
 }
 
+@media (max-width: 500px) {
+    #body #standings {
+        grid-template-columns: auto auto auto auto auto auto auto;
+    }
+
+    #body #standings .pos {
+        display: none;
+    }
+
+    #body #standings .header.before {
+        grid-column-end: span 3;
+    }
+
+    #body #standings .diamond, #body #standings .diamond-empty {
+        display: none;
+    }
+}
+
 #body #standings .provisional, #body #disbanded .provisional {
     color: #999999;
     font-style: italic;

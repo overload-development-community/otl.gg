@@ -62,6 +62,12 @@ a:hover {
     text-shadow: 2px 2px 5px black;
 }
 
+@media (max-width: 600px) {
+    #header #title {
+        font-size: 48px;
+    }
+}
+
 #discord {
     display: grid;
     grid-template-columns: auto 396px;
