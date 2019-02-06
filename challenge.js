@@ -565,9 +565,16 @@ class Challenge {
 
                 this.details.dateClockDeadline = deadline;
                 this.details.dateClockDeadlineNotified = void 0;
+                this.details.matchTime = void 0;
+                this.details.suggestedTime = void 0;
+                this.details.suggestedTimeTeam = void 0;
 
                 try {
-                    await Discord.queue(`${member} has extended the deadline of this challenge.  You have 14 days to get the match scheduled.`, this.channel);
+                    if (deadline) {
+                        await Discord.queue(`${member} has extended the deadline of this challenge.  You have 14 days to get the match scheduled.`, this.channel);
+                    } else {
+                        await Discord.queue(`${member} has cleared the match time of this challenge, please schedule a new time to play.`, this.channel);
+                    }
 
                     await this.updateTopic();
                 } catch (err) {
