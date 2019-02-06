@@ -4,6 +4,14 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.0.5 - 2/5/2019
+
+* Continued work on having better responsive design overall on the website.
+* The game log on the team page is more readable.
+* The sorting of the `!next` command now sorts from earliest match to the latest.
+* The website will now direct traffic to the cast page if no one is setup to cast the match.
+* `!adjudicate extend` can be used to simply clear the match time from a match that was missed, but now will display the correct message if the challenge was not clocked, and will update the channel's topic appropriately.
+
 ## v1.0.4 - 2/3/2019
 
 * New `!stats` command to view your own stats and get a URL to your stats page.
