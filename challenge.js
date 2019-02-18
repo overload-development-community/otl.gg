@@ -1704,7 +1704,7 @@ class Challenge {
         this.details.suggestedTeamSizeTeam = void 0;
 
         try {
-            await Discord.queue(`And admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.`, this.channel);
+            await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
