@@ -103,16 +103,16 @@ class Standings {
                     <div class="header">${records3}</div>
                     <div class="header">${map || ""}</div>
                 ${standings.filter((s) => !s.disbanded).map((s, index) => /* html */`
-                        <div class="pos">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
+                        <div class="pos numeric">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>
-                        <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
-                        <div>${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
-                        <div>${s.wins2 > 0 || s.losses2 > 0 || s.ties2 > 0 ? `${s.wins2}-${s.losses2}${s.ties2 === 0 ? "" : `-${s.ties2}`}` : ""}</div>
-                        <div>${s.wins3 > 0 || s.losses3 > 0 || s.ties3 > 0 ? `${s.wins3}-${s.losses3}${s.ties3 === 0 ? "" : `-${s.ties3}`}` : ""}</div>
-                        <div>${s.winsMap > 0 || s.lossesMap > 0 || s.tiesMap > 0 ? `${s.winsMap}-${s.lossesMap}${s.tiesMap === 0 ? "" : `-${s.tiesMap}`}` : ""}</div>
-                    `).join("")}
+                        <div class="numeric ${s.wins + s.losses + s.ties < 10 ? "provisional" : ""}">${s.rating ? Math.round(s.rating) : ""}</div>
+                        <div class="numeric">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
+                        <div class="numeric">${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
+                        <div class="numeric">${s.wins2 > 0 || s.losses2 > 0 || s.ties2 > 0 ? `${s.wins2}-${s.losses2}${s.ties2 === 0 ? "" : `-${s.ties2}`}` : ""}</div>
+                        <div class="numeric">${s.wins3 > 0 || s.losses3 > 0 || s.ties3 > 0 ? `${s.wins3}-${s.losses3}${s.ties3 === 0 ? "" : `-${s.ties3}`}` : ""}</div>
+                        <div class="numeric">${s.winsMap > 0 || s.lossesMap > 0 || s.tiesMap > 0 ? `${s.winsMap}-${s.lossesMap}${s.tiesMap === 0 ? "" : `-${s.tiesMap}`}` : ""}</div>
+                `).join("")}
                 </div>
                 ${standings.filter((s) => s.disbanded).length > 0 ? /* html */`
                     <div class="section">Disbanded Teams</div>
@@ -131,12 +131,12 @@ class Standings {
                         ${standings.filter((s) => s.disbanded).map((s) => /* html */`
                             <div><a href="/team/${s.tag}">${s.tag}</a></div>
                             <div><a href="/team/${s.tag}">${s.name}</a></div>
-                            <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${s.rating ? Math.round(s.rating) : ""}</div>
-                            <div>${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
-                            <div>${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
-                            <div>${s.wins2 > 0 || s.losses2 > 0 || s.ties2 > 0 ? `${s.wins2}-${s.losses2}${s.ties2 === 0 ? "" : `-${s.ties2}`}` : ""}</div>
-                            <div>${s.wins3 > 0 || s.losses3 > 0 || s.ties3 > 0 ? `${s.wins3}-${s.losses3}${s.ties3 === 0 ? "" : `-${s.ties3}`}` : ""}</div>
-                            <div>${s.winsMap > 0 || s.lossesMap > 0 || s.tiesMap > 0 ? `${s.winsMap}-${s.lossesMap}${s.tiesMap === 0 ? "" : `-${s.tiesMap}`}` : ""}</div>
+                            <div class="numeric ${s.wins + s.losses + s.ties < 10 ? "provisional" : ""}">${s.rating ? Math.round(s.rating) : ""}</div>
+                            <div class="numeric">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? `${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}` : ""}</div>
+                            <div class="numeric">${s.wins1 > 0 || s.losses1 > 0 || s.ties1 > 0 ? `${s.wins1}-${s.losses1}${s.ties1 === 0 ? "" : `-${s.ties1}`}` : ""}</div>
+                            <div class="numeric">${s.wins2 > 0 || s.losses2 > 0 || s.ties2 > 0 ? `${s.wins2}-${s.losses2}${s.ties2 === 0 ? "" : `-${s.ties2}`}` : ""}</div>
+                            <div class="numeric">${s.wins3 > 0 || s.losses3 > 0 || s.ties3 > 0 ? `${s.wins3}-${s.losses3}${s.ties3 === 0 ? "" : `-${s.ties3}`}` : ""}</div>
+                            <div class="numeric">${s.winsMap > 0 || s.lossesMap > 0 || s.tiesMap > 0 ? `${s.winsMap}-${s.lossesMap}${s.tiesMap === 0 ? "" : `-${s.tiesMap}`}` : ""}</div>
                         `).join("")}
                     </div>
                 ` : ""}

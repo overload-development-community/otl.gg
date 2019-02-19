@@ -57,14 +57,7 @@
     color: white;
     margin-top: 20px;
     max-width: 500px;
-}
-
-#matches > div > div:last-child {
-    margin-bottom: 20px;
-}
-
-#matches .match:first-child {
-    margin-top: 0;
+    align-items: start;
 }
 
 #matches #pending .match .tag1 {
@@ -208,6 +201,7 @@
     font-size: 48px;
     text-align: right;
     align-self: center;
+    color: #999999;
 }
 
 #matches #completed .match .tag2 {
@@ -237,6 +231,7 @@
     font-size: 48px;
     text-align: right;
     align-self: center;
+    color: #999999;
 }
 
 #matches #completed .match .map {
@@ -255,7 +250,6 @@
 }
 
 #matches #completed .match .winner {
-    font-weight: bold;
     color: white;
 }
 

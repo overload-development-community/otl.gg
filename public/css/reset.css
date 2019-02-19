@@ -5,6 +5,13 @@
     font-weight: 500;
 }
 
+@font-face {
+    font-family: "Overdigit";
+    src: url("/fonts/Overdigit.woff2") format("woff2"), url("/fonts/Overdigit.woff") format("woff"), url("/fonts/Overdigit.otf") format("opentype");
+    font-style: normal;
+    font-weight: 400;
+}
+
 /* http://meyerweb.com/eric/tools/css/reset/
    v2.0 | 20110126
    License: none (public domain)

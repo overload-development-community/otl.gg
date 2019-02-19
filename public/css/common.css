@@ -1,5 +1,6 @@
 body {
     background-color: white;
+    
 }
 
 a:any-link {
@@ -140,4 +141,11 @@ div > .section:first-child {
 
 .hidden {
     display: none;
+}
+
+.numeric {
+    display: inline-block;
+    font-family: "Overdigit" !important;
+    line-height: 0.95;
+    margin-top: -1px;
 }

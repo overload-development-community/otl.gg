@@ -176,6 +176,7 @@ span.grey {
     padding: 10px;
     justify-items: center;
     font-size: 18px;
+    align-items: start;
 }
 
 #records .breakdown .opponents {

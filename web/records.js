@@ -59,7 +59,7 @@ class Records {
                         ${records.teamKda.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                             <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div>${r.teamKda.toFixed(3)} KDA</div>
+                            <div><span class="numeric">${r.teamKda.toFixed(3)}</span> &nbsp;KDA</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -74,7 +74,7 @@ class Records {
                         ${records.teamScore.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                             <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div>${r.score} Points</div>
+                            <div><span class="numeric">${r.score}</span> &nbsp;Points</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -89,7 +89,7 @@ class Records {
                         ${records.teamAssists.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                             <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div>${r.assists} Assists</div>
+                            <div><span class="numeric">${r.assists}</span> &nbsp;Assists</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -104,7 +104,7 @@ class Records {
                         ${records.teamDeaths.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                             <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div>${r.deaths} Deaths</div>
+                            <div><span class="numeric">${r.deaths}</span> &nbsp;Deaths</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -120,7 +120,7 @@ class Records {
                             <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
-                            <div>${r.kda.toFixed(2)} KDA</div>
+                            <div><span class="numeric">${r.kda.toFixed(2)}</span> &nbsp;KDA</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -136,7 +136,7 @@ class Records {
                             <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
-                            <div>${r.kills} Kills</div>
+                            <div><span class="numeric">${r.kills}</span> &nbsp;Kills</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -152,7 +152,7 @@ class Records {
                             <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
-                            <div>${r.assists} Assists</div>
+                            <div><span class="numeric">${r.assists}</span> &nbsp;Assists</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
@@ -168,7 +168,7 @@ class Records {
                             <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
-                            <div>${r.deaths} Deaths</div>
+                            <div><span class="numeric">${r.deaths}</span> &nbsp;Deaths</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>

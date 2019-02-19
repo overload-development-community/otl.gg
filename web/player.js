@@ -85,14 +85,14 @@ class Player {
                         <div class="season">${s.season}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${s.games}</div>
-                        <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
-                        <div class="totals">${s.kills}</div>
-                        <div class="totals">${s.assists}</div>
-                        <div class="totals">${s.deaths}</div>
-                        <div>${(s.kills / s.games).toFixed(2)}</div>
-                        <div>${(s.assists / s.games).toFixed(2)}</div>
-                        <div>${(s.deaths / s.games).toFixed(2)}</div>
+                        <div class="numeric">${s.games}</div>
+                        <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
+                        <div class="numeric totals">${s.kills}</div>
+                        <div class="numeric totals">${s.assists}</div>
+                        <div class="numeric totals">${s.deaths}</div>
+                        <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
+                        <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
+                        <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
                     `).join("")}
                 </div>
                 <div class="section">Season Matches</div>
@@ -111,13 +111,13 @@ class Player {
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(m.opponentTeamId, m.opponentName, m.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${m.teamScore > m.opponentScore ? "W" : m.teamScore < m.opponentScore ? "L" : "T"} <span ${m.teamScore > m.opponentScore ? "class=\"winner\"" : ""}>${m.teamScore}</span>-<span ${m.teamScore < m.opponentScore ? "class=\"winner\"" : ""}>${m.opponentScore}</span></div>
+                        <div>${m.teamScore > m.opponentScore ? "W" : m.teamScore < m.opponentScore ? "L" : "T"} <span class="numeric">${m.teamScore}</span>-<span class="numeric">${m.opponentScore}</span></div>
                         <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                         <div class="map">${m.map}</div>
-                        <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)}</div>
-                        <div>${m.kills}</div>
-                        <div>${m.assists}</div>
-                        <div>${m.deaths}</div>
+                        <div class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)}</div>
+                        <div class="numeric">${m.kills}</div>
+                        <div class="numeric">${m.assists}</div>
+                        <div class="numeric">${m.deaths}</div>
                     `).join("")}
                 </div>
             `, req);

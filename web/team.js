@@ -95,24 +95,24 @@ class TeamPage {
                 ${teamData.records && (teamData.records.wins > 0 || teamData.records.losses > 0 || teamData.records.ties > 0) ? /* html */`
                     <div id="records">
                         <div class="overall">
-                            <div>Overall: ${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</div>
-                            <div>Rating: <span ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "class=\"provisional\"" : ""}>${Math.round(teamData.records.rating)}</span></div>
+                            <div>Overall: <span class="numeric">${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</span></div>
+                            <div>Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span></div>
                         </div>
                         <div class="splits">
                             <div>
-                                Home Map Record: ${teamData.records.winsMap1}-${teamData.records.lossesMap1}${teamData.records.tiesMap1 ? `-${teamData.records.tiesMap1}` : ""}<br />
-                                Away Map Record: ${teamData.records.winsMap2}-${teamData.records.lossesMap2}${teamData.records.tiesMap2 ? `-${teamData.records.tiesMap2}` : ""}<br />
-                                Neutral Map Record: ${teamData.records.winsMap3}-${teamData.records.lossesMap3}${teamData.records.tiesMap3 ? `-${teamData.records.tiesMap3}` : ""}
+                                Home Map Record: <span class="numeric">${teamData.records.winsMap1}-${teamData.records.lossesMap1}${teamData.records.tiesMap1 ? `-${teamData.records.tiesMap1}` : ""}</span><br />
+                                Away Map Record: <span class="numeric">${teamData.records.winsMap2}-${teamData.records.lossesMap2}${teamData.records.tiesMap2 ? `-${teamData.records.tiesMap2}` : ""}</span><br />
+                                Neutral Map Record: <span class="numeric">${teamData.records.winsMap3}-${teamData.records.lossesMap3}${teamData.records.tiesMap3 ? `-${teamData.records.tiesMap3}` : ""}</span>
                             </div>
                             <div>
-                                Home Server Record: ${teamData.records.winsServer1}-${teamData.records.lossesServer1}${teamData.records.tiesServer1 ? `-${teamData.records.tiesServer1}` : ""}<br />
-                                Away Server Record: ${teamData.records.winsServer2}-${teamData.records.lossesServer2}${teamData.records.tiesServer2 ? `-${teamData.records.tiesServer2}` : ""}<br />
-                                Neutral Server Record: ${teamData.records.winsServer3}-${teamData.records.lossesServer3}${teamData.records.tiesServer3 ? `-${teamData.records.tiesServer3}` : ""}
+                                Home Server Record: <span class="numeric">${teamData.records.winsServer1}-${teamData.records.lossesServer1}${teamData.records.tiesServer1 ? `-${teamData.records.tiesServer1}` : ""}</span><br />
+                                Away Server Record: <span class="numeric">${teamData.records.winsServer2}-${teamData.records.lossesServer2}${teamData.records.tiesServer2 ? `-${teamData.records.tiesServer2}` : ""}</span><br />
+                                Neutral Server Record: <span class="numeric">${teamData.records.winsServer3}-${teamData.records.lossesServer3}${teamData.records.tiesServer3 ? `-${teamData.records.tiesServer3}` : ""}</span>
                             </div>
                             <div>
-                                2v2 Record: ${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}<br />
-                                3v3 Record: ${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}<br />
-                                4v4 Record: ${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}
+                                2v2 Record: <span class="numeric">${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}</span><br />
+                                3v3 Record: <span class="numeric">${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}</span><br />
+                                4v4 Record: <span class="numeric">${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}</span>
                             </div>
                         </div>
                         <div class="breakdown">
@@ -123,7 +123,7 @@ class TeamPage {
                                 ${teamData.opponents.map((opponent) => /* html */`
                                     <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div><a href="/team/${team.tag}">${team.name}</a></div>
-                                    <div>${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
+                                    <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
                                 `).join("")}
                             </div>
                             <div class="maps">
@@ -131,7 +131,7 @@ class TeamPage {
                                 <div class="header">Record</div>
                                 ${teamData.maps.map((map) => /* html */`
                                     <div class="map">${map.map}</div>
-                                    <div>${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
+                                    <div class="numeric">${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
                                 `).join("")}
                             </div>
                         </div>
@@ -146,12 +146,12 @@ class TeamPage {
                         ${teamData.matches.map((m) => /* html */`
                             <div class="tag"><div class="diamond${(team = m.challengingTeamTag === tag ? teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag) : teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div>${m.challengingTeamTag === tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} ${m.challengingTeamTag === tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === tag ? m.challengedTeamScore : m.challengingTeamScore}</div>
+                            <div>${m.challengingTeamTag === tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} <span class="numeric">${m.challengingTeamTag === tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === tag ? m.challengedTeamScore : m.challengingTeamScore}</span></div>
                             <div>${m.map}</div>
                             <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                             <div class="tag player"><div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="player"><a href="/player/${m.playerId}/${encodeURIComponent(Common.normalizeName(m.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(m.name, team.tag))}</a></div>
-                            <div class="best-stats">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
+                            <div class="best-stats"><span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)</div>
                         `).join("")}
                     </div>
                     <div class="section">Season Player Stats</div>
@@ -168,18 +168,18 @@ class TeamPage {
                         <div class="header best">Best Performance Vs.</div>
                         ${teamData.stats.map((s) => /* html */`
                             <div><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div>${s.games}</div>
-                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
-                            <div class="totals">${s.kills}</div>
-                            <div class="totals">${s.assists}</div>
-                            <div class="totals">${s.deaths}</div>
-                            <div>${(s.kills / s.games).toFixed(2)}</div>
-                            <div>${(s.assists / s.games).toFixed(2)}</div>
-                            <div>${(s.deaths / s.games).toFixed(2)}</div>
+                            <div class="numeric">${s.games}</div>
+                            <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
+                            <div class="numeric totals">${s.kills}</div>
+                            <div class="numeric totals">${s.assists}</div>
+                            <div class="numeric totals">${s.deaths}</div>
+                            <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
                             <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="best">${s.map}</div>
                             <div class="best"><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
-                            <div class="best-stats">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
+                            <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)</div>
                         `).join("")}
                     </div>
                 ` : ""}

@@ -69,21 +69,21 @@ class Home {
                             <div class="diamond${(team = teams.getTeam(m.challengedTeamStandings.teamId, m.challengedTeamStandings.name, m.challengedTeamStandings.tag, m.challengedTeamStandings.disbanded, m.challengedTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                         </div>
                         ${typeof m.challengingTeamScore === "number" ? /* html */`
-                            <div class="score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
+                            <div class="numeric score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
                                 ${m.challengingTeamScore}
                             </div>
                         ` : /* html */`
-                            <div class="record1">
-                                ${m.challengingTeamStandings.rating ? Math.round(m.challengingTeamStandings.rating) : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
+                            <div class="numeric record1">
+                                ${m.challengingTeamStandings.rating ? `${Math.round(m.challengingTeamStandings.rating)},` : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
                             </div>
                         `}
                         ${typeof m.challengedTeamScore === "number" ? /* html */`
-                            <div class="score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
+                            <div class="numeric score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
                                 ${m.challengedTeamScore}
                             </div>
                         ` : /* html */`
-                            <div class="record2">
-                                ${m.challengedTeamStandings.rating ? Math.round(m.challengedTeamStandings.rating) : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
+                            <div class="numeric record2">
+                                ${m.challengedTeamStandings.rating ? `${Math.round(m.challengedTeamStandings.rating)},` : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
                             </div>
                         `}
                         <div class="date">
@@ -107,11 +107,11 @@ class Home {
                         <div class="header">Rating</div>
                         <div class="header">Record</div>
                         ${standings.filter((s) => !s.disbanded && (s.wins > 0 || s.losses > 0 || s.ties > 0)).map((s, index) => /* html */`
-                            <div>${index + 1}</div>
+                            <div class="numeric">${index + 1}</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                            <div ${s.wins + s.losses + s.ties < 10 ? "class=\"provisional\"" : ""}>${Math.round(s.rating)}</div>
-                            <div>${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}</div>
+                            <div class="numeric ${s.wins + s.losses + s.ties < 10 ? "provisional" : ""}">${Math.round(s.rating)}</div>
+                            <div class="numeric">${s.wins}-${s.losses}${s.ties === 0 ? "" : `-${s.ties}`}</div>
                         `).slice(0, 5).join("")}
                     </div>
                 </div>
@@ -123,12 +123,12 @@ class Home {
                         <div class="header">Name</div>
                         <div class="header">KDA</div>
                         ${stats.map((s, index) => /* html */`
-                            <div class="pos">${index + 1}</div>
+                            <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div class="value">${s.kda.toFixed(3)}</div>
+                            <div class="numeric value">${s.kda.toFixed(3)}</div>
                         `).join("")}
                     </div>
                 </div>

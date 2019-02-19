@@ -318,3 +318,8 @@ body {
     width: 768px;
     height: 432px;
 }
+
+.numeric {
+    font-family: "Overdigit" !important;
+    line-height: 0.95;
+}

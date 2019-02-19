@@ -69,18 +69,18 @@ class Players {
                 <div id="kda">
                     <div class="section">Best KDA Ratio</div>
                     <div class="stats">
-                        <div class="average">League Average: ${averages.kda.toFixed(3)}</div>
+                        <div class="average">League Average: <span class="numeric">${averages.kda.toFixed(3)}</span></div>
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
                         <div class="header">Name</div>
                         <div class="header">KDA</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.kda - a.kda).map((s, index, sortedStats) => /* html */`
-                            <div class="pos">${index + 1}</div>
+                            <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div class="value">${s.kda.toFixed(3)}</div>
+                            <div class="numeric value">${s.kda.toFixed(3)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].kda < averages.kda && sortedStats[index].kda >= averages.kda ? /* html */`
                                 <div class="separator"></div>
                             ` : ""}
@@ -90,18 +90,18 @@ class Players {
                 <div id="kills">
                     <div class="section">Most Kills per Game</div>
                     <div class="stats">
-                        <div class="average">League Average: ${averages.kills.toFixed(2)}</div>
+                        <div class="average">League Average: <span class="numeric">${averages.kills.toFixed(2)}</span></div>
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
                         <div class="header">Name</div>
                         <div class="header">KPG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgKills - a.avgKills).map((s, index, sortedStats) => /* html */`
-                            <div class="pos">${index + 1}</div>
+                            <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div class="value">${s.avgKills.toFixed(2)}</div>
+                            <div class="numeric value">${s.avgKills.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgKills < averages.kills && sortedStats[index].avgKills >= averages.kills ? /* html */`
                                 <div class="separator"></div>
                             ` : ""}
@@ -111,18 +111,18 @@ class Players {
                 <div id="assists">
                     <div class="section">Most Assists per Game</div>
                     <div class="stats">
-                        <div class="average">League Average: ${averages.assists.toFixed(2)}</div>
+                        <div class="average">League Average: <span class="numeric">${averages.assists.toFixed(2)}</span></div>
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
                         <div class="header">Name</div>
                         <div class="header">APG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgAssists - a.avgAssists).map((s, index, sortedStats) => /* html */`
-                            <div class="pos">${index + 1}</div>
+                            <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div class="value">${s.avgAssists.toFixed(2)}</div>
+                            <div class="numeric value">${s.avgAssists.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgAssists < averages.assists && sortedStats[index].avgAssists >= averages.assists ? /* html */`
                                 <div class="separator"></div>
                             ` : ""}
@@ -132,18 +132,18 @@ class Players {
                 <div id="deaths">
                     <div class="section">Least Deaths per Game</div>
                     <div class="stats">
-                        <div class="average">League Average: ${averages.deaths.toFixed(2)}</div>
+                        <div class="average">League Average: <span class="numeric">${averages.deaths.toFixed(2)}</span></div>
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
                         <div class="header">Name</div>
                         <div class="header">DPG</div>
                         ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : a.avgDeaths - b.avgDeaths).map((s, index, sortedStats) => /* html */`
-                            <div class="pos">${index + 1}</div>
+                            <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                            <div class="value">${s.avgDeaths.toFixed(2)}</div>
+                            <div class="numeric value">${s.avgDeaths.toFixed(2)}</div>
                             ${sortedStats[index + 1] && sortedStats[index + 1].avgDeaths > averages.deaths && sortedStats[index].avgDeaths <= averages.deaths ? /* html */`
                                 <div class="separator"></div>
                             ` : ""}

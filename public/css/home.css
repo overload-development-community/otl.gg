@@ -165,23 +165,25 @@
     white-space: nowrap;
 }
 
-#body div.header {
-    font-size: 24px;
-    color: white;
-}
-
 #body #standings div.header, #body #players div.header {
     color: #999999;
 }
 
-#body #standings div, #body #players div {
+#body #standings, #body #players {
     font-size: 20px;
     color: white;
+}
+
+#body #standings div, #body #players div {
     margin: 1px 3px;
 }
 
 @media (max-width: 600px) {
-    #body #standings div, #body #players div {
+    #body #standings, #body #players {
+        font-size: 16px;
+    }
+
+    #body #standings div.header, #body #standings div.header {
         font-size: 16px;
     }
 }

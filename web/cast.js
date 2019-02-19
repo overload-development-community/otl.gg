@@ -93,20 +93,20 @@ class Cast {
                             </div>
                             <div id="left-rating" style="border-color: ${challengingTeamColor};">
                                 ${data.data.challengingTeamRating ? /* html */`
-                                    <div class="rating">Season Rating: <span class="${data.data.challengingTeamWins + data.data.challengingTeamLosses + data.data.challengingTeamTies < 10 ? "provisional" : ""}">${data.data.challengingTeamRating.toFixed(0)}</span></div>
+                                    <div class="rating">Season Rating: <span class="numeric ${data.data.challengingTeamWins + data.data.challengingTeamLosses + data.data.challengingTeamTies < 10 ? "provisional" : ""}">${data.data.challengingTeamRating.toFixed(0)}</span></div>
                                 ` : ""}
-                                <div class="record">Record: ${data.data.challengingTeamWins}-${data.data.challengingTeamLosses}${data.data.challengingTeamTies ? `-${data.data.challengingTeamTies}` : ""}</div>
+                                <div class="record">Record: <span class="numeric">${data.data.challengingTeamWins}-${data.data.challengingTeamLosses}${data.data.challengingTeamTies ? `-${data.data.challengingTeamTies}` : ""}</span></div>
                             </div>
                             <div id="right-rating" style="border-color: ${challengedTeamColor};">
                                 ${data.data.challengedTeamRating ? /* html */`
-                                    <div class="rating">Season Rating: <span class="${data.data.challengedTeamWins + data.data.challengedTeamLosses + data.data.challengedTeamTies < 10 ? "provisional" : ""}">${data.data.challengedTeamRating.toFixed(0)}</span></div>
+                                    <div class="rating">Season Rating: <span class="numeric ${data.data.challengedTeamWins + data.data.challengedTeamLosses + data.data.challengedTeamTies < 10 ? "provisional" : ""}">${data.data.challengedTeamRating.toFixed(0)}</span></div>
                                 ` : ""}
-                                <div class="record">Record: ${data.data.challengedTeamWins}-${data.data.challengedTeamLosses}${data.data.challengedTeamTies ? `-${data.data.challengedTeamTies}` : ""}</div>
+                                <div class="record">Record: <span class="numeric">${data.data.challengedTeamWins}-${data.data.challengedTeamLosses}${data.data.challengedTeamTies ? `-${data.data.challengedTeamTies}` : ""}</span></div>
                             </div>
                             ${data.data.challengingTeamHeadToHeadWins + data.data.challengedTeamHeadToHeadWins + data.data.headToHeadTies > 0 ? /* html */`
                                 <div id="head-to-head">
                                     Head to Head Record<br />
-                                    <span class="record">${challenge.challengingTeam.tag} ${data.data.challengingTeamHeadToHeadWins}${data.data.headToHeadTies ? ` - Ties ${data.data.headToHeadTies}` : ""} - ${challenge.challengedTeam.tag} ${data.data.challengedTeamHeadToHeadWins}</span>
+                                    <span class="record">${challenge.challengingTeam.tag} <span class="numeric">${data.data.challengingTeamHeadToHeadWins}</span>${data.data.headToHeadTies ? ` - Ties <span class="numeric">${data.data.headToHeadTies}</span>` : ""} - ${challenge.challengedTeam.tag} <span class="numeric">${data.data.challengedTeamHeadToHeadWins}</span></span>
                                 </div>
                             ` : ""}
                             ${data.data.challengingTeamId ? /* html */`
@@ -115,19 +115,19 @@ class Cast {
                                         <div class="last">Last Match</div>
                                         ${challenge.challengingTeam.id === data.data.challengingTeamId ? /* html */`
                                             <div class="left-tag">${challenge.challengingTeam.tag}</div>
-                                            <div class="left-score">${data.data.challengingTeamScore}</div>
+                                            <div class="numeric left-score">${data.data.challengingTeamScore}</div>
                                             <div class="right-tag">${challenge.challengedTeam.tag}</div>
-                                            <div class="right-score">${data.data.challengedTeamScore}</div>
+                                            <div class="numeric right-score">${data.data.challengedTeamScore}</div>
                                         ` : /* html */ `
                                             <div class="left-tag">${challenge.challengingTeam.tag}</div>
-                                            <div class="left-score">${data.data.challengedTeamScore}</div>
+                                            <div class="numeric left-score">${data.data.challengedTeamScore}</div>
                                             <div class="right-tag">${challenge.challengedTeam.tag}</div>
-                                            <div class="right-score">${data.data.challengingTeamScore}</div>
+                                            <div class="numeric right-score">${data.data.challengingTeamScore}</div>
                                         `}
                                         <div class="map">${data.data.map}</div>
                                         <div class="date"><script>document.write(formatDate(new Date("${data.data.matchTime}")));</script></div>
                                         <div class="best">Best Performer</div>
-                                        <div class="best-stats">${(data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${Common.htmlEncode(Common.normalizeName(data.data.name, (data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br />${((data.data.kills + data.data.assists) / Math.max(1, data.data.deaths)).toFixed(2)} KDA (${data.data.kills} K, ${data.data.assists} A, ${data.data.deaths} D)</div>
+                                        <div class="best-stats">${(data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${Common.htmlEncode(Common.normalizeName(data.data.name, (data.data.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((data.data.kills + data.data.assists) / Math.max(1, data.data.deaths)).toFixed(2)}</span> KDA (<span class="numeric">${data.data.kills}</span> K, <span class="numeric">${data.data.assists}</span> A, <span class="numeric">${data.data.deaths}</span> D)</div>
                                     </div>
                                 </div>
                             ` : ""}
@@ -142,11 +142,11 @@ class Cast {
                                     <div>${p.twitchName ? /* html */`
                                         <div class="twitch-image"></div>&nbsp;
                                     ` : ""}${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
-                                    <div>${p.games}</div>
-                                    <div>${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
-                                    <div>${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
-                                    <div>${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
-                                    <div>${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games}</div>
+                                    <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
                                 `).join("")}
                             </div>
                             <div id="right-roster">
@@ -160,11 +160,11 @@ class Cast {
                                     <div>${p.twitchName ? /* html */`
                                     <div class="twitch-image"></div>&nbsp;
                                 ` : ""}${Common.htmlEncode(Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
-                                    <div>${p.games}</div>
-                                    <div>${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
-                                    <div>${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
-                                    <div>${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
-                                    <div>${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games}</div>
+                                    <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
                                 `).join("")}
                             </div>
                             <div id="left-viewing" style="border-color: ${challengingTeamColor};">
