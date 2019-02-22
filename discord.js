@@ -336,14 +336,6 @@ class Discord {
     static async message(user, message, channel) {
         const member = otlGuild.members.find((m) => m.id === user.id);
 
-        if (!member) {
-            return;
-        }
-
-        if (channel instanceof DiscordJs.TextChannel && channel.guild.name !== settings.guild) {
-            return;
-        }
-
         for (const text of message.split("\n")) {
             const matches = messageParse.exec(text);
 
@@ -451,10 +443,12 @@ class Discord {
 
         let msg;
         try {
-            msg = await channel.send("", embed);
+            const msgSend = await channel.send("", embed);
 
-            if (msg instanceof Array) {
-                msg = msg[0];
+            if (msgSend instanceof Array) {
+                msg = msgSend[0];
+            } else {
+                msg = msgSend;
             }
         } catch {}
         return msg;

@@ -11,6 +11,7 @@ const tz = require("timezone-js"),
     Common = require("./web/common"),
     Otl = require("./otl"),
     pjson = require("./package.json"),
+    settings = require("./settings"),
     Team = require("./team"),
     Warning = require("./warning"),
 
@@ -383,6 +384,21 @@ class Commands {
         }
     }
 
+    //       #                 #      ##   #                             ##    ###           ##          ##
+    //       #                 #     #  #  #                              #     #           #  #        #  #
+    //  ##   ###    ##    ##   # #   #     ###    ###  ###   ###    ##    #     #     ###   #  #  ###    #     ##   ###   # #    ##   ###
+    // #     #  #  # ##  #     ##    #     #  #  #  #  #  #  #  #  # ##   #     #    ##     #  #  #  #    #   # ##  #  #  # #   # ##  #  #
+    // #     #  #  ##    #     # #   #  #  #  #  # ##  #  #  #  #  ##     #     #      ##   #  #  #  #  #  #  ##    #     # #   ##    #
+    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  #  #  #  #   ##   ###   ###   ###     ##   #  #   ##    ##   #      #     ##   #
+    /**
+     * Checks to ensure a channel is a challenge room, returning the challenge room.
+     * @param {DiscordJs.TextChannel} channel The channel.
+     * @returns {boolean} Whether the channel is on the correct server.
+     */
+    static checkChannelIsOnServer(channel) {
+        return channel.type === "text" && channel.guild.name === settings.guild;
+    }
+
     //       #                 #     #  #               ###                                  #
     //       #                 #     #  #               #  #                                 #
     //  ##   ###    ##    ##   # #   ####   ###   ###   #  #   ###  ###    ###  # #    ##   ###    ##   ###    ###
@@ -736,7 +752,7 @@ class Commands {
      */
     static async checkNoParameters(message, member, text, channel) {
         if (message) {
-            await Discord.queue(`Sorry, ${member}, but this command does not take any parameters.  ${text}`, channel);
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but this command does not take any parameters.  ${text}`, channel);
             return false;
         }
 
@@ -796,7 +812,7 @@ class Commands {
         }
 
         if (!pilot) {
-            await Discord.queue(`Sorry, ${member}, but I can't find that pilot on this server.  You must mention the pilot.`, channel);
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but I can't find that pilot on this server.  You must mention the pilot.`, channel);
             throw new Warning("Pilot not found.");
         }
 
@@ -1020,6 +1036,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async help(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (message) {
             return false;
         }
@@ -1042,6 +1062,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async version(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (message) {
             return false;
         }
@@ -1064,6 +1088,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async website(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (message) {
             return false;
         }
@@ -1086,6 +1114,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async createteam(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberNotStartingTeam(member, channel);
         await Commands.checkMemberNotOnTeam(member, channel);
         await Commands.checkMemberCanBeCaptain(member, channel);
@@ -1119,6 +1151,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async name(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To name your team, add the team name after the command, for example `!name Cronus Frontier`.", channel)) {
@@ -1161,6 +1197,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async tag(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To assign a tag to your team, add the tag after the command, for example `!tag CF` for a team named Cronus Frontier.", channel)) {
@@ -1204,6 +1244,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cancel(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!message) {
@@ -1242,6 +1286,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async complete(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const newTeam = await Commands.checkMemberStartingNewTeam(member, channel);
 
         if (!newTeam.name) {
@@ -1300,6 +1348,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async color(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "You can use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel)) {
@@ -1435,6 +1487,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async addcaptain(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "You must mention the pilot on your team that you wish to add as a captain.", channel)) {
@@ -1492,6 +1548,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removecaptain(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "You must mention the pilot on your team that you wish to remove as a captain.", channel)) {
@@ -1543,6 +1603,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async disband(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         const team = await Commands.checkMemberOnTeam(member, channel);
@@ -1587,6 +1651,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async makefounder(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to make founder.", channel)) {
@@ -1652,6 +1720,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async reinstate(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberNotStartingTeam(member, channel);
         await Commands.checkMemberNotOnTeam(member, channel);
 
@@ -1714,6 +1786,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async home(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`.", channel)) {
@@ -1768,6 +1844,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async request(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberNotStartingTeam(member, channel);
         await Commands.checkMemberNotOnTeam(member, channel);
 
@@ -1833,6 +1913,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async invite(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "You must mention the pilot you wish to invite.", channel)) {
@@ -1920,6 +2004,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async accept(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberNotStartingTeam(member, channel);
         await Commands.checkMemberNotOnTeam(member, channel);
 
@@ -2007,6 +2095,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async leave(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const team = await Commands.checkMemberOnTeam(member, channel);
 
         if (team.locked) {
@@ -2053,6 +2145,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async remove(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         const team = await Commands.checkMemberOnTeam(member, channel);
@@ -2128,6 +2224,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async timezone(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (!await Commands.checkHasParameters(message, member, "You must specify a time zone with this command.", channel)) {
             return false;
         }
@@ -2160,6 +2260,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async challenge(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (!member.isCaptainOrFounder()) {
             await Discord.queue(`Sorry, ${member}, but you must be a team captain or founder to use this command.`, channel);
             throw new Warning("Pilot is not a founder or captain.");
@@ -2270,6 +2374,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async pickmap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2321,6 +2429,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestmap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2374,6 +2486,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmmap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2430,6 +2546,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestneutralserver(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2484,6 +2604,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmneutralserver(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2544,6 +2668,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggestteamsize(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2587,6 +2715,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmteamsize(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2640,6 +2772,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async suggesttime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2717,6 +2853,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirmtime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2769,6 +2909,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async clock(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -2905,9 +3049,9 @@ class Commands {
                     seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                 if (difference > 0) {
-                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.`}`);
+                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
                 } else {
-                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.`}`);
+                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
                 }
             });
             await Discord.richQueue(msg, channel);
@@ -2929,6 +3073,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async matchtime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         let challenge;
 
         if (message) {
@@ -2972,6 +3120,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async countdown(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         let challenge;
 
         if (message) {
@@ -3027,6 +3179,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async deadline(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3062,6 +3218,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async deadlinecountdown(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3107,6 +3267,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async twitch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (!await Commands.checkHasParameters(message, member, "To link your Twitch channel, add the name of your channel after the command, for example `!twitch roncli`.", channel)) {
             return false;
         }
@@ -3137,6 +3301,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removetwitch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (!await Commands.checkNoParameters(message, member, "Use `!removetwitch` by itself to unlink your Twitch channel.", channel)) {
             return false;
         }
@@ -3168,6 +3336,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async streaming(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3211,6 +3383,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async notstreaming(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3251,6 +3427,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cast(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         if (!await Commands.checkHasParameters(message, member, "To cast a match, use the command along with the challenge ID of the match you wish to cast, for example `!cast 1`.", channel)) {
             return false;
         }
@@ -3320,6 +3500,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async uncast(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3360,6 +3544,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async report(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3418,6 +3606,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async confirm(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3465,6 +3657,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async rematch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3516,6 +3712,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async teamtimezone(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsFounder(member, channel);
 
         const team = await Commands.checkMemberOnTeam(member, channel);
@@ -3556,6 +3756,10 @@ class Commands {
         if (message) {
             pilot = await Commands.checkPilotExists(message, member, channel);
         } else {
+            if (!member) {
+                Discord.queue("Sorry, but you have not played any games on the OTL this season.", channel);
+                return true;
+            }
             pilot = member;
         }
 
@@ -3573,7 +3777,7 @@ class Commands {
                 ]
             }), channel);
         } else {
-            Discord.queue(`Sorry, ${member}, but ${pilot} has not played any games this season.`, channel);
+            Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but ${pilot} has not played any games on the OTL this season.`, channel);
         }
 
         return true;
@@ -3591,6 +3795,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async rename(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team tag followed by the new team name to rename a team, for example `!rename CF Juno Offworld Automation`.", channel)) {
@@ -3634,6 +3842,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async retag(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the old team tag followed by the new team tag to rename a team tag, for example `!retag CF JOA`.", channel)) {
@@ -3680,6 +3892,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async replacefounder(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team and mention the pilot, for example, `!replacefounder CF @roncli`.", channel)) {
@@ -3731,6 +3947,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async ejectcaptain(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the captain to eject with this command.", channel)) {
@@ -3774,6 +3994,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async ejectpilot(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the pilot to eject with this command.", channel)) {
@@ -3819,6 +4043,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async creatematch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the two teams to create a match for.", channel)) {
@@ -3922,6 +4150,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async lockmatch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -3964,6 +4196,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async unlockmatch(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4007,6 +4243,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcehomemapteam(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4047,6 +4287,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcemap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4097,6 +4341,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forceneutralserver(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4132,6 +4380,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcehomeserverteam(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4171,6 +4423,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forceteamsize(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4207,6 +4463,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcetime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4267,6 +4527,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async cleartime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4303,6 +4567,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async forcereport(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4353,6 +4621,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async adjudicate(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4432,6 +4704,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async addstat(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4483,6 +4759,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async removestat(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4545,6 +4825,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async voidgame(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         let challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
@@ -4623,6 +4907,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async unvoidgame(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         await Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!unvoidgame` command with the challenge ID of the challenge you wish to unvoid.", channel)) {
@@ -4670,6 +4958,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async closegame(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4713,6 +5005,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async title(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4745,6 +5041,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async postseason(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
@@ -4781,6 +5081,10 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async regularseason(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
             return false;
