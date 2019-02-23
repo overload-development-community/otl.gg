@@ -42,7 +42,7 @@ class Matches {
         let team;
 
         /**
-         * @type {{completed: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengeId: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, timeRemaining?: number, challengeId: number, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
+         * @type {{completed: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, timeRemaining?: number, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
          */
         const matches = await Db.seasonMatches();
 
@@ -73,6 +73,9 @@ class Matches {
                         <div class="matches">
                             ${matches.pending.map((m) => /* html */`
                                 <div class="match">
+                                    ${m.title ? /* html */`
+                                        <div class="title">${m.title}</div>
+                                    ` : ""}
                                     <div class="tag1">
                                         <div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamStandings.name, m.challengingTeamStandings.tag, m.challengingTeamStandings.disbanded, m.challengingTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     </div>
@@ -140,6 +143,9 @@ class Matches {
                         ${matches.completed.map((m, index) => /* html */`
                             <div class="page page-${Math.floor(index / matchesPerPage)} ${index >= matchesPerPage ? "hidden" : ""}">
                                 <div class="match">
+                                    ${m.title ? /* html */`
+                                        <div class="title">${m.title}</div>
+                                    ` : ""}
                                     <div class="tag1">
                                         <div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamStandings.name, m.challengingTeamStandings.tag, m.challengingTeamStandings.disbanded, m.challengingTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     </div>
