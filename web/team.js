@@ -167,7 +167,7 @@ class TeamPage {
                         <div class="header">DPG</div>
                         <div class="header best">Best Performance Vs.</div>
                         ${teamData.stats.map((s) => /* html */`
-                            <div><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
+                            <div><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, pageTeam.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, pageTeam.tag))}</a></div>
                             <div>${s.games}</div>
                             <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                             <div class="totals">${s.kills}</div>
