@@ -3321,6 +3321,24 @@ class Commands {
         return true;
     }
 
+    //         #
+    //         #
+    //  ###   ###   ###    ##    ###  # #
+    // ##      #    #  #  # ##  #  #  ####
+    //   ##    #    #     ##    # ##  #  #
+    // ###      ##  #      ##    # #  #  #
+    /**
+     * Alias for streaming.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    stream(member, channel, message) {
+        console.log("stream");
+        return this.streaming(member, channel, message);
+    }
+
     //         #                             #
     //         #
     //  ###   ###   ###    ##    ###  # #   ##    ###    ###
