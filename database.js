@@ -654,7 +654,12 @@ class Database {
                     AND DateVoided IS NULL
             ) a
 
+            EXEC sp_getapplock @Resource = 'tblChallenge', @LockMode = 'Update', @LockOwner = 'Session', @LockTimeout = 10000
+
+            SELECT @challengeId = COUNT(ChallengeId) + 1 FROM tblChallenge
+
             INSERT INTO tblChallenge (
+                ChallengeId,
                 ChallengingTeamId,
                 ChallengedTeamId,
                 OrangeTeamId,
@@ -665,6 +670,7 @@ class Database {
                 ChallengedTeamPenalized,
                 AdminCreated
             ) VALUES (
+                @challengeId,
                 @team1Id,
                 @team2Id,
                 @orangeTeamId,
@@ -676,7 +682,7 @@ class Database {
                 @adminCreated
             )
 
-            SET @challengeId = SCOPE_IDENTITY()
+            EXEC sp_releaseapplock @Resource = 'tblChallenge', @LockOwner = 'Session'
 
             IF @adminCreated = 0
             BEGIN
