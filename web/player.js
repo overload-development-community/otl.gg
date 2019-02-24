@@ -95,6 +95,42 @@ class Player {
                         <div>${(s.deaths / s.games).toFixed(2)}</div>
                     `).join("")}
                 </div>
+                <div class="section">Performance</div>
+                <div id="performance">
+                    <div id="opponents">
+                        <div class="header team">Vs. Opponent</div>
+                        <div class="header">G</div>
+                        <div class="header">KDA</div>
+                        <div class="header">KPG</div>
+                        <div class="header">APG</div>
+                        <div class="header">DPG</div>
+                        ${player.opponents.map((s) => /* html */`
+                            <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                            <div>${s.games}</div>
+                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
+                            <div>${(s.kills / s.games).toFixed(2)}</div>
+                            <div>${(s.assists / s.games).toFixed(2)}</div>
+                            <div>${(s.deaths / s.games).toFixed(2)}</div>
+                        `).join("")}
+                    </div>
+                    <div id="maps">
+                        <div class="header">On Map</div>
+                        <div class="header">G</div>
+                        <div class="header">KDA</div>
+                        <div class="header">KPG</div>
+                        <div class="header">APG</div>
+                        <div class="header">DPG</div>
+                        ${player.maps.map((s) => /* html */`
+                            <div>${s.map}</div>
+                            <div>${s.games}</div>
+                            <div>${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
+                            <div>${(s.kills / s.games).toFixed(2)}</div>
+                            <div>${(s.assists / s.games).toFixed(2)}</div>
+                            <div>${(s.deaths / s.games).toFixed(2)}</div>
+                        `).join("")}
+                    </div>
+                </div>
                 <div class="section">Season Matches</div>
                 <div id="matches">
                     <div class="header team">Team</div>

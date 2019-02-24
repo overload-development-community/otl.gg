@@ -89,6 +89,26 @@
     font-size: 14px;
 }
 
+#opponents {
+    display: grid;
+    color: white;
+    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+#maps {
+    display: grid;
+    color: white;
+    grid-template-columns: auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
 #matches {
     display: grid;
     color: white;
@@ -101,6 +121,16 @@
 
 .team {
     grid-column-end: span 2;
+}
+
+@media (min-width: 900px) {
+    #performance {
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-column-gap: 50px;
+        column-gap: 50px;
+        align-items: start;
+    }
 }
 
 @media (max-width: 1000px) {
@@ -154,6 +184,20 @@
 
     #matches .map {
         display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    #opponents {
+        grid-template-columns: auto auto auto auto auto auto;
+    }
+
+    #opponents .team-name {
+        display: none;
+    }
+
+    #opponents .team {
+        grid-column-end: span 1;
     }
 }
 
