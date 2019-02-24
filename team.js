@@ -1330,9 +1330,14 @@ class Team {
             await this.updateChannels();
 
             for (const challenge of challenges) {
-                await challenge.channel.setName(challenge.channelName, "Team tag renamed by admin.");
-                await challenge.updateTopic();
-                await Discord.queue(`${member} has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
+                const channel = /** @type {DiscordJs.TextChannel} */ Discord.channels.find((c) => c.name.endsWith(`-${challenge.id}`) && c.name.indexOf(oldTag.toLowerCase()) !== -1); // eslint-disable-line no-extra-parens
+
+                if (channel) {
+                    await channel.setName(challenge.channelName, "Team tag renamed by admin.");
+
+                    await challenge.updateTopic();
+                    await Discord.queue(`${member} has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
+                }
             }
 
             await Discord.queue(`${member} has changed your team's tag to **${tag}**.`, this.teamChannel);

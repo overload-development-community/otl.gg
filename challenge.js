@@ -751,7 +751,7 @@ class Challenge {
                                     return a.deaths - b.deaths;
                                 }
                                 return a.pilot.displayName.localeCompare(b.pilot.displayName);
-                            }).map((stat) => `${stat.pilot.displayName}: ${stat.kills}-${stat.assists}-${stat.deaths}`).join("\n")}`
+                            }).map((stat) => `${stat.pilot.displayName}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }
                     ]
                 }), Discord.matchResultsChannel);
@@ -1220,12 +1220,29 @@ class Challenge {
             throw new Exception("There was a database error notifying a match starting for a challenge.", err);
         }
 
+        await this.loadDetails();
+
         try {
+            const msg = Discord.richEmbed({
+                fields: []
+            });
             if (Math.round((matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
-                await Discord.queue(`Polish your gunships, this match begins in ${Math.round((matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`, this.channel);
+                msg.setTitle(`Polish your gunships, this match begins in ${Math.round((matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`);
             } else {
-                await Discord.queue("Polish your gunships, this match begins NOW!", this.channel);
+                msg.setTitle("Polish your gunships, this match begins NOW!");
             }
+
+            if (!this.details.map) {
+                msg.addField("Please select your map!", `**${this.challengingTeam.id === this.details.homeMapTeam.id ? this.challengedTeam.tag : this.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
+            }
+
+            if (!this.details.teamSize) {
+                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+            }
+
+            msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
+
+            await Discord.richQueue(msg, this.channel);
         } catch (err) {
             throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
         }

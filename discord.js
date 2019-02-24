@@ -128,6 +128,24 @@ class Discord {
         return challengesCategory;
     }
 
+    //       #                             ##
+    //       #                              #
+    //  ##   ###    ###  ###   ###    ##    #     ###
+    // #     #  #  #  #  #  #  #  #  # ##   #    ##
+    // #     #  #  # ##  #  #  #  #  ##     #      ##
+    //  ##   #  #   # #  #  #  #  #   ##   ###   ###
+    /**
+     * Returns the channels on the server.
+     * @returns {DiscordJs.Collection<string, DiscordJs.GuildChannel>} The channels.
+     */
+    static get channels() {
+        if (otlGuild) {
+            return otlGuild.channels;
+        }
+
+        return new DiscordJs.Collection();
+    }
+
     //   #                        #              ###         ##
     //  # #                       #              #  #         #
     //  #     ##   #  #  ###    ###   ##   ###   #  #   ##    #     ##

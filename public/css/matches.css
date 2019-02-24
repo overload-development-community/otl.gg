@@ -60,22 +60,29 @@
     align-items: start;
 }
 
+#matches #pending .match .title {
+    text-align: center;
+    grid-column: 1 / span 2;
+    grid-row: 1;
+    font-size: 20px;
+}
+
 #matches #pending .match .tag1 {
     white-space: nowrap;
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 2;
     font-size: 24px;
 }
 
 #matches #pending .match .team1 {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 3;
     font-size: 14px;
 }
 
 #matches #pending .match .record1 {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 2 / span 2;
     font-size: 20px;
     color: #999999;
     font-style: italic;
@@ -86,19 +93,19 @@
 #matches #pending .match .tag2 {
     white-space: nowrap;
     grid-column: 1;
-    grid-row: 3;
+    grid-row: 4;
     font-size: 24px;
 }
 
 #matches #pending .match .team2 {
     grid-column: 1;
-    grid-row: 4;
+    grid-row: 5;
     font-size: 14px;
 }
 
 #matches #pending .match .record2 {
     grid-column: 2;
-    grid-row: 3 / span 2;
+    grid-row: 4 / span 2;
     font-size: 20px;
     color: #999999;
     font-style: italic;
@@ -108,14 +115,14 @@
 
 #matches #pending .match .map {
     grid-column: 1;
-    grid-row: 5;
+    grid-row: 6;
     font-size: 18px;
     margin-top: 3px;
 }
 
 #matches #pending .match .date {
     grid-column: 2;
-    grid-row: 5;
+    grid-row: 6;
     font-size: 18px;
     text-align: right;
     margin-top: 3px;
@@ -123,14 +130,14 @@
 
 #matches #pending .match .countdown {
     grid-column: 1 / span 2;
-    grid-row: 6;
+    grid-row: 7;
     font-size: 20px;
     text-align: center;
 }
 
 #matches #pending .match .caster {
     grid-column: 1 / span 2;
-    grid-row: 7;
+    grid-row: 8;
     font-size: 14px;
     text-align: center;
 }
@@ -174,22 +181,29 @@
     color: white;
 }
 
+#matches #completed .match .title {
+    text-align: center;
+    grid-column: 1 / span 2;
+    grid-row: 1;
+    font-size: 20px;
+}
+
 #matches #completed .match .tag1 {
     white-space: nowrap;
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 2;
     font-size: 24px;
 }
 
 #matches #completed .match .team1 {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 3;
     font-size: 14px;
 }
 
 #matches #completed .match .record1 {
     grid-column: 1;
-    grid-row: 3;
+    grid-row: 4;
     font-size: 12px;
     color: #999999;
     font-style: italic;
@@ -197,7 +211,7 @@
 
 #matches #completed .match .score1 {
     grid-column: 2;
-    grid-row: 1 / span 3;
+    grid-row: 2 / span 3;
     font-size: 48px;
     text-align: right;
     align-self: center;
@@ -207,19 +221,19 @@
 #matches #completed .match .tag2 {
     white-space: nowrap;
     grid-column: 1;
-    grid-row: 4;
+    grid-row: 5;
     font-size: 24px;
 }
 
 #matches #completed .match .team2 {
     grid-column: 1;
-    grid-row: 5;
+    grid-row: 6;
     font-size: 14px;
 }
 
 #matches #completed .match .record2 {
     grid-column: 1;
-    grid-row: 6;
+    grid-row: 7;
     font-size: 12px;
     color: #999999;
     font-style: italic;
@@ -227,7 +241,7 @@
 
 #matches #completed .match .score2 {
     grid-column: 2;
-    grid-row: 4 / span 3;
+    grid-row: 5 / span 3;
     font-size: 48px;
     text-align: right;
     align-self: center;
@@ -236,14 +250,14 @@
 
 #matches #completed .match .map {
     grid-column: 1;
-    grid-row: 7;
+    grid-row: 8;
     font-size: 18px;
     margin-top: 3px;
 }
 
 #matches #completed .match .date {
     grid-column: 2;
-    grid-row: 7;
+    grid-row: 8;
     font-size: 18px;
     text-align: right;
     margin-top: 3px;
