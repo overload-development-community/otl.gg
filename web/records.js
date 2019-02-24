@@ -120,7 +120,7 @@ class Records {
                             <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div><a href="/player/${r.playerId}/${encodeURIComponent(Common.normalizeName(r.name, r.tag))}">${Common.htmlEncode(Common.normalizeName(r.name, r.tag))}</a></div>
-                            <div>${r.kda.toFixed(2)} KDA</div>
+                            <div>${r.kda.toFixed(3)} KDA</div>
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>

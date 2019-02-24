@@ -151,7 +151,7 @@ class TeamPage {
                             <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                             <div class="tag player"><div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="player"><a href="/player/${m.playerId}/${encodeURIComponent(Common.normalizeName(m.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(m.name, team.tag))}</a></div>
-                            <div class="best-stats">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
+                            <div class="best-stats">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)} KDA (${m.kills} K, ${m.assists} A, ${m.deaths} D)</div>
                         `).join("")}
                     </div>
                     <div class="section">Season Player Stats</div>
@@ -179,7 +179,7 @@ class TeamPage {
                             <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="best">${s.map}</div>
                             <div class="best"><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>
-                            <div class="best-stats">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(2)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
+                            <div class="best-stats">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)} KDA (${s.bestKills} K, ${s.bestAssists} A, ${s.bestDeaths} D)</div>
                         `).join("")}
                     </div>
                 ` : ""}

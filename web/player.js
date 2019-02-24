@@ -114,7 +114,7 @@ class Player {
                         <div>${m.teamScore > m.opponentScore ? "W" : m.teamScore < m.opponentScore ? "L" : "T"} <span ${m.teamScore > m.opponentScore ? "class=\"winner\"" : ""}>${m.teamScore}</span>-<span ${m.teamScore < m.opponentScore ? "class=\"winner\"" : ""}>${m.opponentScore}</span></div>
                         <div class="date"><script>document.write(formatDate(new Date("${m.matchTime}")));</script></div>
                         <div class="map">${m.map}</div>
-                        <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2)}</div>
+                        <div>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</div>
                         <div>${m.kills}</div>
                         <div>${m.assists}</div>
                         <div>${m.deaths}</div>
