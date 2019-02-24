@@ -4,6 +4,25 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.0.6 - 2/24/2019
+
+### Bot:
+
+* The Fourth Sovereign can now be invited to other servers.  Use https://discordapp.com/oauth2/authorize?client_id=469895441186816031&scope=bot&permissions=0 to invite the bot to your server.  Valid commands on servers outside the OTL are `!next` and `!stats`.
+* Match reminders will now also remind teams of any unset parameters, and will remind players to set their `!streaming` flag.
+* KDA now appears in the #match-results channel.
+* Challenge IDs now won't spike into the 1000's when the server gets unexpectedly rebooted.
+* `!stream` is now an alias for `!streaming`.
+* `!retag` command errors have been fixed.
+
+### Website:
+
+* New Overdigit font for numbers.
+* Matches that have been given a `!title` now have the title shown on the matches page.
+* Player pages will now show a player's performance against each team and on each map played.
+* KDA is now always to 3 decimal places.
+* Fixed some places where the player name wasn't normalized.
+
 ## v1.0.5 - 2/5/2019
 
 * Continued work on having better responsive design overall on the website.
