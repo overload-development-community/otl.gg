@@ -1,3 +1,12 @@
+#options {
+    padding: 10px;
+    color: white;
+}
+
+#options .grey {
+    color: #999999;
+}
+
 #matches {
     display: grid;
     grid-template-columns: auto;

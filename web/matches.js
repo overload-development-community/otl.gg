@@ -37,14 +37,16 @@ class Matches {
      */
     static async get(req, res) {
         const matchesPerPage = 10,
-            standings = await Db.seasonStandings(),
+            seasonList = await Db.seasonList(),
+            season = Number.parseInt(req.query.season, 10) || void 0,
+            standings = await Db.seasonStandings(isNaN(season) ? void 0 : season),
             teams = new Teams();
         let team;
 
         /**
          * @type {{completed: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, timeRemaining?: number, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
          */
-        const matches = await Db.seasonMatches();
+        const matches = await Db.seasonMatches(isNaN(season) ? void 0 : season);
 
         matches.completed.forEach((match) => {
             match.challengingTeamStandings = standings.find((s) => s.teamId === match.challengingTeamId);
@@ -66,6 +68,11 @@ class Matches {
             <script src="/js/countdown.js"></script>
             <script src="/js/matches.js"></script>
         `, /* html */`
+            <div id="options">
+                <span class="grey">Matches for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
+                    ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/matches?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
+                `).join(" | ")}<br />
+            </div>
             <div id="matches">
                 ${matches.pending.length === 0 ? "" : /* html */`
                     <div id="pending">
@@ -119,86 +126,88 @@ class Matches {
                         </div>
                     </div>
                 `}
-                <div id="completed">
-                    <div class="section">Completed Matches</div>
-                    ${matches.completed.length > matchesPerPage ? /* html */`
-                        <div class="paginator">
-                            <div class="paginator-text">
-                                <div>Page:</div>
+                ${matches.completed.length === 0 ? "" : /* html */`
+                    <div id="completed">
+                        <div class="section">Completed Matches</div>
+                        ${matches.completed.length > matchesPerPage ? /* html */`
+                            <div class="paginator">
+                                <div class="paginator-text">
+                                    <div>Page:</div>
+                                </div>
+                                <div id="select-prev" class="paginator-page">
+                                    <div>&lt;&lt;</div>
+                                </div>
+                                ${Array.from(new Array(Math.ceil(matches.completed.length / matchesPerPage))).map((_, index) => /* html */`
+                                    <div class="paginator-page select-page select-page-${index} ${index === 0 ? "active" : ""}">
+                                        <div class="numeric">${index + 1}</div>
+                                    </div>
+                                `).join("")}
+                                <div id="select-next" class="paginator-page">
+                                    <div>&gt;&gt;</div>
+                                </div>
                             </div>
-                            <div id="select-prev" class="paginator-page">
-                                <div>&lt;&lt;</div>
-                            </div>
-                            ${Array.from(new Array(Math.ceil(matches.completed.length / matchesPerPage))).map((_, index) => /* html */`
-                                <div class="paginator-page select-page select-page-${index} ${index === 0 ? "active" : ""}">
-                                    <div class="numeric">${index + 1}</div>
+                        ` : ""}
+                        <div class="matches">
+                            ${matches.completed.map((m, index) => /* html */`
+                                <div class="page page-${Math.floor(index / matchesPerPage)} ${index >= matchesPerPage ? "hidden" : ""}">
+                                    <div class="match">
+                                        ${m.title ? /* html */`
+                                            <div class="title">${m.title}</div>
+                                        ` : ""}
+                                        <div class="tag1">
+                                            <div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamStandings.name, m.challengingTeamStandings.tag, m.challengingTeamStandings.disbanded, m.challengingTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                                        </div>
+                                        <div class="team1">
+                                            <a href="/team/${team.tag}">${team.name}</a>
+                                        </div>
+                                        <div class="numeric record1">
+                                            ${m.challengingTeamStandings.rating ? `${Math.round(m.challengingTeamStandings.rating)},` : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
+                                        </div>
+                                        <div class="numeric score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
+                                            ${m.challengingTeamScore}
+                                        </div>
+                                        <div class="tag2">
+                                        <div class="diamond${(team = teams.getTeam(m.challengedTeamId, m.challengedTeamStandings.name, m.challengedTeamStandings.tag, m.challengedTeamStandings.disbanded, m.challengedTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                                        </div>
+                                        <div class="team2">
+                                            <a href="/team/${team.tag}">${team.name}</a>
+                                        </div>
+                                        <div class="numeric record2">
+                                            ${m.challengedTeamStandings.rating ? `${Math.round(m.challengedTeamStandings.rating)},` : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
+                                        </div>
+                                        <div class="numeric score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
+                                            ${m.challengedTeamScore}
+                                        </div>
+                                        <div class="map">
+                                            ${m.map}
+                                        </div>
+                                        <div class="date">
+                                            <script>document.write(formatDate(new Date("${m.matchTime}")));</script>
+                                        </div>
+                                    </div>
+                                    <div class="stats">
+                                        <div class="header">Team</div>
+                                        <div class="header">Name</div>
+                                        <div class="header">KDA</div>
+                                        <div class="header">Kills</div>
+                                        <div class="header">Assists</div>
+                                        <div class="header">Deaths</div>
+                                        ${matches.stats.filter((s) => s.challengeId === m.challengeId).sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
+                                            <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === null ? "" : /* html */`
+                                                <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                                            `}</div>
+                                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
+                                            <div class="numeric kda">${s.kda.toFixed(3)}</div>
+                                            <div class="numeric kills">${s.kills}</div>
+                                            <div class="numeric assists">${s.assists}</div>
+                                            <div class="numeric deaths">${s.deaths}</div>
+                                        `).join("")}
+                                    </div>
                                 </div>
                             `).join("")}
-                            <div id="select-next" class="paginator-page">
-                                <div>&gt;&gt;</div>
-                            </div>
                         </div>
-                    ` : ""}
-                    <div class="matches">
-                        ${matches.completed.map((m, index) => /* html */`
-                            <div class="page page-${Math.floor(index / matchesPerPage)} ${index >= matchesPerPage ? "hidden" : ""}">
-                                <div class="match">
-                                    ${m.title ? /* html */`
-                                        <div class="title">${m.title}</div>
-                                    ` : ""}
-                                    <div class="tag1">
-                                        <div class="diamond${(team = teams.getTeam(m.challengingTeamId, m.challengingTeamStandings.name, m.challengingTeamStandings.tag, m.challengingTeamStandings.disbanded, m.challengingTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                                    </div>
-                                    <div class="team1">
-                                        <a href="/team/${team.tag}">${team.name}</a>
-                                    </div>
-                                    <div class="numeric record1">
-                                        ${m.challengingTeamStandings.rating ? `${Math.round(m.challengingTeamStandings.rating)},` : ""} ${m.challengingTeamStandings.wins}-${m.challengingTeamStandings.losses}${m.challengingTeamStandings.ties === 0 ? "" : `-${m.challengingTeamStandings.ties}`}
-                                    </div>
-                                    <div class="numeric score1 ${m.dateClosed && m.challengingTeamScore > m.challengedTeamScore ? "winner" : ""}">
-                                        ${m.challengingTeamScore}
-                                    </div>
-                                    <div class="tag2">
-                                    <div class="diamond${(team = teams.getTeam(m.challengedTeamId, m.challengedTeamStandings.name, m.challengedTeamStandings.tag, m.challengedTeamStandings.disbanded, m.challengedTeamStandings.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                                    </div>
-                                    <div class="team2">
-                                        <a href="/team/${team.tag}">${team.name}</a>
-                                    </div>
-                                    <div class="numeric record2">
-                                        ${m.challengedTeamStandings.rating ? `${Math.round(m.challengedTeamStandings.rating)},` : ""} ${m.challengedTeamStandings.wins}-${m.challengedTeamStandings.losses}${m.challengedTeamStandings.ties === 0 ? "" : `-${m.challengedTeamStandings.ties}`}
-                                    </div>
-                                    <div class="numeric score2 ${m.dateClosed && m.challengedTeamScore > m.challengingTeamScore ? "winner" : ""}">
-                                        ${m.challengedTeamScore}
-                                    </div>
-                                    <div class="map">
-                                        ${m.map}
-                                    </div>
-                                    <div class="date">
-                                        <script>document.write(formatDate(new Date("${m.matchTime}")));</script>
-                                    </div>
-                                </div>
-                                <div class="stats">
-                                    <div class="header">Team</div>
-                                    <div class="header">Name</div>
-                                    <div class="header">KDA</div>
-                                    <div class="header">Kills</div>
-                                    <div class="header">Assists</div>
-                                    <div class="header">Deaths</div>
-                                    ${matches.stats.filter((s) => s.challengeId === m.challengeId).sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
-                                        <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === null ? "" : /* html */`
-                                            <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                                        `}</div>
-                                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(Common.normalizeName(s.name, team.tag))}">${Common.htmlEncode(Common.normalizeName(s.name, team.tag))}</a></div>
-                                        <div class="numeric kda">${s.kda.toFixed(3)}</div>
-                                        <div class="numeric kills">${s.kills}</div>
-                                        <div class="numeric assists">${s.assists}</div>
-                                        <div class="numeric deaths">${s.deaths}</div>
-                                    `).join("")}
-                                </div>
-                            </div>
-                        `).join("")}
                     </div>
-                </div>
+                `}
             </div>
         `, req);
 
