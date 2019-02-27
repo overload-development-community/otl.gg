@@ -15,6 +15,15 @@
     padding: 10px;
 }
 
+#options {
+    padding: 10px;
+    color: white;
+}
+
+#options .grey {
+    color: #999999;
+}
+
 #stats {
     display: grid;
     grid-template-columns: 25% 25% 25% 25%;

@@ -1147,12 +1147,11 @@ class Database {
             SELECT TOP 1
                 @season = Season
             FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
+            WHERE DateStart <= GETUTCDATE()
                 AND DateEnd > GETUTCDATE()
             ORDER BY Season DESC
 
-            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND PostSeason = 1)
+            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND Postseason = 1)
             BEGIN
                 SET @season = @season - 1
             END
@@ -2038,13 +2037,15 @@ class Database {
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, WinsMap1: number, LossesMap1: number, TiesMap1: number, WinsMap2: number, LossesMap2: number, TiesMap2: number, WinsMap3: number, LossesMap3: number, TiesMap3: number, WinsServer1: number, LossesServer1: number, TiesServer1: number, WinsServer2: number, LossesServer2: number, TiesServer2: number, WinsServer3: number, LossesServer3: number, TiesServer3: number, Wins2v2: number, Losses2v2: number, Ties2v2: number, Wins3v3: number, Losses3v3: number, Ties3v3: number, Wins4v4: number, Losses4v4: number, Ties4v4: number}[], {TeamId: number, Name: string, Tag: string, Wins: number, Losses: number, Ties: number}[], {Map: string, Wins: number, Losses: number, Ties: number}[], {ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, Map: string, MatchTime: Date, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Kills: number, Deaths: number, Assists: number}[], {PlayerId: number, Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TeamId: number, TeamName: string, TeamTag: string, Map: string, MatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
@@ -2903,13 +2904,15 @@ class Database {
          * @type {{recordsets: [{Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
 
             SELECT DISTINCT Map
             FROM vwCompletedChallenge
@@ -2930,21 +2933,24 @@ class Database {
     /**
      * Gets player stats for the specified season.
      * @param {number} [season] The season number, or void for the latest season.
+     * @param {boolean} postseason Whether to get stats for the postseason.
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
-    static async playerSeasonStats(season) {
+    static async playerSeasonStats(season, postseason) {
 
         /**
          * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
 
             SELECT
                 p.PlayerId,
@@ -2967,8 +2973,12 @@ class Database {
             ) ON p.PlayerId = r.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND c.Season = @season
+                AND c.Postseason = @postseason
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
-        `, {season: {type: Db.INT, value: season}});
+        `, {
+            season: {type: Db.INT, value: season},
+            postseason: {type: Db.BIT, value: postseason}
+        });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             playerId: row.PlayerId,
             name: row.Name,
@@ -3403,13 +3413,15 @@ class Database {
          * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date}[], {ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
 
             SELECT
                 ChallengeId,
@@ -3537,13 +3549,15 @@ class Database {
          * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, Wins1: number, Losses1: number, Ties1: number, Wins2: number, Losses2: number, Ties2: number, Wins3: number, Losses3: number, Ties3: number, WinsMap?: number, LossesMap?: number, TiesMap?: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE (@season IS NULL OR Season = @season)
-                AND DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,

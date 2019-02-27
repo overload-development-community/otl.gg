@@ -71,7 +71,7 @@ class Matches {
             <div id="options">
                 <span class="grey">Matches for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/matches?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
-                `).join(" | ")}<br />
+                `).join(" | ")}
             </div>
             <div id="matches">
                 ${matches.pending.length === 0 ? "" : /* html */`
