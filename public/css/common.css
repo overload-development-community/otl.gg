@@ -3,7 +3,7 @@ body {
     
 }
 
-a:any-link {
+a {
     color: #ff6600;
     text-decoration: none;
 }
