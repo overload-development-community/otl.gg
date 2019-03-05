@@ -89,6 +89,15 @@
     font-size: 14px;
 }
 
+#options {
+    padding: 10px;
+    color: white;
+}
+
+#options .grey {
+    color: #999999;
+}
+
 #opponents {
     display: grid;
     color: white;
