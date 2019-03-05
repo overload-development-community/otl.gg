@@ -69,7 +69,7 @@ class Matches {
             <script src="/js/matches.js"></script>
         `, /* html */`
             <div id="options">
-                <span class="grey">Matches for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
+                <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/matches?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")}
             </div>
@@ -77,6 +77,7 @@ class Matches {
                 ${matches.pending.length === 0 ? "" : /* html */`
                     <div id="pending">
                         <div class="section">Pending Matches</div>
+                        <div class="subsection">for Season ${season || Math.max(...seasonList)}</div>
                         <div class="matches">
                             ${matches.pending.map((m) => /* html */`
                                 <div class="match">
@@ -129,6 +130,7 @@ class Matches {
                 ${matches.completed.length === 0 ? "" : /* html */`
                     <div id="completed">
                         <div class="section">Completed Matches</div>
+                        <div class="subsection">for Season ${season || Math.max(...seasonList)}</div>
                         ${matches.completed.length > matchesPerPage ? /* html */`
                             <div class="paginator">
                                 <div class="paginator-text">

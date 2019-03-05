@@ -36,7 +36,10 @@ class Records {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const records = await Db.getRecords(),
+        const seasonList = await Db.seasonList(),
+            season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
+            postseason = !!req.query.postseason,
+            records = await Db.getRecords(season, postseason),
             teams = new Teams();
 
         let team;
@@ -44,7 +47,14 @@ class Records {
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/records.css" />
         `, /* html */`
+            <div id="options">
+                <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
+                    ${!isNaN(season) && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/records?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber} | ${season === 0 ? "All Time" : /* html */`<a href="/records?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}
+                `).join(" | ")}<br />
+                <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/records?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/records${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
+            </div>
             <div class="section">Records</div>
+            <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
             <div id="records">
                 <div class="header category">Category</div>
                 <div class="header holder">Holder</div>

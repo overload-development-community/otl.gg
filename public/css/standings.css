@@ -7,11 +7,11 @@
     color: #999999;
 }
 
-#body #standings .header.before {
+#standings .header.before {
     grid-column-end: span 5;
 }
 
-#body #disbanded .header.before {
+#disbanded .header.before {
     grid-column-end: span 4;
 }
 
@@ -20,13 +20,13 @@
     text-align: center;
 }
 
-#body #standings {
+#standings {
     display: grid;
     grid-template-columns: auto auto auto auto auto auto auto auto auto;
     padding: 10px;
 }
 
-#body #standings .diamond {
+#standings .diamond {
     display: inline-block;
     width: 12px;
     height: 12px;
@@ -43,7 +43,7 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .diamond-empty {
+#standings .diamond-empty {
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -61,79 +61,79 @@
     transform-origin: 0 100%;
 }
 
-#body #standings .tag {
+#standings .tag {
     white-space: nowrap;
 }
 
-#body #standings div.header, #body #disbanded div.header {
+#standings div.header, #disbanded div.header {
     font-size: 20px;
     color: #999999;
 }
 
-#body #standings div, #body #disbanded div {
+#standings div, #disbanded div {
     font-size: 20px;
     color: white;
     margin: 1px 3px;
 }
 
 @media (max-width: 1000px) {
-    #body #standings div.header, #body #disbanded div.header {
+    #standings div.header, #disbanded div.header {
         font-size: 18px;
     }    
 
-    #body #standings div, #body #disbanded div {
+    #standings div, #disbanded div {
         font-size: 18px;
     }
 }
 
 @media (max-width: 800px) {
-    #body #standings div.header, #body #disbanded div.header {
+    #standings div.header, #disbanded div.header {
         font-size: 14px;
     }    
 
-    #body #standings div, #body #disbanded div {
+    #standings div, #disbanded div {
         font-size: 14px;
     }
 }
 
 @media (max-width: 700px) {
-    #body #standings {
+    #standings {
         grid-template-columns: auto auto auto auto auto auto auto auto;
     }
 
-    #body #standings .team-name {
+    #standings .team-name {
         display: none;
     }
 
-    #body #standings .header.before {
+    #standings .header.before {
         grid-column-end: span 4;
     }
 }
 
 @media (max-width: 500px) {
-    #body #standings {
+    #standings {
         grid-template-columns: auto auto auto auto auto auto auto;
     }
 
-    #body #standings .pos {
+    #standings .pos {
         display: none;
     }
 
-    #body #standings .header.before {
+    #standings .header.before {
         grid-column-end: span 3;
     }
 
-    #body #standings .diamond, #body #standings .diamond-empty {
+    #standings .diamond, #standings .diamond-empty {
         display: none;
     }
 }
 
-#body #standings .provisional, #body #disbanded .provisional {
+#standings .provisional, #disbanded .provisional {
     color: #999999;
     font-style: italic;
 }
 
-#body #disbanded {
+#disbanded {
     display: grid;
     grid-template-columns: auto auto auto auto auto auto auto auto;
     padding: 10px;

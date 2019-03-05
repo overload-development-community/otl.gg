@@ -102,3 +102,8 @@
     color: white;
     text-align: center;
 }
+
+#no-results {
+    color: white;
+    padding: 10px;
+}

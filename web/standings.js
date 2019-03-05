@@ -48,7 +48,7 @@ class Standings {
                 records3 = "Neutral";
                 break;
             case "size":
-                records = "Team Size";
+                records = "Team Size Records";
                 records1 = "2v2";
                 records2 = "3v3";
                 records3 = "4v4";
@@ -77,10 +77,10 @@ class Standings {
             <link rel="stylesheet" href="/css/standings.css" />
         `, /* html */`
             <div id="options">
-                <span class="grey">Standings for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
+                <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/standings?season=${seasonNumber}${req.query.records ? `&records=${req.query.records}` : ""}${map ? `&map=${map}` : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")}<br />
-                <span class="grey">Record Splits:</span> ${records === "Map Records" ? "Map Records" : /* html */`<a href="/standings?records=map${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Map Records</a>`} | ${records === "Server Records" ? "Server Records" : /* html */`<a href="/standings?records=server${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Server Records</a>`} | ${records === "Team Size" ? "Team Size" : /* html */`<a href="/standings?records=size${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Team Size</a>`}<br />
+                <span class="grey">Record Splits:</span> ${records === "Map Records" ? "Map Records" : /* html */`<a href="/standings?records=map${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Map Records</a>`} | ${records === "Server Records" ? "Server Records" : /* html */`<a href="/standings?records=server${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Server Records</a>`} | ${records === "Team Size Records" ? "Team Size" : /* html */`<a href="/standings?records=size${req.query.season ? `&season=${req.query.season}` : ""}${map ? `&map=${map}` : ""}">Team Size</a>`}<br />
                 ${maps.length > 0 ? /* html */`
                     <span class="grey">Map:</span> ${map ? /* html */`<a href="/standings?map=none${req.query.season ? `&season=${req.query.season}` : ""}${req.query.records ? `&records=${req.query.records}` : ""}">None</a>` : "None"} | ${maps.map((mapName) => /* html */`
                         ${map === mapName ? mapName : /* html */`<a href="/standings?map=${mapName}${req.query.season ? `&season=${req.query.season}` : ""}${req.query.records ? `&records=${req.query.records}` : ""}">${mapName}</a>`}
@@ -89,6 +89,7 @@ class Standings {
             </div>
             <div id="body">
                 <div class="section">Season Standings</div>
+                <div class="subsection">for Season ${season || Math.max(...seasonList)} with ${records} ${map ? `and ${map} records` : ""}</div>
                 <div id="standings">
                     <div class="header before"></div>
                     <div class="header records">${records}</div>

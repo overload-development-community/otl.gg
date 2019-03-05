@@ -7,6 +7,12 @@
     color: #999999;
 }
 
+#showing {
+    font-size: 14px;
+    color: white;
+    padding-left: 10px;
+}
+
 #matches {
     display: grid;
     grid-template-columns: auto;

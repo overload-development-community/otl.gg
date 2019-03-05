@@ -135,6 +135,12 @@ a:hover {
     padding: 20px 10px 10px 10px;
 }
 
+.subsection {
+    font-size: 14px;
+    color: white;
+    margin: -10px 0 10px 10px;
+}
+
 div > .section:first-child {
     padding-top: 10px;
 }
