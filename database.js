@@ -84,6 +84,29 @@ class Database {
         });
     }
 
+    //          #     #  ####                     #
+    //          #     #  #                        #
+    //  ###   ###   ###  ###   # #    ##   ###   ###
+    // #  #  #  #  #  #  #     # #   # ##  #  #   #
+    // # ##  #  #  #  #  #     # #   ##    #  #   #
+    //  # #   ###   ###  ####   #     ##   #  #    ##
+    /**
+     * Adds an event.
+     * @param {string} title The title of the event.
+     * @param {Date} dateStart The start of the event.
+     * @param {Date} dateEnd The end of the event.
+     * @returns {Promise} A promise that resolves when the event is added.
+     */
+    static async addEvent(title, dateStart, dateEnd) {
+        await db.query(/* sql */`
+            INSERT INTO tblEvent (Title, DateStart, DateEnd) VALUES (@title, @dateStart, @dateEnd)
+        `, {
+            title: {type: Db.VARCHAR(200), value: title},
+            dateStart: {type: Db.DATETIME, value: dateStart},
+            dateEnd: {type: Db.DATETIME, value: dateEnd}
+        });
+    }
+
     //          #     #  ###    #    ##           #    ###         ###
     //          #     #  #  #         #           #     #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
@@ -1248,7 +1271,7 @@ class Database {
             INNER JOIN tblChallenge c ON c.ChallengingTeamId = r.TeamId
             LEFT JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             LEFT JOIN (
-                tblStat s 
+                tblStat s
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
             ) ON r.PlayerId = s.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -2613,6 +2636,37 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengeId: row.ChallengeId, matchTime: row.MatchTime})) || [];
     }
 
+    //              #    #  #                           #                ####                     #
+    //              #    #  #                                            #                        #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ###   # #    ##   ###   ###    ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  #     # #   # ##  #  #   #    ##
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #     # #   ##    #  #   #      ##
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     ####   #     ##   #  #    ##  ###
+    //  ###                    #                                    ###
+    /**
+     * Gets the upcoming scheduled events.
+     * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
+     */
+    static async getUpcomingEvents() {
+
+        /**
+         * @type {{recordsets: [{Title: string, DateStart: Date, DateEnd: Date}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT Title, DateStart, DateEnd
+            FROM tblEvent
+            WHERE (DateStart >= GETUTCDATE() AND DateStart <= DATEADD(DAY, 28, GETUTCDATE())) OR (DateStart < GETUTCDATE() AND DateEnd > GETUTCDATE())
+            ORDER BY
+                CASE WHEN DateStart < GETUTCDATE() THEN 0 ELSE 1 END,
+                CASE WHEN DateStart < GETUTCDATE() THEN DateStart ELSE DateEnd END
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            title: row.Title,
+            dateStart: row.DateStart,
+            dateEnd: row.DateEnd
+        })) || [];
+    }
+
     //              #    #  #                           #                #  #         #          #
     //              #    #  #                                            ####         #          #
     //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
@@ -3159,6 +3213,25 @@ class Database {
         await db.query(/* sql */`
             UPDATE tblChallenge SET CasterPlayerId = NULL WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //                                     ####                     #
+    //                                     #                        #
+    // ###    ##   # #    ##   # #    ##   ###   # #    ##   ###   ###
+    // #  #  # ##  ####  #  #  # #   # ##  #     # #   # ##  #  #   #
+    // #     ##    #  #  #  #  # #   ##    #     # #   ##    #  #   #
+    // #      ##   #  #   ##    #     ##   ####   #     ##   #  #    ##
+    /**
+     * Removes an event from the databse.
+     * @param {string} title The title of the event.
+     * @returns {Promise} A promise that resolves when the event has been removed.
+     */
+    static async removeEvent(title) {
+        await db.query(/* sql */`
+            DELETE FROM tblEvent WHERE Title = @title
+        `, {
+            title: {type: Db.VARCHAR(200), value: title}
+        });
     }
 
     //                                     ###    #    ##           #    ####                    ###

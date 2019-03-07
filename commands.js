@@ -17,6 +17,7 @@ const tz = require("timezone-js"),
 
     adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}))?$/,
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    eventParse = /^(.+) ((?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) ((?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?([0-9]+)>$/,
     idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
@@ -3032,16 +3033,21 @@ class Commands {
             return false;
         }
 
-        const matches = await Otl.upcomingMatches();
+        const matches = await Otl.upcomingMatches(),
+            events = await Otl.upcomingEvents();
 
-        if (matches.length === 0) {
-            await Discord.queue("There are no matches currently scheduled.", channel);
-        } else {
-            const msg = Discord.richEmbed({
-                title: "Upcoming Matches",
-                fields: []
-            });
-            matches.forEach((match) => {
+        const msg = Discord.richEmbed({
+            title: "Overload Teams League Schedule",
+            fields: []
+        });
+
+        if (matches.length === 0 && events.length === 0) {
+            await Discord.queue("There are no matches or events currently scheduled.", channel);
+            return true;
+        }
+
+        if (matches.length !== 0) {
+            matches.forEach((match, index) => {
                 const difference = match.matchTime.getTime() - new Date().getTime(),
                     days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
                     hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
@@ -3049,13 +3055,39 @@ class Commands {
                     seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                 if (difference > 0) {
-                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
                 } else {
-                    msg.addField(`${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
                 }
             });
-            await Discord.richQueue(msg, channel);
         }
+
+        if (events.length !== 0) {
+            events.forEach((event, index) => {
+                if (event.dateStart >= new Date()) {
+                    const difference = event.dateStart.getTime() - new Date().getTime(),
+                        days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                        hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                        minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                        seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                } else if (event.dateEnd >= new Date()) {
+                    const difference = event.dateEnd.getTime() - new Date().getTime(),
+                        days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                        hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                        minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                        seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                } else {
+                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
+                }
+            });
+        }
+
+        await Discord.richQueue(msg, channel);
+
         return true;
     }
 
@@ -5121,6 +5153,100 @@ class Commands {
             throw err;
         }
 
+        return true;
+    }
+
+    //          #     #                           #
+    //          #     #                           #
+    //  ###   ###   ###   ##   # #    ##   ###   ###
+    // #  #  #  #  #  #  # ##  # #   # ##  #  #   #
+    // # ##  #  #  #  #  ##    # #   ##    #  #   #
+    //  # #   ###   ###   ##    #     ##   #  #    ##
+    /**
+     * Adds an event for the !next command.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async addevent(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!eventParse.test(message)) {
+            return false;
+        }
+
+        const {1: title, 2: dateStartStr, 3: dateEndStr} = eventParse.exec(message);
+
+        let dateStart;
+        try {
+            dateStart = new Date(new tz.Date(dateStartStr, await member.getTimezone()).getTime());
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse the start date and time.`, channel);
+            throw new Warning("Invalid start date.");
+        }
+
+        if (!dateStart || isNaN(dateStart.valueOf())) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse the start date and time.`, channel);
+            throw new Warning("Invalid start date.");
+        }
+
+        let dateEnd;
+        try {
+            dateEnd = new Date(new tz.Date(dateEndStr, await member.getTimezone()).getTime());
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
+            throw new Warning("Invalid end date.");
+        }
+
+        if (!dateEnd || isNaN(dateEnd.valueOf())) {
+            await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
+            throw new Warning("Invalid end date.");
+        }
+
+        try {
+            await Otl.addEvent(title, dateStart, dateEnd);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the event **${title}** has been added.  Use the \`!next\` command to see upcoming events.`, channel);
+        return true;
+    }
+
+    //                                                              #
+    //                                                              #
+    // ###    ##   # #    ##   # #    ##    ##   # #    ##   ###   ###
+    // #  #  # ##  ####  #  #  # #   # ##  # ##  # #   # ##  #  #   #
+    // #     ##    #  #  #  #  # #   ##    ##    # #   ##    #  #   #
+    // #      ##   #  #   ##    #     ##    ##    #     ##   #  #    ##
+    /**
+     * Removes an event for the !next command.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async removeevent(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        try {
+            await Otl.removeEvent(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the event **${message}** has been removed.  Use the \`!next\` command to see upcoming events.`, channel);
         return true;
     }
 }

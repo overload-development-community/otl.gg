@@ -17,6 +17,68 @@ const Db = require("./database"),
  * A class that handles league-related functions.
  */
 class Otl {
+    //          #     #  ####                     #
+    //          #     #  #                        #
+    //  ###   ###   ###  ###   # #    ##   ###   ###
+    // #  #  #  #  #  #  #     # #   # ##  #  #   #
+    // # ##  #  #  #  #  #     # #   ##    #  #   #
+    //  # #   ###   ###  ####   #     ##   #  #    ##
+    /**
+     * Adds an event to the database.
+     * @param {string} title The title of the event.
+     * @param {Date} dateStart The start of the event.
+     * @param {Date} dateEnd The end of the event.
+     * @returns {Promise} A promise that resolves then the event has been added.
+     */
+    static async addEvent(title, dateStart, dateEnd) {
+        try {
+            await Db.addEvent(title, dateStart, dateEnd);
+        } catch (err) {
+            throw new Exception("There was a database error adding an event.", err);
+        }
+    }
+
+    //                                     ####                     #
+    //                                     #                        #
+    // ###    ##   # #    ##   # #    ##   ###   # #    ##   ###   ###
+    // #  #  # ##  ####  #  #  # #   # ##  #     # #   # ##  #  #   #
+    // #     ##    #  #  #  #  # #   ##    #     # #   ##    #  #   #
+    // #      ##   #  #   ##    #     ##   ####   #     ##   #  #    ##
+    /**
+     * Removes an event from the database.
+     * @param {string} title The title of the event.
+     * @returns {Promise} A promise that resolves then the event has been removed.
+     */
+    static async removeEvent(title) {
+        try {
+            await Db.removeEvent(title);
+        } catch (err) {
+            throw new Exception("There was a database error removing an event.", err);
+        }
+    }
+
+    //                                #                ####                     #
+    //                                                 #                        #
+    // #  #  ###    ##    ##   # #   ##    ###    ###  ###   # #    ##   ###   ###    ###
+    // #  #  #  #  #     #  #  ####   #    #  #  #  #  #     # #   # ##  #  #   #    ##
+    // #  #  #  #  #     #  #  #  #   #    #  #   ##   #     # #   ##    #  #   #      ##
+    //  ###  ###    ##    ##   #  #  ###   #  #  #     ####   #     ##   #  #    ##  ###
+    //       #                                    ###
+    /**
+     * Gets the list of upcoming events.
+     * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
+     */
+    static async upcomingEvents() {
+        let events;
+        try {
+            events = await Db.getUpcomingEvents();
+        } catch (err) {
+            throw new Exception("There was a database error getting the upcoming events.", err);
+        }
+
+        return events;
+    }
+
     //                                #                #  #         #          #
     //                                                 ####         #          #
     // #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
