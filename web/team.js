@@ -45,8 +45,9 @@ class TeamPage {
         if (pageTeam) {
             const teamInfo = await pageTeam.getInfo(),
                 seasonList = await Db.seasonList(),
-                season = Number.parseInt(req.query.season, 10) || void 0,
-                teamData = await Db.getTeamData(pageTeam, season),
+                season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
+                postseason = !!req.query.postseason,
+                teamData = await Db.getTeamData(pageTeam, season, postseason),
                 teams = new Teams();
             let team;
 
@@ -84,19 +85,21 @@ class TeamPage {
                         <div>${await pageTeam.getTimezone()}</div>
                     </div>
                 </div>
-                <div class="section">Season Records</div>
                 <div id="options">
-                    <div class="season">
-                        <span class="grey">Standings for Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                            ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/team/${pageTeam.tag}?season=${seasonNumber}">${seasonNumber}</a>` : seasonNumber}
-                        `).join(" | ")}
-                    </div>
+                    <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
+                        ${!isNaN(season) && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber} | ${season === 0 ? "All Time" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}
+                    `).join(" | ")}<br />
+                    <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/team/${encodeURI(pageTeam.tag)}${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
                 </div>
+                <div class="section">Season Records</div>
+                <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
                 ${teamData.records && (teamData.records.wins > 0 || teamData.records.losses > 0 || teamData.records.ties > 0) ? /* html */`
                     <div id="records">
                         <div class="overall">
                             <div>Overall: <span class="numeric">${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</span></div>
-                            <div>Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span></div>
+                            ${season === 0 ? "" : /* html */`
+                                <div>Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span></div>
+                            `}
                         </div>
                         <div class="splits">
                             <div>
@@ -137,6 +140,7 @@ class TeamPage {
                         </div>
                     </div>
                     <div class="section">Season Matches</div>
+                    <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
                     <div id="matches">
                         <div class="header team">Oppenent</div>
                         <div class="header">Score</div>
@@ -155,6 +159,7 @@ class TeamPage {
                         `).join("")}
                     </div>
                     <div class="section">Season Player Stats</div>
+                    <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
                     <div id="stats">
                         <div class="header">Player</div>
                         <div class="header">G</div>
