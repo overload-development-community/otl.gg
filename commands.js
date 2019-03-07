@@ -211,27 +211,6 @@ class Commands {
         }
     }
 
-    //       #                 #      ##   #           ##    ##                            #  #              ###          #  #         #     ##          #
-    //       #                 #     #  #  #            #     #                            ####               #           ## #         #    #  #         #
-    //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   ####   ###  ###    #     ###   ## #   ##   ###    #     ##   ###
-    // #     #  #  # ##  #     ##    #     #  #  #  #   #     #    # ##  #  #  #  #  # ##  #  #  #  #  #  #   #    ##     # ##  #  #   #      #   # ##   #
-    // #     #  #  ##    #     # #   #  #  #  #  # ##   #     #    ##    #  #   ##   ##    #  #  # ##  #  #   #      ##   # ##  #  #   #    #  #  ##     #
-    //  ##   #  #   ##    ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##   #  #   # #  ###   ###   ###    #  #   ##     ##   ##    ##     ##
-    //                                                                          ###                    #
-    /**
-     * Checks to ensure the challenge map is not set.
-     * @param {Challenge} challenge The challenge.
-     * @param {DiscordJs.GuildMember} member The pilot sending the command.
-     * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise} A promise that resolves when the check has completed.
-     */
-    static async checkChallengeMapIsNotSet(challenge, member, channel) {
-        if (challenge.details.map) {
-            await Discord.queue(`Sorry, ${member}, but the map for this match has already been locked in as **${challenge.details.map}**.`, channel);
-            throw new Warning("Map already set.");
-        }
-    }
-
     //       #                 #      ##   #           ##    ##                            #  #              ###           ##          #
     //       #                 #     #  #  #            #     #                            ####               #           #  #         #
     //  ##   ###    ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##   ####   ###  ###    #     ###    #     ##   ###
@@ -2398,8 +2377,6 @@ class Commands {
             throw new Warning("Wrong team.");
         }
 
-        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
-
         if (!message || ["a", "b", "c"].indexOf(message.toLowerCase()) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`!pickmap a\`, \`!pickmap b\`, or \`!pickmap c\`.`, channel);
             throw new Warning("Missing map selection.");
@@ -2453,7 +2430,6 @@ class Commands {
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
         await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
-        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
         const map = await Commands.checkMapIsValid(message, member, channel);
 
@@ -2510,7 +2486,6 @@ class Commands {
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
         await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
-        await Commands.checkChallengeMapIsNotSet(challenge, member, channel);
 
         if (!challenge.details.suggestedMap || challenge.details.suggestedMap.length === 0) {
             await Discord.queue(`Sorry, ${member}, but no one has suggested a neutral map for this match yet!  Use the \`!suggestmap\` command to do so.`, channel);
