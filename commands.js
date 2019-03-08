@@ -2805,6 +2805,11 @@ class Commands {
             }
         }
 
+        if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
+            await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
+            throw new Warning("Date too far into the future..");
+        }
+
         try {
             await challenge.suggestTime(team, date);
         } catch (err) {
@@ -4526,6 +4531,11 @@ class Commands {
                     date.setFullYear(date.getFullYear() + 1);
                 }
             }
+
+            if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
+                await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
+                throw new Warning("Date too far into the future..");
+            }
         }
 
         try {
@@ -5181,6 +5191,26 @@ class Commands {
         if (!dateEnd || isNaN(dateEnd.valueOf())) {
             await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
             throw new Warning("Invalid end date.");
+        }
+
+        if (dateStart.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
+            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
+            throw new Warning("Date too far into the future..");
+        }
+
+        if (dateEnd.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
+            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
+            throw new Warning("Date too far into the future..");
+        }
+
+        if (dateStart.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
+            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
+            throw new Warning("Date too far into the future..");
+        }
+
+        if (dateEnd.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
+            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
+            throw new Warning("Date too far into the future..");
         }
 
         try {
