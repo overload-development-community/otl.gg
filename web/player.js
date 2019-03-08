@@ -49,6 +49,13 @@ class Player {
             const teams = new Teams();
             let team;
 
+            let totals = {
+                games: player.career.reduce((sum, stat) => sum + stat.games, 0),
+                kills: player.career.reduce((sum, stat) => sum + stat.kills, 0),
+                assists: player.career.reduce((sum, stat) => sum + stat.assists, 0),
+                deaths: player.career.reduce((sum, stat) => sum + stat.deaths, 0)
+            };
+
             const html = Common.page(/* html */`
                 <link rel="stylesheet" href="/css/player.css" />
             `, /* html */`
@@ -74,7 +81,7 @@ class Player {
                     ` : ""}
                 </div>
                 ${player.career.length === 0 ? "" : /* html */`
-                    <div class="section">Career Stats</div>
+                    <div class="section">Career Stats by Season</div>
                     <div id="stats">
                         <div class="header">Season</div>
                         <div class="header team">Team</div>
@@ -88,6 +95,39 @@ class Player {
                         <div class="header">DPG</div>
                         ${player.career.map((s) => /* html */`
                             <div class="season">${s.season} ${s.postseason ? "Postseason" : ""}</div>
+                            <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                            <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                            <div class="numeric">${s.games}</div>
+                            <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
+                            <div class="numeric totals">${s.kills}</div>
+                            <div class="numeric totals">${s.assists}</div>
+                            <div class="numeric totals">${s.deaths}</div>
+                            <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                        `).join("")}
+                        <div class="lifetime">Lifetime</div>
+                        <div class="numeric">${totals.games}</div>
+                        <div class="numeric">${((totals.kills + totals.assists) / Math.max(1, totals.deaths)).toFixed(3)}</div>
+                        <div class="numeric totals">${totals.kills}</div>
+                        <div class="numeric totals">${totals.assists}</div>
+                        <div class="numeric totals">${totals.deaths}</div>
+                        <div class="numeric">${(totals.kills / totals.games).toFixed(2)}</div>
+                        <div class="numeric">${(totals.assists / totals.games).toFixed(2)}</div>
+                        <div class="numeric">${(totals.deaths / totals.games).toFixed(2)}</div>
+                    </div>
+                    <div class="section">Career Stats by Team</div>
+                    <div id="team-stats">
+                        <div class="header team">Team</div>
+                        <div class="header">G</div>
+                        <div class="header">KDA</div>
+                        <div class="header totals">K</div>
+                        <div class="header totals">A</div>
+                        <div class="header totals">D</div>
+                        <div class="header">KPG</div>
+                        <div class="header">APG</div>
+                        <div class="header">DPG</div>
+                        ${player.careerTeams.map((s) => /* html */`
                             <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="numeric">${s.games}</div>

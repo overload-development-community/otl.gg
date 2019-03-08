@@ -89,6 +89,20 @@
     font-size: 14px;
 }
 
+#stats .lifetime {
+    grid-column-end: span 3;
+}
+
+#team-stats {
+    display: grid;
+    color: white;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    grid-column-gap: 5px;
+    column-gap: 5px;
+    padding: 10px;
+    font-size: 14px;
+}
+
 #options {
     padding: 10px;
     color: white;
@@ -169,6 +183,22 @@
         grid-column-end: span 1;
     }
 
+    #stats .lifetime {
+        grid-column-end: span 2;
+    }
+    
+    #team-stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    }
+
+    #team-stats .team-name {
+        display: none;
+    }
+
+    #team-stats .team {
+        grid-column-end: span 1;
+    }
+
     #matches {
         grid-template-columns: auto auto auto auto auto auto auto auto;
     }
@@ -184,6 +214,14 @@
     }
 
     #stats .totals {
+        display: none;
+    }
+
+    #team-stats {
+        grid-template-columns: auto auto auto auto auto auto;
+    }
+
+    #team-stats .totals {
         display: none;
     }
 
@@ -211,6 +249,7 @@
 }
 
 #stats .diamond,
+#team-stats .diamond,
 #matches .diamond {
     display: inline-block;
     width: 8px;
@@ -229,6 +268,7 @@
 }
 
 #stats .diamond-empty,
+#team-stats .diamond-empty,
 #matches .diamond-empty {
     display: inline-block;
     width: 6px;
