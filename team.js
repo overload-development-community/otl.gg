@@ -199,6 +199,34 @@ class Team {
         return !!Discord.findChannelByName(`Team ${tag}`);
     }
 
+    //                                                                    #            ##   #                             ##
+    //                                                                    #           #  #  #                              #
+    //  ###  ###   ###    ##   #  #  ###    ##    ##   # #    ##   ###   ###    ###   #     ###    ###  ###   ###    ##    #
+    // #  #  #  #  #  #  #  #  #  #  #  #  #     # ##  ####  # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##   #
+    // # ##  #  #  #  #  #  #  #  #  #  #  #     ##    #  #  ##    #  #   #      ##   #  #  #  #  # ##  #  #  #  #  ##     #
+    //  # #  #  #  #  #   ##    ###  #  #   ##    ##   #  #   ##   #  #    ##  ###     ##   #  #   # #  #  #  #  #   ##   ###
+    /**
+     * Gets the team's announcements channel.
+     * @returns {DiscordJs.TextChannel} The team's announcements channel.
+     */
+    get announcementsChannel() {
+        return /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(this.announcementsChannelName)); // eslint-disable-line no-extra-parens
+    }
+
+    //                                                                    #            ##   #                             ##    #  #
+    //                                                                    #           #  #  #                              #    ## #
+    //  ###  ###   ###    ##   #  #  ###    ##    ##   # #    ##   ###   ###    ###   #     ###    ###  ###   ###    ##    #    ## #   ###  # #    ##
+    // #  #  #  #  #  #  #  #  #  #  #  #  #     # ##  ####  # ##  #  #   #    ##     #     #  #  #  #  #  #  #  #  # ##   #    # ##  #  #  ####  # ##
+    // # ##  #  #  #  #  #  #  #  #  #  #  #     ##    #  #  ##    #  #   #      ##   #  #  #  #  # ##  #  #  #  #  ##     #    # ##  # ##  #  #  ##
+    //  # #  #  #  #  #   ##    ###  #  #   ##    ##   #  #   ##   #  #    ##  ###     ##   #  #   # #  #  #  #  #   ##   ###   #  #   # #  #  #   ##
+    /**
+     * Gets the team's announcements channel name.
+     * @returns {string} The team's announcements channel name.
+     */
+    get announcementsChannelName() {
+        return `announcements-${this.tag.toLowerCase().replace(/ /g, "-")}`;
+    }
+
     //                    #           #                  ##   #                             ##
     //                    #                             #  #  #                              #
     //  ##    ###  ###   ###    ###  ##    ###    ###   #     ###    ###  ###   ###    ##    #
@@ -379,6 +407,11 @@ class Team {
         }
 
         try {
+            const announcementsChannel = this.announcementsChannel;
+            if (!announcementsChannel) {
+                throw new Error("Announcement's channel does not exist for the team.");
+            }
+
             const captainsChannel = this.captainsChannel;
             if (!captainsChannel) {
                 throw new Error("Captain's channel does not exist for the team.");
@@ -410,7 +443,7 @@ class Team {
 
             await this.updateChannels();
 
-            await Discord.queue(`${captain}, you have been added as a captain of **${this.name}**!  You now have access to your team's captain's channel, ${captainsChannel}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
+            await Discord.queue(`${captain}, you have been added as a captain of **${this.name}**!  You now have access to your team's captain's channel, ${captainsChannel}, and can post in the team's announcements channel, ${announcementsChannel}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
             await Discord.queue(`Welcome **${captain}** as the newest team captain!`, captainsChannel);
             await Discord.queue(`**${captain}** is now a team captain!`, teamChannel);
             await Discord.richQueue(Discord.richEmbed({
@@ -582,30 +615,36 @@ class Team {
         try {
             const teamChannel = this.teamChannel;
             if (!teamChannel) {
-                throw new Error("Team channel does not exists.");
+                throw new Error("Team channel does not exist.");
+            }
+
+            const announcementsChannel = this.announcementsChannel;
+            if (!announcementsChannel) {
+                throw new Error("Announcements channel does not exist.");
             }
 
             const captainsChannel = this.captainsChannel;
             if (!captainsChannel) {
-                throw new Error("Captain channel does not exists.");
+                throw new Error("Captain channel does not exist.");
             }
 
             const teamVoiceChannel = this.teamVoiceChannel;
             if (!teamVoiceChannel) {
-                throw new Error("Team voice channel does not exists.");
+                throw new Error("Team voice channel does not exist.");
             }
 
             const captainsVoiceChannel = this.captainsVoiceChannel;
             if (!captainsVoiceChannel) {
-                throw new Error("Captains voice channel does not exists.");
+                throw new Error("Captains voice channel does not exist.");
             }
 
             const categoryChannel = this.categoryChannel;
             if (!categoryChannel) {
-                throw new Error("Team category does not exists.");
+                throw new Error("Team category does not exist.");
             }
 
             await teamChannel.delete(`${member.displayName} disbanded ${this.name}.`);
+            await announcementsChannel.delete(`${member.displayName} disbanded ${this.name}.`);
             await captainsChannel.delete(`${member.displayName} disbanded ${this.name}.`);
             await teamVoiceChannel.delete(`${member.displayName} disbanded ${this.name}.`);
             await captainsVoiceChannel.delete(`${member.displayName} disbanded ${this.name}.`);
@@ -1308,6 +1347,7 @@ class Team {
         const oldTag = this.tag,
             teamChannel = this.teamChannel,
             teamVoiceChannel = this.teamVoiceChannel,
+            announcementsChannel = this.announcementsChannel,
             captainsChannel = this.captainsChannel,
             captainsVoiceChannel = this.captainsVoiceChannel;
 
@@ -1324,6 +1364,7 @@ class Team {
         try {
             await teamChannel.setName(this.teamChannelName, "Team tag renamed by admin.");
             await teamVoiceChannel.setName(this.teamVoiceChannelName, "Team tag renamed by admin.");
+            await announcementsChannel.setName(this.announcementsChannelName, "Team tag renamed by admin.");
             await captainsChannel.setName(this.captainsChannelName, "Team tag renamed by admin.");
             await captainsVoiceChannel.setName(this.captainsVoiceChannelName, "Team tag renamed by admin.");
 
@@ -1424,6 +1465,10 @@ class Team {
             throw new Error("Team channel already exists.");
         }
 
+        if (this.announcementsChannel) {
+            throw new Error("Announcements channel already exists.");
+        }
+
         if (this.captainsChannel) {
             throw new Error("Captains channel already exists.");
         }
@@ -1472,6 +1517,24 @@ class Team {
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await teamChannel.setParent(category);
+
+        const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, "text", [
+            {
+                id: Discord.id,
+                deny: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+            }, {
+                id: teamRole.id,
+                allow: ["VIEW_CHANNEL"]
+            }, {
+                id: Discord.founderRole,
+                allow: ["SEND_MESSAGES", "MANAGE_MESSAGES", "MENTION_EVERYONE"]
+            }, {
+                id: Discord.captainRole,
+                allow: ["SEND_MESSAGES", "MENTION_EVERYONE"]
+            }
+        ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
+
+        await announcementsChannel.setParent(category);
 
         const captainsChannel = await Discord.createChannel(this.captainsChannelName, "text", [
             {
