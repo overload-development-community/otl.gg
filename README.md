@@ -4,6 +4,24 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.0.7 - 3/10/2019
+
+### Bot:
+
+* Events are now shown in the `!next` command.
+* Maps can now be changed after they are set.
+* Teams now get an announcements channel that everyone can read but only founders and captains can post in.
+* Commands that take dates will no longer accept dates too far into the future (or past where applicable).
+* Reordered the team colors in the challenge topic to match the order that they appear in game.
+* Fix a bug with the KDA only showing for one team in the #match-results channel.
+
+### Website:
+
+* Many pages now have new or improved filtering based on the season and whether to show regular season or postseason stats.
+* Added the best game for each map and opponent on the player page.
+* Fixed link color in some less common browsers.
+* Fixed website crash when viewing a player who is not on a team.
+
 ## v1.0.6 - 2/24/2019
 
 ### Bot:
