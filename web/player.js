@@ -49,7 +49,7 @@ class Player {
             const teams = new Teams();
             let team;
 
-            let totals = {
+            const totals = {
                 games: player.career.reduce((sum, stat) => sum + stat.games, 0),
                 kills: player.career.reduce((sum, stat) => sum + stat.kills, 0),
                 assists: player.career.reduce((sum, stat) => sum + stat.assists, 0),
@@ -156,6 +156,7 @@ class Player {
                             <div class="header">KPG</div>
                             <div class="header">APG</div>
                             <div class="header">DPG</div>
+                            <div class="header best">Best Game On</div>
                             ${player.opponents.map((s) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -164,6 +165,9 @@ class Player {
                                 <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
                                 <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
                                 <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                                <div class="best-stats">${s.bestMap}</div>
+                                <div class="match-time"><script>document.write(formatDate(new Date("${s.bestMatchTime}")));</script></div>
+                                <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)</div>
                             `).join("")}
                         </div>
                         <div id="maps">
@@ -173,6 +177,7 @@ class Player {
                             <div class="header">KPG</div>
                             <div class="header">APG</div>
                             <div class="header">DPG</div>
+                            <div class="header best">Best Game Vs.</div>
                             ${player.maps.map((s) => /* html */`
                                 <div>${s.map}</div>
                                 <div class="numeric">${s.games}</div>
@@ -180,6 +185,10 @@ class Player {
                                 <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
                                 <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
                                 <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                                <div class="tag best-stats"><div class="diamond${(team = teams.getTeam(s.bestOpponentTeamId, s.bestOpponentTeamName, s.bestOpponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                <div class="match-time"><script>document.write(formatDate(new Date("${s.bestMatchTime}")));</script></div>
+                                <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)</div>
                             `).join("")}
                         </div>
                     </div>
