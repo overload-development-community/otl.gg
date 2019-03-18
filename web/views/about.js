@@ -1,8 +1,8 @@
 const HtmlMinifier = require("html-minifier"),
 
-    Common = require("./common"),
+    Common = require("../includes/common"),
 
-    settings = require("../settings");
+    settings = require("../../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -267,4 +267,8 @@ class About {
     }
 }
 
-module.exports = About.get;
+About.route = {
+    path: "/about"
+};
+
+module.exports = About;

@@ -1,11 +1,11 @@
 const HtmlMinifier = require("html-minifier"),
 
-    Common = require("./common"),
+    Common = require("../includes/common"),
+    Teams = require("../includes/teams"),
 
-    Discord = require("../discord"),
-    Db = require("../database"),
-    settings = require("../settings"),
-    Teams = require("./teams");
+    Discord = require("../../discord"),
+    Db = require("../../database"),
+    settings = require("../../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -171,4 +171,8 @@ class Players {
     }
 }
 
-module.exports = Players.get;
+Players.route = {
+    path: "/players"
+};
+
+module.exports = Players;

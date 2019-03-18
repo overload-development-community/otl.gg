@@ -1,10 +1,10 @@
 const HtmlMinifier = require("html-minifier"),
 
-    Common = require("./common"),
+    Common = require("../includes/common"),
 
-    Challenge = require("../challenge"),
-    Db = require("../database"),
-    settings = require("../settings");
+    Challenge = require("../../challenge"),
+    Db = require("../../database"),
+    settings = require("../../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -199,4 +199,8 @@ class Cast {
     }
 }
 
-module.exports = Cast.get;
+Cast.route = {
+    path: "/cast/:challengeId"
+};
+
+module.exports = Cast;

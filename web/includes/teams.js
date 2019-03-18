@@ -1,4 +1,4 @@
-const Team = require("../team");
+const Team = require("../../team");
 
 //  #####
 //    #
@@ -52,5 +52,9 @@ class Teams {
         return this.teams[id];
     }
 }
+
+Teams.route = {
+    include: true
+};
 
 module.exports = Teams;

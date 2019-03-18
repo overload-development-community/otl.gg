@@ -7,8 +7,8 @@ const compression = require("compression"),
     Discord = require("./discord"),
     Log = require("./log"),
     Notify = require("./notify"),
+    Router = require("./router"),
     settings = require("./settings"),
-    Web = require("./web"),
 
     app = express();
 
@@ -22,8 +22,16 @@ const compression = require("compression"),
 /**
  * Starts up the application.
  */
-(function startup() {
+(async function startup() {
     Log.log("Starting up...");
+
+    let router;
+    try {
+        router = await Router.getRouter();
+    } catch (err) {
+        console.log(err);
+        return;
+    }
 
     tz.timezone.loadingScheme = tz.timezone.loadingSchemes.MANUAL_LOAD;
     tz.timezone.loadZoneDataFromObject(tzdata);
@@ -46,18 +54,11 @@ const compression = require("compression"),
     app.use(minify());
     app.use(express.static("public"));
 
-    app.get("/", Web.home);
-    app.get("/about", Web.about);
-    app.get("/cast/:challengeId", Web.cast);
     app.get("/discord", (req, res) => {
         res.redirect("http://ronc.li/otl-discord");
     });
-    app.get("/matches", Web.matches);
-    app.get("/players", Web.players);
-    app.get("/player/:id/:name", Web.player);
-    app.get("/records", Web.records);
-    app.get("/standings", Web.standings);
-    app.get("/team/:tag", Web.team);
+
+    app.use("/", router);
 
     // Startup web server.
     const port = process.env.PORT || settings.express.port;

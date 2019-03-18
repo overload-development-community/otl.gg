@@ -1,12 +1,12 @@
 const HtmlMinifier = require("html-minifier"),
     DiscordMarkdown = require("discord-markdown"),
 
-    Common = require("./common"),
+    Common = require("../includes/common"),
+    Teams = require("../includes/teams"),
 
-    Db = require("../database"),
-    Discord = require("../discord"),
-    settings = require("../settings"),
-    Teams = require("./teams");
+    Db = require("../../database"),
+    Discord = require("../../discord"),
+    settings = require("../../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -148,4 +148,8 @@ class Home {
     }
 }
 
-module.exports = Home.get;
+Home.route = {
+    path: "/"
+};
+
+module.exports = Home;

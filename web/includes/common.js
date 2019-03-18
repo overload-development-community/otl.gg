@@ -1,4 +1,4 @@
-const pjson = require("../package.json"),
+const pjson = require("../../package.json"),
 
     nameAngledBracketTagStart = /^<.*> /,
     nameBraceTagStart = /^\{.*\} /,
@@ -140,5 +140,9 @@ class Common {
         return name.replace(nameParenthesisTagStart, "").replace(nameBracketTagStart, "").replace(nameBraceTagStart, "").replace(nameAngledBracketTagStart, "").replace(nameDesignaterEnd, "");
     }
 }
+
+Common.route = {
+    include: true
+};
 
 module.exports = Common;

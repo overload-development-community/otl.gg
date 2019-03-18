@@ -1,10 +1,10 @@
 const HtmlMinifier = require("html-minifier"),
 
-    Common = require("./common"),
+    Common = require("../includes/common"),
+    Teams = require("../includes/teams"),
 
-    Db = require("../database"),
-    settings = require("../settings"),
-    Teams = require("./teams");
+    Db = require("../../database"),
+    settings = require("../../settings");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -148,4 +148,8 @@ class Standings {
     }
 }
 
-module.exports = Standings.get;
+Standings.route = {
+    path: "/standings"
+};
+
+module.exports = Standings;
