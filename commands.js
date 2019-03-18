@@ -2792,10 +2792,10 @@ class Commands {
                 throw new Warning("Invalid date.");
             }
 
-            if (date.getFullYear() <= 2001) {
-                date.setFullYear(new Date().getFullYear());
+            if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date = new Date(new tz.Date(`${message} ${new Date().getFullYear()}`, await member.getTimezone()).getTime());
                 if (date < new Date()) {
-                    date.setFullYear(date.getFullYear() + 1);
+                    date = new Date(new tz.Date(`${message} ${new Date().getFullYear() + 1}`, await member.getTimezone()).getTime());
                 }
             }
 
@@ -2803,11 +2803,11 @@ class Commands {
                 await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
                 throw new Warning("Date is in the past.");
             }
-        }
 
-        if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
-            await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
-            throw new Warning("Date too far into the future..");
+            if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
+                await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
+                throw new Warning("Date too far into the future.");
+            }
         }
 
         try {
@@ -4525,16 +4525,21 @@ class Commands {
                 throw new Warning("Invalid date.");
             }
 
-            if (date.getFullYear() <= 2001) {
-                date.setFullYear(new Date().getFullYear());
+            if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date = new Date(new tz.Date(`${message} ${new Date().getFullYear()}`, await member.getTimezone()).getTime());
                 if (date < new Date()) {
-                    date.setFullYear(date.getFullYear() + 1);
+                    date = new Date(new tz.Date(`${message} ${new Date().getFullYear() + 1}`, await member.getTimezone()).getTime());
                 }
+            }
+
+            if (date.getTime() - new Date().getTime() < -28 * 24 * 60 * 60 * 1000) {
+                await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the past.`, channel);
+                throw new Warning("Date too far into the past.");
             }
 
             if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
                 await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
-                throw new Warning("Date too far into the future..");
+                throw new Warning("Date too far into the future.");
             }
         }
 
@@ -5195,22 +5200,22 @@ class Commands {
 
         if (dateStart.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
             await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
-            throw new Warning("Date too far into the future..");
+            throw new Warning("Date too far into the past.");
         }
 
         if (dateEnd.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
             await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
-            throw new Warning("Date too far into the future..");
+            throw new Warning("Date too far into the past.");
         }
 
         if (dateStart.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
             await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
-            throw new Warning("Date too far into the future..");
+            throw new Warning("Date too far into the future.");
         }
 
         if (dateEnd.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
             await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
-            throw new Warning("Date too far into the future..");
+            throw new Warning("Date too far into the future.");
         }
 
         try {
