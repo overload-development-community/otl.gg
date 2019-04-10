@@ -4270,6 +4270,30 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
     }
 
+    /**
+     * Checks to see if a team has a stock home map.
+     * @param {Team} team The team to check.
+     * @param {number} [excludeNumber] Excludes a home map number from the check.
+     * @returns {Promise<boolean>} A promise that resolves with whether the team has a stock home map.
+     */
+    static async teamHasStockHomeMap(team, excludeNumber) {
+
+        /** @type {{recordsets: [{}[]]}} */
+        const data = await db.query(/* sql */`
+            SELECT TOP 1 1
+            FROM tblTeamHome th
+            INNER JOIN tblAllowedMap am ON th.Map = am.Map
+            WHERE th.TeamId = @teamId
+                AND (@excludeNumber IS NULL OR th.Number <> @excludeNumber)
+                AND am.Stock = 1
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            excludeNumber: {type: Db.INT, value: excludeNumber}
+        });
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0 || false;
+    }
+
     //             ##                #      ##   #           ##    ##
     //              #                #     #  #  #            #     #
     // #  #  ###    #     ##    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
@@ -4446,17 +4470,17 @@ class Database {
     /**
      * Validates a map.
      * @param {string} map The map.
-     * @returns {Promise<string>} A promise that resolves with the validated map.
+     * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the validated map.
      */
     static async validateMap(map) {
 
         /**
-         * @type {{recordsets: [{Map: string}[]]}}
+         * @type {{recordsets: [{Map: string, Stock: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT Map FROM tblAllowedMap WHERE Map = @map
+            SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map
         `, {map: {type: Db.VARCHAR(100), value: map}});
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {map: data.recordsets[0][0].Map, stock: data.recordsets[0][0].Stock} || void 0;
     }
 
     //              #       #   ##   #           ##    ##

@@ -414,7 +414,7 @@ class Commands {
      * @param {string} map The map to check.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<string>} A promise that resolves with the chosen map, properly cased.
+     * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the chosen map, properly cased, and whether it is a stock map.
      */
     static async checkMapIsValid(map, member, channel) {
         let correctedMap;
@@ -426,7 +426,7 @@ class Commands {
         }
 
         if (!correctedMap) {
-            await Discord.queue(`Sorry, ${member}, but you that is not a map you can use.  You can only use valid multiplayer maps that you can pick in the game client.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you that is not a map you can use.  You can only use stock maps or any of the custom maps listed in #teams.`, channel);
             throw new Warning("Invalid map.");
         }
 
@@ -1793,13 +1793,20 @@ class Commands {
             throw err;
         }
 
-        if (homes.indexOf(map) !== -1) {
+        if (homes.indexOf(map.map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but you already have this map set as your home.`, channel);
             throw new Warning("Team already has this home map set.");
         }
 
+        if (!map.stock) {
+            if (!await team.hasStockHomeMap(+number)) {
+                await Discord.queue(`Sorry, ${member}, but your team must have at least one stock map in your home list.`, channel);
+                throw new Warning("Team does not have a stock map.");
+            }
+        }
+
         try {
-            await team.applyHomeMap(member, +number, map);
+            await team.applyHomeMap(member, +number, map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -2433,13 +2440,13 @@ class Commands {
 
         const map = await Commands.checkMapIsValid(message, member, channel);
 
-        if (challenge.details.homeMaps.indexOf(map) !== -1) {
+        if (challenge.details.homeMaps.indexOf(map.map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
             throw new Warning("Pilot suggested one of the home options.");
         }
 
         try {
-            await challenge.suggestMap(team, map);
+            await challenge.suggestMap(team, map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4348,7 +4355,7 @@ class Commands {
         const map = await Commands.checkMapIsValid(message, member, channel);
 
         try {
-            await challenge.setMap(member, map);
+            await challenge.setMap(member, map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;

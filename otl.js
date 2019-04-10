@@ -144,7 +144,7 @@ class Otl {
     /**
      * Validates a map with the database.
      * @param {string} map The map to validate.
-     * @returns {Promise<string>} The validated map.
+     * @returns {Promise<{map: string, stock: boolean}>} The validated map.
      */
     static async validateMap(map) {
         try {
