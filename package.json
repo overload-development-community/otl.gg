@@ -24,6 +24,7 @@
         "express": "4.16.4",
         "express-minify": "1.0.0",
         "html-minifier": "3.5.21",
+        "morgan": "1.9.1",
         "node-database": "roncli/node-database#v1.0.2",
         "timezone-js": "0.4.13",
         "tzdata": "1.0.15"

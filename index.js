@@ -1,6 +1,8 @@
 const compression = require("compression"),
     express = require("express"),
     minify = require("express-minify"),
+    morgan = require("morgan"),
+    morganExtensions = require("./morgan.extensions"),
     tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
@@ -49,9 +51,15 @@ const compression = require("compression"),
     // Begin notifications.
     setInterval(Notify.notify, 60 * 1000);
 
-    // Web server routes.
+    // Add morgan extensions.
+    morganExtensions(morgan);
+
+    // Initialize middleware stack.
     app.use(compression());
+    app.use(morgan(":colorstatus \x1b[30m\x1b[1m:method\x1b[0m :url\x1b[30m\x1b[1m:newline    Date :date[iso]    IP :req[ip]    Time :colorresponse ms"));
     app.use(minify());
+
+    // Web server routes.
     app.use(express.static("public"));
 
     app.get("/discord", (req, res) => {

@@ -5,7 +5,7 @@
 const util = require("util");
 
 /**
- * @type {{type: string, date: Date, obj?: Error, message?: string}[]}
+ * @type {{type: string, date: Date, obj?: object, message?: string}[]}
  */
 const queue = [];
 
@@ -79,7 +79,7 @@ class Log {
     /**
      * Logs an exception.
      * @param {string} message The message describing the error.
-     * @param {Error} [obj] The object to log.
+     * @param {object} [obj] The object to log.
      * @returns {void}
      */
     static exception(message, obj) {
