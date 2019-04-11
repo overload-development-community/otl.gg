@@ -24,6 +24,7 @@ const tz = require("timezone-js"),
     mapMatch = /^([123]) (.+)$/,
     nameConfirmParse = /^@?(.+?)(?: (confirm))?$/,
     numberMatch = /^(?:[1-9][0-9]*)$/,
+    numberOrZeroMatch = /^(?:0|[1-9][0-9]*)$/,
     scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
     statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
     teamNameMatch = /^[0-9a-zA-Z' -]{6,25}$/,
@@ -4734,6 +4735,56 @@ class Commands {
             throw err;
         }
 
+        return true;
+    }
+
+    //                          #     #
+    //                          #
+    //  ##   # #    ##   ###   ###   ##    # #    ##
+    // #  #  # #   # ##  #  #   #     #    ####  # ##
+    // #  #  # #   ##    #      #     #    #  #  ##
+    //  ##    #     ##   #       ##  ###   #  #   ##
+    /**
+     * Adds overtime periods for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async overtime(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!overtime` command followed by the number of overtime periods played in this match.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        if (!numberOrZeroMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use \`!overtime\` followed by the number of overtime periods played in this match.`, channel);
+            return false;
+        }
+
+        const overtimePeriods = +message;
+        try {
+            await challenge.setOvertimePeriods(overtimePeriods);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`The number of overtime periods for this match has been set to ${overtimePeriods}.`, channel);
         return true;
     }
 

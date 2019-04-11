@@ -720,7 +720,7 @@ class Challenge {
 
             if (this.details.dateConfirmed && !this.details.dateVoided) {
                 await Discord.richQueue(Discord.richEmbed({
-                    title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}`,
+                    title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? `${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
                     description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
                     fields: [
@@ -1114,6 +1114,7 @@ class Challenge {
             rematchTeam: details.rematchTeamId ? details.rematchTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             dateRematched: details.dateRematched,
             dateVoided: details.dateVoided,
+            overtimePeriods: details.overtimePeriods,
             homeMaps: details.homeMaps
         };
     }
@@ -1578,6 +1579,25 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #     ##                      #     #                ###                #             #
+    //               #    #  #                     #                      #  #                             #
+    //  ###    ##   ###   #  #  # #    ##   ###   ###   ##    # #    ##   #  #   ##   ###   ##     ##    ###   ###
+    // ##     # ##   #    #  #  # #   # ##  #  #   #     #    ####  # ##  ###   # ##  #  #   #    #  #  #  #  ##
+    //   ##   ##     #    #  #  # #   ##    #      #     #    #  #  ##    #     ##    #      #    #  #  #  #    ##
+    // ###     ##     ##   ##    #     ##   #       ##  ###   #  #   ##   #      ##   #     ###    ##    ###  ###
+    /**
+     * Sets the number of overtime periods for the challenge.
+     * @param {number} overtimePeriods The number of overtime periods played.
+     * @returns {Promise} A promise that resolves when the number of overtime periods has been set.
+     */
+    async setOvertimePeriods(overtimePeriods) {
+        try {
+            await Db.setOvertimePeriodsForChallenge(this, overtimePeriods);
+        } catch (err) {
+            throw new Exception("There was a database error setting the number of overtime periods played for a challenge.", err);
         }
     }
 
@@ -2185,9 +2205,9 @@ class Challenge {
             }
 
             if (this.details.dateReported && !this.details.dateConfirmed) {
-                topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}, reported by ${this.details.reportingTeam.tag}`;
+                topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}, reported by ${this.details.reportingTeam.tag}`;
             } else if (this.details.dateConfirmed) {
-                topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}`;
+                topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`;
             }
 
             if (this.details.caster) {

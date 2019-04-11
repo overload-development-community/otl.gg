@@ -1410,12 +1410,12 @@ class Database {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getChallengeDetails(challenge) {
 
         /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date}[], {Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -1456,7 +1456,8 @@ class Database {
                 c.DateRematchRequested,
                 c.RematchTeamId,
                 c.DateRematched,
-                c.DateVoided
+                c.DateVoided,
+                c.OvertimePeriods
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -1502,6 +1503,7 @@ class Database {
             dateRematchRequested: data.recordsets[0][0].DateRematchRequested,
             rematchTeamId: data.recordsets[0][0].RematchTeamId,
             dateRematched: data.recordsets[0][0].DateRematched,
+            overtimePeriods: data.recordsets[0][0].OvertimePeriods,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -3899,6 +3901,28 @@ class Database {
         await db.query(/* sql */`
             UPDATE tblChallenge SET UsingHomeServerTeam = 0 WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //               #     ##                      #     #                ###                #             #         ####               ##   #           ##    ##
+    //               #    #  #                     #                      #  #                             #         #                 #  #  #            #     #
+    //  ###    ##   ###   #  #  # #    ##   ###   ###   ##    # #    ##   #  #   ##   ###   ##     ##    ###   ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // ##     # ##   #    #  #  # #   # ##  #  #   #     #    ####  # ##  ###   # ##  #  #   #    #  #  #  #  ##     #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //   ##   ##     #    #  #  # #   ##    #      #     #    #  #  ##    #     ##    #      #    #  #  #  #    ##   #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // ###     ##     ##   ##    #     ##   #       ##  ###   #  #   ##   #      ##   #     ###    ##    ###  ###    #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //                                                                                                                                                                            ###
+    /**
+     * Sets the number of overtime periods for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {number} overtimePeriods The number of overtime periods played.
+     * @returns {Promise} A promise that resolves when the number of overtime periods has been set.
+     */
+    static async setOvertimePeriodsForChallenge(challenge, overtimePeriods) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET OvertimePeriods = @overtimePeriods WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            overtimePeriods: {type: Db.INT, value: overtimePeriods}
+        });
     }
 
     //               #    ###                 #                                          ####               ##   #           ##    ##
