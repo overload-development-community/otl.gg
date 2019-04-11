@@ -4,6 +4,7 @@ const pjson = require("../../package.json"),
     nameBraceTagStart = /^\{.*\} /,
     nameBracketTagStart = /^\[.*\] /,
     nameDesignaterEnd = / - .*$/,
+    nameParenthesisEnd = / \(.*\)$/,
     nameParenthesisTagStart = /^\(.*\) /;
 
 /**
@@ -137,7 +138,7 @@ class Common {
             name = name.substring(tag.length + 1);
         }
 
-        return name.replace(nameParenthesisTagStart, "").replace(nameBracketTagStart, "").replace(nameBraceTagStart, "").replace(nameAngledBracketTagStart, "").replace(nameDesignaterEnd, "");
+        return name.replace(nameParenthesisTagStart, "").replace(nameBracketTagStart, "").replace(nameBraceTagStart, "").replace(nameAngledBracketTagStart, "").replace(nameDesignaterEnd, "").replace(nameParenthesisEnd, "");
     }
 }
 
