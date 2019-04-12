@@ -101,35 +101,57 @@ class Log {
     //                   #
     /**
      * Outputs the log queue.
-     * @returns {void}
+     * @returns {Promise} A promise that resolves when the output has been completed.
      */
-    static output() {
+    static async output() {
         if (!Discord) {
             Discord = require("./discord");
         }
 
         if (Discord.isConnected()) {
 
-            queue.forEach((log) => {
-                const message = Discord.richEmbed({
-                    color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
-                    fields: [],
-                    timestamp: log.date
-                });
-
-                if (log.message) {
-                    message.setDescription(log.message);
-                }
-
+            for (const log of queue) {
                 if (log.obj) {
-                    message.fields.push({
-                        name: "Message",
-                        value: util.inspect(log.obj)
-                    });
-                }
+                    let value = util.inspect(log.obj),
+                        continued = false;
 
-                Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
-            });
+                    while (value.length > 0) {
+                        const message = Discord.richEmbed({
+                            color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
+                            fields: [],
+                            timestamp: log.date
+                        });
+
+                        if (continued) {
+                            message.setDescription("(Continued)");
+                        } else if (log.message) {
+                            message.setDescription(log.message);
+                        }
+
+                        message.fields.push({
+                            name: "Message",
+                            value: value.substring(0, 1024)
+                        });
+
+                        value = value.substring(1024);
+                        continued = true;
+
+                        await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
+                    }
+                } else {
+                    const message = Discord.richEmbed({
+                        color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
+                        fields: [],
+                        timestamp: log.date
+                    });
+
+                    if (log.message) {
+                        message.setDescription(log.message);
+                    }
+
+                    await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
+                }
+            }
 
             queue.splice(0, queue.length);
         } else {
