@@ -45,7 +45,7 @@ class Home {
         let team;
 
         /**
-         * @type {{challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[]}
+         * @type {{challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]}
          */
         const matches = await Db.upcomingMatches();
 
@@ -92,7 +92,7 @@ class Home {
                             ` : "Unscheduled"}
                         </div>
                         ${m.map ? /* html */`
-                            <div class="map">${m.map}</div>
+                            <div class="map">${m.map}${m.overtimePeriods > 0 ? `, ${m.overtimePeriods > 1 ? m.overtimePeriods : ""}OT` : ""}</div>
                         ` : ""}
                     </div>
                 `).join("")}

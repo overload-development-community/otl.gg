@@ -102,9 +102,9 @@ class Player {
                             <div class="numeric totals">${s.kills}</div>
                             <div class="numeric totals">${s.assists}</div>
                             <div class="numeric totals">${s.deaths}</div>
-                            <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         `).join("")}
                         <div class="lifetime">Lifetime</div>
                         <div class="numeric">${totals.games}</div>
@@ -112,9 +112,9 @@ class Player {
                         <div class="numeric totals">${totals.kills}</div>
                         <div class="numeric totals">${totals.assists}</div>
                         <div class="numeric totals">${totals.deaths}</div>
-                        <div class="numeric">${(totals.kills / totals.games).toFixed(2)}</div>
-                        <div class="numeric">${(totals.assists / totals.games).toFixed(2)}</div>
-                        <div class="numeric">${(totals.deaths / totals.games).toFixed(2)}</div>
+                        <div class="numeric">${(totals.kills / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${(totals.assists / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${(totals.deaths / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     </div>
                     <div class="section">Career Stats by Team</div>
                     <div id="team-stats">
@@ -135,9 +135,9 @@ class Player {
                             <div class="numeric totals">${s.kills}</div>
                             <div class="numeric totals">${s.assists}</div>
                             <div class="numeric totals">${s.deaths}</div>
-                            <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         `).join("")}
                     </div>
                     <div id="options">
@@ -162,9 +162,9 @@ class Player {
                                 <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                 <div class="numeric">${s.games}</div>
                                 <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
-                                <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
-                                <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
-                                <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                                <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="best-stats">${s.bestMap}</div>
                                 <div class="match-time"><script>document.write(formatDate(new Date("${s.bestMatchTime}")));</script></div>
                                 <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)</div>
@@ -182,9 +182,9 @@ class Player {
                                 <div>${s.map}</div>
                                 <div class="numeric">${s.games}</div>
                                 <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
-                                <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
-                                <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
-                                <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                                <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="tag best-stats"><div class="diamond${(team = teams.getTeam(s.bestOpponentTeamId, s.bestOpponentTeamName, s.bestOpponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                 <div class="match-time"><script>document.write(formatDate(new Date("${s.bestMatchTime}")));</script></div>

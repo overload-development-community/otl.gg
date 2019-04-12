@@ -963,12 +963,12 @@ class Database {
      * @param {number} playerId The player ID to get data for.
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, teamSize: number, matchTime: Date, map: string}[]}>} A promise that resolves with a player's career data.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, teamSize: number, matchTime: Date, map: string}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
 
         /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, TeamSize: number, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, TeamSize: number, MatchTime: Date, Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -987,7 +987,7 @@ class Database {
             ) ON r.PlayerId = p.PlayerId
             WHERE p.PlayerId = @playerId
 
-            SELECT c.Season, c.Postseason, s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
+            SELECT c.Season, c.Postseason, s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -996,7 +996,7 @@ class Database {
             GROUP BY c.Season, c.Postseason, s.TeamId, t.Tag, t.Name
             ORDER BY c.Season, c.Postseason, MIN(c.MatchTime)
 
-            SELECT s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
+            SELECT s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1005,7 +1005,7 @@ class Database {
             GROUP BY s.TeamId, t.Tag, t.Name
             ORDER BY t.Name
 
-            SELECT o.TeamId, o.Tag, o.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, sb.MatchTime BestMatchTime, sb.Map BestMap, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
+            SELECT o.TeamId, o.Tag, o.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, sb.MatchTime BestMatchTime, sb.Map BestMap, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
@@ -1033,7 +1033,7 @@ class Database {
             GROUP BY o.TeamId, o.Tag, o.Name, sb.MatchTime, sb.Map, sb.Kills, sb.Assists, sb.Deaths
             ORDER BY o.Name
 
-            SELECT c.Map, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, o.TeamId BestOpponentTeamId, o.Tag BestOpponentTag, o.Name BestOpponentTeamName, sb.MatchTime BestMatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
+            SELECT c.Map, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, o.TeamId BestOpponentTeamId, o.Tag BestOpponentTag, o.Name BestOpponentTeamName, sb.MatchTime BestMatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -1061,7 +1061,7 @@ class Database {
             GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.MatchTime, sb.Kills, sb.Assists, sb.Deaths
             ORDER BY c.Map
 
-            SELECT t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, c.TeamSize, c.MatchTime, c.Map
+            SELECT t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, SUM(c.OvertimePeriods) OvertimePeriods, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, c.TeamSize, c.MatchTime, c.Map
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END = t.TeamId
@@ -1093,7 +1093,8 @@ class Database {
                 games: row.Games,
                 kills: row.Kills,
                 assists: row.Assists,
-                deaths: row.Deaths
+                deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods
             })),
             careerTeams: data.recordsets[2].map((row) => ({
                 teamId: row.TeamId,
@@ -1102,7 +1103,8 @@ class Database {
                 games: row.Games,
                 kills: row.Kills,
                 assists: row.Assists,
-                deaths: row.Deaths
+                deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods
             })),
             opponents: data.recordsets[3].map((row) => ({
                 teamId: row.TeamId,
@@ -1112,6 +1114,7 @@ class Database {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods,
                 bestMatchTime: row.BestMatchTime,
                 bestMap: row.BestMap,
                 bestKills: row.BestKills,
@@ -1124,6 +1127,7 @@ class Database {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods,
                 bestMatchTime: row.BestMatchTime,
                 bestOpponentTeamId: row.BestOpponentTeamId,
                 bestOpponentTag: row.BestOpponentTag,
@@ -1139,6 +1143,7 @@ class Database {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods,
                 opponentTeamId: row.OpponentTeamId,
                 opponentTag: row.OpponentTag,
                 opponentName: row.OpponentName,
@@ -1629,12 +1634,12 @@ class Database {
      * Gets the league records.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string}[]}>} A promise that resolves with the league records.
+     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, matchTime: Date, map: string, overtimePeriods: number}[]}>} A promise that resolves with the league records.
      */
     static async getRecords(season, postseason) {
 
         /**
-         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, MatchTime: Date, Map: string, OvertimePeriods: number}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -1647,7 +1652,7 @@ class Database {
                 ORDER BY Season DESC
             END
 
-            SELECT s.TeamSize, s.TeamKDA, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.TeamKDA, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (SUM(s.Kills) + SUM(s.Assists)) / CAST(CASE WHEN SUM(s.Deaths) < 1 THEN 1 ELSE SUM(s.Deaths) END AS FLOAT) DESC) Rank,
                     c.ChallengeId,
@@ -1666,7 +1671,7 @@ class Database {
             WHERE s.Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END DESC) Rank,
                     c.TeamSize,
@@ -1686,7 +1691,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(s.Assists) DESC) Rank,
                     c.TeamSize,
@@ -1705,7 +1710,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(s.Deaths)) Rank,
                     c.TeamSize,
@@ -1724,7 +1729,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
                     c.TeamSize,
@@ -1744,7 +1749,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Kills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Kills DESC) Rank,
                     c.TeamSize,
@@ -1764,7 +1769,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Assists, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Assists DESC) Rank,
                     c.TeamSize,
@@ -1784,7 +1789,7 @@ class Database {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
-            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map
+            SELECT s.TeamSize, s.Deaths, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
                 SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Deaths) Rank,
                     c.TeamSize,
@@ -1818,7 +1823,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             teamScore: data.recordsets[1].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1830,7 +1836,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             teamAssists: data.recordsets[2].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1842,7 +1849,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             teamDeaths: data.recordsets[3].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1854,7 +1862,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             kda: data.recordsets[4].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1868,7 +1877,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             kills: data.recordsets[5].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1882,7 +1892,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             assists: data.recordsets[6].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1896,7 +1907,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             })),
             deaths: data.recordsets[7].map((row) => ({
                 teamSize: row.TeamSize,
@@ -1910,7 +1922,8 @@ class Database {
                 opponentTag: row.OpponentTag,
                 opponentTeamName: row.OpponentTeamName,
                 matchTime: row.MatchTime,
-                map: row.Map
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             }))
         } || void 0;
     }
@@ -2155,12 +2168,12 @@ class Database {
      * @param {Team} team The team to get the data for.
      * @param {number} season The season to get the team's data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, winsServer1: number, lossesServer1: number, tiesServer1: number, winsServer2: number, lossesServer2: number, tiesServer2: number, winsServer3: number, lossesServer3: number, tiesServer3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, deaths: number, assists: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, teamId: number, teamName: string, teamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} The team data.
+     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, winsServer1: number, lossesServer1: number, tiesServer1: number, winsServer2: number, lossesServer2: number, tiesServer2: number, winsServer3: number, lossesServer3: number, tiesServer3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, deaths: number, assists: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} The team data.
      */
     static async getTeamData(team, season, postseason) {
 
         /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, WinsMap1: number, LossesMap1: number, TiesMap1: number, WinsMap2: number, LossesMap2: number, TiesMap2: number, WinsMap3: number, LossesMap3: number, TiesMap3: number, WinsServer1: number, LossesServer1: number, TiesServer1: number, WinsServer2: number, LossesServer2: number, TiesServer2: number, WinsServer3: number, LossesServer3: number, TiesServer3: number, Wins2v2: number, Losses2v2: number, Ties2v2: number, Wins3v3: number, Losses3v3: number, Ties3v3: number, Wins4v4: number, Losses4v4: number, Ties4v4: number}[], {TeamId: number, Name: string, Tag: string, Wins: number, Losses: number, Ties: number}[], {Map: string, Wins: number, Losses: number, Ties: number}[], {ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, Map: string, MatchTime: Date, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Kills: number, Deaths: number, Assists: number}[], {PlayerId: number, Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TeamId: number, TeamName: string, TeamTag: string, Map: string, MatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[]]}}
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, WinsMap1: number, LossesMap1: number, TiesMap1: number, WinsMap2: number, LossesMap2: number, TiesMap2: number, WinsMap3: number, LossesMap3: number, TiesMap3: number, WinsServer1: number, LossesServer1: number, TiesServer1: number, WinsServer2: number, LossesServer2: number, TiesServer2: number, WinsServer3: number, LossesServer3: number, TiesServer3: number, Wins2v2: number, Losses2v2: number, Ties2v2: number, Wins3v3: number, Losses3v3: number, Ties3v3: number, Wins4v4: number, Losses4v4: number, Ties4v4: number}[], {TeamId: number, Name: string, Tag: string, Wins: number, Losses: number, Ties: number}[], {Map: string, Wins: number, Losses: number, Ties: number}[], {ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, Map: string, MatchTime: Date, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Kills: number, Deaths: number, Assists: number}[], {PlayerId: number, Name: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, TeamId: number, TeamName: string, TeamTag: string, Map: string, MatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -2288,7 +2301,7 @@ class Database {
                 AND c.Postseason = @postseason
             ORDER BY c.MatchTime
 
-            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, t.TeamId, t.Name TeamName, t.Tag TeamTag, c.Map, c.MatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
+            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, t.TeamId, t.Name TeamName, t.Tag TeamTag, c.Map, c.MatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
@@ -2396,6 +2409,7 @@ class Database {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods,
                 teamId: row.TeamId,
                 teamName: row.TeamName,
                 teamTag: row.TeamTag,
@@ -3124,9 +3138,9 @@ class Database {
                 t.Tag,
                 t.Disbanded,
                 t.Locked,
-                AVG(CAST(s.Kills AS FLOAT)) AvgKills,
-                AVG(CAST(s.Assists AS FLOAT)) AvgAssists,
-                AVG(CAST(s.Deaths AS FLOAT)) AvgDeaths,
+                SUM(s.Kills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgKills,
+                SUM(s.Assists) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgAssists,
+                SUM(s.Deaths) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDeaths,
                 CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END KDA
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
@@ -3588,12 +3602,12 @@ class Database {
     /**
      * Gets the matches for the specified season.
      * @param {number} [season] The season number, or void for the latest season.
-     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the season's matches.
+     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], pending: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the season's matches.
      */
     static async seasonMatches(season) {
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date}[], {ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -3615,7 +3629,8 @@ class Database {
                 ChallengedTeamScore,
                 MatchTime,
                 Map,
-                DateClosed
+                DateClosed,
+                OvertimePeriods
             FROM vwCompletedChallenge
             WHERE MatchTime IS NOT NULL
                 AND Season = @season
@@ -3666,7 +3681,8 @@ class Database {
                 challengedTeamScore: row.ChallengedTeamScore,
                 matchTime: row.MatchTime,
                 map: row.Map,
-                dateClosed: row.DateClosed
+                dateClosed: row.DateClosed,
+                overtimePeriods: row.OvertimePeriods
             })),
             pending: data.recordsets[1].map((row) => ({
                 challengeId: row.ChallengeId,
@@ -4363,12 +4379,12 @@ class Database {
     //       #                                    ###
     /**
      * Gets the upcoming matches.
-     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
     static async upcomingMatches() {
 
         /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date}[]]}}
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -4378,7 +4394,8 @@ class Database {
                 ChallengedTeamScore,
                 MatchTime,
                 Map,
-                DateClosed
+                DateClosed,
+                OvertimePeriods
             FROM
             (
                 SELECT TOP 5
@@ -4388,7 +4405,8 @@ class Database {
                     CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                     MatchTime,
                     Map,
-                    DateClosed
+                    DateClosed,
+                    OvertimePeriods
                 FROM tblChallenge
                 WHERE MatchTime IS NOT NULL
                     AND MatchTime <= GETUTCDATE()
@@ -4402,14 +4420,24 @@ class Database {
                 CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                 MatchTime,
                 Map,
-                DateClosed
+                DateClosed,
+                OvertimePeriods
             FROM tblChallenge
             WHERE MatchTime IS NOT NULL
                 AND MatchTime > GETUTCDATE()
                 AND DateVoided IS NULL
             ORDER BY MatchTime
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId, challengingTeamScore: row.ChallengingTeamScore, challengedTeamScore: row.ChallengedTeamScore, matchTime: row.MatchTime, map: row.Map, dateClosed: row.DateClosed})) || [];
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            challengingTeamId: row.ChallengingTeamId,
+            challengedTeamId: row.ChallengedTeamId,
+            challengingTeamScore: row.ChallengingTeamScore,
+            challengedTeamScore: row.ChallengedTeamScore,
+            matchTime: row.MatchTime,
+            map: row.Map,
+            dateClosed: row.DateClosed,
+            overtimePeriods: row.OvertimePeriods
+        })) || [];
     }
 
     //                #         #          #  #

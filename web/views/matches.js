@@ -44,7 +44,7 @@ class Matches {
         let team;
 
         /**
-         * @type {{completed: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date}[], pending: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, timeRemaining?: number, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
+         * @type {{completed: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], pending: {challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, timeRemaining?: number, challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, kda?: number}[]}}
          */
         const matches = await Db.seasonMatches(isNaN(season) ? void 0 : season);
 
@@ -181,7 +181,7 @@ class Matches {
                                             ${m.challengedTeamScore}
                                         </div>
                                         <div class="map">
-                                            ${m.map}
+                                            ${m.map}${m.overtimePeriods > 0 ? `, ${m.overtimePeriods > 1 ? m.overtimePeriods : ""}OT` : ""}
                                         </div>
                                         <div class="date">
                                             <script>document.write(formatDate(new Date("${m.matchTime}")));</script>

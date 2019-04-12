@@ -178,9 +178,9 @@ class TeamPage {
                             <div class="numeric totals">${s.kills}</div>
                             <div class="numeric totals">${s.assists}</div>
                             <div class="numeric totals">${s.deaths}</div>
-                            <div class="numeric">${(s.kills / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.assists / s.games).toFixed(2)}</div>
-                            <div class="numeric">${(s.deaths / s.games).toFixed(2)}</div>
+                            <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                             <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="best">${s.map}</div>
                             <div class="best"><script>document.write(formatDate(new Date("${s.matchTime}")));</script></div>

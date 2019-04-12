@@ -3355,7 +3355,6 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     stream(member, channel, message) {
-        console.log("stream");
         return this.streaming(member, channel, message);
     }
 

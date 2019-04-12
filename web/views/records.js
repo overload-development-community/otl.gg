@@ -73,7 +73,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -88,7 +88,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -103,7 +103,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -118,7 +118,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -134,7 +134,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -150,7 +150,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -166,7 +166,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
@@ -182,7 +182,7 @@ class Records {
                             <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                             <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                             <div class="date"><script>document.write(formatDate(new Date("${r.matchTime}")));</script></div>
-                            <div class="map">${r.map}</div>
+                            <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
                         `).join("")}
                     `).join("")}
                 `}
