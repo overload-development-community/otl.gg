@@ -70,5 +70,5 @@ window.formatDate = function(time) {
 window.randomBackground = function() {
     "use strict";
 
-    return ["backfire", "blizzard", "centrifuge", "foundry", "hive", "labyrinth", "roundabout", "syrinx", "terminal", "vault", "wraith"][Math.floor(Math.random() * 11)] + ".jpg";
+    return ["backfire", "blizzard", "burning indika", "centrifuge", "foundry", "hive", "keg party", "labyrinth", "roundabout", "sub rosa", "syrinx", "terminal", "vault", "wraith"][Math.floor(Math.random() * 11)] + ".jpg";
 };
