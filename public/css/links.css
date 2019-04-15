@@ -1,0 +1,14 @@
+#about div.section {
+    padding-bottom: 0;
+}
+
+#about div.highlight {
+    margin-top: 10px;
+    margin-left: 10px;
+    color: #ff6600;
+}
+
+#about div.text {
+    margin-left: 10px;
+    color: white;
+}

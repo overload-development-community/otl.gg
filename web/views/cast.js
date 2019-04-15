@@ -79,7 +79,7 @@ class Cast {
                             `).join("")}
                         </script>
                     <head>
-                    <body style="background-image: url(/images/${challenge.details.map.toLowerCase()}.jpg);">
+                    <body style="background-image: url('/images/${challenge.details.map.toLowerCase()}.jpg');">
                         <div id="shade">
                             <div id="logo"></div>
                             <div id="title">Overload Teams League</div>

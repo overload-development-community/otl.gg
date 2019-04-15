@@ -116,27 +116,28 @@ class Log {
                         continued = false;
 
                     while (value.length > 0) {
-                        const message = Discord.richEmbed({
-                            color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
-                            fields: [],
-                            timestamp: log.date
-                        });
-
                         if (continued) {
-                            message.setDescription("(Continued)");
+                            await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
                         } else if (log.message) {
+                            const message = Discord.richEmbed({
+                                color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
+                                fields: [],
+                                timestamp: log.date
+                            });
+
                             message.setDescription(log.message);
+
+                            message.fields.push({
+                                name: "Message",
+                                value: value.substring(0, 1024)
+                            });
+
+                            continued = true;
+
+                            await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
                         }
 
-                        message.fields.push({
-                            name: "Message",
-                            value: value.substring(0, 1024)
-                        });
-
                         value = value.substring(1024);
-                        continued = true;
-
-                        await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
                     }
                 } else {
                     const message = Discord.richEmbed({

@@ -60,17 +60,18 @@ class Common {
                                 <li><a href="/">Home</a></li>
                                 <li><a href="/standings">Standings</a></li>
                                 <li><a href="/matches">Matches</a></li>
-                                <li><a href="https://challonge.com/communities/otlgg">Tournaments</a></li>
+                                <li><a href="https://challonge.com/communities/otlgg" target="_blank">Tournaments</a></li>
                                 <li><a href="/players">Players</a></li>
                                 <li><a href="/records">Records</a></li>
                                 <li><a href="/about">About</a></li>
+                                <li><a href="/links">Links</a></li>
                             </ul>
                         </div>
                         <div id="header">
                             <div id="logo"></div>
                             <div id="title">Overload Teams League</div>
                         </div>
-                        <script>document.getElementById("header").style.backgroundImage = "url(/images/" + randomBackground() + ")";</script>
+                        <script>document.getElementById("header").style.backgroundImage = "url('/images/" + randomBackground() + "')";</script>
                         ${html}
                         <div id="discord">
                             <div class="title">Join the OTL on Discord!</div>
