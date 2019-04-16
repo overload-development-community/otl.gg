@@ -1025,7 +1025,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue(`${member}, see the about page at http://otl.gg/about.`, channel);
+        await Discord.queue(`${member}, see the about page at https://otl.gg/about.`, channel);
         return true;
     }
 
@@ -1077,7 +1077,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue("Visit our website at http://otl.gg for league standings, matches, and stats!", channel);
+        await Discord.queue("Visit our website at https://otl.gg for league standings, matches, and stats!", channel);
         return true;
     }
 
@@ -3043,9 +3043,9 @@ class Commands {
                     seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                 if (difference > 0) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                 } else {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at http://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at http://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                 }
             });
         }
@@ -3518,7 +3518,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use http://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
+        await Discord.queue(`${member}, you are now scheduled to cast the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use https://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
 
         return true;
     }
@@ -3809,7 +3809,7 @@ class Commands {
                 fields: [
                     {
                         name: "For more details, visit:",
-                        value: `http://otl.gg/player/${stats.playerId}/${Common.normalizeName(pilot.displayName, stats.tag)}`
+                        value: `https://otl.gg/player/${stats.playerId}/${Common.normalizeName(pilot.displayName, stats.tag)}`
                     }
                 ]
             }), channel);

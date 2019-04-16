@@ -119,7 +119,7 @@ class Matches {
                                         </div>
                                     ` : m.map ? /* html */`
                                         <div class="caster">
-                                            Watch at <a href="http://otl.gg/cast/${m.challengeId}" target="_blank">http://otl.gg/cast/${m.challengeId}</a>
+                                            Watch at <a href="https://otl.gg/cast/${m.challengeId}" target="_blank">https://otl.gg/cast/${m.challengeId}</a>
                                         </div>
                                     ` : ""}
                                 </div>

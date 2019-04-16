@@ -1712,7 +1712,7 @@ class Team {
                 return;
             }
 
-            let topic = `${this.name}\nhttp://otl.gg/team/${this.tag}\n\nRoster:`;
+            let topic = `${this.name}\nhttps://otl.gg/team/${this.tag}\n\nRoster:`;
 
             teamInfo.members.forEach((member) => {
                 topic += `\n${member.name}`;

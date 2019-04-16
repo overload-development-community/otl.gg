@@ -40,7 +40,7 @@ class About {
             <div id="about">
                 <div class="section">About the Overload Teams League</div>
                 <div class="text">
-                    The Overload Teams League is a community of players who compete in the game <a href="http://playoverload.com" target="_blank">Overload</a>, a Six Degrees of Freedom First Person Shooter by Revival Productions.<br /><br />
+                    The Overload Teams League is a community of players who compete in the game <a href="https://playoverload.com" target="_blank">Overload</a>, a Six Degrees of Freedom First Person Shooter by Revival Productions.<br /><br />
                     To play, join the Discord server (link is at the bottom of the page), where you may join an existing team or create your own.  For rules specific to the league, please see the Rules section on the Discord server.
                 </div>
                 <div class="section">Discord Bot Commands</div>

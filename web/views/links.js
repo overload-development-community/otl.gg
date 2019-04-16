@@ -54,7 +54,7 @@ class Links {
                 <div class="text">Overload Kickstarter: <a href="https://www.kickstarter.com/projects/revivalprod/overload-the-ultimate-six-degree-of-freedom-shoote" target="_blank">https://www.kickstarter.com/projects/revivalprod/overload-the-ultimate-six-degree-of-freedom-shoote</a></div>
                 <div class="highlight">Fan Sites</div>
                 <div class="text">Overload Maps: <a href="https://overloadmaps.com/" target="_blank">https://overloadmaps.com/</a></div>
-                <div class="text">OL Proxy and game tracker: <a href="http://olproxy.otl.gg/" target="_blank">http://olproxy.otl.gg/</a></div>
+                <div class="text">OL Proxy and game tracker: <a href="https://olproxy.otl.gg/" target="_blank">https://olproxy.otl.gg/</a></div>
             </div>
         `, req);
 
