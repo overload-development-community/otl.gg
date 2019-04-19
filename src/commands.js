@@ -5316,6 +5316,80 @@ class Commands {
         await Discord.queue(`${member}, the event **${message}** has been removed.  Use the \`!next\` command to see upcoming events.`, channel);
         return true;
     }
+
+    // ##                #      #
+    //  #                #      #
+    //  #     ##    ##   # #   ###    ##    ###  # #
+    //  #    #  #  #     ##     #    # ##  #  #  ####
+    //  #    #  #  #     # #    #    ##    # ##  #  #
+    // ###    ##    ##   #  #    ##   ##    # #  #  #
+    /**
+     * Locks a team's roster.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async lockteam(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to lock the roster for with this command.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        try {
+            await team.setLock(true);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the roster for **${team.name}** has been locked.`, channel);
+        return true;
+    }
+
+    //             ##                #      #
+    //              #                #      #
+    // #  #  ###    #     ##    ##   # #   ###    ##    ###  # #
+    // #  #  #  #   #    #  #  #     ##     #    # ##  #  #  ####
+    // #  #  #  #   #    #  #  #     # #    #    ##    # ##  #  #
+    //  ###  #  #  ###    ##    ##   #  #    ##   ##    # #  #  #
+    /**
+     * Unlocks a team's roster.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async unlockteam(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to unlock the roster for with this command.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        try {
+            await team.setLock(false);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the roster for **${team.name}** has been unlocked.`, channel);
+        return true;
+    }
 }
 
 module.exports = Commands;

@@ -4144,6 +4144,27 @@ class Database {
         });
     }
 
+    //               #    ###                     ###                 #                #                 #
+    //               #     #                      #  #                #                #                 #
+    //  ###    ##   ###    #     ##    ###  # #   #  #   ##    ###   ###    ##   ###   #      ##    ##   # #
+    // ##     # ##   #     #    # ##  #  #  ####  ###   #  #  ##      #    # ##  #  #  #     #  #  #     ##
+    //   ##   ##     #     #    ##    # ##  #  #  # #   #  #    ##    #    ##    #     #     #  #  #     # #
+    // ###     ##     ##   #     ##    # #  #  #  #  #   ##   ###      ##   ##   #     ####   ##    ##   #  #
+    /**
+     * Sets a team's roster lock state.
+     * @param {Team} team The team to set the roster lock state for.
+     * @param {boolean} locked Whether the team's roster should be locked.
+     * @returns {Promise} A promise that resolves when the lock state has been set.
+     */
+    static async setTeamRosterLock(team, locked) {
+        await db.query(/* sql */`
+            UPDATE tblTeam SET Locked = @locked WHERE TeamId = @teamId
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            locked: {type: Db.BIT, value: locked}
+        });
+    }
+
     //               #    ###                      ##    #                ####               ##   #           ##    ##
     //               #     #                      #  #                    #                 #  #  #            #     #
     //  ###    ##   ###    #     ##    ###  # #    #    ##    ####   ##   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##

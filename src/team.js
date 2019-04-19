@@ -1426,6 +1426,25 @@ class Team {
         }
     }
 
+    //               #    #                 #
+    //               #    #                 #
+    //  ###    ##   ###   #      ##    ##   # #
+    // ##     # ##   #    #     #  #  #     ##
+    //   ##   ##     #    #     #  #  #     # #
+    // ###     ##     ##  ####   ##    ##   #  #
+    /**
+     * Sets the roster lock state for a team.
+     * @param {boolean} locked Whether the team's roster should be locked.
+     * @returns {Promise} A promise that resolves when the lock state has been set.
+     */
+    async setLock(locked) {
+        try {
+            await Db.setTeamRosterLock(this, locked);
+        } catch (err) {
+            throw new Exception("There was a database error setting a team's roster lock state.", err);
+        }
+    }
+
     //               #    ###    #
     //               #     #
     //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##
