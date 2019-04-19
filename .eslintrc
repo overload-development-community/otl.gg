@@ -124,6 +124,13 @@
                 "prefer-arrow-callback": "off",
                 "prefer-template": "off"
             }
+        },
+        {
+            "files": ["public/templates/**/*.js"],
+            "rules": {
+                "no-implicit-globals": "off",
+                "no-undef": "off"
+            }
         }
     ]
 }

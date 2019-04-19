@@ -89,7 +89,7 @@ class Router {
      * @returns {Promise<express.Router>} A promise that resolves with the router to use for the website.
      */
     static async getRouter() {
-        await Router.getClasses(`${__dirname}/web`);
+        await Router.getClasses(`${__dirname}/../web`);
 
         const router = express.Router(),
             filenames = Object.keys(classes),

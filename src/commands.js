@@ -8,10 +8,10 @@ const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
     Challenge = require("./challenge"),
-    Common = require("./web/includes/common"),
+    Common = require("../web/includes/common"),
     Otl = require("./otl"),
-    pjson = require("./package.json"),
-    settings = require("./settings"),
+    pjson = require("../package.json"),
+    settings = require("../settings"),
     Team = require("./team"),
     Warning = require("./warning"),
 

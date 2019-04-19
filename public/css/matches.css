@@ -26,9 +26,17 @@
     padding: 20px;
 }
 
+#matches .matches .loading {
+    grid-column: 1 / span 2;
+}
+
 @media (max-width: 1100px) {
     #matches .matches {
         grid-template-columns: auto;
+    }
+
+    #matches .matches .loading {
+        grid-column: 1;
     }
 }
 

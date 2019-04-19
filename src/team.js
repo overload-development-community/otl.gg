@@ -13,7 +13,7 @@
 const Db = require("./database"),
     Exception = require("./exception"),
     Log = require("./log"),
-    settings = require("./settings");
+    settings = require("../settings");
 
 /**
  * @type {typeof import("./challenge")}

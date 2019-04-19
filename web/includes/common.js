@@ -71,7 +71,7 @@ class Common {
                             <div id="logo"></div>
                             <div id="title">Overload Teams League</div>
                         </div>
-                        <script>document.getElementById("header").style.backgroundImage = "url('/images/" + randomBackground() + "')";</script>
+                        <script>document.getElementById("header").style.backgroundImage = "url('/images/" + Common.randomBackground() + "')";</script>
                         ${html}
                         <div id="discord">
                             <div class="title">Join the OTL on Discord!</div>

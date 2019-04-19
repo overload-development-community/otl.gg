@@ -2,8 +2,8 @@ const HtmlMinifier = require("html-minifier"),
 
     Common = require("../includes/common"),
 
-    Challenge = require("../../challenge"),
-    Db = require("../../database"),
+    Challenge = require("../../src/challenge"),
+    Db = require("../../src/database"),
     settings = require("../../settings");
 
 /**

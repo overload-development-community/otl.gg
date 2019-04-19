@@ -4,8 +4,8 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../database"),
-    Discord = require("../../discord"),
+    Db = require("../../src/database"),
+    Discord = require("../../src/discord"),
     settings = require("../../settings");
 
 /**

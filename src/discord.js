@@ -3,7 +3,7 @@ const DiscordJs = require("discord.js"),
     Commands = require("./commands"),
     Exception = require("./exception"),
     Log = require("./log"),
-    settings = require("./settings"),
+    settings = require("../settings"),
     Warning = require("./warning"),
 
     commands = new Commands(),
@@ -57,7 +57,7 @@ let rosterUpdatesChannel;
  */
 let scheduledMatchesChannel;
 
-require("./discordJs.GuildMember.extensions");
+require("./extensions/discordJs.GuildMember.extensions");
 
 //  ####     #                                    #
 //   #  #                                         #
@@ -599,6 +599,9 @@ class Discord {
      * @returns {DiscordJs.Role} The Discord role.
      */
     static findRoleByName(name) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.roles.find((r) => r.name === name);
     }
 

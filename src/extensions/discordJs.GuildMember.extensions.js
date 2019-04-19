@@ -1,19 +1,19 @@
 const DiscordJs = require("discord.js"),
 
-    Challenge = require("./challenge"),
-    Db = require("./database"),
-    Exception = require("./exception"),
-    NewTeam = require("./newTeam"),
-    settings = require("./settings"),
-    Team = require("./team");
+    Challenge = require("../challenge"),
+    Db = require("../database"),
+    Exception = require("../exception"),
+    NewTeam = require("../newTeam"),
+    settings = require("../../settings"),
+    Team = require("../team");
 
 /**
- * @type {typeof import("./discord")}
+ * @type {typeof import("../discord")}
  */
 let Discord;
 
 setTimeout(() => {
-    Discord = require("./discord");
+    Discord = require("../discord");
 }, 0);
 
 //          #     #  ###          #     #          #     #  #

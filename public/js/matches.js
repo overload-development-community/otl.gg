@@ -1,3 +1,5 @@
+/* global Common, Match */
+
 //  #   #          #            #
 //  #   #          #            #
 //  ## ##   ###   ####    ###   # ##    ###    ###
@@ -20,21 +22,13 @@ class Matches {
      * @returns {void}
      */
     static DOMContentLoaded() {
-        Matches.page = 0;
+        Matches.page = 1;
 
-        Array.from(document.getElementsByClassName("select-page")).forEach((paginator, index) => {
+        Array.from(document.getElementsByClassName("select-page")).forEach((paginator) => {
             paginator.addEventListener("click", (ev) => {
                 if (ev.target.classList.contains("active")) {
                     return;
                 }
-
-                Array.from(document.getElementsByClassName("page")).forEach((page) => {
-                    page.classList.add("hidden");
-                });
-
-                Array.from(document.getElementsByClassName(`page-${index}`)).forEach((page) => {
-                    page.classList.remove("hidden");
-                });
 
                 Array.from(document.getElementsByClassName("select-page")).forEach((page) => {
                     page.classList.remove("active");
@@ -42,7 +36,9 @@ class Matches {
 
                 paginator.classList.add("active");
 
-                Matches.page = +paginator.innerText - 1;
+                Matches.page = +paginator.innerText;
+
+                Common.loadDataIntoTemplate(`/api/match?season=${document.getElementById("season").innerText}&page=${Matches.page}`, "#completed-matches", Match.get);
             });
 
             paginator.addEventListener("selectstart", (ev) => {

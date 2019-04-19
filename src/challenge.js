@@ -7,7 +7,7 @@
 const Db = require("./database"),
     Exception = require("./exception"),
     Otl = require("./otl"),
-    settings = require("./settings"),
+    settings = require("../settings"),
     Team = require("./team"),
 
     channelParse = /^([0-9a-z]{1,5})-([0-9a-z]{1,5})-([1-9][0-9]*)$/,
