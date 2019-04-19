@@ -38,6 +38,26 @@ class Otl {
         }
     }
 
+    //          #     #  #  #
+    //          #     #  ####
+    //  ###   ###   ###  ####   ###  ###
+    // #  #  #  #  #  #  #  #  #  #  #  #
+    // # ##  #  #  #  #  #  #  # ##  #  #
+    //  # #   ###   ###  #  #   # #  ###
+    //                               #
+    /**
+     * Adds a map to the OTL.
+     * @param {string} map The map to add.
+     * @returns {Promise} A promise that resolves when the map has been added.
+     */
+    static async addMap(map) {
+        try {
+            await Db.addMap(map);
+        } catch (err) {
+            throw new Exception("There was a database error adding a map.", err);
+        }
+    }
+
     //                                     ####                     #
     //                                     #                        #
     // ###    ##   # #    ##   # #    ##   ###   # #    ##   ###   ###
@@ -54,6 +74,26 @@ class Otl {
             await Db.removeEvent(title);
         } catch (err) {
             throw new Exception("There was a database error removing an event.", err);
+        }
+    }
+
+    //                                     #  #
+    //                                     ####
+    // ###    ##   # #    ##   # #    ##   ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   # #  ###
+    //                                                 #
+    /**
+     * Removes a map from the OTL.
+     * @param {string} map The map to remove.
+     * @returns {Promise} A promise that resolves when the map has been removed.
+     */
+    static async removeMap(map) {
+        try {
+            await Db.removeMap(map);
+        } catch (err) {
+            throw new Exception("There was a database error removing a map.", err);
         }
     }
 

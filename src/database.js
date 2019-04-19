@@ -107,6 +107,28 @@ class Database {
         });
     }
 
+    //          #     #  #  #
+    //          #     #  ####
+    //  ###   ###   ###  ####   ###  ###
+    // #  #  #  #  #  #  #  #  #  #  #  #
+    // # ##  #  #  #  #  #  #  # ##  #  #
+    //  # #   ###   ###  #  #   # #  ###
+    //                               #
+    /**
+     * Adds a map to the database.
+     * @param {string} map The map to add.
+     * @param {boolean} [stock] Whether or not this is a stock map.
+     * @returns {Promise} A promise that resolves when the map has been added.
+     */
+    static async addMap(map, stock) {
+        await db.query(/* sql */`
+            INSERT INTO tblAllowedMap (Map, Stock) VALUES (@map, @stock)
+        `, {
+            map: {type: Db.VARCHAR(100), value: map},
+            stock: {type: Db.BIT, value: !!stock}
+        });
+    }
+
     //          #     #  ###    #    ##           #    ###         ###
     //          #     #  #  #         #           #     #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
@@ -3555,6 +3577,24 @@ class Database {
         `, {
             title: {type: Db.VARCHAR(200), value: title}
         });
+    }
+
+    //                                     #  #
+    //                                     ####
+    // ###    ##   # #    ##   # #    ##   ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   # #  ###
+    //                                                 #
+    /**
+     * Removes a map from the database.
+     * @param {string} map The map to remove.
+     * @returns {Promise} A promise that resolves when the map has been removed.
+     */
+    static async removeMap(map) {
+        await db.query(/* sql */`
+            DELETE FROM tblAllowedMap WHERE Map = @map
+        `, {map: {type: Db.VARCHAR(100), value: map}});
     }
 
     //                                     ###    #    ##           #    ####                    ###

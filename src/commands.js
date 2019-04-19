@@ -5390,6 +5390,102 @@ class Commands {
         await Discord.queue(`${member}, the roster for **${team.name}** has been unlocked.`, channel);
         return true;
     }
+
+    //          #     #
+    //          #     #
+    //  ###   ###   ###  # #    ###  ###
+    // #  #  #  #  #  #  ####  #  #  #  #
+    // # ##  #  #  #  #  #  #  # ##  #  #
+    //  # #   ###   ###  #  #   # #  ###
+    //                               #
+    /**
+     * Adds a new map to the list of allowed maps.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async addmap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the map you wish to add with this command.", channel)) {
+            return false;
+        }
+
+        let map;
+        try {
+            map = await Otl.validateMap(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        if (map) {
+            await Discord.queue(`Sorry, ${member}, but ${map.map} is already allowed.`, channel);
+            throw new Warning("Map already allowed.");
+        }
+
+        try {
+            await Otl.addMap(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the map **${message}** is now available for play.`, channel);
+        return true;
+    }
+
+    // ###    ##   # #    ##   # #    ##   # #    ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  ####  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   # #  ###
+    //                                                 #
+    /**
+     * Removes a map from the list of allowed maps.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async removemap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "You must specify the map you wish to remove with this command.", channel)) {
+            return false;
+        }
+
+        let map;
+        try {
+            map = await Otl.validateMap(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        if (map) {
+            await Discord.queue(`Sorry, ${member}, but ${map.map} is not currently allowed.`, channel);
+            throw new Warning("Map not currently allowed.");
+        }
+
+        try {
+            await Otl.removeMap(message);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, the map **${message}** is no longer available for play.`, channel);
+        return true;
+    }
 }
 
 module.exports = Commands;
