@@ -62,6 +62,7 @@ class Cast {
                         <script src="https://player.twitch.tv/js/embed/v1.js"></script>
                         <script src="/js/common.js"></script>
                         <script src="/js/cast.js"></script>
+                        ${Common.favIcon()}
                         <link rel="stylesheet" href="/css/reset.css" />
                         <link rel="stylesheet" href="/css/cast.css" />
                         <script>

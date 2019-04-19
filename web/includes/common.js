@@ -48,6 +48,7 @@ class Common {
                     <meta name="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
                     <meta name="twitter:card" content="summary" />
                     <meta name="twitter:creator" content="@roncli" />
+                    ${Common.favIcon()}
                     <link rel="stylesheet" href="/css/reset.css" />
                     <link rel="stylesheet" href="/css/common.css" />
                     <script src="/js/common.js"></script>
@@ -89,6 +90,32 @@ class Common {
                     </div>
                 </body>
             </html>
+        `;
+    }
+
+    //   #               ###
+    //  # #               #
+    //  #     ###  # #    #     ##    ##   ###
+    // ###   #  #  # #    #    #     #  #  #  #
+    //  #    # ##  # #    #    #     #  #  #  #
+    //  #     # #   #    ###    ##    ##   #  #
+    /**
+     * Returns the HTML to generate the favicon.
+     * @returns {string} The HTML to generate the favicon.
+     */
+    static favIcon() {
+        return /* html */`
+            <meta name="apple-mobile-web-app-title" content="Overload Teams League">
+            <meta name="application-name" content="Overload Teams League">
+            <meta name="msapplication-TileColor" content="#ff9900">
+            <meta name="msapplication-config" content="/images/browserconfig.xml">
+            <meta name="theme-color" content="#ffffff">
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+            <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+            <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+            <link rel="manifest" href="/images/site.webmanifest">
+            <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#ff9900">
+            <link rel="shortcut icon" href="/images/favicon.ico">
         `;
     }
 
