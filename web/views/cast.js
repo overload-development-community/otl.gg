@@ -3,7 +3,7 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
 
     Challenge = require("../../src/challenge"),
-    Db = require("../../src/database"),
+    Db = require("../../src/database/challenge"),
     settings = require("../../settings");
 
 /**
@@ -48,7 +48,7 @@ class Cast {
             /**
              * @type {{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[]}}
              */
-            const data = await Db.getChallengeDataForCast(challenge),
+            const data = await Db.getCastData(challenge),
                 challengingTeamColor = challenge.challengingTeam.role && challenge.challengingTeam.role.color ? challenge.challengingTeam.role.hexColor : "white",
                 challengedTeamColor = challenge.challengedTeam.role && challenge.challengedTeam.role.color ? challenge.challengedTeam.role.hexColor : "white";
 

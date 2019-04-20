@@ -4,7 +4,7 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const Db = require("./database"),
+const Db = require("./database/challenge"),
     Exception = require("./exception"),
     Otl = require("./otl"),
     settings = require("../settings"),
@@ -71,7 +71,7 @@ class Challenge {
     static async create(challengingTeam, challengedTeam, adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow) {
         let data;
         try {
-            data = await Db.createChallenge(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow);
+            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -279,7 +279,7 @@ class Challenge {
     static async getAllByTeam(team) {
         let challenges;
         try {
-            challenges = await Db.getChallengesByTeam(team);
+            challenges = await Db.getAllByTeam(team);
 
             return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
@@ -303,7 +303,7 @@ class Challenge {
     static async getAllByTeams(team1, team2) {
         let challenges;
         try {
-            challenges = await Db.getChallengesByTeams(team1, team2);
+            challenges = await Db.getAllByTeams(team1, team2);
 
             return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
@@ -370,7 +370,7 @@ class Challenge {
     static async getById(id) {
         let data;
         try {
-            data = await Db.getChallengeById(id);
+            data = await Db.getById(id);
         } catch (err) {
             throw new Exception("There was a database error getting a challenge by ID.", err);
         }
@@ -394,7 +394,7 @@ class Challenge {
     static async getByTeams(team1, team2) {
         let data;
         try {
-            data = await Db.getChallengeByTeams(team1, team2);
+            data = await Db.getByTeams(team1, team2);
         } catch (err) {
             throw new Exception("There was a database error getting a challenge by teams.", err);
         }
@@ -430,45 +430,6 @@ class Challenge {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
     }
 
-    //          #     #   ##                 #
-    //          #     #  #  #                #
-    //  ###   ###   ###  #      ###   ###   ###    ##   ###
-    // #  #  #  #  #  #  #     #  #  ##      #    # ##  #  #
-    // # ##  #  #  #  #  #  #  # ##    ##    #    ##    #
-    //  # #   ###   ###   ##    # #  ###      ##   ##   #
-    /**
-     * Adds a caster to the challenge.
-     * @param {DiscordJs.GuildMember} member The caster.
-     * @returns {Promise} A promise that resolves when the caster has been added to the challenge.
-     */
-    async addCaster(member) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.addCasterToChallenge(this, member);
-        } catch (err) {
-            throw new Exception("There was a database error adding a pilot as a caster to a challenge.", err);
-        }
-
-        this.details.caster = member;
-
-        try {
-            await this.channel.overwritePermissions(
-                member,
-                {"VIEW_CHANNEL": true},
-                `${member} is scheduled to cast this match.`
-            );
-
-            await this.updateTopic();
-
-            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
     //          #     #   ##    #           #
     //          #     #  #  #   #           #
     //  ###   ###   ###   #    ###    ###  ###
@@ -486,7 +447,7 @@ class Challenge {
      */
     async addStat(team, pilot, kills, assists, deaths) {
         try {
-            await Db.addStatToChallenge(this, team, pilot, kills, assists, deaths);
+            await Db.addStat(this, team, pilot, kills, assists, deaths);
         } catch (err) {
             throw new Exception("There was a database error adding a stat to a challenge.", err);
         }
@@ -508,7 +469,7 @@ class Challenge {
      */
     async addStreamer(member, twitchName) {
         try {
-            await Db.addStreamerToChallenge(this, member);
+            await Db.addStreamer(this, member);
         } catch (err) {
             throw new Exception("There was a database error adding a pilot as a streamer for a challenge.", err);
         }
@@ -544,7 +505,7 @@ class Challenge {
         switch (decision) {
             case "cancel":
                 try {
-                    await Db.voidChallenge(this);
+                    await Db.void(this);
                 } catch (err) {
                     throw new Exception("There was a database error voiding a challenge.", err);
                 }
@@ -558,7 +519,7 @@ class Challenge {
             {
                 let deadline;
                 try {
-                    deadline = await Db.extendChallenge(this);
+                    deadline = await Db.extend(this);
                 } catch (err) {
                     throw new Exception("There was a database error extending a challenge.", err);
                 }
@@ -587,7 +548,7 @@ class Challenge {
             {
                 let penalizedTeams;
                 try {
-                    penalizedTeams = await Db.voidChallengeWithPenalties(this, teams);
+                    penalizedTeams = await Db.voidWithPenalties(this, teams);
                 } catch (err) {
                     throw new Exception("There was a database error penalizing a challenge.", err);
                 }
@@ -640,7 +601,7 @@ class Challenge {
         }
 
         try {
-            await Db.setTimeForChallenge(this, void 0);
+            await Db.setTime(this);
         } catch (err) {
             throw new Exception("There was a database error setting the time for a challenge.", err);
         }
@@ -674,7 +635,7 @@ class Challenge {
 
         let dates;
         try {
-            dates = await Db.clockChallenge(team, this);
+            dates = await Db.clock(team, this);
         } catch (err) {
             throw new Exception("There was a database error clocking a challenge.", err);
         }
@@ -710,7 +671,7 @@ class Challenge {
         }
 
         try {
-            await Db.closeChallenge(this);
+            await Db.close(this);
         } catch (err) {
             throw new Exception("There was a database error closing a challenge.", err);
         }
@@ -788,7 +749,7 @@ class Challenge {
         }
 
         try {
-            await Db.confirmMapForChallenge(this);
+            await Db.confirmMap(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested neutral map for a challenge.", err);
         }
@@ -821,7 +782,7 @@ class Challenge {
         }
 
         try {
-            this.details.dateConfirmed = await Db.confirmMatch(this);
+            this.details.dateConfirmed = await Db.setConfirmed(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a reported match.", err);
         }
@@ -878,7 +839,7 @@ class Challenge {
         }
 
         try {
-            await Db.setNeutralServerForChallenge(this);
+            await Db.setNeutralServer(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested neutral server for a challenge.", err);
         }
@@ -910,7 +871,7 @@ class Challenge {
         }
 
         try {
-            await Db.confirmTeamSizeForChallenge(this);
+            await Db.confirmTeamSize(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested team size for a challenge.", err);
         }
@@ -944,7 +905,7 @@ class Challenge {
         }
 
         try {
-            await Db.confirmTimeForChallenge(this);
+            await Db.confirmTime(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested time for a challenge.", err);
         }
@@ -1027,7 +988,7 @@ class Challenge {
      */
     async createRematch(team) {
         try {
-            await Db.setRematchedForChallenge(this);
+            await Db.setRematched(this);
         } catch (err) {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
@@ -1051,7 +1012,7 @@ class Challenge {
      */
     async getStatsForTeam(team) {
         try {
-            return (await Db.getTeamStatsForChallenge(this, team)).map((s) => ({pilot: Discord.findGuildMemberById(s.discordId), kills: s.kills, assists: s.assists, deaths: s.deaths}));
+            return (await Db.getStatsForTeam(this, team)).map((s) => ({pilot: Discord.findGuildMemberById(s.discordId), kills: s.kills, assists: s.assists, deaths: s.deaths}));
         } catch (err) {
             throw new Exception("There was a database error loading team stats for a challenge.", err);
         }
@@ -1070,7 +1031,7 @@ class Challenge {
     async loadDetails() {
         let details;
         try {
-            details = await Db.getChallengeDetails(this);
+            details = await Db.getDetails(this);
         } catch (err) {
             throw new Exception("There was a database error loading details for a challenge.", err);
         }
@@ -1136,7 +1097,7 @@ class Challenge {
         }
 
         try {
-            await Db.lockChallenge(this);
+            await Db.setLock(this, true);
         } catch (err) {
             throw new Exception("There was a database error locking a challenge.", err);
         }
@@ -1165,7 +1126,7 @@ class Challenge {
      */
     async notifyClockExpired() {
         try {
-            await Db.notifyClockExpiredForChallenge(this);
+            await Db.setNotifyClockExpired(this);
         } catch (err) {
             throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
         }
@@ -1190,7 +1151,7 @@ class Challenge {
      */
     async notifyMatchMissed() {
         try {
-            await Db.notifyMatchMissedForChallenge(this);
+            await Db.setNotifyMatchMissed(this);
         } catch (err) {
             throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
         }
@@ -1216,7 +1177,7 @@ class Challenge {
      */
     async notifyMatchStarting(matchTime) {
         try {
-            await Db.notifyMatchStartingForChallenge(this);
+            await Db.setNotifyMatchStarting(this);
         } catch (err) {
             throw new Exception("There was a database error notifying a match starting for a challenge.", err);
         }
@@ -1267,7 +1228,7 @@ class Challenge {
         }
 
         try {
-            this.details.map = await Db.pickMapForChallenge(this, number);
+            this.details.map = await Db.pickMap(this, number);
         } catch (err) {
             throw new Exception("There was a database error picking a map for a challenge.", err);
         }
@@ -1278,47 +1239,6 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                                      ##                 #
-    //                                     #  #                #
-    // ###    ##   # #    ##   # #    ##   #      ###   ###   ###    ##   ###
-    // #  #  # ##  ####  #  #  # #   # ##  #     #  #  ##      #    # ##  #  #
-    // #     ##    #  #  #  #  # #   ##    #  #  # ##    ##    #    ##    #
-    // #      ##   #  #   ##    #     ##    ##    # #  ###      ##   ##   #
-    /**
-     * Removes a caster from the challenge.
-     * @param {DiscordJs.GuildMember} member The caster.
-     * @returns {Promise} A promise that resolves when the caster has been removed from the challenge.
-     */
-    async removeCaster(member) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.removeCasterFromChallenge(this);
-        } catch (err) {
-            throw new Exception("There was a database error removing a pilot as a caster from a challenge.", err);
-        }
-
-        this.details.caster = void 0;
-
-        try {
-            if (Discord.findGuildMemberById(member.id)) {
-                await this.channel.overwritePermissions(
-                    member,
-                    {"VIEW_CHANNEL": null},
-                    `${member} is no longer scheduled to cast this match.`
-                );
-            }
-
-            await this.updateTopic();
-
-            await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1335,7 +1255,7 @@ class Challenge {
      */
     async removeStat(pilot) {
         try {
-            await Db.removeStatFromChallenge(this, pilot);
+            await Db.removeStat(this, pilot);
         } catch (err) {
             throw new Exception("There was a database error removing a stat from a challenge.", err);
         }
@@ -1357,7 +1277,7 @@ class Challenge {
      */
     async removeStreamer(member) {
         try {
-            await Db.removeStreamerFromChallenge(this, member);
+            await Db.removeStreamer(this, member);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot as a streamer for a challenge.", err);
         }
@@ -1393,7 +1313,7 @@ class Challenge {
         const winningTeam = losingTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam;
 
         try {
-            this.details.dateReported = await Db.reportMatch(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
+            this.details.dateReported = await Db.report(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
         } catch (err) {
             throw new Exception("There was a database error reporting a challenge.", err);
         }
@@ -1432,12 +1352,51 @@ class Challenge {
      */
     async requestRematch(team) {
         try {
-            await Db.requestRematchForChallenge(this, team);
+            await Db.requestRematch(this, team);
         } catch (err) {
             throw new Exception("There was a database error requesting a rematch.", err);
         }
 
         await Discord.queue(`**${team.name}** is requesting a rematch!  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, do you accept?  The match will be scheduled immediately.  Use the \`!rematch\` command, and the new challenge will be created!`, this.channel);
+    }
+
+    //               #     ##                 #
+    //               #    #  #                #
+    //  ###    ##   ###   #      ###   ###   ###    ##   ###
+    // ##     # ##   #    #     #  #  ##      #    # ##  #  #
+    //   ##   ##     #    #  #  # ##    ##    #    ##    #
+    // ###     ##     ##   ##    # #  ###      ##   ##   #
+    /**
+     * Adds a caster to the challenge.
+     * @param {DiscordJs.GuildMember} member The caster.
+     * @returns {Promise} A promise that resolves when the caster has been added to the challenge.
+     */
+    async setCaster(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setCaster(this, member);
+        } catch (err) {
+            throw new Exception("There was a database error adding a pilot as a caster to a challenge.", err);
+        }
+
+        this.details.caster = member;
+
+        try {
+            await this.channel.overwritePermissions(
+                member,
+                {"VIEW_CHANNEL": true},
+                `${member} is scheduled to cast this match.`
+            );
+
+            await this.updateTopic();
+
+            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //               #    #  #                    #  #              ###
@@ -1460,7 +1419,7 @@ class Challenge {
 
         let homes;
         try {
-            homes = await Db.setHomeMapTeamForChallenge(this, team);
+            homes = await Db.setHomeMapTeam(this, team);
         } catch (err) {
             throw new Exception("There was a database error setting a home map team for a challenge.", err);
         }
@@ -1496,7 +1455,7 @@ class Challenge {
         }
 
         try {
-            await Db.setHomeServerTeamForChallenge(this, team);
+            await Db.setHomeServerTeam(this, team);
         } catch (err) {
             throw new Exception("There was a database error setting a home server team for a challenge.", err);
         }
@@ -1532,7 +1491,7 @@ class Challenge {
         }
 
         try {
-            await Db.setMapForChallenge(this, map);
+            await Db.setMap(this, map);
         } catch (err) {
             throw new Exception("There was a database error setting a map for a challenge.", err);
         }
@@ -1566,7 +1525,7 @@ class Challenge {
         }
 
         try {
-            await Db.setNeutralServerForChallenge(this);
+            await Db.setNeutralServer(this);
         } catch (err) {
             throw new Exception("There was a database error setting a neutral server for a challenge.", err);
         }
@@ -1595,7 +1554,7 @@ class Challenge {
      */
     async setOvertimePeriods(overtimePeriods) {
         try {
-            await Db.setOvertimePeriodsForChallenge(this, overtimePeriods);
+            await Db.setOvertimePeriods(this, overtimePeriods);
         } catch (err) {
             throw new Exception("There was a database error setting the number of overtime periods played for a challenge.", err);
         }
@@ -1613,7 +1572,7 @@ class Challenge {
      */
     async setPostseason() {
         try {
-            await Db.setPostseasonForChallenge(this);
+            await Db.setPostseason(this);
         } catch (err) {
             throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
         }
@@ -1640,7 +1599,7 @@ class Challenge {
      */
     async setRegularSeason() {
         try {
-            await Db.setRegularSeasonForChallenge(this);
+            await Db.setRegularSeason(this);
         } catch (err) {
             throw new Exception("There was a database error setting a challenge to be a regular season match.", err);
         }
@@ -1672,7 +1631,7 @@ class Challenge {
         }
 
         try {
-            await Db.setScoreForChallenge(this, challengingTeamScore, challengedTeamScore);
+            await Db.setScore(this, challengingTeamScore, challengedTeamScore);
         } catch (err) {
             throw new Exception("There was a database error setting the score for a challenge.", err);
         }
@@ -1731,7 +1690,7 @@ class Challenge {
         }
 
         try {
-            await Db.setTeamSizeForChallenge(this, size);
+            await Db.setTeamSize(this, size);
         } catch (err) {
             throw new Exception("There was a database error setting the team size for a challenge.", err);
         }
@@ -1767,7 +1726,7 @@ class Challenge {
         }
 
         try {
-            await Db.setTimeForChallenge(this, date);
+            await Db.setTime(this, date);
         } catch (err) {
             throw new Exception("There was a database error setting the time for a challenge.", err);
         }
@@ -1856,7 +1815,7 @@ class Challenge {
         }
 
         try {
-            await Db.suggestMapForChallenge(this, team, map);
+            await Db.suggestMap(this, team, map);
         } catch (err) {
             throw new Exception("There was a database error suggesting a map for a challenge.", err);
         }
@@ -1891,7 +1850,7 @@ class Challenge {
         }
 
         try {
-            await Db.suggestNeutralServerForChallenge(this, team);
+            await Db.suggestNeutralServer(this, team);
         } catch (err) {
             throw new Exception("There was a database error suggesting a neutral server for a challenge.", err);
         }
@@ -1926,7 +1885,7 @@ class Challenge {
         }
 
         try {
-            await Db.suggestTeamSizeForChallenge(this, team, size);
+            await Db.suggestTeamSize(this, team, size);
         } catch (err) {
             throw new Exception("There was a database error suggesting a team size for a challenge.", err);
         }
@@ -1962,7 +1921,7 @@ class Challenge {
         }
 
         try {
-            await Db.suggestTimeForChallenge(this, team, date);
+            await Db.suggestTime(this, team, date);
         } catch (err) {
             throw new Exception("There was a database error suggesting a time for a challenge.", err);
         }
@@ -2034,7 +1993,7 @@ class Challenge {
         }
 
         try {
-            await Db.setTitleForChallenge(this, title);
+            await Db.setTitle(this, title);
         } catch (err) {
             throw new Exception("There was a database error changing the title for a challenge.", err);
         }
@@ -2070,7 +2029,7 @@ class Challenge {
         }
 
         try {
-            await Db.unlockChallenge(this);
+            await Db.setLock(this, false);
         } catch (err) {
             throw new Exception("There was a database error unlocking a challenge.", err);
         }
@@ -2083,6 +2042,47 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error unlocking a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                           #     ##                 #
+    //                           #    #  #                #
+    // #  #  ###    ###    ##   ###   #      ###   ###   ###    ##   ###
+    // #  #  #  #  ##     # ##   #    #     #  #  ##      #    # ##  #  #
+    // #  #  #  #    ##   ##     #    #  #  # ##    ##    #    ##    #
+    //  ###  #  #  ###     ##     ##   ##    # #  ###      ##   ##   #
+    /**
+     * Removes a caster from the challenge.
+     * @param {DiscordJs.GuildMember} member The caster.
+     * @returns {Promise} A promise that resolves when the caster has been removed from the challenge.
+     */
+    async unsetCaster(member) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setCaster(this);
+        } catch (err) {
+            throw new Exception("There was a database error removing a pilot as a caster from a challenge.", err);
+        }
+
+        this.details.caster = void 0;
+
+        try {
+            if (Discord.findGuildMemberById(member.id)) {
+                await this.channel.overwritePermissions(
+                    member,
+                    {"VIEW_CHANNEL": null},
+                    `${member} is no longer scheduled to cast this match.`
+                );
+            }
+
+            await this.updateTopic();
+
+            await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -2103,7 +2103,7 @@ class Challenge {
         }
 
         try {
-            await Db.unvoidChallenge(this);
+            await Db.unvoid(this);
         } catch (err) {
             throw new Exception("There was a database error unvoiding a challenge.", err);
         }
@@ -2153,7 +2153,7 @@ class Challenge {
 
         let streamers;
         try {
-            streamers = await Db.getStreamersForChallenge(this);
+            streamers = await Db.getStreamers(this);
         } catch (err) {
             streamers = [];
         }
@@ -2240,7 +2240,7 @@ class Challenge {
         }
 
         try {
-            await Db.voidChallenge(this);
+            await Db.void(this);
         } catch (err) {
             throw new Exception("There was a database error voiding a challenge.", err);
         }

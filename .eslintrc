@@ -28,6 +28,7 @@
         "init-declarations": "off",
         "line-comment-position": "off",
         "linebreak-style": "off",
+        "lines-around-comment": "off",
         "max-depth": "off",
         "max-len": "off",
         "max-lines": "off",

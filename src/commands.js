@@ -3512,7 +3512,7 @@ class Commands {
         }
 
         try {
-            await challenge.addCaster(member);
+            await challenge.setCaster(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3554,8 +3554,18 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
+        if (challenge.details.caster) {
+            await Discord.queue(`Sorry, ${member}, but no one is scheduled to cast this match yet.  Did you mean to \`!cast ${challenge.id}\` instead?`, channel);
+            throw new Warning("Caster is already set.");
+        }
+
+        if (challenge.details.caster.id === member.id) {
+            await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} is scheduled to cast this match, not you.`, channel);
+            throw new Warning("Caster is already set.");
+        }
+
         try {
-            await challenge.removeCaster(member);
+            await challenge.unsetCaster(member);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;

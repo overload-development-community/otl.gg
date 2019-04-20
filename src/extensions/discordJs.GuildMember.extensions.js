@@ -343,7 +343,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
     for (const challengeId of castedChallengeIds) {
         const challenge = await Challenge.getById(challengeId);
 
-        await challenge.removeCaster(this);
+        await challenge.unsetCaster(this);
         await challenge.updateTopic();
     }
 
