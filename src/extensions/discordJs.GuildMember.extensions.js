@@ -1,7 +1,8 @@
 const DiscordJs = require("discord.js"),
 
     Challenge = require("../challenge"),
-    Db = require("../database"),
+    Db = require("../database/player"),
+    TeamDb = require("../database/team"),
     Exception = require("../exception"),
     NewTeam = require("../newTeam"),
     settings = require("../../settings"),
@@ -29,7 +30,7 @@ setTimeout(() => {
  */
 DiscordJs.GuildMember.prototype.addTwitchName = async function(name) {
     try {
-        return await Db.addTwitchName(this, name);
+        return await Db.setTwitchName(this, name);
     } catch (err) {
         throw new Exception("There was a database error adding a Twitch name.", err);
     }
@@ -156,7 +157,7 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
  */
 DiscordJs.GuildMember.prototype.getStats = async function() {
     try {
-        return await Db.getStatsForPilot(this);
+        return await Db.getStats(this);
     } catch (err) {
         throw new Exception("There was a database error getting the stats for a pilot.", err);
     }
@@ -190,12 +191,12 @@ DiscordJs.GuildMember.prototype.getTeam = function() {
  */
 DiscordJs.GuildMember.prototype.getTimezone = async function() {
     try {
-        const timezone = await Db.getTimezoneForPilot(this);
+        const timezone = await Db.getTimezone(this);
         if (timezone) {
             return timezone;
         }
 
-        const team = new Team(await Db.getTeamByPilot(this));
+        const team = new Team(await TeamDb.getByPilot(this));
         if (team) {
             const teamTimezone = await team.getTimezone();
             if (teamTimezone) {
@@ -335,7 +336,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
 
     let castedChallengeIds;
     try {
-        castedChallengeIds = await Db.getCastedChallengeIdsForPilot(this);
+        castedChallengeIds = await Db.getCastedChallenges(this);
     } catch (err) {
         throw new Exception("There was a database error getting a pilot's casted matches.", err);
     }
@@ -397,7 +398,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
  */
 DiscordJs.GuildMember.prototype.removeTwitchName = async function() {
     try {
-        return await Db.removeTwitchName(this);
+        return await Db.unsetTwitchName(this);
     } catch (err) {
         throw new Exception("There was a database error adding a Twitch name.", err);
     }
@@ -449,7 +450,7 @@ DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
  */
 DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
     try {
-        await Db.setTimezoneForPilot(this, timezone);
+        await Db.setTimezone(this, timezone);
     } catch (err) {
         throw new Exception("There was a database error setting a pilot's time zone.", err);
     }
@@ -469,14 +470,14 @@ DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
  */
 DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
     try {
-        await Db.updateName(this);
+        await Db.setName(this);
     } catch (err) {
         throw new Exception("There was a database error updating the pilot's name.", err);
     }
 
     let castedChallengeIds;
     try {
-        castedChallengeIds = await Db.getCastedChallengeIdsForPilot(this);
+        castedChallengeIds = await Db.getCastedChallenges(this);
     } catch (err) {
         throw new Exception("There was a database error getting a pilot's casted matches.", err);
     }
