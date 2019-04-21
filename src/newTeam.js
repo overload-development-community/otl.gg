@@ -4,7 +4,7 @@
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
  */
 
-const Db = require("./database"),
+const Db = require("./database/newTeam"),
     Exception = require("./exception"),
     Team = require("./team");
 
@@ -59,7 +59,7 @@ class NewTeam {
     static async create(member) {
         let data;
         try {
-            data = await Db.startCreateTeam(member);
+            data = await Db.create(member);
         } catch (err) {
             throw new Exception("There was a database error starting to create a team.", err);
         }
@@ -136,7 +136,7 @@ class NewTeam {
     static async getByPilot(pilot) {
         let data;
         try {
-            data = await Db.getNewTeam(pilot);
+            data = await Db.getByPilot(pilot);
         } catch (err) {
             throw new Exception("There was a database error getting a pilot's new team creation object.", err);
         }
@@ -199,7 +199,7 @@ class NewTeam {
      */
     async delete(reason) {
         try {
-            await Db.cancelCreateTeam(this);
+            await Db.delete(this);
         } catch (err) {
             throw new Exception("There was a database error removing a new team creation record.", err);
         }
@@ -224,7 +224,7 @@ class NewTeam {
      */
     async setName(name) {
         try {
-            await Db.applyTeamName(this, name);
+            await Db.setName(this, name);
         } catch (err) {
             throw new Exception("There was a database error setting a new team's name.", err);
         }
@@ -252,7 +252,7 @@ class NewTeam {
      */
     async setTag(tag) {
         try {
-            await Db.applyTeamTag(this, tag);
+            await Db.setTag(this, tag);
         } catch (err) {
             throw new Exception("There was a database error setting a new team's tag.", err);
         }
