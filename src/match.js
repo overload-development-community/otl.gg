@@ -2,7 +2,7 @@ const Common = require("../web/includes/common"),
     Teams = require("../web/includes/teams"),
 
     Log = require("./log"),
-    Db = require("./database");
+    Db = require("./database/match");
 
 /** @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} Team */
 
@@ -14,7 +14,7 @@ const Common = require("../web/includes/common"),
 //  #   #  #   #   #  #  #   #  #   #
 //  #   #   ####    ##    ###   #   #
 /**
- * A class that represents a match.
+ * A class that handles match-related functions.
  */
 class Match {
     //              #    #  #         #          #                  ###          ##
@@ -33,7 +33,7 @@ class Match {
     static async getMatchesBySeason(season, page) {
         let completed, stats, standings;
         try {
-            ({completed, stats, standings} = await Db.getSeasonMatchesByPage(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page));
+            ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page));
         } catch (err) {
             Log.exception("There was a database error retrieving matches by page.", err);
         }
@@ -110,7 +110,7 @@ class Match {
     static async getPendingMatches(season) {
         let matches, standings, completed;
         try {
-            ({matches, standings, completed} = await Db.getPendingMatches(isNaN(season) ? void 0 : season));
+            ({matches, standings, completed} = await Db.getPending(isNaN(season) ? void 0 : season));
         } catch (err) {
             Log.exception("There was a database error retrieving pending matches.", err);
             throw err;

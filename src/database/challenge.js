@@ -11,6 +11,15 @@ const Db = require("node-database"),
 
     db = new Db(settings.database);
 
+//   ###   #              ##     ##                                ####   #
+//  #   #  #               #      #                                 #  #  #
+//  #      # ##    ###     #      #     ###   # ##    ## #   ###    #  #  # ##
+//  #      ##  #      #    #      #    #   #  ##  #  #  #   #   #   #  #  ##  #
+//  #      #   #   ####    #      #    #####  #   #   ##    #####   #  #  #   #
+//  #   #  #   #  #   #    #      #    #      #   #  #      #       #  #  ##  #
+//   ###   #   #   ####   ###    ###    ###   #   #   ###    ###   ####   # ##
+//                                                   #   #
+//                                                    ###
 /**
  * A class that handles calls to the database for challenges.
  */
