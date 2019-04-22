@@ -1,4 +1,5 @@
 /**
+ * @typedef {import("../challenge")} Challenge
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  */
@@ -46,6 +47,57 @@ class TeamDb {
             WHERE TeamId IN (SELECT TeamId FROM tblRoster WHERE PlayerId = @playerId)
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {member, id: data.recordsets[0][0].TeamId, name: data.recordsets[0][0].Name, tag: data.recordsets[0][0].Tag, isFounder: !!data.recordsets[0][0].IsFounder, locked: !!data.recordsets[0][0].Locked} || void 0;
+    }
+
+    //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
+    //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
+    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #    #   # ##  #  #  ##     #  #  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #  #  #     #  #  ##    # ##    ##   #  #  #  #  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //       #                                                            ###                                                                                                                                   ###
+    /**
+     * Updates the ratins for the season based on the challenge supplied.
+     * @param {Challenge} challenge The challenge in the season to update ratings for.
+     * @param {Object<number, number>} ratings The ratings.
+     * @returns {Promise} A promise that resolves when the ratings are updated.
+     */
+    static async updateRatingsForSeasonFromChallenge(challenge, ratings) {
+        let sql = /* sql */`
+            DECLARE @matchTime DATETIME
+            DECLARE @season INT
+
+            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
+
+            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+            BEGIN
+                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+            END
+
+            SELECT @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
+
+            DELETE FROM tblTeamRating WHERE Season = @season
+        `;
+
+        const params = {
+            challengeId: {type: Db.INT, value: challenge.id}
+        };
+
+        for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: r, rating: ratings[r], index: i}))) {
+            sql = /* sql */`
+                ${sql}
+
+                INSERT INTO tblTeamRating
+                (Season, TeamId, Rating)
+                VALUES
+                (@season, @team${index}Id, @rating${index})
+            `;
+
+            params[`team${index}id`] = {type: Db.INT, value: teamId};
+            params[`rating${index}`] = {type: Db.FLOAT, value: rating};
+        }
+
+        await db.query(sql, params);
     }
 }
 

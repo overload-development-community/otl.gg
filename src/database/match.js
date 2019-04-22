@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("../challenge")} Challenge
+ */
+
 const Db = require("node-database"),
 
     settings = require("../../settings"),
@@ -245,6 +249,118 @@ class MatchDb {
             })),
             completed: data.recordsets[2] && data.recordsets[2][0] && data.recordsets[2][0].Completed || 0
         } || {matches: [], standings: [], completed: 0};
+    }
+
+    //              #     ##                                  ###          #          ####                     ##   #           ##    ##
+    //              #    #  #                                 #  #         #          #                       #  #  #            #     #
+    //  ###   ##   ###    #     ##    ###   ###    ##   ###   #  #   ###  ###    ###  ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##   #      #   # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  ##   ##     #    #  #  ##    # ##    ##   #  #  #  #  #  #  # ##   #    # ##  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##     ##   ##    ##    # #  ###     ##   #  #  ###    # #    ##   # #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //  ###                                                                                                                                              ###
+    /**
+     * Gets the season data from a challenge that is in the desired season.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<{matches: {challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
+     */
+    static async getSeasonDataFromChallenge(challenge) {
+        /**
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @matchTime DATETIME
+            DECLARE @k FLOAT
+            DECLARE @season INT
+
+            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
+
+            IF @matchTime IS NOT NULL
+            BEGIN
+                IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
+                BEGIN
+                    SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
+                END
+
+                WHILE NOT EXISTS(SELECT TOP 1 1 FROM tblSeason WHERE DateStart <= @matchTime And DateEnd > @matchTime)
+                BEGIN
+                    INSERT INTO tblSeason
+                    (Season, K, DateStart, DateEnd)
+                    SELECT TOP 1
+                        Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
+                    FROM tblSeason
+                    ORDER BY Season DESC
+                END
+
+                SELECT @k = K, @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
+
+                SELECT
+                    ChallengingTeamId,
+                    ChallengedTeamId,
+                    ChallengingTeamScore,
+                    ChallengedTeamScore
+                FROM vwCompletedChallenge
+                WHERE Season = @season
+                    AND Postseason = 0
+                ORDER BY MatchTime, ChallengeId
+
+                SELECT @k K
+            END
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets.length === 2 && {
+            matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamScore: row.ChallengedTeamScore
+            })) || [],
+            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
+        } || void 0;
+    }
+
+    //              #    #  #                           #
+    //              #    #  #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #
+    //  ###                    #                                    ###
+    /**
+     * Gets the upcoming scheduled matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the upcoming matches.
+     */
+    static async getUpcoming() {
+        /**
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT c.ChallengeId,
+                t1.Tag ChallengingTeamTag,
+                t1.Name ChallengingTeamName,
+                t2.Tag ChallengedTeamTag,
+                t2.Name ChallengedTeamName,
+                c.MatchTime,
+                c.Map,
+                p.TwitchName
+            FROM tblChallenge c
+            INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
+            INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+            LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
+            WHERE c.MatchTime IS NOT NULL
+                AND c.DateConfirmed IS NULL
+                AND c.DateClosed IS NULL
+                AND c.DateVoided IS NULL
+            ORDER BY c.MatchTime
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            challengeId: row.ChallengeId,
+            challengingTeamTag: row.ChallengingTeamTag,
+            challengingTeamName: row.ChallengingTeamName,
+            challengedTeamTag: row.ChallengedTeamTag,
+            challengedTeamName: row.ChallengedTeamName,
+            matchTime: row.MatchTime,
+            map: row.Map,
+            twitchName: row.TwitchName
+        })) || [];
     }
 }
 

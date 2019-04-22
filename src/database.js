@@ -56,51 +56,6 @@ class Database {
         });
     }
 
-    //          #     #  ####                     #
-    //          #     #  #                        #
-    //  ###   ###   ###  ###   # #    ##   ###   ###
-    // #  #  #  #  #  #  #     # #   # ##  #  #   #
-    // # ##  #  #  #  #  #     # #   ##    #  #   #
-    //  # #   ###   ###  ####   #     ##   #  #    ##
-    /**
-     * Adds an event.
-     * @param {string} title The title of the event.
-     * @param {Date} dateStart The start of the event.
-     * @param {Date} dateEnd The end of the event.
-     * @returns {Promise} A promise that resolves when the event is added.
-     */
-    static async addEvent(title, dateStart, dateEnd) {
-        await db.query(/* sql */`
-            INSERT INTO tblEvent (Title, DateStart, DateEnd) VALUES (@title, @dateStart, @dateEnd)
-        `, {
-            title: {type: Db.VARCHAR(200), value: title},
-            dateStart: {type: Db.DATETIME, value: dateStart},
-            dateEnd: {type: Db.DATETIME, value: dateEnd}
-        });
-    }
-
-    //          #     #  #  #
-    //          #     #  ####
-    //  ###   ###   ###  ####   ###  ###
-    // #  #  #  #  #  #  #  #  #  #  #  #
-    // # ##  #  #  #  #  #  #  # ##  #  #
-    //  # #   ###   ###  #  #   # #  ###
-    //                               #
-    /**
-     * Adds a map to the database.
-     * @param {string} map The map to add.
-     * @param {boolean} [stock] Whether or not this is a stock map.
-     * @returns {Promise} A promise that resolves when the map has been added.
-     */
-    static async addMap(map, stock) {
-        await db.query(/* sql */`
-            INSERT INTO tblAllowedMap (Map, Stock) VALUES (@map, @stock)
-        `, {
-            map: {type: Db.VARCHAR(100), value: map},
-            stock: {type: Db.BIT, value: !!stock}
-        });
-    }
-
     //          #     #  ###    #    ##           #    ###         ###
     //          #     #  #  #         #           #     #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
@@ -871,72 +826,6 @@ class Database {
         } || void 0;
     }
 
-    //              #     ##                                  ###          #          ####                     ##   #           ##    ##
-    //              #    #  #                                 #  #         #          #                       #  #  #            #     #
-    //  ###   ##   ###    #     ##    ###   ###    ##   ###   #  #   ###  ###    ###  ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
-    // #  #  # ##   #      #   # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
-    //  ##   ##     #    #  #  ##    # ##    ##   #  #  #  #  #  #  # ##   #    # ##  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
-    // #      ##     ##   ##    ##    # #  ###     ##   #  #  ###    # #    ##   # #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
-    //  ###                                                                                                                                              ###
-    /**
-     * Gets the season data from a challenge that is in the desired season.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{matches: {challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
-     */
-    static async getSeasonDataFromChallenge(challenge) {
-        /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number}[]]}}
-         */
-        const data = await db.query(/* sql */`
-            DECLARE @matchTime DATETIME
-            DECLARE @k FLOAT
-            DECLARE @season INT
-
-            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
-
-            IF @matchTime IS NOT NULL
-            BEGIN
-                IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
-                BEGIN
-                    SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
-                END
-
-                WHILE NOT EXISTS(SELECT TOP 1 1 FROM tblSeason WHERE DateStart <= @matchTime And DateEnd > @matchTime)
-                BEGIN
-                    INSERT INTO tblSeason
-                    (Season, K, DateStart, DateEnd)
-                    SELECT TOP 1
-                        Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
-                    FROM tblSeason
-                    ORDER BY Season DESC
-                END
-
-                SELECT @k = K, @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
-
-                SELECT
-                    ChallengingTeamId,
-                    ChallengedTeamId,
-                    ChallengingTeamScore,
-                    ChallengedTeamScore
-                FROM vwCompletedChallenge
-                WHERE Season = @season
-                    AND Postseason = 0
-                ORDER BY MatchTime, ChallengeId
-
-                SELECT @k K
-            END
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
-        return data && data.recordsets && data.recordsets.length === 2 && {
-            matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
-                challengingTeamId: row.ChallengingTeamId,
-                challengedTeamId: row.ChallengedTeamId,
-                challengingTeamScore: row.ChallengingTeamScore,
-                challengedTeamScore: row.ChallengedTeamScore
-            })) || [],
-            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
-        } || void 0;
-    }
-
     //              #    ###                     ###         ###      #
     //              #     #                      #  #         #       #
     //  ###   ##   ###    #     ##    ###  # #   ###   #  #   #     ###
@@ -1365,82 +1254,6 @@ class Database {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Timezone || void 0;
     }
 
-    //              #    #  #                           #                ####                     #
-    //              #    #  #                                            #                        #
-    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ###   # #    ##   ###   ###    ###
-    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  #     # #   # ##  #  #   #    ##
-    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #     # #   ##    #  #   #      ##
-    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     ####   #     ##   #  #    ##  ###
-    //  ###                    #                                    ###
-    /**
-     * Gets the upcoming scheduled events.
-     * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
-     */
-    static async getUpcomingEvents() {
-        /**
-         * @type {{recordsets: [{Title: string, DateStart: Date, DateEnd: Date}[]]}}
-         */
-        const data = await db.query(/* sql */`
-            SELECT Title, DateStart, DateEnd
-            FROM tblEvent
-            WHERE (DateStart >= GETUTCDATE() AND DateStart <= DATEADD(DAY, 28, GETUTCDATE())) OR (DateStart < GETUTCDATE() AND DateEnd > GETUTCDATE())
-            ORDER BY
-                CASE WHEN DateStart < GETUTCDATE() THEN 0 ELSE 1 END,
-                CASE WHEN DateStart < GETUTCDATE() THEN DateStart ELSE DateEnd END
-        `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
-            title: row.Title,
-            dateStart: row.DateStart,
-            dateEnd: row.DateEnd
-        })) || [];
-    }
-
-    //              #    #  #                           #                #  #         #          #
-    //              #    #  #                                            ####         #          #
-    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
-    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
-    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
-    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
-    //  ###                    #                                    ###
-    /**
-     * Gets the upcoming scheduled matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the upcoming matches.
-     */
-    static async getUpcomingMatches() {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string}[]]}}
-         */
-        const data = await db.query(/* sql */`
-            SELECT c.ChallengeId,
-                t1.Tag ChallengingTeamTag,
-                t1.Name ChallengingTeamName,
-                t2.Tag ChallengedTeamTag,
-                t2.Name ChallengedTeamName,
-                c.MatchTime,
-                c.Map,
-                p.TwitchName
-            FROM tblChallenge c
-            INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
-            INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
-            LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
-            WHERE c.MatchTime IS NOT NULL
-                AND c.DateConfirmed IS NULL
-                AND c.DateClosed IS NULL
-                AND c.DateVoided IS NULL
-            ORDER BY c.MatchTime
-        `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
-            challengeId: row.ChallengeId,
-            challengingTeamTag: row.ChallengingTeamTag,
-            challengingTeamName: row.ChallengingTeamName,
-            challengedTeamTag: row.ChallengedTeamTag,
-            challengedTeamName: row.ChallengedTeamName,
-            matchTime: row.MatchTime,
-            map: row.Map,
-            twitchName: row.TwitchName
-        })) || [];
-    }
-
     //  #                 #     #          ###    #    ##           #    ###         ###
     //                          #          #  #         #           #     #           #
     // ##    ###   # #   ##    ###    ##   #  #  ##     #     ##   ###    #     ##    #     ##    ###  # #
@@ -1725,43 +1538,6 @@ class Database {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             teamId: {type: Db.INT, value: team.id}
         });
-    }
-
-    //                                     ####                     #
-    //                                     #                        #
-    // ###    ##   # #    ##   # #    ##   ###   # #    ##   ###   ###
-    // #  #  # ##  ####  #  #  # #   # ##  #     # #   # ##  #  #   #
-    // #     ##    #  #  #  #  # #   ##    #     # #   ##    #  #   #
-    // #      ##   #  #   ##    #     ##   ####   #     ##   #  #    ##
-    /**
-     * Removes an event from the databse.
-     * @param {string} title The title of the event.
-     * @returns {Promise} A promise that resolves when the event has been removed.
-     */
-    static async removeEvent(title) {
-        await db.query(/* sql */`
-            DELETE FROM tblEvent WHERE Title = @title
-        `, {
-            title: {type: Db.VARCHAR(200), value: title}
-        });
-    }
-
-    //                                     #  #
-    //                                     ####
-    // ###    ##   # #    ##   # #    ##   ####   ###  ###
-    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  #  #
-    // #     ##    #  #  #  #  # #   ##    #  #  # ##  #  #
-    // #      ##   #  #   ##    #     ##   #  #   # #  ###
-    //                                                 #
-    /**
-     * Removes a map from the database.
-     * @param {string} map The map to remove.
-     * @returns {Promise} A promise that resolves when the map has been removed.
-     */
-    static async removeMap(map) {
-        await db.query(/* sql */`
-            DELETE FROM tblAllowedMap WHERE Map = @map
-        `, {map: {type: Db.VARCHAR(100), value: map}});
     }
 
     //                                     ###    #    ##           #    ####                    ###
@@ -2143,79 +1919,6 @@ class Database {
             dateClosed: row.DateClosed,
             overtimePeriods: row.OvertimePeriods
         })) || [];
-    }
-
-    //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
-    //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
-    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
-    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #    #   # ##  #  #  ##     #  #  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
-    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #  #  #     #  #  ##    # ##    ##   #  #  #  #  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
-    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
-    //       #                                                            ###                                                                                                                                   ###
-    /**
-     * Updates the ratins for the season based on the challenge supplied.
-     * @param {Challenge} challenge The challenge in the season to update ratings for.
-     * @param {Object<number, number>} ratings The ratings.
-     * @returns {Promise} A promise that resolves when the ratings are updated.
-     */
-    static async updateRatingsForSeasonFromChallenge(challenge, ratings) {
-        let sql = /* sql */`
-            DECLARE @matchTime DATETIME
-            DECLARE @season INT
-
-            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
-
-            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
-            BEGIN
-                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
-            END
-
-            SELECT @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
-
-            DELETE FROM tblTeamRating WHERE Season = @season
-        `;
-
-        const params = {
-            challengeId: {type: Db.INT, value: challenge.id}
-        };
-
-        for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: r, rating: ratings[r], index: i}))) {
-            sql = /* sql */`
-                ${sql}
-
-                INSERT INTO tblTeamRating
-                (Season, TeamId, Rating)
-                VALUES
-                (@season, @team${index}Id, @rating${index})
-            `;
-
-            params[`team${index}id`] = {type: Db.INT, value: teamId};
-            params[`rating${index}`] = {type: Db.FLOAT, value: rating};
-        }
-
-        await db.query(sql, params);
-    }
-
-    //             ##     #       #         #          #  #
-    //              #             #         #          ####
-    // # #    ###   #    ##     ###   ###  ###    ##   ####   ###  ###
-    // # #   #  #   #     #    #  #  #  #   #    # ##  #  #  #  #  #  #
-    // # #   # ##   #     #    #  #  # ##   #    ##    #  #  # ##  #  #
-    //  #     # #  ###   ###    ###   # #    ##   ##   #  #   # #  ###
-    //                                                             #
-    /**
-     * Validates a map.
-     * @param {string} map The map.
-     * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the validated map.
-     */
-    static async validateMap(map) {
-        /**
-         * @type {{recordsets: [{Map: string, Stock: boolean}[]]}}
-         */
-        const data = await db.query(/* sql */`
-            SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map
-        `, {map: {type: Db.VARCHAR(100), value: map}});
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {map: data.recordsets[0][0].Map, stock: data.recordsets[0][0].Stock} || void 0;
     }
 }
 

@@ -2,9 +2,12 @@
  * @typedef {import("./challenge")} Challenge
  */
 
-const Db = require("./database"),
-    Elo = require("./elo"),
-    Exception = require("./exception");
+const Elo = require("./elo"),
+    EventDb = require("./database/event"),
+    Exception = require("./exception"),
+    MapDb = require("./database/map"),
+    MatchDb = require("./database/match"),
+    TeamDb = require("./database/team");
 
 //   ###    #      ##
 //  #   #   #       #
@@ -32,7 +35,7 @@ class Otl {
      */
     static async addEvent(title, dateStart, dateEnd) {
         try {
-            await Db.addEvent(title, dateStart, dateEnd);
+            await EventDb.create(title, dateStart, dateEnd);
         } catch (err) {
             throw new Exception("There was a database error adding an event.", err);
         }
@@ -52,7 +55,7 @@ class Otl {
      */
     static async addMap(map) {
         try {
-            await Db.addMap(map);
+            await MapDb.create(map);
         } catch (err) {
             throw new Exception("There was a database error adding a map.", err);
         }
@@ -71,7 +74,7 @@ class Otl {
      */
     static async removeEvent(title) {
         try {
-            await Db.removeEvent(title);
+            await EventDb.remove(title);
         } catch (err) {
             throw new Exception("There was a database error removing an event.", err);
         }
@@ -91,7 +94,7 @@ class Otl {
      */
     static async removeMap(map) {
         try {
-            await Db.removeMap(map);
+            await MapDb.remove(map);
         } catch (err) {
             throw new Exception("There was a database error removing a map.", err);
         }
@@ -111,7 +114,7 @@ class Otl {
     static async upcomingEvents() {
         let events;
         try {
-            events = await Db.getUpcomingEvents();
+            events = await EventDb.getUpcoming();
         } catch (err) {
             throw new Exception("There was a database error getting the upcoming events.", err);
         }
@@ -133,7 +136,7 @@ class Otl {
     static async upcomingMatches() {
         let matches;
         try {
-            matches = await Db.getUpcomingMatches();
+            matches = await MatchDb.getUpcoming();
         } catch (err) {
             throw new Exception("There was a database error getting the upcoming matches.", err);
         }
@@ -156,7 +159,7 @@ class Otl {
     static async updateRatingsForSeasonFromChallenge(challenge) {
         let data;
         try {
-            data = await Db.getSeasonDataFromChallenge(challenge);
+            data = await MatchDb.getSeasonDataFromChallenge(challenge);
         } catch (err) {
             throw new Exception("There was a database error getting the season's matches.", err);
         }
@@ -168,7 +171,7 @@ class Otl {
         const ratings = Elo.calculateRatings(data.matches, data.k);
 
         try {
-            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings);
+            await TeamDb.updateRatingsForSeasonFromChallenge(challenge, ratings);
         } catch (err) {
             throw new Exception("There was a database error updating season ratings.", err);
         }
@@ -188,7 +191,7 @@ class Otl {
      */
     static async validateMap(map) {
         try {
-            return await Db.validateMap(map);
+            return await MapDb.validate(map);
         } catch (err) {
             throw new Exception("There was a database error validating a map.", err);
         }
