@@ -10,7 +10,7 @@
  * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
-const Db = require("./database"),
+const Db = require("./database/team"),
     Exception = require("./exception"),
     Log = require("./log"),
     settings = require("../settings");
@@ -81,7 +81,7 @@ class Team {
     static async create(newTeam) {
         let teamData;
         try {
-            teamData = await Db.createTeam(newTeam);
+            teamData = await Db.create(newTeam);
         } catch (err) {
             throw new Exception("There was a database error creating a team.", err);
         }
@@ -114,7 +114,7 @@ class Team {
     static async getById(id) {
         let data;
         try {
-            data = await Db.getTeamById(id);
+            data = await Db.getById(id);
         } catch (err) {
             throw new Exception("There was a database error getting a team by team ID.", err);
         }
@@ -137,7 +137,7 @@ class Team {
     static async getByPilot(pilot) {
         let data;
         try {
-            data = await Db.getTeamByPilot(pilot);
+            data = await Db.getByPilot(pilot);
         } catch (err) {
             throw new Exception("There was a database error getting a team by pilot.", err);
         }
@@ -160,7 +160,7 @@ class Team {
     static async getByNameOrTag(name) {
         let data;
         try {
-            data = await Db.getAnyTeamByNameOrTag(name);
+            data = await Db.getByNameOrTag(name);
         } catch (err) {
             throw new Exception("There was a database error getting a team by name or tag.", err);
         }
@@ -480,7 +480,7 @@ class Team {
      */
     async addPilot(member) {
         try {
-            await Db.addPilotToTeam(member, this);
+            await Db.addPilot(member, this);
         } catch (err) {
             throw new Exception("There was a database error adding a pilot to a team.", err);
         }
@@ -538,7 +538,7 @@ class Team {
      */
     async applyHomeMap(member, number, map) {
         try {
-            await Db.applyHomeMap(this, number, map);
+            await Db.updateHomeMap(this, number, map);
         } catch (err) {
             throw new Exception("There was a database error setting a home map.", err);
         }
@@ -607,7 +607,7 @@ class Team {
     async disband(member) {
         let challengeIds;
         try {
-            challengeIds = await Db.disbandTeam(this);
+            challengeIds = await Db.disband(this);
         } catch (err) {
             throw new Exception("There was a database error disbanding a team.", err);
         }
@@ -711,7 +711,7 @@ class Team {
      */
     async getClockedChallengeCount() {
         try {
-            return await Db.clockedChallengeCountForTeam(this);
+            return await Db.getClockedChallengeCount(this);
         } catch (err) {
             throw new Exception("There was a database error getting the number of clocked challenges for a team.", err);
         }
@@ -730,7 +730,7 @@ class Team {
      */
     async getHomeMaps() {
         try {
-            return await Db.getTeamHomeMaps(this);
+            return await Db.getHomeMaps(this);
         } catch (err) {
             throw new Exception("There was a database error getting the home maps for the team the pilot is on.", err);
         }
@@ -749,7 +749,7 @@ class Team {
      */
     async getInfo() {
         try {
-            return await Db.getTeamInfo(this);
+            return await Db.getInfo(this);
         } catch (err) {
             throw new Exception("There was a database error getting the team info.", err);
         }
@@ -768,7 +768,7 @@ class Team {
      */
     async getNextClockDate() {
         try {
-            return await Db.getNextClockDateForTeam(this);
+            return await Db.getNextClockDate(this);
         } catch (err) {
             throw new Exception("There was a database error getting a team's next clock date.", err);
         }
@@ -787,7 +787,7 @@ class Team {
      */
     async getPilotAndInvitedCount() {
         try {
-            return await Db.getTeamPilotAndInvitedCount(this);
+            return await Db.getPilotAndInvitedCount(this);
         } catch (err) {
             throw new Exception("There was a database error getting the number of pilots on and invited to a team.", err);
         }
@@ -806,7 +806,7 @@ class Team {
      */
     async getPilotCount() {
         try {
-            return await Db.getTeamPilotCount(this);
+            return await Db.getPilotCount(this);
         } catch (err) {
             throw new Exception("There was a database error getting the number of pilots on a team.", err);
         }
@@ -825,7 +825,7 @@ class Team {
      */
     async getTimezone() {
         try {
-            return await Db.getTimezoneForTeam(this) || settings.defaultTimezone;
+            return await Db.getTimezone(this) || settings.defaultTimezone;
         } catch (err) {
             return settings.defaultTimezone;
         }
@@ -844,7 +844,7 @@ class Team {
      */
     async hasClockedThisSeason(team) {
         try {
-            return await Db.teamHasClockedTeamThisSeason(this, team);
+            return await Db.hasClockedTeamThisSeason(this, team);
         } catch (err) {
             throw new Exception("There was a database error getting whether a team has clocked another team this season.", err);
         }
@@ -864,7 +864,7 @@ class Team {
      */
     async hasStockHomeMap(excludeNumber) {
         try {
-            return await Db.teamHasStockHomeMap(this, excludeNumber);
+            return await Db.hasStockHomeMap(this, excludeNumber);
         } catch (err) {
             throw new Exception("There was a database error checking whether a team has a stock home map.", err);
         }
@@ -884,7 +884,7 @@ class Team {
      */
     async invitePilot(fromMember, toMember) {
         try {
-            await Db.invitePilotToTeam(this, toMember);
+            await Db.invitePilot(this, toMember);
         } catch (err) {
             throw new Exception("There was a database error inviting a pilot to a team.", err);
         }
@@ -988,7 +988,7 @@ class Team {
         const team = await member.getTeam();
 
         try {
-            await Db.removePilotFromTeam(member, this);
+            await Db.removePilot(member, this);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot from a team.", err);
         }
@@ -1053,7 +1053,7 @@ class Team {
      */
     async reinstate(member) {
         try {
-            await Db.reinstateTeam(member, this);
+            await Db.reinstate(member, this);
         } catch (err) {
             throw new Exception("There was a database error reinstating a team.", err);
         }
@@ -1155,7 +1155,7 @@ class Team {
      */
     async removePilot(member, pilot) {
         try {
-            await Db.removePilotFromTeam(pilot, this);
+            await Db.removePilot(pilot, this);
         } catch (err) {
             throw new Exception("There was a database error removing a pilot from a team.", err);
         }
@@ -1226,7 +1226,7 @@ class Team {
             role = this.role;
 
         try {
-            await Db.renameTeam(this, name);
+            await Db.setName(this, name);
         } catch (err) {
             throw new Exception("There was a database error renaming a team.", err);
         }
@@ -1372,7 +1372,7 @@ class Team {
             captainsVoiceChannel = this.captainsVoiceChannel;
 
         try {
-            await Db.retagTeam(this, tag);
+            await Db.setTag(this, tag);
         } catch (err) {
             throw new Exception("There was a database error renaming a team tag.", err);
         }
@@ -1439,7 +1439,7 @@ class Team {
      */
     async setLock(locked) {
         try {
-            await Db.setTeamRosterLock(this, locked);
+            await Db.setLocked(this, locked);
         } catch (err) {
             throw new Exception("There was a database error setting a team's roster lock state.", err);
         }
@@ -1458,7 +1458,7 @@ class Team {
      */
     async setTimezone(timezone) {
         try {
-            await Db.setTimezoneForTeam(this, timezone);
+            await Db.setTimezone(this, timezone);
         } catch (err) {
             throw new Exception("There was a database error setting a team's timezone.", err);
         }
@@ -1725,7 +1725,7 @@ class Team {
 
             let teamInfo;
             try {
-                teamInfo = await Db.getTeamInfo(this);
+                teamInfo = await Db.getInfo(this);
             } catch (err) {
                 Log.exception(`There was a database error retrieving team information.  Please update ${this.name} manually.`, err);
                 return;
