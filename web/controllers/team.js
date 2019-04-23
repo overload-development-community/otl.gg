@@ -47,7 +47,7 @@ class TeamPage {
                 seasonList = await Season.getSeasonNumbers(),
                 season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
                 postseason = !!req.query.postseason,
-                teamData = await Db.getTeamData(pageTeam, season, postseason),
+                teamData = await Team.getData(pageTeam, season, postseason),
                 teams = new Teams();
             let team;
 

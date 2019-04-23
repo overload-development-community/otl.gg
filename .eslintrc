@@ -129,8 +129,7 @@
         {
             "files": ["public/views/**/*.js"],
             "rules": {
-                "no-implicit-globals": "off",
-                "no-undef": "off"
+                "no-implicit-globals": "off"
             }
         }
     ]

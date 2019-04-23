@@ -10,7 +10,7 @@
 //  #   #  #   #   #  #  #   #  #   #
 //  #   #   ####    ##    ###   #   #
 /**
- * A class that represents the match template.
+ * A class that represents the match view.
  */
 class Match {
     //              #
@@ -21,7 +21,7 @@ class Match {
     // #      ##     ##
     //  ###
     /**
-     * Gets the match.
+     * Gets the match template.
      * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
@@ -91,8 +91,8 @@ class Match {
 }
 
 // @ts-ignore
-Match.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common;
+Match.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 
 if (typeof module !== "undefined") {
-    module.exports = Match;
+    module.exports = Match; // eslint-disable-line no-undef
 }

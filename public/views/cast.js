@@ -1,0 +1,175 @@
+/**
+ * @typedef {import("../../src/models/challenge")} Challenge
+ * @typedef {{name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}} Roster
+ */
+
+//   ###                  #
+//  #   #                 #
+//  #       ###    ###   ####
+//  #          #  #       #
+//  #       ####   ###    #
+//  #   #  #   #      #   #  #
+//   ###    ####  ####     ##
+/**
+ * A class that represents the cast view.
+ */
+class Cast {
+    //              #
+    //              #
+    //  ###   ##   ###
+    // #  #  # ##   #
+    //  ##   ##     #
+    // #      ##     ##
+    //  ###
+    /**
+     * Gets the cast template.
+     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}}} data The match data.
+     * @returns {string} An HTML string of the match.
+     */
+    static get(data) {
+        const {challenge, challengingTeamRoster, challengedTeamRoster, castData} = data,
+            challengingTeamColor = challenge.challengingTeam.role && challenge.challengingTeam.role.color ? challenge.challengingTeam.role.hexColor : "white",
+            challengedTeamColor = challenge.challengedTeam.role && challenge.challengedTeam.role.color ? challenge.challengedTeam.role.hexColor : "white";
+
+        return /* html */`
+            <html>
+                <head>
+                    <title>${challenge.challengingTeam.name} vs ${challenge.challengedTeam.name}</title>
+                    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
+                    <script src="/js/common.js"></script>
+                    <script src="/js/cast.js"></script>
+                    ${Cast.Common.favIcon()}
+                    <link rel="stylesheet" href="/css/reset.css" />
+                    <link rel="stylesheet" href="/css/cast.css" />
+                    <script>
+                        ${challengingTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
+                            leftStreamers.push({
+                                name: "${Cast.Common.jsEncode(Cast.Common.normalizeName(p.name, challenge.challengingTeam.tag))}",
+                                twitch: "${p.twitchName ? Cast.Common.jsEncode(p.twitchName) : ""}"
+                            });
+                        `).join("")}
+                        ${challengedTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
+                            rightStreamers.push({
+                                name: "${Cast.Common.jsEncode(Cast.Common.normalizeName(p.name, challenge.challengedTeam.tag))}",
+                                twitch: "${p.twitchName ? Cast.Common.jsEncode(p.twitchName) : ""}"
+                            });
+                        `).join("")}
+                    </script>
+                <head>
+                <body style="background-image: url('/images/${challenge.details.map.toLowerCase()}.jpg');">
+                    <div id="shade">
+                        <div id="logo"></div>
+                        <div id="title">Overload Teams League</div>
+                        <div id="left-team" style="border-color: ${challengingTeamColor};">
+                            <div class="tag"><div class="diamond${challenge.challengingTeam.role && challenge.challengingTeam.role.color ? "" : "-empty"}" ${challenge.challengingTeam.role && challenge.challengingTeam.role.color ? `style="background-color: ${challenge.challengingTeam.role.hexColor};"` : ""}></div> ${challenge.challengingTeam.tag}</div>
+                            <div class="name">${challenge.challengingTeam.name}</div>
+                        </div>
+                        <div id="right-team" style="border-color: ${challengedTeamColor};">
+                            <div class="tag"><div class="diamond${challenge.challengedTeam.role && challenge.challengedTeam.role.color ? "" : "-empty"}" ${challenge.challengedTeam.role && challenge.challengedTeam.role.color ? `style="background-color: ${challenge.challengedTeam.role.hexColor};"` : ""}></div> ${challenge.challengedTeam.tag}</div>
+                            <div class="name">${challenge.challengedTeam.name}</div>
+                        </div>
+                        <div id="left-rating" style="border-color: ${challengingTeamColor};">
+                            ${castData.challengingTeamRating ? /* html */`
+                                <div class="rating">Season Rating: <span class="numeric ${castData.challengingTeamWins + castData.challengingTeamLosses + castData.challengingTeamTies < 10 ? "provisional" : ""}">${castData.challengingTeamRating.toFixed(0)}</span></div>
+                            ` : ""}
+                            <div class="record">Record: <span class="numeric">${castData.challengingTeamWins}-${castData.challengingTeamLosses}${castData.challengingTeamTies ? `-${castData.challengingTeamTies}` : ""}</span></div>
+                        </div>
+                        <div id="right-rating" style="border-color: ${challengedTeamColor};">
+                            ${castData.challengedTeamRating ? /* html */`
+                                <div class="rating">Season Rating: <span class="numeric ${castData.challengedTeamWins + castData.challengedTeamLosses + castData.challengedTeamTies < 10 ? "provisional" : ""}">${castData.challengedTeamRating.toFixed(0)}</span></div>
+                            ` : ""}
+                            <div class="record">Record: <span class="numeric">${castData.challengedTeamWins}-${castData.challengedTeamLosses}${castData.challengedTeamTies ? `-${castData.challengedTeamTies}` : ""}</span></div>
+                        </div>
+                        ${castData.challengingTeamHeadToHeadWins + castData.challengedTeamHeadToHeadWins + castData.headToHeadTies > 0 ? /* html */`
+                            <div id="head-to-head">
+                                Head to Head Record<br />
+                                <span class="record">${challenge.challengingTeam.tag} <span class="numeric">${castData.challengingTeamHeadToHeadWins}</span>${castData.headToHeadTies ? ` - Ties <span class="numeric">${castData.headToHeadTies}</span>` : ""} - ${challenge.challengedTeam.tag} <span class="numeric">${castData.challengedTeamHeadToHeadWins}</span></span>
+                            </div>
+                        ` : ""}
+                        ${castData.challengingTeamId ? /* html */`
+                            <div id="previous">
+                                <div class="grid">
+                                    <div class="last">Last Match</div>
+                                    ${challenge.challengingTeam.id === castData.challengingTeamId ? /* html */`
+                                        <div class="left-tag">${challenge.challengingTeam.tag}</div>
+                                        <div class="numeric left-score">${castData.challengingTeamScore}</div>
+                                        <div class="right-tag">${challenge.challengedTeam.tag}</div>
+                                        <div class="numeric right-score">${castData.challengedTeamScore}</div>
+                                    ` : /* html */ `
+                                        <div class="left-tag">${challenge.challengingTeam.tag}</div>
+                                        <div class="numeric left-score">${castData.challengedTeamScore}</div>
+                                        <div class="right-tag">${challenge.challengedTeam.tag}</div>
+                                        <div class="numeric right-score">${castData.challengingTeamScore}</div>
+                                    `}
+                                    <div class="map">${castData.map}</div>
+                                    <div class="date"><script>document.write(formatDate(new Date("${castData.matchTime}")));</script></div>
+                                    <div class="best">Best Performer</div>
+                                    <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${Cast.Common.htmlEncode(Cast.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
+                                </div>
+                            </div>
+                        ` : ""}
+                        <div id="left-roster">
+                            <div class="header">Pilot</div>
+                            <div class="header">G</div>
+                            <div class="header">KDA</div>
+                            <div class="header">KPG</div>
+                            <div class="header">APG</div>
+                            <div class="header">DPG</div>
+                            ${data.challengingTeamRoster.map((p) => /* html */`
+                                <div>${p.twitchName ? /* html */`
+                                    <div class="twitch-image"></div>&nbsp;
+                                ` : ""}${Cast.Common.htmlEncode(Cast.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
+                                <div class="numeric">${p.games}</div>
+                                <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
+                                <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                            `).join("")}
+                        </div>
+                        <div id="right-roster">
+                            <div class="header">Pilot</div>
+                            <div class="header">G</div>
+                            <div class="header">KDA</div>
+                            <div class="header">KPG</div>
+                            <div class="header">APG</div>
+                            <div class="header">DPG</div>
+                            ${data.challengedTeamRoster.map((p) => /* html */`
+                                <div>${p.twitchName ? /* html */`
+                                <div class="twitch-image"></div>&nbsp;
+                            ` : ""}${Cast.Common.htmlEncode(Cast.Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
+                                <div class="numeric">${p.games}</div>
+                                <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
+                                <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                            `).join("")}
+                        </div>
+                        <div id="left-viewing" style="border-color: ${challengingTeamColor};">
+                            Now viewing:<br />
+                            <span id="left-name" class="player"></span><br />
+                            <div class="twitch-image"></div>&nbsp;<span id="left-twitch" class="twitch"></span>
+                        </div>
+                        <div id="right-viewing" style="border-color: ${challengedTeamColor};">
+                            Now viewing:<br />
+                            <span id="right-name" class="player"></span><br />
+                            <div class="twitch-image"></div>&nbsp;<span id="right-twitch" class="twitch"></span>
+                        </div>
+                        <div id="left-frame" style="border-color: ${challengingTeamColor};">
+                            <div id="left-player"></div>
+                        </div>
+                        <div id="right-frame" style="border-color: ${challengedTeamColor};">
+                            <div id="right-player"></div>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `;
+    }
+}
+
+// @ts-ignore
+Cast.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
+
+if (typeof module !== "undefined") {
+    module.exports = Cast; // eslint-disable-line no-undef
+}

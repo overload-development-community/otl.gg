@@ -5,7 +5,7 @@
  */
 
 const Db = require("../database/newTeam"),
-    Exception = require("../exception"),
+    Exception = require("../logging/exception"),
     Team = require("./team");
 
 /**

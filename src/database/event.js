@@ -1,8 +1,5 @@
 const Db = require("node-database"),
-
-    settings = require("../../settings"),
-
-    db = new Db(settings.database);
+    db = require("./index");
 
 //  #####                        #     ####   #
 //  #                            #      #  #  #
