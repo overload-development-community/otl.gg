@@ -1,0 +1,73 @@
+const Db = require("../database/map"),
+    Exception = require("../logging/exception");
+
+//  #   #
+//  #   #
+//  ## ##   ###   # ##
+//  # # #      #  ##  #
+//  #   #   ####  ##  #
+//  #   #  #   #  # ##
+//  #   #   ####  #
+//                #
+//                #
+/**
+ * A class that handles map-related functions.
+ */
+class Map {
+    //                          #
+    //                          #
+    //  ##   ###    ##    ###  ###    ##
+    // #     #  #  # ##  #  #   #    # ##
+    // #     #     ##    # ##   #    ##
+    //  ##   #      ##    # #    ##   ##
+    /**
+     * Adds a map to the OTL.
+     * @param {string} map The map to add.
+     * @returns {Promise} A promise that resolves when the map has been added.
+     */
+    static async create(map) {
+        try {
+            await Db.create(map);
+        } catch (err) {
+            throw new Exception("There was a database error adding a map.", err);
+        }
+    }
+
+    // ###    ##   # #    ##   # #    ##
+    // #  #  # ##  ####  #  #  # #   # ##
+    // #     ##    #  #  #  #  # #   ##
+    // #      ##   #  #   ##    #     ##
+    /**
+     * Removes a map from the OTL.
+     * @param {string} map The map to remove.
+     * @returns {Promise} A promise that resolves when the map has been removed.
+     */
+    static async remove(map) {
+        try {
+            await Db.remove(map);
+        } catch (err) {
+            throw new Exception("There was a database error removing a map.", err);
+        }
+    }
+
+    //             ##     #       #         #
+    //              #             #         #
+    // # #    ###   #    ##     ###   ###  ###    ##
+    // # #   #  #   #     #    #  #  #  #   #    # ##
+    // # #   # ##   #     #    #  #  # ##   #    ##
+    //  #     # #  ###   ###    ###   # #    ##   ##
+    /**
+     * Validates a map with the database.
+     * @param {string} map The map to validate.
+     * @returns {Promise<{map: string, stock: boolean}>} The validated map.
+     */
+    static async validate(map) {
+        try {
+            return await Db.validate(map);
+        } catch (err) {
+            throw new Exception("There was a database error validating a map.", err);
+        }
+    }
+}
+
+module.exports = Map;

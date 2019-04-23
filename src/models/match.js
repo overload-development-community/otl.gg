@@ -1,6 +1,6 @@
 const Common = require("../../web/includes/common"),
     Db = require("../database/match"),
-    Log = require("../logging/log"),
+    Exception = require("../logging/exception"),
     Teams = require("../../web/includes/teams");
 
 /**
@@ -18,25 +18,25 @@ const Common = require("../../web/includes/common"),
  * A class that handles match-related functions.
  */
 class Match {
-    //              #    #  #         #          #                  ###          ##
-    //              #    ####         #          #                  #  #        #  #
-    //  ###   ##   ###   ####   ###  ###    ##   ###    ##    ###   ###   #  #   #     ##    ###   ###    ##   ###
-    // #  #  # ##   #    #  #  #  #   #    #     #  #  # ##  ##     #  #  #  #    #   # ##  #  #  ##     #  #  #  #
-    //  ##   ##     #    #  #  # ##   #    #     #  #  ##      ##   #  #   # #  #  #  ##    # ##    ##   #  #  #  #
-    // #      ##     ##  #  #   # #    ##   ##   #  #   ##   ###    ###     #    ##    ##    # #  ###     ##   #  #
-    //  ###                                                                #
+    //              #    ###          ##
+    //              #    #  #        #  #
+    //  ###   ##   ###   ###   #  #   #     ##    ###   ###    ##   ###
+    // #  #  # ##   #    #  #  #  #    #   # ##  #  #  ##     #  #  #  #
+    //  ##   ##     #    #  #   # #  #  #  ##    # ##    ##   #  #  #  #
+    // #      ##     ##  ###     #    ##    ##    # #  ###     ##   #  #
+    //  ###                     #
     /**
      * Gets paginated matches for a season.
      * @param {number} [season] The season number.
      * @param {number} [page] The page to get.
      * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}[]>} A promise that resolves with the completed matches.
      */
-    static async getMatchesBySeason(season, page) {
+    static async getBySeason(season, page) {
         let completed, stats, standings;
         try {
             ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page));
         } catch (err) {
-            Log.exception("There was a database error retrieving matches by page.", err);
+            throw new Exception("There was a database error retrieving matches by page.", err);
         }
 
         const teams = new Teams();
@@ -96,25 +96,46 @@ class Match {
         });
     }
 
-    //              #    ###                  #   #                #  #         #          #
-    //              #    #  #                 #                    ####         #          #
-    //  ###   ##   ###   #  #   ##   ###    ###  ##    ###    ###  ####   ###  ###    ##   ###    ##    ###
-    // #  #  # ##   #    ###   # ##  #  #  #  #   #    #  #  #  #  #  #  #  #   #    #     #  #  # ##  ##
-    //  ##   ##     #    #     ##    #  #  #  #   #    #  #   ##   #  #  # ##   #    #     #  #  ##      ##
-    // #      ##     ##  #      ##   #  #   ###  ###   #  #  #     #  #   # #    ##   ##   #  #   ##   ###
-    //  ###                                                   ###
+    //              #    #  #                           #
+    //              #    #  #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #
+    //  ###                    #                                    ###
     /**
-     * Gets the pending matches.
+     * Gets the list of pending matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the list of upcoming matches.
+     */
+    static async getUpcoming() {
+        let matches;
+        try {
+            matches = await Db.getUpcoming();
+        } catch (err) {
+            throw new Exception("There was a database error getting the upcoming matches.", err);
+        }
+
+        return matches;
+    }
+
+    //              #    #  #                           #                 ##            #   ##                     ##           #             #   ##                      #
+    //              #    #  #                                            #  #           #  #  #                     #           #             #  #  #                     #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  #  #  ###    ###  #      ##   # #   ###    #     ##   ###    ##    ###  #      ##   #  #  ###   ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  ####  #  #  #  #  #     #  #  ####  #  #   #    # ##   #    # ##  #  #  #     #  #  #  #  #  #   #
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #  #  #  #  #  #  #  #  #  #  #  #  #  #   #    ##     #    ##    #  #  #  #  #  #  #  #  #  #   #
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     #  #  #  #   ###   ##    ##   #  #  ###   ###    ##     ##   ##    ###   ##    ##    ###  #  #    ##
+    //  ###                    #                                    ###                                      #
+    /**
+     * Gets the pending matches, along with the number of completed matches for the season.
      * @param {number} [season] The season number.
      * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
-    static async getPendingMatches(season) {
+    static async getUpcomingAndCompletedCount(season) {
         let matches, standings, completed;
         try {
             ({matches, standings, completed} = await Db.getPending(isNaN(season) ? void 0 : season));
         } catch (err) {
-            Log.exception("There was a database error retrieving pending matches.", err);
-            throw err;
+            throw new Exception("There was a database error retrieving pending matches.", err);
         }
 
         const teams = new Teams();

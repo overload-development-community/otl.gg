@@ -11,8 +11,10 @@
  */
 
 const Db = require("../database/team"),
-    Exception = require("../exception"),
-    Log = require("../log"),
+    Elo = require("../elo"),
+    Exception = require("../logging/exception"),
+    Log = require("../logging/log"),
+    MatchDb = require("../database/match"),
     settings = require("../../settings");
 
 /**
@@ -1772,6 +1774,39 @@ class Team {
             await captainsChannel.setTopic(captainsChannelTopic, "Team topic update requested.");
         } catch (err) {
             Log.exception(`There was an error updating team information for ${this.name}.  Please update ${this.name} manually.`, err);
+        }
+    }
+
+    //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
+    //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
+    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #    #   # ##  #  #  ##     #  #  #  #  #     #  #  #  #  ####  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #  #  #     #  #  ##    # ##    ##   #  #  #  #  #     #     #  #  #  #  #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //       #                                                            ###                                                                                                                                   ###
+    /**
+     * Updates ratings for a season from a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the ratings are updated.
+     */
+    static async updateRatingsForSeasonFromChallenge(challenge) {
+        let data;
+        try {
+            data = await MatchDb.getSeasonDataFromChallenge(challenge);
+        } catch (err) {
+            throw new Exception("There was a database error getting the season's matches.", err);
+        }
+
+        if (!data) {
+            return;
+        }
+
+        const ratings = Elo.calculateRatings(data.matches, data.k);
+
+        try {
+            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings);
+        } catch (err) {
+            throw new Exception("There was a database error updating season ratings.", err);
         }
     }
 }

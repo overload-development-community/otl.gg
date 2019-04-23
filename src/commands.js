@@ -9,7 +9,9 @@ const tz = require("timezone-js"),
 
     Challenge = require("./models/challenge"),
     Common = require("../web/includes/common"),
-    Otl = require("./otl"),
+    Event = require("./models/event"),
+    Map = require("./models/map"),
+    Match = require("./models/match"),
     pjson = require("../package.json"),
     settings = require("../settings"),
     Team = require("./models/team"),
@@ -420,7 +422,7 @@ class Commands {
     static async checkMapIsValid(map, member, channel) {
         let correctedMap;
         try {
-            correctedMap = await Otl.validateMap(map);
+            correctedMap = await Map.validate(map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -3021,8 +3023,8 @@ class Commands {
             return false;
         }
 
-        const matches = await Otl.upcomingMatches(),
-            events = await Otl.upcomingEvents();
+        const matches = await Match.getUpcoming(),
+            events = await Event.getUpcoming();
 
         const msg = Discord.richEmbed({
             title: "Overload Teams League Schedule",
@@ -3475,12 +3477,20 @@ class Commands {
         await Commands.checkMemberHasTwitchName(member, channel);
 
         if (message.toLowerCase() === "next") {
-            const matches = (await Otl.upcomingMatches()).filter((m) => !m.twitchName);
+            let matches;
+            try {
+                matches = await Match.getUpcoming();
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw err;
+            }
 
-            if (matches.length === 0) {
+            const uncastedMatches = matches.filter((m) => !m.twitchName);
+
+            if (uncastedMatches.length === 0) {
                 await Discord.queue("There are no matches without a caster currently scheduled.", channel);
             } else {
-                await Discord.queue(`The next match is **${matches[0].challengingTeamName}** vs **${matches[0].challengedTeamName}** at ${matches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${matches[0].challengeId}\`.  To see other upcoming matches, enter \`!next\`.`, channel);
+                await Discord.queue(`The next match is **${uncastedMatches[0].challengingTeamName}** vs **${uncastedMatches[0].challengedTeamName}** at ${uncastedMatches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${uncastedMatches[0].challengeId}\`.  To see other upcoming matches, enter \`!next\`.`, channel);
             }
 
             return true;
@@ -5286,7 +5296,7 @@ class Commands {
         }
 
         try {
-            await Otl.addEvent(title, dateStart, dateEnd);
+            await Event.create(title, dateStart, dateEnd);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -5317,7 +5327,7 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         try {
-            await Otl.removeEvent(message);
+            await Event.remove(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -5428,7 +5438,7 @@ class Commands {
 
         let map;
         try {
-            map = await Otl.validateMap(message);
+            map = await Map.validate(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -5440,7 +5450,7 @@ class Commands {
         }
 
         try {
-            await Otl.addMap(message);
+            await Map.create(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -5475,7 +5485,7 @@ class Commands {
 
         let map;
         try {
-            map = await Otl.validateMap(message);
+            map = await Map.validate(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -5487,7 +5497,7 @@ class Commands {
         }
 
         try {
-            await Otl.removeMap(message);
+            await Map.remove(message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;

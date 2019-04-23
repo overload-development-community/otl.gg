@@ -7,7 +7,6 @@
 const Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
-    Otl = require("../otl"),
     settings = require("../../settings"),
     Team = require("./team"),
 
@@ -730,7 +729,7 @@ class Challenge {
             throw new Exception("There was a critical Discord error closing a challenge.  Please resolve this manually as soon as possible.", err);
         }
 
-        await Otl.updateRatingsForSeasonFromChallenge(this);
+        await Team.updateRatingsForSeasonFromChallenge(this);
     }
 
     //                     #    #                #  #
@@ -2184,7 +2183,7 @@ class Challenge {
         }
 
         if (this.details.dateClosed) {
-            await Otl.updateRatingsForSeasonFromChallenge(this);
+            await Team.updateRatingsForSeasonFromChallenge(this);
         }
     }
 
@@ -2327,7 +2326,7 @@ class Challenge {
         }
 
         if (this.details.dateClosed) {
-            await Otl.updateRatingsForSeasonFromChallenge(this);
+            await Team.updateRatingsForSeasonFromChallenge(this);
         }
     }
 }

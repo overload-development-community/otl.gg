@@ -32,7 +32,7 @@ class MatchApi {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        return res.json(await Match.getMatchesBySeason(req.query.season, req.query.page));
+        return res.json(await Match.getBySeason(req.query.season, req.query.page));
     }
 }
 

@@ -40,8 +40,8 @@ class Matches {
         const matchesPerPage = 10,
             season = Number.parseInt(req.query.season, 10) || void 0,
             seasonList = await Db.seasonList(),
-            {matches: pending, completed: totalCompleted} = await Match.getPendingMatches(isNaN(season) ? void 0 : season),
-            completed = await Match.getMatchesBySeason(isNaN(season) ? void 0 : season);
+            {matches: pending, completed: totalCompleted} = await Match.getUpcomingAndCompletedCount(isNaN(season) ? void 0 : season),
+            completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
 
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/matches.css" />
