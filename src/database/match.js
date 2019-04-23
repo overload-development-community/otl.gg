@@ -155,6 +155,75 @@ class MatchDb {
         } || {completed: [], stats: [], standings: []};
     }
 
+    //              #     ##                                  #
+    //              #    #  #                                 #
+    //  ###   ##   ###   #     #  #  ###   ###    ##   ###   ###
+    // #  #  # ##   #    #     #  #  #  #  #  #  # ##  #  #   #
+    //  ##   ##     #    #  #  #  #  #     #     ##    #  #   #
+    // #      ##     ##   ##    ###  #     #      ##   #  #    ##
+    //  ###
+    /**
+     * Gets the current matches.
+     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     */
+    static async getCurrent() {
+        /**
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                ChallengingTeamScore,
+                ChallengedTeamScore,
+                MatchTime,
+                Map,
+                DateClosed,
+                OvertimePeriods
+            FROM
+            (
+                SELECT TOP 5
+                    ChallengingTeamId,
+                    ChallengedTeamId,
+                    CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                    CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                    MatchTime,
+                    Map,
+                    DateClosed,
+                    OvertimePeriods
+                FROM tblChallenge
+                WHERE MatchTime IS NOT NULL
+                    AND MatchTime <= GETUTCDATE()
+                    AND DateVoided IS NULL
+                ORDER BY MatchTime DESC
+            ) a
+            UNION SELECT
+                ChallengingTeamId,
+                ChallengedTeamId,
+                CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
+                CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
+                MatchTime,
+                Map,
+                DateClosed,
+                OvertimePeriods
+            FROM tblChallenge
+            WHERE MatchTime IS NOT NULL
+                AND MatchTime > GETUTCDATE()
+                AND DateVoided IS NULL
+            ORDER BY MatchTime
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            challengingTeamId: row.ChallengingTeamId,
+            challengedTeamId: row.ChallengedTeamId,
+            challengingTeamScore: row.ChallengingTeamScore,
+            challengedTeamScore: row.ChallengedTeamScore,
+            matchTime: row.MatchTime,
+            map: row.Map,
+            dateClosed: row.DateClosed,
+            overtimePeriods: row.OvertimePeriods
+        })) || [];
+    }
+
     //              #    ###                  #   #
     //              #    #  #                 #
     //  ###   ##   ###   #  #   ##   ###    ###  ##    ###    ###

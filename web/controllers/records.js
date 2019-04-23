@@ -3,7 +3,8 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../src/database"),
+    Player = require("../../src/models/player"),
+    Season = require("../../src/models/season"),
     settings = require("../../settings");
 
 /**
@@ -36,10 +37,10 @@ class Records {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const seasonList = await Db.seasonList(),
+        const seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            records = await Db.getRecords(season, postseason),
+            records = await Player.getRecords(season, postseason),
             teams = new Teams();
 
         let team;

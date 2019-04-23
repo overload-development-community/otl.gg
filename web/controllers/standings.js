@@ -3,8 +3,10 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../src/database"),
-    settings = require("../../settings");
+    Map = require("../../src/models/map"),
+    Season = require("../../src/models/season"),
+    settings = require("../../settings"),
+    Team = require("../../src/models/team");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -61,9 +63,9 @@ class Standings {
                 break;
         }
 
-        const seasonList = await Db.seasonList(),
+        const seasonList = await Season.getSeasonNumbers(),
             season = Number.parseInt(req.query.season, 10) || void 0,
-            maps = await Db.playedMapsForSeason(season),
+            maps = await Map.getPlayedBySeason(season),
             teams = new Teams();
 
         let map, team;
@@ -71,7 +73,7 @@ class Standings {
             map = req.query.map;
         }
 
-        const standings = await Db.seasonStandings(isNaN(season) ? void 0 : season, records, map);
+        const standings = await Team.getSeasonStandings(isNaN(season) ? void 0 : season, records, map);
 
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/standings.css" />

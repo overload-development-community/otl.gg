@@ -1,10 +1,10 @@
 const HtmlMinifier = require("html-minifier"),
 
     Common = require("../includes/common"),
+
     Match = require("../../src/models/match"),
     MatchView = require("../../public/views/match"),
-
-    Db = require("../../src/database"),
+    Season = require("../../src/models/season"),
     settings = require("../../settings");
 
 /**
@@ -39,7 +39,7 @@ class Matches {
     static async get(req, res) {
         const matchesPerPage = 10,
             season = Number.parseInt(req.query.season, 10) || void 0,
-            seasonList = await Db.seasonList(),
+            seasonList = await Season.getSeasonNumbers(),
             {matches: pending, completed: totalCompleted} = await Match.getUpcomingAndCompletedCount(isNaN(season) ? void 0 : season),
             completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
 

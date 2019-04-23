@@ -96,6 +96,25 @@ class Match {
         });
     }
 
+    //              #     ##                                  #
+    //              #    #  #                                 #
+    //  ###   ##   ###   #     #  #  ###   ###    ##   ###   ###
+    // #  #  # ##   #    #     #  #  #  #  #  #  # ##  #  #   #
+    //  ##   ##     #    #  #  #  #  #     #     ##    #  #   #
+    // #      ##     ##   ##    ###  #     #      ##   #  #    ##
+    //  ###
+    /**
+     * Gets the current matches.
+     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     */
+    static async getCurrent() {
+        try {
+            return await Db.getCurrent();
+        } catch (err) {
+            throw new Exception("There was a database error getting current matches.", err);
+        }
+    }
+
     //              #    #  #                           #
     //              #    #  #
     //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###

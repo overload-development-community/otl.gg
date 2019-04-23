@@ -33,6 +33,26 @@ class Map {
         }
     }
 
+    //              #    ###   ##                         #  ###          ##
+    //              #    #  #   #                         #  #  #        #  #
+    //  ###   ##   ###   #  #   #     ###  #  #   ##    ###  ###   #  #   #     ##    ###   ###    ##   ###
+    // #  #  # ##   #    ###    #    #  #  #  #  # ##  #  #  #  #  #  #    #   # ##  #  #  ##     #  #  #  #
+    //  ##   ##     #    #      #    # ##   # #  ##    #  #  #  #   # #  #  #  ##    # ##    ##   #  #  #  #
+    // #      ##     ##  #     ###    # #    #    ##    ###  ###     #    ##    ##    # #  ###     ##   #  #
+    //  ###                                 #                       #
+    /**
+     * Gets played maps for the season.
+     * @param {number} [season] The season number, or void for the latest season.
+     * @returns {Promise<string[]>} The list of maps played in a season.
+     */
+    static async getPlayedBySeason(season) {
+        try {
+            return await Db.getPlayedBySeason(season);
+        } catch (err) {
+            throw new Exception("There was a database error getting maps played.", err);
+        }
+    }
+
     // ###    ##   # #    ##   # #    ##
     // #  #  # ##  ####  #  #  # #   # ##
     // #     ##    #  #  #  #  # #   ##

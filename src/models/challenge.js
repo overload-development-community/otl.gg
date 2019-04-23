@@ -998,6 +998,25 @@ class Challenge {
         await Discord.queue(`The rematch has been created!  Visit ${challenge.channel} to get started.`, this.channel);
     }
 
+    //              #     ##                 #    ###          #
+    //              #    #  #                #    #  #         #
+    //  ###   ##   ###   #      ###   ###   ###   #  #   ###  ###    ###
+    // #  #  # ##   #    #     #  #  ##      #    #  #  #  #   #    #  #
+    //  ##   ##     #    #  #  # ##    ##    #    #  #  # ##   #    # ##
+    // #      ##     ##   ##    # #  ###      ##  ###    # #    ##   # #
+    //  ###
+    /**
+     * Gets the challenge data for the cast page.
+     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
+     */
+    async getCastData() {
+        try {
+            return await Db.getCastData(this);
+        } catch (err) {
+            throw new Exception("There was a database error loading cast data.", err);
+        }
+    }
+
     //              #     ##    #           #           ####              ###
     //              #    #  #   #           #           #                  #
     //  ###   ##   ###    #    ###    ###  ###    ###   ###    ##   ###    #     ##    ###  # #

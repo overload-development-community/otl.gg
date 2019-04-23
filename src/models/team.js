@@ -170,6 +170,50 @@ class Team {
         return data ? new Team(data) : void 0;
     }
 
+    //              #    ###          #
+    //              #    #  #         #
+    //  ###   ##   ###   #  #   ###  ###    ###
+    // #  #  # ##   #    #  #  #  #   #    #  #
+    //  ##   ##     #    #  #  # ##   #    # ##
+    // #      ##     ##  ###    # #    ##   # #
+    //  ###
+    /**
+     * Gets data for the team.
+     * @param {Team} team The team to get the data for.
+     * @param {number} season The season to get the team's data for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, winsServer1: number, lossesServer1: number, tiesServer1: number, winsServer2: number, lossesServer2: number, tiesServer2: number, winsServer3: number, lossesServer3: number, tiesServer3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, deaths: number, assists: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} The team data.
+     */
+    static async getData(team, season, postseason) {
+        try {
+            return await Db.getData(team, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting team data.", err);
+        }
+    }
+
+    //              #     ##                                   ##    #                   #   #
+    //              #    #  #                                 #  #   #                   #
+    //  ###   ##   ###    #     ##    ###   ###    ##   ###    #    ###    ###  ###    ###  ##    ###    ###   ###
+    // #  #  # ##   #      #   # ##  #  #  ##     #  #  #  #    #    #    #  #  #  #  #  #   #    #  #  #  #  ##
+    //  ##   ##     #    #  #  ##    # ##    ##   #  #  #  #  #  #   #    # ##  #  #  #  #   #    #  #   ##     ##
+    // #      ##     ##   ##    ##    # #  ###     ##   #  #   ##     ##   # #  #  #   ###  ###   #  #  #     ###
+    //  ###                                                                                              ###
+    /**
+     * Gets the season standings for the specified season.
+     * @param {number} [season] The season number, or void for the latest season.
+     * @param {string} [records] The type of record split to retrieve.
+     * @param {string} [map] The map record to retrieve.
+     * @returns {Promise<{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[]>} A promise that resolves with the season standings.
+     */
+    static async getSeasonStandings(season, records, map) {
+        try {
+            return await Db.getSeasonStandings(season, records, map);
+        } catch (err) {
+            throw new Exception("There was a database error getting the season standings.", err);
+        }
+    }
+
     //                         ####         #            #
     //                         #                         #
     // ###    ###  # #    ##   ###   #  #  ##     ###   ###    ###

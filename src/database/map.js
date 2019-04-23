@@ -38,6 +38,42 @@ class MapDb {
         });
     }
 
+    //              #    ###   ##                         #  ###          ##
+    //              #    #  #   #                         #  #  #        #  #
+    //  ###   ##   ###   #  #   #     ###  #  #   ##    ###  ###   #  #   #     ##    ###   ###    ##   ###
+    // #  #  # ##   #    ###    #    #  #  #  #  # ##  #  #  #  #  #  #    #   # ##  #  #  ##     #  #  #  #
+    //  ##   ##     #    #      #    # ##   # #  ##    #  #  #  #   # #  #  #  ##    # ##    ##   #  #  #  #
+    // #      ##     ##  #     ###    # #    #    ##    ###  ###     #    ##    ##    # #  ###     ##   #  #
+    //  ###                                 #                       #
+    /**
+     * Gets played maps for the season.
+     * @param {number} [season] The season number, or void for the latest season.
+     * @returns {Promise<string[]>} The list of maps played in a season.
+     */
+    static async getPlayedBySeason(season) {
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
+
+            SELECT DISTINCT Map
+            FROM vwCompletedChallenge
+            WHERE MatchTime IS NOT NULL
+                AND Season = @season
+            ORDER BY Map
+        `, {season: {type: Db.INT, value: season}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || void 0;
+    }
+
     // ###    ##   # #    ##   # #    ##
     // #  #  # ##  ####  #  #  # #   # ##
     // #     ##    #  #  #  #  # #   ##

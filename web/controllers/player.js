@@ -3,7 +3,7 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../src/database"),
+    PlayerModel = require("../../src/models/player"),
     settings = require("../../settings");
 
 /**
@@ -42,7 +42,7 @@ class Player {
             name = req.params.name,
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            player = await Db.getCareer(playerId, season, postseason),
+            player = await PlayerModel.getCareer(playerId, season, postseason),
             seasonList = player.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort();
 
         if (player) {

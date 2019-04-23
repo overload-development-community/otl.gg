@@ -3,7 +3,7 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../src/database"),
+    Season = require("../../src/models/season"),
     settings = require("../../settings"),
     Team = require("../../src/models/team");
 
@@ -44,7 +44,7 @@ class TeamPage {
 
         if (pageTeam) {
             const teamInfo = await pageTeam.getInfo(),
-                seasonList = await Db.seasonList(),
+                seasonList = await Season.getSeasonNumbers(),
                 season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
                 postseason = !!req.query.postseason,
                 teamData = await Db.getTeamData(pageTeam, season, postseason),

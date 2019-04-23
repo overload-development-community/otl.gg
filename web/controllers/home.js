@@ -4,9 +4,11 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
-    Db = require("../../src/database"),
     Discord = require("../../src/discord"),
-    settings = require("../../settings");
+    Match = require("../../src/models/match"),
+    Player = require("../../src/models/player"),
+    settings = require("../../settings"),
+    Team = require("../../src/models/team");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -39,15 +41,15 @@ class Home {
      */
     static async get(req, res) {
 
-        const standings = await Db.seasonStandings(),
-            stats = await Db.playerSeasonTopKdaStats(),
+        const standings = await Team.getSeasonStandings(),
+            stats = await Player.getTopKda(),
             teams = new Teams();
         let team;
 
         /**
          * @type {{challengingTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengedTeamStandings?: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]}
          */
-        const matches = await Db.upcomingMatches();
+        const matches = await Match.getCurrent();
 
         matches.forEach((match) => {
             match.challengingTeamStandings = standings.find((s) => s.teamId === match.challengingTeamId);

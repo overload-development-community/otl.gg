@@ -4,7 +4,8 @@ const HtmlMinifier = require("html-minifier"),
     Teams = require("../includes/teams"),
 
     Discord = require("../../src/discord"),
-    Db = require("../../src/database"),
+    Player = require("../../src/models/player"),
+    Season = require("../../src/models/season"),
     settings = require("../../settings");
 
 /**
@@ -39,11 +40,11 @@ class Players {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const freeAgents = (await Db.freeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
-            seasonList = await Db.seasonList(),
+        const freeAgents = (await Player.getFreeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
+            seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            stats = await Db.playerSeasonStats(season, postseason),
+            stats = await Player.getSeasonStats(season, postseason),
             averages = {
                 kda: stats.reduce((acc, cur) => acc + cur.kda, 0) / stats.length,
                 kills: stats.reduce((acc, cur) => acc + cur.avgKills, 0) / stats.length,
