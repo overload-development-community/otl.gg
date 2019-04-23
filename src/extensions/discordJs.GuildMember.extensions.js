@@ -1,12 +1,12 @@
 const DiscordJs = require("discord.js"),
 
-    Challenge = require("../challenge"),
+    Challenge = require("../models/challenge"),
     Db = require("../database/player"),
     TeamDb = require("../database/team"),
-    Exception = require("../exception"),
-    NewTeam = require("../newTeam"),
+    Exception = require("../logging/exception"),
+    NewTeam = require("../models/newTeam"),
     settings = require("../../settings"),
-    Team = require("../team");
+    Team = require("../models/team");
 
 /**
  * @type {typeof import("../discord")}

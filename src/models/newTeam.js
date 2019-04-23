@@ -4,17 +4,17 @@
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
  */
 
-const Db = require("./database/newTeam"),
-    Exception = require("./exception"),
+const Db = require("../database/newTeam"),
+    Exception = require("../exception"),
     Team = require("./team");
 
 /**
- * @type {typeof import("./discord")}
+ * @type {typeof import("../discord")}
  */
 let Discord;
 
 setTimeout(() => {
-    Discord = require("./discord");
+    Discord = require("../discord");
 }, 0);
 
 //  #   #                #####

@@ -10,10 +10,10 @@
  * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
-const Db = require("./database/team"),
-    Exception = require("./exception"),
-    Log = require("./log"),
-    settings = require("../settings");
+const Db = require("../database/team"),
+    Exception = require("../exception"),
+    Log = require("../log"),
+    settings = require("../../settings");
 
 /**
  * @type {typeof import("./challenge")}
@@ -25,12 +25,12 @@ setTimeout(() => {
 }, 0);
 
 /**
- * @type {typeof import("./discord")}
+ * @type {typeof import("../discord")}
  */
 let Discord;
 
 setTimeout(() => {
-    Discord = require("./discord");
+    Discord = require("../discord");
 }, 0);
 
 //  #####

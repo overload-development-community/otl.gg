@@ -4,22 +4,23 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const Db = require("./database/challenge"),
-    Exception = require("./exception"),
-    Otl = require("./otl"),
-    settings = require("../settings"),
+const Db = require("../database/challenge"),
+    Exception = require("../logging/exception"),
+    Log = require("../logging/log"),
+    Otl = require("../otl"),
+    settings = require("../../settings"),
     Team = require("./team"),
 
     channelParse = /^([0-9a-z]{1,5})-([0-9a-z]{1,5})-([1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (.*)$/;
 
 /**
- * @type {typeof import("./discord")}
+ * @type {typeof import("../discord")}
  */
 let Discord;
 
 setTimeout(() => {
-    Discord = require("./discord");
+    Discord = require("../discord");
 }, 0);
 
 //   ###   #              ##     ##
@@ -1113,100 +1114,158 @@ class Challenge {
         }
     }
 
-    //              #     #      #          ##   ##                #     ####               #                   #
-    //              #           # #        #  #   #                #     #                                      #
-    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #   ###   #  #  ###   ##    ###    ##    ###
-    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    #      ##   #  #   #    #  #  # ##  #  #
-    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #   #      ##   #  #   #    #     ##    #  #
-    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ####  #  #  ###   ###   #      ##    ###
-    //                                #                                              #
+    //              #     #      #
+    //              #           # #
+    // ###    ##   ###   ##     #    #  #
+    // #  #  #  #   #     #    ###   #  #
+    // #  #  #  #   #     #     #     # #
+    // #  #   ##     ##  ###    #      #
+    //                                #
     /**
-     * Notifies an admin that the challenge's clock has expired.
-     * @returns {Promise} A promise that resolves when the notification has been sent.
+     * Handle challenge notifications.
+     * @returns {Promise} A promise that resolves when notifications have been handled.
      */
-    async notifyClockExpired() {
+    static async notify() {
+        let notifications;
         try {
-            await Db.setNotifyClockExpired(this);
+            notifications = await Db.getNotifications();
         } catch (err) {
-            throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
+            Log.exception("There was an error getting challenge notifications.", err);
+            return;
         }
 
         try {
-            await Discord.queue(`The clock deadline has been passed in ${this.channel}.`, Discord.alertsChannel);
+            await Challenge.notifyClocksExpired(notifications.expiredClocks);
+            await Challenge.notifyMatchesStarting(notifications.startingMatches);
+            await Challenge.notifyMatchesMissed(notifications.missedMatches);
         } catch (err) {
-            throw new Exception("There was a critical Discord error notifying a clock expired for a challenge.  Please resolve this manually as soon as possible.", err);
+            Log.exception(err);
         }
     }
 
-    //              #     #      #         #  #         #          #     #  #   #                           #
-    //              #           # #        ####         #          #     ####                               #
-    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###   ####  ##     ###    ###    ##    ###
-    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  #  #   #    ##     ##     # ##  #  #
-    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #      ##     ##   ##    #  #
-    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #  #  #  ###   ###    ###     ##    ###
+    //              #     #      #          ##   ##                #            ####               #                   #
+    //              #           # #        #  #   #                #            #                                      #
+    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #    ###   ###   #  #  ###   ##    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    ##     #      ##   #  #   #    #  #  # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #     ##   #      ##   #  #   #    #     ##    #  #
+    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ###    ####  #  #  ###   ###   #      ##    ###
+    //                                #                                                     #
+    /**
+     * Notifies an admin that the challenge's clock has expired.
+     * @param {number[]} challengeIds The challenge IDs to notify expired clocks for.
+     * @returns {Promise} A promise that resolves when the notification has been sent.
+     */
+    static async notifyClocksExpired(challengeIds) {
+        for (const challengeId of challengeIds) {
+            let challenge;
+            try {
+                challenge = await Challenge.getById(challengeId);
+            } catch (err) {
+                throw new Exception("There was an error notifying that a challenge clock expired.", err);
+            }
+
+            try {
+                await Db.setNotifyClockExpired(challenge);
+            } catch (err) {
+                throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
+            }
+
+            try {
+                await Discord.queue(`The clock deadline has been passed in ${challenge.channel}.`, Discord.alertsChannel);
+            } catch (err) {
+                throw new Exception("There was a critical Discord error notifying a clock expired for a challenge.  Please resolve this manually as soon as possible.", err);
+            }
+        }
+    }
+
+    //              #     #      #         #  #         #          #                  #  #   #                           #
+    //              #           # #        ####         #          #                  ####                               #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    ##    ###   ####  ##     ###    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  # ##  ##     #  #   #    ##     ##     # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  ##      ##   #  #   #      ##     ##   ##    #  #
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##   ###    #  #  ###   ###    ###     ##    ###
     //                                #
     /**
      * Notifies an admin that the challenge's match time was missed.
+     * @param {number[]} challengeIds The challenge IDs to notify missed matches for.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    async notifyMatchMissed() {
-        try {
-            await Db.setNotifyMatchMissed(this);
-        } catch (err) {
-            throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
-        }
+    static async notifyMatchesMissed(challengeIds) {
+        for (const challengeId of challengeIds) {
+            let challenge;
+            try {
+                challenge = await Challenge.getById(challengeId);
+            } catch (err) {
+                throw new Exception("There was an error notifying that a challenge match was missed.", err);
+            }
 
-        try {
-            await Discord.queue(`The match time was missed in ${this.channel}.`, Discord.alertsChannel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error notifying a match was missed for a challenge.  Please resolve this manually as soon as possible.", err);
+            try {
+                await Db.setNotifyMatchMissed(challenge);
+            } catch (err) {
+                throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
+            }
+
+            try {
+                await Discord.queue(`The match time was missed in ${challenge.channel}.`, Discord.alertsChannel);
+            } catch (err) {
+                throw new Exception("There was a critical Discord error notifying a match was missed for a challenge.  Please resolve this manually as soon as possible.", err);
+            }
         }
     }
 
-    //              #     #      #         #  #         #          #      ##    #                 #     #
-    //              #           # #        ####         #          #     #  #   #                 #
-    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###
-    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #    #    #    #  #  #  #   #     #    #  #  #  #
-    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #    # ##  #      #     #    #  #   ##
-    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##     ##   # #  #       ##  ###   #  #  #
-    //                                #                                                                             ###
+    //              #     #      #         #  #         #          #                   ##    #                 #     #
+    //              #           # #        ####         #          #                  #  #   #                 #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    ##    ###    #    ###    ###  ###   ###   ##    ###    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  # ##  ##       #    #    #  #  #  #   #     #    #  #  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  ##      ##   #  #   #    # ##  #      #     #    #  #   ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##   ###     ##     ##   # #  #       ##  ###   #  #  #
+    //                                #                                                                                          ###
     /**
      * Notifies the challenge channel that the match is about to start.
-     * @param {Date} matchTime The time the match is starting.
+     * @param {number[]} challengeIds The challenge IDs to notify matches starting for.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    async notifyMatchStarting(matchTime) {
-        try {
-            await Db.setNotifyMatchStarting(this);
-        } catch (err) {
-            throw new Exception("There was a database error notifying a match starting for a challenge.", err);
-        }
-
-        await this.loadDetails();
-
-        try {
-            const msg = Discord.richEmbed({
-                fields: []
-            });
-            if (Math.round((matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
-                msg.setTitle(`Polish your gunships, this match begins in ${Math.round((matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`);
-            } else {
-                msg.setTitle("Polish your gunships, this match begins NOW!");
+    static async notifyMatchesStarting(challengeIds) {
+        for (const challengeId of challengeIds) {
+            let challenge;
+            try {
+                challenge = await Challenge.getById(challengeId);
+            } catch (err) {
+                throw new Exception("There was an error notifying that a challenge match is about to start.", err);
             }
 
-            if (!this.details.map) {
-                msg.addField("Please select your map!", `**${this.challengingTeam.id === this.details.homeMapTeam.id ? this.challengedTeam.tag : this.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
+            try {
+                await Db.setNotifyMatchStarting(challenge);
+            } catch (err) {
+                throw new Exception("There was a database error notifying a match starting for a challenge.", err);
             }
 
-            if (!this.details.teamSize) {
-                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+            await challenge.loadDetails();
+
+            try {
+                const msg = Discord.richEmbed({
+                    fields: []
+                });
+                if (Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
+                    msg.setTitle(`Polish your gunships, this match begins in ${Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`);
+                } else {
+                    msg.setTitle("Polish your gunships, this match begins NOW!");
+                }
+
+                if (!challenge.details.map) {
+                    msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
+                }
+
+                if (!challenge.details.teamSize) {
+                    msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+                }
+
+                msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
+
+                await Discord.richQueue(msg, challenge.channel);
+            } catch (err) {
+                throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
             }
-
-            msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
-
-            await Discord.richQueue(msg, this.channel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 

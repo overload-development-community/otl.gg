@@ -1,6 +1,5 @@
 /**
- * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("./team")} Team
+ * @typedef {import("./models/team")} Team
  */
 
 const Db = require("node-database"),

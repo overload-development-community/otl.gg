@@ -1,19 +1,19 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("./newteam")} NewTeam
+ * @typedef {import("./models/newteam")} NewTeam
  */
 
 const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
-    Challenge = require("./challenge"),
+    Challenge = require("./models/challenge"),
     Common = require("../web/includes/common"),
     Otl = require("./otl"),
     pjson = require("../package.json"),
     settings = require("../settings"),
-    Team = require("./team"),
-    Warning = require("./warning"),
+    Team = require("./models/team"),
+    Warning = require("./logging/warning"),
 
     adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}))?$/,
     colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,

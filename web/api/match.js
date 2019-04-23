@@ -1,4 +1,4 @@
-const Match = require("../../src/match");
+const Match = require("../../src/models/match");
 
 /**
  * @typedef {import("express").Request} Express.Request

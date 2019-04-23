@@ -1,4 +1,4 @@
-const Team = require("../../src/team");
+const Team = require("../../src/models/team");
 
 //  #####
 //    #

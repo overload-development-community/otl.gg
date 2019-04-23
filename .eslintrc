@@ -127,7 +127,7 @@
             }
         },
         {
-            "files": ["public/templates/**/*.js"],
+            "files": ["public/views/**/*.js"],
             "rules": {
                 "no-implicit-globals": "off",
                 "no-undef": "off"

@@ -1,10 +1,10 @@
 /**
- * @typedef {import("./challenge")} Challenge
+ * @typedef {import("./models/challenge")} Challenge
  */
 
 const Elo = require("./elo"),
     EventDb = require("./database/event"),
-    Exception = require("./exception"),
+    Exception = require("./logging/exception"),
     MapDb = require("./database/map"),
     MatchDb = require("./database/match"),
     TeamDb = require("./database/team");

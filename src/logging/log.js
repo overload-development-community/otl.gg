@@ -10,7 +10,7 @@ const util = require("util");
 const queue = [];
 
 /**
- * @type {typeof import("./discord")}
+ * @type {typeof import("../discord")}
  */
 let Discord;
 
@@ -105,7 +105,7 @@ class Log {
      */
     static async output() {
         if (!Discord) {
-            Discord = require("./discord");
+            Discord = require("../discord");
         }
 
         if (Discord.isConnected()) {

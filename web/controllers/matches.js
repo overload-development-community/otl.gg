@@ -1,8 +1,8 @@
 const HtmlMinifier = require("html-minifier"),
 
     Common = require("../includes/common"),
-    Match = require("../../src/match"),
-    MatchTemplate = require("../../public/templates/match"),
+    Match = require("../../src/models/match"),
+    MatchView = require("../../public/views/match"),
 
     Db = require("../../src/database"),
     settings = require("../../settings");
@@ -45,7 +45,7 @@ class Matches {
 
         const html = Common.page(/* html */`
             <link rel="stylesheet" href="/css/matches.css" />
-            <script src="/templates/match.js"></script>
+            <script src="/views/match.js"></script>
             <script src="/js/countdown.js"></script>
             <script src="/js/matches.js"></script>
         `, /* html */`
@@ -131,7 +131,7 @@ class Matches {
                             </div>
                         ` : ""}
                         <div class="matches" id="completed-matches">
-                            ${completed.map((m) => MatchTemplate.get(m)).join("")}
+                            ${completed.map((m) => MatchView.get(m)).join("")}
                         </div>
                     </div>
                 `}

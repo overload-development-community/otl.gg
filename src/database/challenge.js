@@ -1,8 +1,8 @@
 /**
- * @typedef {import("../challenge")} Challenge
+ * @typedef {import("../models/challenge")} Challenge
  * @typedef {{id?: number, challengingTeamId: number, challengedTeamId: number}} ChallengeData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("../team")} Team
+ * @typedef {import("../models/team")} Team
  */
 
 const Db = require("node-database"),
@@ -799,11 +799,11 @@ class ChallengeDb {
     //  ###
     /**
      * Gets the notifications to send out.
-     * @returns {Promise<{expiredClocks: number[], startingMatches: {challengeId: number, matchTime: Date}[], missedMatches: number[]}>} A promise that resolves with the notifications to send out.
+     * @returns {Promise<{expiredClocks: number[], startingMatches: number[], missedMatches: number[]}>} A promise that resolves with the notifications to send out.
      */
     static async getNotifications() {
         /**
-         * @type {{recordsets: [{ChallengeId: number}[], {ChallengeId: number, MatchTime: Date}[], {ChallengeId: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number}[], {ChallengeId: number}[], {ChallengeId: number}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT ChallengeId
@@ -830,10 +830,7 @@ class ChallengeDb {
         `);
         return data && data.recordsets && data.recordsets.length === 3 && {
             expiredClocks: data.recordsets[0].map((row) => row.ChallengeId),
-            startingMatches: data.recordsets[1].map((row) => ({
-                challengeId: row.ChallengeId,
-                matchTime: row.MatchTime
-            })),
+            startingMatches: data.recordsets[1].map((row) => row.ChallengeId),
             missedMatches: data.recordsets[2].map((row) => row.ChallengeId)
         } || {expiredClocks: [], startingMatches: [], missedMatches: []};
     }

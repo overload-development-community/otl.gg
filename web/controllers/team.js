@@ -5,7 +5,7 @@ const HtmlMinifier = require("html-minifier"),
 
     Db = require("../../src/database"),
     settings = require("../../settings"),
-    Team = require("../../src/team");
+    Team = require("../../src/models/team");
 
 /**
  * @typedef {import("express").Request} Express.Request

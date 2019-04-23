@@ -1,4 +1,6 @@
-/** @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} Team */
+/**
+ * @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} TeamRecord
+ */
 
 //  #   #          #            #
 //  #   #          #            #
@@ -20,7 +22,7 @@ class Match {
     //  ###
     /**
      * Gets the match.
-     * @param {{match: {challengeId: number, title: string, challengingTeam: Team, challengedTeam: Team, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
+     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {

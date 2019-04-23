@@ -1,10 +1,10 @@
 const DiscordJs = require("discord.js"),
 
     Commands = require("./commands"),
-    Exception = require("./exception"),
-    Log = require("./log"),
+    Exception = require("./logging/exception"),
+    Log = require("./logging/log"),
     settings = require("../settings"),
-    Warning = require("./warning"),
+    Warning = require("./logging/warning"),
 
     commands = new Commands(),
     discord = new DiscordJs.Client(/** @type {DiscordJs.ClientOptions} */ (settings.discord.options)), // eslint-disable-line no-extra-parens

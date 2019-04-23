@@ -7,7 +7,7 @@ const compression = require("compression"),
     tzdata = require("tzdata"),
 
     Discord = require("./src/discord"),
-    Log = require("./src/log"),
+    Log = require("./src/logging/log"),
     Notify = require("./src/notify"),
     Router = require("./src/router"),
     settings = require("./settings"),

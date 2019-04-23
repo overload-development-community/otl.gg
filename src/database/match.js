@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../challenge")} Challenge
+ * @typedef {import("../models/challenge")} Challenge
  */
 
 const Db = require("node-database"),

@@ -1,6 +1,6 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("../newTeam")} NewTeam
+ * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
  */
 

@@ -1,8 +1,8 @@
 /**
- * @typedef {import("../challenge")} Challenge
+ * @typedef {import("../models/challenge")} Challenge
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("../newTeam")} NewTeam
- * @typedef {import("../team")} Team
+ * @typedef {import("../models/newTeam")} NewTeam
+ * @typedef {import("../models/team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
