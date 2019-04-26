@@ -1,4 +1,10 @@
-const pjson = require("../../package.json"),
+/**
+ * @typedef {import("express").Request} Express.Request
+ */
+
+const HtmlMinifier = require("html-minifier"),
+    pjson = require("../../package.json"),
+    settings = require("../../settings"),
 
     nameAngledBracketTagStart = /^<.*> /,
     nameBraceTagStart = /^\{.*\} /,
@@ -8,8 +14,9 @@ const pjson = require("../../package.json"),
     nameParenthesisTagStart = /^\(.*\) /;
 
 /**
- * @typedef {import("express").Request} Express.Request
+ * @type {typeof import("../../public/views/index")}
  */
+let IndexView;
 
 //   ###
 //  #   #
@@ -35,62 +42,22 @@ class Common {
      * @returns {string} The HTML of the full web page.
      */
     static page(head, html, req) {
-        const year = new Date().getFullYear();
+        if (!IndexView) {
+            IndexView = require("../../public/views/index");
+        }
 
-        return /* html */`
-            <html>
-                <head>
-                    <title>Overload Teams League</title>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                    <meta name="og:image" content="${req.protocol}://otl.gg/images/otl.png" />
-                    <meta name="og:title" content="Overload Teams League" />
-                    <meta name="og:type" content="website" />
-                    <meta name="og:url" content="${req.protocol}://${req.get("host")}${req.originalUrl}" />
-                    <meta name="twitter:card" content="summary" />
-                    <meta name="twitter:creator" content="@roncli" />
-                    ${Common.favIcon()}
-                    <link rel="stylesheet" href="/css/reset.css" />
-                    <link rel="stylesheet" href="/css/common.css" />
-                    <script src="/js/common.js"></script>
-                    ${head}
-                </head>
-                <body>
-                    <div id="page">
-                        <div id="menu">
-                            <ul>
-                                <li><a href="/">Home</a></li>
-                                <li><a href="/standings">Standings</a></li>
-                                <li><a href="/matches">Matches</a></li>
-                                <li><a href="https://challonge.com/communities/otlgg" target="_blank">Tournaments</a></li>
-                                <li><a href="/players">Players</a></li>
-                                <li><a href="/records">Records</a></li>
-                                <li><a href="/about">About</a></li>
-                                <li><a href="/links">Links</a></li>
-                            </ul>
-                        </div>
-                        <div id="header">
-                            <div id="logo"></div>
-                            <div id="title">Overload Teams League</div>
-                        </div>
-                        <script>document.getElementById("header").style.backgroundImage = "url('/images/" + Common.randomBackground() + "')";</script>
-                        ${html}
-                        <div id="discord">
-                            <div class="title">Join the OTL on Discord!</div>
-                            <div class="text">Interested in joining?  The Overload Teams League coordinates all of our matches and team communication via the OTL Discord server.  Join today and compete with pilots from all over the world.</div>
-                            <div class="link"><a href="/discord" target="_blank"><img src="/images/discord.png" /></a></div>
-                        </div>
-                        <div id="copyright">
-                            <div class="left">
-                                Version ${pjson.version}, &copy;${+year > 2019 ? "2019-" : ""}${year} roncli Productions
-                            </div>
-                            <div class="right">
-                                Bugs?  <a href="https://github.com/roncli/otl-bot/issues" target="_blank">Report on GitHub</a>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        `;
+        return HtmlMinifier.minify(
+            IndexView.get({
+                head,
+                html,
+                protocol: req.protocol,
+                host: req.get("host"),
+                originalUrl: req.originalUrl,
+                year: new Date().getFullYear(),
+                version: pjson.version
+            }),
+            settings.htmlMinifier
+        );
     }
 
     //   #               ###

@@ -2,17 +2,17 @@
  * @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} TeamRecord
  */
 
-//  #   #          #            #
-//  #   #          #            #
-//  ## ##   ###   ####    ###   # ##
-//  # # #      #   #     #   #  ##  #
-//  #   #   ####   #     #      #   #
-//  #   #  #   #   #  #  #   #  #   #
-//  #   #   ####    ##    ###   #   #
+//  #   #          #            #      #   #    #
+//  #   #          #            #      #   #
+//  ## ##   ###   ####    ###   # ##   #   #   ##     ###   #   #
+//  # # #      #   #     #   #  ##  #   # #     #    #   #  #   #
+//  #   #   ####   #     #      #   #   # #     #    #####  # # #
+//  #   #  #   #   #  #  #   #  #   #   # #     #    #      # # #
+//  #   #   ####    ##    ###   #   #    #     ###    ###    # #
 /**
  * A class that represents the match view.
  */
-class Match {
+class MatchView {
     //              #
     //              #
     //  ###   ##   ###
@@ -64,7 +64,7 @@ class Match {
                         ${match.map}${match.overtimePeriods > 0 ? `, ${match.overtimePeriods > 1 ? match.overtimePeriods : ""}OT` : ""}
                     </div>
                     <div class="date">
-                        <script>document.write(Match.Common.formatDate(new Date("${match.matchTime}")));</script>
+                        <script>document.write(MatchView.Common.formatDate(new Date("${match.matchTime}")));</script>
                     </div>
                 </div>
                 <div class="stats">
@@ -78,7 +78,7 @@ class Match {
                         <div class="tag">${(team = match.challengingTeam.teamId === s.teamId ? match.challengingTeam : match.challengedTeam) === null ? "" : /* html */`
                             <div class="diamond${team.color ? "" : "-empty"}" ${team.color ? `style="background-color: ${team.color};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                         `}</div>
-                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${Match.Common.htmlEncode(s.name)}</a></div>
+                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
                         <div class="numeric kda">${s.kda.toFixed(3)}</div>
                         <div class="numeric kills">${s.kills}</div>
                         <div class="numeric assists">${s.assists}</div>
@@ -91,8 +91,8 @@ class Match {
 }
 
 // @ts-ignore
-Match.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
+MatchView.Common = typeof Common === "undefined" ? require("../../../web/includes/common") : Common; // eslint-disable-line no-undef
 
 if (typeof module !== "undefined") {
-    module.exports = Match; // eslint-disable-line no-undef
+    module.exports = MatchView; // eslint-disable-line no-undef
 }

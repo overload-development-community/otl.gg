@@ -27,9 +27,10 @@ class MatchDb {
      * Gets the confirmed matches for the specified season by page number.
      * @param {number} [season] The season number, or void for the latest season.
      * @param {number} [page] The page number, or void for the first page.
+     * @param {number} matchesPerPage The number of matches per page.
      * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
-    static async getConfirmed(season, page) {
+    static async getConfirmed(season, page, matchesPerPage) {
         /**
          * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
          */
@@ -63,8 +64,8 @@ class MatchDb {
                     AND DateVoided IS NULL
                     AND DateConfirmed IS NOT NULL
             ) c
-            WHERE Row >= @page * 10 - 9
-                AND Row <= @page * 10
+            WHERE Row >= @page * @matchesPerPage - (@matchesPerPage - 1)
+                AND Row <= @page * @matchesPerPage
             ORDER BY MatchTime DESC
 
             SELECT
@@ -88,8 +89,8 @@ class MatchDb {
                     AND DateVoided IS NULL
                     AND DateConfirmed IS NOT NULL
             ) c ON s.ChallengeId = c.ChallengeId
-            WHERE Row >= @page * 10 - 9
-                AND Row <= @page * 10
+            WHERE Row >= @page * @matchesPerPage - (@matchesPerPage - 1)
+                AND Row <= @page * @matchesPerPage
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
@@ -112,7 +113,8 @@ class MatchDb {
             ) a
         `, {
             season: {type: Db.INT, value: season},
-            page: {type: Db.INT, value: page}
+            page: {type: Db.INT, value: page},
+            matchesPerPage: {type: Db.INT, value: matchesPerPage}
         });
         return data && data.recordsets && data.recordsets.length === 3 && {
             completed: data.recordsets[0].map((row) => ({

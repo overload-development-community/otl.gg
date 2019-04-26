@@ -1,4 +1,4 @@
-/* global Common, Match */
+/* global Common, MatchView */
 
 //  #   #          #            #
 //  #   #          #            #
@@ -38,7 +38,7 @@ class Matches {
 
                 Matches.page = +paginator.innerText;
 
-                Common.loadDataIntoTemplate(`/api/match?season=${document.getElementById("season").innerText}&page=${Matches.page}`, "#completed-matches", Match.get);
+                Common.loadDataIntoTemplate(`/api/match?season=${document.getElementById("season").innerText}&page=${Matches.page}`, "#completed-matches", MatchView.get);
             });
 
             paginator.addEventListener("selectstart", (ev) => {

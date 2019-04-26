@@ -3,17 +3,17 @@
  * @typedef {{name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}} Roster
  */
 
-//   ###                  #
-//  #   #                 #
-//  #       ###    ###   ####
-//  #          #  #       #
-//  #       ####   ###    #
-//  #   #  #   #      #   #  #
-//   ###    ####  ####     ##
+//   ###                  #     #   #    #
+//  #   #                 #     #   #
+//  #       ###    ###   ####   #   #   ##     ###   #   #
+//  #          #  #       #      # #     #    #   #  #   #
+//  #       ####   ###    #      # #     #    #####  # # #
+//  #   #  #   #      #   #  #   # #     #    #      # # #
+//   ###    ####  ####     ##     #     ###    ###    # #
 /**
  * A class that represents the cast view.
  */
-class Cast {
+class CastView {
     //              #
     //              #
     //  ###   ##   ###
@@ -22,9 +22,9 @@ class Cast {
     // #      ##     ##
     //  ###
     /**
-     * Gets the cast template.
-     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}}} data The match data.
-     * @returns {string} An HTML string of the match.
+     * Gets the rendered cast template.
+     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}}} data The cast data.
+     * @returns {string} An HTML string of the cast.
      */
     static get(data) {
         const {challenge, challengingTeamRoster, challengedTeamRoster, castData} = data,
@@ -38,20 +38,20 @@ class Cast {
                     <script src="https://player.twitch.tv/js/embed/v1.js"></script>
                     <script src="/js/common.js"></script>
                     <script src="/js/cast.js"></script>
-                    ${Cast.Common.favIcon()}
+                    ${CastView.Common.favIcon()}
                     <link rel="stylesheet" href="/css/reset.css" />
                     <link rel="stylesheet" href="/css/cast.css" />
                     <script>
                         ${challengingTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
-                            leftStreamers.push({
-                                name: "${Cast.Common.jsEncode(Cast.Common.normalizeName(p.name, challenge.challengingTeam.tag))}",
-                                twitch: "${p.twitchName ? Cast.Common.jsEncode(p.twitchName) : ""}"
+                            Cast.leftStreamers.push({
+                                name: "${CastView.Common.jsEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}",
+                                twitch: "${p.twitchName ? CastView.Common.jsEncode(p.twitchName) : ""}"
                             });
                         `).join("")}
                         ${challengedTeamRoster.filter((p) => p.twitchName).map((p) => /* html */`
-                            rightStreamers.push({
-                                name: "${Cast.Common.jsEncode(Cast.Common.normalizeName(p.name, challenge.challengedTeam.tag))}",
-                                twitch: "${p.twitchName ? Cast.Common.jsEncode(p.twitchName) : ""}"
+                            Cast.rightStreamers.push({
+                                name: "${CastView.Common.jsEncode(CastView.Common.normalizeName(p.name, challenge.challengedTeam.tag))}",
+                                twitch: "${p.twitchName ? CastView.Common.jsEncode(p.twitchName) : ""}"
                             });
                         `).join("")}
                     </script>
@@ -102,9 +102,9 @@ class Cast {
                                         <div class="numeric right-score">${castData.challengingTeamScore}</div>
                                     `}
                                     <div class="map">${castData.map}</div>
-                                    <div class="date"><script>document.write(formatDate(new Date("${castData.matchTime}")));</script></div>
+                                    <div class="date"><script>document.write(Common.formatDate(new Date("${castData.matchTime}")));</script></div>
                                     <div class="best">Best Performer</div>
-                                    <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${Cast.Common.htmlEncode(Cast.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
+                                    <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
                                 </div>
                             </div>
                         ` : ""}
@@ -118,7 +118,7 @@ class Cast {
                             ${data.challengingTeamRoster.map((p) => /* html */`
                                 <div>${p.twitchName ? /* html */`
                                     <div class="twitch-image"></div>&nbsp;
-                                ` : ""}${Cast.Common.htmlEncode(Cast.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
+                                ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                 <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
@@ -136,7 +136,7 @@ class Cast {
                             ${data.challengedTeamRoster.map((p) => /* html */`
                                 <div>${p.twitchName ? /* html */`
                                 <div class="twitch-image"></div>&nbsp;
-                            ` : ""}${Cast.Common.htmlEncode(Cast.Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
+                            ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                 <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
@@ -168,8 +168,8 @@ class Cast {
 }
 
 // @ts-ignore
-Cast.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
+CastView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 
 if (typeof module !== "undefined") {
-    module.exports = Cast; // eslint-disable-line no-undef
+    module.exports = CastView; // eslint-disable-line no-undef
 }

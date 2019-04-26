@@ -4,6 +4,7 @@ const Common = require("../../web/includes/common"),
     Teams = require("../../web/includes/teams");
 
 /**
+ * @typedef {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}} Standing
  * @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} TeamRecord
  */
 
@@ -34,7 +35,7 @@ class Match {
     static async getBySeason(season, page) {
         let completed, stats, standings;
         try {
-            ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page));
+            ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page, Match.matchesPerPage));
         } catch (err) {
             throw new Exception("There was a database error retrieving matches by page.", err);
         }
@@ -105,14 +106,27 @@ class Match {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     * @param {Standing[]} standings The standings.
+     * @returns {Promise<{challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
-    static async getCurrent() {
+    static async getCurrent(standings) {
+        let matches;
         try {
-            return await Db.getCurrent();
+            matches = await Db.getCurrent();
         } catch (err) {
             throw new Exception("There was a database error getting current matches.", err);
         }
+
+        return matches.map((match) => ({
+            challengingTeam: standings.find((s) => s.teamId === match.challengingTeamId),
+            challengedTeam: standings.find((s) => s.teamId === match.challengedTeamId),
+            challengingTeamScore: match.challengingTeamScore,
+            challengedTeamScore: match.challengedTeamScore,
+            matchTime: match.matchTime,
+            map: match.map,
+            dateClosed: match.dateClosed,
+            overtimePeriods: match.overtimePeriods
+        }));
     }
 
     //              #    #  #                           #
@@ -203,5 +217,7 @@ class Match {
         };
     }
 }
+
+Match.matchesPerPage = 10;
 
 module.exports = Match;
