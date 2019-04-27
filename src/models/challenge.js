@@ -1157,7 +1157,7 @@ class Challenge {
             await Challenge.notifyMatchesStarting(notifications.startingMatches);
             await Challenge.notifyMatchesMissed(notifications.missedMatches);
         } catch (err) {
-            Log.exception(err);
+            Log.exception("There was an error issuing challenge notifications.", err);
         }
     }
 

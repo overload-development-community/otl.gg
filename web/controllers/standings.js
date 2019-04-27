@@ -38,8 +38,8 @@ class Standings {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-
         let recordsTitle, records1, records2, records3;
+
         switch (req.query.records) {
             case "server":
                 recordsTitle = "Server Records";

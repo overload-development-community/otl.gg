@@ -4,6 +4,7 @@ const fs = require("fs"),
 
     express = require("express"),
 
+    Log = require("./logging/log"),
     classes = {};
 
 //  ####                  #
@@ -73,6 +74,7 @@ class Router {
                     classes[filename].methods = Object.getOwnPropertyNames(classInfo).filter((p) => typeof classInfo[p] === "function");
                 }
                 classes[filename].file = filename;
+                Router.checkCache(filename);
             }
         }
     }
@@ -94,7 +96,7 @@ class Router {
         const router = express.Router(),
             filenames = Object.keys(classes),
             includes = filenames.filter((c) => classes[c].include),
-            pages = filenames.filter((c) => !classes[c].include && classes[c].methods && classes[c].methods.length > 0);
+            pages = filenames.filter((c) => !classes[c].include && classes[c].path && classes[c].methods && classes[c].methods.length > 0);
 
         pages.forEach((filename) => {
             const classInfo = classes[filename];
@@ -106,11 +108,13 @@ class Router {
                             await Router.checkCache(include);
                         }
                         await Router.checkCache(filename);
+
+                        return await classInfo.class[req.method.toLowerCase()](req, res, next);
                     } catch (err) {
-                        console.log(err);
+                        Log.exception(`A web exception occurred in ${method} ${classInfo.path}.`, err);
                     }
 
-                    return classInfo.class[req.method.toLowerCase()](req, res, next);
+                    return classes[path.resolve(`${__dirname}/../web/controllers/500.js`)].class.get(req, res, next);
                 });
             });
         });

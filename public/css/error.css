@@ -1,0 +1,7 @@
+#error {
+    color: white;
+}
+
+#error .text {
+    padding: 10px;
+}

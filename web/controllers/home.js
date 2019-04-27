@@ -39,7 +39,6 @@ class Home {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-
         const standings = await Team.getSeasonStandings(),
             stats = await Player.getTopKda(),
             matches = await Match.getCurrent(standings),
