@@ -3,6 +3,7 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
+    NotFoundView = require("../../public/views/404"),
     Season = require("../../src/models/season"),
     settings = require("../../settings"),
     Team = require("../../src/models/team"),
@@ -70,11 +71,13 @@ class TeamPage {
                 req
             ));
         } else {
-            const html = Common.page("", /* html */`
-                <div class="section">Team Not Found</div>
-            `, req);
-
-            res.status(404).send(HtmlMinifier.minify(html, settings.htmlMinifier));
+            res.status(404).send(Common.page(
+                /* html */`
+                    <link rel="stylesheet" href="/css/error.css" />
+                `,
+                NotFoundView.get({message: "This team does not exist."}),
+                req
+            ));
         }
     }
 }

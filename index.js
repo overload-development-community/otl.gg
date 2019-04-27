@@ -67,6 +67,11 @@ const compression = require("compression"),
     });
 
     app.use("/", router);
+    app.all("*", (req, res) => {
+        req.method = "GET";
+        req.url = "/404";
+        router(req, res);
+    });
 
     // Startup web server.
     const port = process.env.PORT || settings.express.port;

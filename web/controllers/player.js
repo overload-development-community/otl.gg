@@ -3,6 +3,7 @@ const HtmlMinifier = require("html-minifier"),
     Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
+    NotFoundView = require("../../public/views/404"),
     PlayerModel = require("../../src/models/player"),
     PlayerView = require("../../public/views/player"),
     settings = require("../../settings");
@@ -42,11 +43,11 @@ class Player {
         const playerId = isNaN(req.params.id) ? 0 : Number.parseInt(req.params.id, 10),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            career = await PlayerModel.getCareer(playerId, season, postseason),
-            seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort();
+            career = await PlayerModel.getCareer(playerId, season, postseason);
 
         if (career) {
-            const teams = new Teams();
+            const seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort(),
+                teams = new Teams();
 
             teams.getTeam(career.player.teamId, career.player.teamName, career.player.tag);
 
@@ -100,11 +101,13 @@ class Player {
                 req
             ));
         } else {
-            const html = Common.page("", /* html */`
-                <div class="section">Player Not Found</div>
-            `, req);
-
-            res.status(404).send(HtmlMinifier.minify(html, settings.htmlMinifier));
+            res.status(404).send(Common.page(
+                /* html */`
+                    <link rel="stylesheet" href="/css/error.css" />
+                `,
+                NotFoundView.get({message: "This player does not exist."}),
+                req
+            ));
         }
     }
 }

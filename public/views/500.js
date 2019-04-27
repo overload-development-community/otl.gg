@@ -17,13 +17,13 @@ class ServerErrorView {
     // #      ##     ##
     //  ###
     /**
-     * Gets the rendered cast template.
-     * @returns {string} An HTML string of the cast.
+     * Gets the rendered server error template.
+     * @returns {string} An HTML string of the server error view.
      */
     static get() {
         return /* html */`
             <div id="error">
-                <div class="section">Self-destruct sequence activated.</div>
+                <div class="section">500 - Self-destruct sequence activated.</div>
                 <div class="text">Something broke.  The error that caused this has been logged.  Please try your request again later.</div>
             </div>
         `;

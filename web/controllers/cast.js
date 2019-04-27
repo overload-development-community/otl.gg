@@ -4,6 +4,7 @@ const HtmlMinifier = require("html-minifier"),
 
     CastView = require("../../public/views/cast"),
     Challenge = require("../../src/models/challenge"),
+    NotFoundView = require("../../public/views/404"),
     settings = require("../../settings");
 
 /**
@@ -53,11 +54,13 @@ class Cast {
                 castData: data.data
             }), settings.htmlMinifier));
         } else {
-            const html = Common.page("", /* html */`
-                <div class="section">Challenge Not Found</div>
-            `, req);
-
-            res.status(404).send(HtmlMinifier.minify(html, settings.htmlMinifier));
+            res.status(404).send(Common.page(
+                /* html */`
+                    <link rel="stylesheet" href="/css/error.css" />
+                `,
+                NotFoundView.get({message: "There is no scheduled match with this Match ID."}),
+                req
+            ));
         }
     }
 }
