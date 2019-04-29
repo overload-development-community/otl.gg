@@ -1,11 +1,8 @@
-const HtmlMinifier = require("html-minifier"),
-
-    Common = require("../includes/common"),
+const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
     NotFoundView = require("../../public/views/404"),
     Season = require("../../src/models/season"),
-    settings = require("../../settings"),
     Team = require("../../src/models/team"),
     TeamView = require("../../public/views/team");
 

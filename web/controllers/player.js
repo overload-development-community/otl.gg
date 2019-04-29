@@ -1,12 +1,9 @@
-const HtmlMinifier = require("html-minifier"),
-
-    Common = require("../includes/common"),
+const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
     NotFoundView = require("../../public/views/404"),
     PlayerModel = require("../../src/models/player"),
-    PlayerView = require("../../public/views/player"),
-    settings = require("../../settings");
+    PlayerView = require("../../public/views/player");
 
 /**
  * @typedef {import("express").Request} Express.Request
