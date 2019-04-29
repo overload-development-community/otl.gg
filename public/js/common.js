@@ -133,12 +133,15 @@ Common.backgrounds = [
     "centrifuge",
     "foundry",
     "hive",
+    "junebug",
     "keg party",
     "labyrinth",
+    "mesa",
     "roundabout",
     "sub rosa",
     "syrinx",
     "terminal",
+    "turnstile",
     "vault",
     "wraith"
 ];
