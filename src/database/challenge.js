@@ -281,7 +281,6 @@ class ChallengeDb {
                     ISNULL((SELECT PenaltiesRemaining FROM tblTeamPenalty WHERE TeamId = @team2Id), 0) Team2Penalties
                 FROM tblChallenge
                 WHERE ((ChallengingTeamId = @team1Id AND ChallengedTeamId = @team2Id) OR (ChallengingTeamId = @team2Id AND ChallengedTeamId = @team1Id))
-                    AND DateConfirmed IS NOT NULL
                     AND DateVoided IS NULL
             ) a
 
