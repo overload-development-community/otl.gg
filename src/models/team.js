@@ -7,7 +7,7 @@
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
 const Db = require("../database/team"),

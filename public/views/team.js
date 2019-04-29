@@ -1,6 +1,6 @@
 /**
  * @typedef {import("../../src/models/team")} Team
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  * @typedef {import("../../web/includes/teams")} Teams
  */
 
@@ -40,7 +40,7 @@ class TeamView {
                 <div id="roster">
                     <div class="section">Current Roster</div>
                     ${teamInfo.members.map((m) => /* html */`
-                        <div class="member">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, pageTeam.tag))} <span class="grey">${m.role ? `- ${m.role}` : ""}</span></div>
+                        <div class="member"><a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, pageTeam.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, pageTeam.tag))}</a><span class="grey">${m.role ? ` - ${m.role}` : ""}</span></div>
                     `).join("")}
                 </div>
                 <div id="homes">

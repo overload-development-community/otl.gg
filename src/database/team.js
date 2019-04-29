@@ -4,7 +4,7 @@
  * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {import("../models/team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
 const Db = require("node-database"),
@@ -590,12 +590,12 @@ class TeamDb {
      */
     static async getInfo(team) {
         /**
-         * @type {{recordsets: [{Map: string}[], {Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
+         * @type {{recordsets: [{Map: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
 
-            SELECT p.Name, r.Captain, r.Founder
+            SELECT p.PlayerId, p.Name, r.Captain, r.Founder
             FROM tblRoster r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             WHERE r.TeamId = @teamId
@@ -618,9 +618,19 @@ class TeamDb {
         `, {teamId: {type: Db.INT, value: team.id}});
         return {
             homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [],
-            members: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({name: row.Name, role: row.Captain ? "Captain" : row.Founder ? "Founder" : void 0})) || [],
-            requests: data && data.recordsets && data.recordsets[2] && data.recordsets[2].map((row) => ({name: row.Name, date: row.DateRequested})) || [],
-            invites: data && data.recordsets && data.recordsets[3] && data.recordsets[3].map((row) => ({name: row.Name, date: row.DateInvited})) || [],
+            members: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({
+                playerId: row.PlayerId,
+                name: row.Name,
+                role: row.Captain ? "Captain" : row.Founder ? "Founder" : void 0
+            })) || [],
+            requests: data && data.recordsets && data.recordsets[2] && data.recordsets[2].map((row) => ({
+                name: row.Name,
+                date: row.DateRequested
+            })) || [],
+            invites: data && data.recordsets && data.recordsets[3] && data.recordsets[3].map((row) => ({
+                name: row.Name,
+                date: row.DateInvited
+            })) || [],
             penaltiesRemaining: data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].PenaltiesRemaining || void 0
         };
     }
