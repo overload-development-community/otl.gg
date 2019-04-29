@@ -3019,61 +3019,82 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async next(member, channel, message) {
-        if (!await Commands.checkNoParameters(message, member, "Use `!next` by itself to get the list of upcoming matches.", channel)) {
+        if (message && message.toLowerCase() !== "time") {
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but this command does not take any parameters.  Use \`!next\` by itself to get the list of upcoming matches as a countdown, or use \`!next time\` to get the list with dates and times.`, channel);
             return false;
         }
 
         const matches = await Match.getUpcoming(),
             events = await Event.getUpcoming();
 
-        const msg = Discord.richEmbed({
-            title: "Overload Teams League Schedule",
-            fields: []
-        });
-
         if (matches.length === 0 && events.length === 0) {
             await Discord.queue("There are no matches or events currently scheduled.", channel);
             return true;
         }
 
-        if (matches.length !== 0) {
-            matches.forEach((match, index) => {
-                const difference = match.matchTime.getTime() - new Date().getTime(),
-                    days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
-                    hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
-                    minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
-                    seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+        const msg = Discord.richEmbed({
+            title: "Overload Teams League Schedule",
+            fields: []
+        });
 
-                if (difference > 0) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
-                } else {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+        if (message === "time") {
+            if (matches.length !== 0) {
+                for (const [index, match] of matches.entries()) {
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                 }
-            });
-        }
+            }
 
-        if (events.length !== 0) {
-            events.forEach((event, index) => {
-                if (event.dateStart >= new Date()) {
-                    const difference = event.dateStart.getTime() - new Date().getTime(),
+            if (events.length !== 0) {
+                for (const [index, event] of events.entries()) {
+                    if (event.dateStart >= new Date()) {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins at ${event.dateStart.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`);
+                    } else if (event.dateEnd >= new Date()) {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing until ${event.dateEnd.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`);
+                    } else {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
+                    }
+                }
+            }
+        } else {
+            if (matches.length !== 0) {
+                matches.forEach((match, index) => {
+                    const difference = match.matchTime.getTime() - new Date().getTime(),
                         days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
                         hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
                         minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                         seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
-                } else if (event.dateEnd >= new Date()) {
-                    const difference = event.dateEnd.getTime() - new Date().getTime(),
-                        days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
-                        hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
-                        minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
-                        seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+                    if (difference > 0) {
+                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    } else {
+                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    }
+                });
+            }
 
-                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
-                } else {
-                    msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
-                }
-            });
+            if (events.length !== 0) {
+                events.forEach((event, index) => {
+                    if (event.dateStart >= new Date()) {
+                        const difference = event.dateStart.getTime() - new Date().getTime(),
+                            days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                            hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                            minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                            seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                    } else if (event.dateEnd >= new Date()) {
+                        const difference = event.dateEnd.getTime() - new Date().getTime(),
+                            days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                            hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                            minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                            seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                    } else {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
+                    }
+                });
+            }
         }
 
         await Discord.richQueue(msg, channel);
