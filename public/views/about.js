@@ -63,9 +63,9 @@ class AboutView {
                     <div>Unsets your Twitch channel.</div>
                     <div class="example">!removetwitch</div>
 
-                    <div class="command">!next</div>
-                    <div>List the upcoming scheduled matches.</div>
-                    <div class="example">!next</div>
+                    <div class="command">!next [time]</div>
+                    <div>List the upcoming scheduled matches.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
+                    <div class="example">!next<br />!next time</div>
 
                     <div class="command">!matchtime &lt;challengeId></div>
                     <div>Gets the match time in your local time zone.</div>

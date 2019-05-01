@@ -4,6 +4,42 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.1 - 4/30/2019
+
+### Bot:
+
+* Refactored database code to be less monolithic.
+* For commands where you enter a date and time, if you don't enter a year, it will no longer fail to recognize Daylight Savings Time properly in some cases.
+* The `!home` command will now enforce the one stock map per team rule.
+* Added `!overtime` command to implement overtime periods for games that use overtime.
+* Improved error reporting.
+* The `!addstat` command now shows KDA.
+* Added `!lockteam` and `!unlockteam` commands to lock and unlock team rosters.
+* Added `!addmap` and `!removemap` commands to add and remove maps from the allowed map pool.
+* Fix to `!creatematch` not swapping team colors properly.
+* Added `!next time` to show the next events and matches in the user's local time zone.
+* Increase admin's `!forcetime` range to 180 days.
+* Fix a bug where the bot will throw an error if a player leaves a server after playing a match but before it's closed.
+* Fix a bug with issuing `!voidgame` and `!closegame` too rapidly in succession.
+
+### Website:
+
+* Refactored to a proper MVC pattern.
+* Uses a more generic router.
+* Now using morgan for logging.
+* Improved display name sanitizing.
+* Fix a bug with team size records being incorrect on the standings page.
+* Overtime games are now noted on the website on the home, matches, and match page.
+* Added a prominent link to Challonge.
+* Added images for Burning Indika, Junebug, Keg Party, Mesa, Sub Rosa, and Turnstile.
+* Added new links page.
+* Website now uses SSL.
+* Matches page now dynamically loads 10 matches at a time.
+* Website now has a favicon.
+* Added custom 404 and 500 pages.
+* Team rosters now link to the player's page.
+* New match page, linked to from everywhere on the site that shows a match.  The match's time serves as the link.
+
 ## v1.0.7 - 3/10/2019
 
 ### Bot:
