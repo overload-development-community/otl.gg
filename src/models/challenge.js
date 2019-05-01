@@ -452,7 +452,7 @@ class Challenge {
             throw new Exception("There was a database error adding a stat to a challenge.", err);
         }
 
-        await Discord.queue(`Added stats for ${pilot}: ${(kills + assists) / Math.max(deaths, 1)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+        await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
     }
 
     //          #     #   ##    #
