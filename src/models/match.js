@@ -107,7 +107,7 @@ class Match {
     /**
      * Gets the current matches.
      * @param {Standing[]} standings The standings.
-     * @returns {Promise<{challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent(standings) {
         let matches;
@@ -118,6 +118,7 @@ class Match {
         }
 
         return matches.map((match) => ({
+            id: match.id,
             challengingTeam: standings.find((s) => s.teamId === match.challengingTeamId),
             challengedTeam: standings.find((s) => s.teamId === match.challengedTeamId),
             challengingTeamScore: match.challengingTeamScore,

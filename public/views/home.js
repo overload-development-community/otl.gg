@@ -62,7 +62,7 @@ class HomeView {
                         `}
                         <div class="date">
                             ${m.matchTime ? /* html */`
-                                <script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script>
+                                <a href="/match/${m.id}/${m.challengingTeam.tag}/${m.challengedTeam.tag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a>
                             ` : "Unscheduled"}
                         </div>
                         ${m.map ? /* html */`

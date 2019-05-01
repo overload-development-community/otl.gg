@@ -886,6 +886,99 @@ class ChallengeDb {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({discordId: row.DiscordId, twitchName: row.TwitchName})) || [];
     }
 
+    //              #    ###                     ###          #           #    ##
+    //              #     #                      #  #         #                 #
+    //  ###   ##   ###    #     ##    ###  # #   #  #   ##   ###    ###  ##     #     ###
+    // #  #  # ##   #     #    # ##  #  #  ####  #  #  # ##   #    #  #   #     #    ##
+    //  ##   ##     #     #    ##    # ##  #  #  #  #  ##     #    # ##   #     #      ##
+    // #      ##     ##   #     ##    # #  #  #  ###    ##     ##   # #  ###   ###   ###
+    //  ###
+    /**
+     * Gets the team details for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     */
+    static async getTeamDetails(challenge) {
+        /**
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number}[], {Season: number, Postseason: boolean}[]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @season INT
+            DECLARE @postseason BIT
+            DECLARE @challengingTeamId INT
+            DECLARE @challengedTeamId INT
+            
+            SELECT @season = Season,
+                @postseason = Postseason,
+                @challengingTeamId = ChallengingTeamId,
+                @challengedTeamId = ChallengedTeamId
+            FROM vwCompletedChallenge
+            WHERE ChallengeId = @challengeId
+            
+            IF @season IS NULL
+            BEGIN
+                DECLARE @matchTime DATETIME
+            
+                SELECT @matchTime = MatchTime,
+                    @postseason = Postseason,
+                    @challengingTeamId = ChallengingTeamId,
+                    @challengedTeamId = ChallengedTeamId
+                FROM tblChallenge
+                WHERE ChallengeId = @challengeId
+            
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE @matchTime IS NULL OR (@matchTime >= DateStart AND @matchTime < DateEnd)
+            END
+            
+            SELECT
+                TeamId, Name, Tag,
+                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Wins, Losses, Ties
+            FROM
+            (
+                SELECT
+                    t.TeamId,
+                    t.Name,
+                    t.Tag,
+                    tr.Rating,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                FROM tblTeam t
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
+                WHERE t.TeamId IN (@challengingTeamId, @challengedTeamId)
+            ) a
+            
+            SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths
+            FROM tblStat s
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE s.ChallengeId = @challengeId
+            
+            SELECT @Season Season, @Postseason Postseason
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets.length === 3 && {
+            teams: data.recordsets[0].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                rating: row.Rating,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            })),
+            stats: data.recordsets[1].map((row) => ({
+                playerId: row.PlayerId,
+                name: row.Name,
+                teamId: row.TeamId,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths
+            })),
+            season: data.recordsets[2] && data.recordsets[2][0] && {season: data.recordsets[2][0].Season, postseason: data.recordsets[2][0].Postseason} || void 0
+        } || {teams: void 0, stats: void 0, season: void 0};
+    }
+
     //        #          #     #  #
     //                   #     ####
     // ###   ##     ##   # #   ####   ###  ###

@@ -1037,6 +1037,25 @@ class Challenge {
         }
     }
 
+    //              #    ###                     ###          #           #    ##
+    //              #     #                      #  #         #                 #
+    //  ###   ##   ###    #     ##    ###  # #   #  #   ##   ###    ###  ##     #     ###
+    // #  #  # ##   #     #    # ##  #  #  ####  #  #  # ##   #    #  #   #     #    ##
+    //  ##   ##     #     #    ##    # ##  #  #  #  #  ##     #    # ##   #     #      ##
+    // #      ##     ##   #     ##    # #  #  #  ###    ##     ##   # #  ###   ###   ###
+    //  ###
+    /**
+     * Gets the team details for a challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     */
+    async getTeamDetails() {
+        try {
+            return await Db.getTeamDetails(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting team details for a challenge.", err);
+        }
+    }
+
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -2238,7 +2257,7 @@ class Challenge {
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
             challengedTeamTimezone = await this.challengedTeam.getTimezone();
 
-        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}`;
+        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`;
 
         if (this.details.dateVoided) {
             topic = `${topic}\n\nThis match has been voided.`;

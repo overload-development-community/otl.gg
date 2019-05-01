@@ -163,14 +163,15 @@ class MatchDb {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
         /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
+                ChallengeId,
                 ChallengingTeamId,
                 ChallengedTeamId,
                 ChallengingTeamScore,
@@ -182,6 +183,7 @@ class MatchDb {
             FROM
             (
                 SELECT TOP 5
+                    ChallengeId,
                     ChallengingTeamId,
                     ChallengedTeamId,
                     CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
@@ -197,6 +199,7 @@ class MatchDb {
                 ORDER BY MatchTime DESC
             ) a
             UNION SELECT
+                ChallengeId,
                 ChallengingTeamId,
                 ChallengedTeamId,
                 CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
@@ -212,6 +215,7 @@ class MatchDb {
             ORDER BY MatchTime
         `);
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            id: row.ChallengeId,
             challengingTeamId: row.ChallengingTeamId,
             challengedTeamId: row.ChallengedTeamId,
             challengingTeamScore: row.ChallengingTeamScore,
