@@ -4580,12 +4580,12 @@ class Commands {
                 }
             }
 
-            if (date.getTime() - new Date().getTime() < -28 * 24 * 60 * 60 * 1000) {
+            if (date.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
                 await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the past.`, channel);
                 throw new Warning("Date too far into the past.");
             }
 
-            if (date.getTime() - new Date().getTime() > 28 * 24 * 60 * 60 * 1000) {
+            if (date.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
                 await Discord.queue(`Sorry, ${member}, but you cannot schedule a match that far into the future.`, channel);
                 throw new Warning("Date too far into the future.");
             }
