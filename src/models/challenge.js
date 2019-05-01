@@ -2356,7 +2356,9 @@ class Challenge {
 
                 await Discord.queue(`The match at ${this.channel} has been voided.  Please close the channel.`, Discord.alertsChannel);
 
-                await this.updateTopic();
+                if (this.channel) {
+                    await this.updateTopic();
+                }
             }
 
             if (this.details.dateConfirmed && this.details.dateClosed) {
