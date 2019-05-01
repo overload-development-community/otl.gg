@@ -697,8 +697,11 @@ class Challenge {
                                 if (a.deaths !== b.deaths) {
                                     return a.deaths - b.deaths;
                                 }
+                                if (!a.pilot || !b.pilot) {
+                                    return 0;
+                                }
                                 return a.pilot.displayName.localeCompare(b.pilot.displayName);
-                            }).map((stat) => `${stat.pilot.displayName}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
                             value: `${stats.challengedTeamStats.sort((a, b) => {
@@ -712,7 +715,7 @@ class Challenge {
                                     return a.deaths - b.deaths;
                                 }
                                 return a.pilot.displayName.localeCompare(b.pilot.displayName);
-                            }).map((stat) => `${stat.pilot.displayName}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }
                     ]
                 }), Discord.matchResultsChannel);
