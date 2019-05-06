@@ -4,7 +4,8 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const Db = require("../database/challenge"),
+const Common = require("../../web/includes/common"),
+    Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
     settings = require("../../settings"),
@@ -1052,11 +1053,18 @@ class Challenge {
      * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     async getTeamDetails() {
+        let details;
         try {
-            return await Db.getTeamDetails(this);
+            details = await Db.getTeamDetails(this);
         } catch (err) {
             throw new Exception("There was a database error getting team details for a challenge.", err);
         }
+
+        details.stats.forEach((stat) => {
+            stat.name = Common.normalizeName(stat.name, details.teams.find((team) => team.teamId === stat.teamId).tag);
+        });
+
+        return details;
     }
 
     // ##                   #  ###          #           #    ##
