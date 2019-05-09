@@ -84,7 +84,7 @@ class TeamView {
                         <div>
                             2v2 Record: <span class="numeric">${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}</span><br />
                             3v3 Record: <span class="numeric">${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}</span><br />
-                            4v4 Record: <span class="numeric">${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}</span>
+                            4v4+ Record: <span class="numeric">${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}</span>
                         </div>
                     </div>
                     <div class="breakdown">
