@@ -112,6 +112,14 @@ class Log {
 
             for (const log of queue) {
                 if (log.obj) {
+                    if (log.obj.message && log.obj.innerError && log.obj.innerError.message && log.obj.innerError.code && log.obj.innerError.code === "ETIMEOUT") {
+                        log.obj = `${log.obj.message} - ${log.obj.innerError.message} - ETIMEOUT`;
+                    }
+
+                    if (log.obj.name && log.obj.name === "TimeoutError") {
+                        log.obj = `${log.obj.message} - TimeoutError`;
+                    }
+
                     let value = util.inspect(log.obj),
                         continued = false;
 
