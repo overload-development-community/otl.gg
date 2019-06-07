@@ -109,6 +109,10 @@ class Router {
                         }
                         await Router.checkCache(filename);
 
+                        if (!classInfo.class[req.method.toLowerCase()]) {
+                            return classes[path.resolve(`${__dirname}/../web/controllers/404.js`)].class.get(req, res, next);
+                        }
+
                         return await classInfo.class[req.method.toLowerCase()](req, res, next);
                     } catch (err) {
                         Log.exception(`A web exception occurred in ${method} ${classInfo.path}.`, err);
