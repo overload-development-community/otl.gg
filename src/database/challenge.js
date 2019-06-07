@@ -896,11 +896,11 @@ class ChallengeDb {
     /**
      * Gets the team details for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     static async getTeamDetails(challenge) {
         /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number}[], {Season: number, Postseason: boolean}[]}}
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Season: number, Postseason: boolean}[]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -950,9 +950,10 @@ class ChallengeDb {
                 WHERE t.TeamId IN (@challengingTeamId, @challengedTeamId)
             ) a
             
-            SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths
+            SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
             WHERE s.ChallengeId = @challengeId
             
             SELECT @Season Season, @Postseason Postseason
@@ -973,7 +974,8 @@ class ChallengeDb {
                 teamId: row.TeamId,
                 kills: row.Kills,
                 assists: row.Assists,
-                deaths: row.Deaths
+                deaths: row.Deaths,
+                twitchName: row.TwitchName
             })),
             season: data.recordsets[2] && data.recordsets[2][0] && {season: data.recordsets[2][0].Season, postseason: data.recordsets[2][0].Postseason} || void 0
         } || {teams: void 0, stats: void 0, season: void 0};

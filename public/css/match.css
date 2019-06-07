@@ -168,7 +168,7 @@
 
 #stats {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto;
     color: white;
     font-size: 14px;
     margin-top: 5px;
@@ -222,9 +222,17 @@
     white-space: nowrap;
 }
 
+.twitch-image {
+    display: inline-block;
+    background-image: url(/images/twitch.png);
+    background-size: 14px 14px;
+    width: 14px;
+    height: 14px;
+}
+
 #details {
     display: grid;
-    grid-template-columns: auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto;
     color: white;
     font-size: 14px;
     margin-top: 5px;

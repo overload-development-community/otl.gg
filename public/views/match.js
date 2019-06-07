@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number}[], season: {season: number, postseason: boolean}}}} data The match data.
+     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], season: {season: number, postseason: boolean}}}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
@@ -93,6 +93,9 @@ class MatchView {
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
+                            <div class="twitch">${s.twitchName ? /* html */`
+                                <a href="https://twitch.tv/${encodeURIComponent(s.twitchName)}"><div class="twitch-image"></div></a>
+                            ` : ""}</div>
                             <div class="numeric kda">${((s.kills + s.assists) / Math.max(s.deaths, 1)).toFixed(3)}</div>
                             <div class="numeric kills">${s.kills}</div>
                             <div class="numeric assists">${s.assists}</div>
@@ -113,6 +116,8 @@ class MatchView {
                             `}
                         ` : "Neutral"}
                     </div>
+                    <div>Caster:</div>
+                    <div>${challenge.details.caster ? MatchView.Common.htmlEncode(challenge.details.caster.displayName) : "None"}</div>
                     <div>Orange team:</div>
                     <div class="tag">
                         ${(team = challenge.details.orangeTeam) === null ? "" : /* html */`
