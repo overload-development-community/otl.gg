@@ -69,7 +69,7 @@ class MatchesView {
                                         </div>
                                     ` : ""}
                                     <div class="date">
-                                        <script>document.write(MatchesView.Common.formatDate(new Date("${m.matchTime}")));</script>
+                                        <script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script>
                                     </div>
                                     <div class="countdown">
                                         <script>new Countdown(${m.timeRemaining});</script>
