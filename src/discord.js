@@ -321,6 +321,11 @@ class Discord {
         });
 
         discord.on("error", (err) => {
+            if (err.message === "read ECONNRESET") {
+                // Swallow this error, see https://github.com/discordjs/discord.js/issues/3043#issuecomment-465543902
+                return;
+            }
+
             Log.exception("Discord error.", err);
         });
     }
