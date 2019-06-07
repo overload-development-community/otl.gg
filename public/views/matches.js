@@ -69,7 +69,7 @@ class MatchesView {
                                         </div>
                                     ` : ""}
                                     <div class="date">
-                                        <script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script>
+                                        <a href="/match/${m.challengeId}/${m.challengingTeam.tag}/${m.challengedTeam.tag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a>
                                     </div>
                                     <div class="countdown">
                                         <script>new Countdown(${m.timeRemaining});</script>

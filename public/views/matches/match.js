@@ -64,7 +64,7 @@ class MatchView {
                         ${match.map}${match.overtimePeriods > 0 ? `, ${match.overtimePeriods > 1 ? match.overtimePeriods : ""}OT` : ""}
                     </div>
                     <div class="date">
-                        <script>document.write(MatchView.Common.formatDate(new Date("${match.matchTime}")));</script>
+                        <a href="/match/${match.challengeId}/${match.challengingTeam.tag}/${match.challengedTeam.tag}"><script>document.write(MatchView.Common.formatDate(new Date("${match.matchTime}")));</script></a>
                     </div>
                 </div>
                 <div class="stats">
