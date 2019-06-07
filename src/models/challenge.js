@@ -1288,6 +1288,10 @@ class Challenge {
                 throw new Exception("There was a database error notifying a match starting for a challenge.", err);
             }
 
+            if (!challenge.channel) {
+                return;
+            }
+
             await challenge.loadDetails();
 
             try {
