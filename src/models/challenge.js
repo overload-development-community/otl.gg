@@ -2352,8 +2352,10 @@ class Challenge {
             this.setNotifyClockExpired(this.details.dateClockDeadline);
         }
 
-        this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
-        this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
+        if (this.details.matchTime) {
+            this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
+            this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
+        }
 
         try {
             if (this.channel) {
