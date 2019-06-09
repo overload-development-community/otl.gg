@@ -8,11 +8,27 @@ const Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
+    schedule = require("node-schedule"),
     settings = require("../../settings"),
     Team = require("./team"),
 
     channelParse = /^([0-9a-z]{1,5})-([0-9a-z]{1,5})-([1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (.*)$/;
+
+/**
+ * @type {Object.<number, schedule.Job>}
+ */
+const clockExpiredJobs = {};
+
+/**
+ * @type {Object.<number, schedule.Job>}
+ */
+const upcomingMatchJobs = {};
+
+/**
+ * @type {Object.<number, schedule.Job>}
+ */
+const missedMatchJobs = {};
 
 /**
  * @type {typeof import("../discord")}
@@ -515,6 +531,21 @@ class Challenge {
 
                 await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
 
+                if (clockExpiredJobs[this.id]) {
+                    clockExpiredJobs[this.id].cancel();
+                    delete clockExpiredJobs[this.id];
+                }
+
+                if (upcomingMatchJobs[this.id]) {
+                    upcomingMatchJobs[this.id].cancel();
+                    delete upcomingMatchJobs[this.id];
+                }
+
+                if (missedMatchJobs[this.id]) {
+                    missedMatchJobs[this.id].cancel();
+                    delete missedMatchJobs[this.id];
+                }
+
                 break;
             case "extend":
             {
@@ -532,13 +563,30 @@ class Challenge {
                 this.details.suggestedTimeTeam = void 0;
 
                 try {
+                    if (clockExpiredJobs[this.id]) {
+                        clockExpiredJobs[this.id].cancel();
+                        delete clockExpiredJobs[this.id];
+                    }
+
                     if (deadline) {
                         await Discord.queue(`${member} has extended the deadline of this challenge.  You have 14 days to get the match scheduled.`, this.channel);
+
+                        clockExpiredJobs[this.id] = schedule.scheduleJob(deadline, Challenge.notifyClockExpired.bind(null, this.id));
                     } else {
                         await Discord.queue(`${member} has cleared the match time of this challenge, please schedule a new time to play.`, this.channel);
                     }
 
                     await this.updateTopic();
+
+                    if (upcomingMatchJobs[this.id]) {
+                        upcomingMatchJobs[this.id].cancel();
+                        delete upcomingMatchJobs[this.id];
+                    }
+
+                    if (missedMatchJobs[this.id]) {
+                        missedMatchJobs[this.id].cancel();
+                        delete missedMatchJobs[this.id];
+                    }
                 } catch (err) {
                     throw new Exception("There was a critical Discord error extending a challenge.  Please resolve this manually as soon as possible.", err);
                 }
@@ -552,6 +600,21 @@ class Challenge {
                     penalizedTeams = await Db.voidWithPenalties(this, teams);
                 } catch (err) {
                     throw new Exception("There was a database error penalizing a challenge.", err);
+                }
+
+                if (clockExpiredJobs[this.id]) {
+                    clockExpiredJobs[this.id].cancel();
+                    delete clockExpiredJobs[this.id];
+                }
+
+                if (upcomingMatchJobs[this.id]) {
+                    upcomingMatchJobs[this.id].cancel();
+                    delete upcomingMatchJobs[this.id];
+                }
+
+                if (missedMatchJobs[this.id]) {
+                    missedMatchJobs[this.id].cancel();
+                    delete missedMatchJobs[this.id];
                 }
 
                 try {
@@ -613,6 +676,16 @@ class Challenge {
             await Discord.queue(`${member} has cleared the match time for this match.`, this.channel);
 
             await this.updateTopic();
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -649,6 +722,13 @@ class Challenge {
             await Discord.queue(`**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`, this.channel);
 
             await this.updateTopic();
+
+            if (clockExpiredJobs[this.id]) {
+                clockExpiredJobs[this.id].cancel();
+                delete clockExpiredJobs[this.id];
+            }
+
+            clockExpiredJobs[this.id] = schedule.scheduleJob(dates.clockDeadline, Challenge.notifyClockExpired.bind(null, this.id));
         } catch (err) {
             throw new Exception("There was a critical Discord error clocking a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -822,6 +902,21 @@ class Challenge {
             await Discord.queue(`The match at ${this.channel} has been confirmed.  Please add stats and close the channel.`, Discord.alertsChannel);
 
             await this.updateTopic();
+
+            if (clockExpiredJobs[this.id]) {
+                clockExpiredJobs[this.id].cancel();
+                delete clockExpiredJobs[this.id];
+            }
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a reported match.  Please resolve this manually as soon as possible.", err);
         }
@@ -974,6 +1069,20 @@ class Challenge {
             }), Discord.scheduledMatchesChannel);
 
             await this.updateTopic();
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            upcomingMatchJobs[this.id] = schedule.scheduleJob(new Date(Math.max(this.details.matchTime.getTime() - 1800000, new Date().getTime() + 5000)), Challenge.notifyMatchStarting.bind(null, this.id));
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
+
+            missedMatchJobs[this.id] = schedule.scheduleJob(new Date(Math.max(this.details.matchTime.getTime() + 3600000, new Date().getTime() + 5000)), Challenge.notifyMatchMissed.bind(null, this.id));
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1000,6 +1109,9 @@ class Challenge {
         const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, void 0, this.details.usingHomeServerTeam ? this.details.homeServerTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam : null, this.details.teamSize, true);
 
         await Discord.queue(`The rematch has been created!  Visit ${challenge.channel} to get started.`, this.channel);
+
+        upcomingMatchJobs[challenge.id] = schedule.scheduleJob(new Date(new Date().getTime() + 5000), Challenge.notifyMatchStarting.bind(null, challenge.id));
+        missedMatchJobs[challenge.id] = schedule.scheduleJob(new Date(new Date().getTime() + 3600000), Challenge.notifyMatchMissed.bind(null, challenge.id));
     }
 
     //              #     ##                 #    ###          #
@@ -1183,142 +1295,150 @@ class Challenge {
         }
 
         try {
-            await Challenge.notifyClocksExpired(notifications.expiredClocks);
-            await Challenge.notifyMatchesStarting(notifications.startingMatches);
-            await Challenge.notifyMatchesMissed(notifications.missedMatches);
+            for (const challengeData of notifications.expiredClocks) {
+                clockExpiredJobs[challengeData.challengeId] = schedule.scheduleJob(new Date(Math.max(challengeData.dateClockDeadline.getTime(), new Date().getTime() + 5000)), Challenge.notifyClockExpired.bind(null, challengeData.challengeId));
+            }
+
+            for (const challengeData of notifications.startingMatches) {
+                upcomingMatchJobs[challengeData.challengeId] = schedule.scheduleJob(new Date(Math.max(challengeData.matchTime.getTime() - 1800000, new Date().getTime() + 5000)), Challenge.notifyMatchStarting.bind(null, challengeData.challengeId));
+            }
+
+            for (const challengeData of notifications.missedMatches) {
+                missedMatchJobs[challengeData.challengeId] = schedule.scheduleJob(new Date(Math.max(challengeData.matchTime.getTime() + 3600000, new Date().getTime() + 5000)), Challenge.notifyMatchMissed.bind(null, challengeData.challengeId));
+            }
         } catch (err) {
             Log.exception("There was an error issuing challenge notifications.", err);
         }
     }
 
-    //              #     #      #          ##   ##                #            ####               #                   #
-    //              #           # #        #  #   #                #            #                                      #
-    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #    ###   ###   #  #  ###   ##    ###    ##    ###
-    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    ##     #      ##   #  #   #    #  #  # ##  #  #
-    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #     ##   #      ##   #  #   #    #     ##    #  #
-    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ###    ####  #  #  ###   ###   #      ##    ###
+    //              #     #      #          ##   ##                #     ####               #                   #
+    //              #           # #        #  #   #                #     #                                      #
+    // ###    ##   ###   ##     #    #  #  #      #     ##    ##   # #   ###   #  #  ###   ##    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #      #    #  #  #     ##    #      ##   #  #   #    #  #  # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #   #    #  #  #     # #   #      ##   #  #   #    #     ##    #  #
+    // #  #   ##     ##  ###    #      #    ##   ###    ##    ##   #  #  ####  #  #  ###   ###   #      ##    ###
     //                                #                                                     #
     /**
      * Notifies an admin that the challenge's clock has expired.
-     * @param {number[]} challengeIds The challenge IDs to notify expired clocks for.
+     * @param {number} challengeId The challenge ID to notify an expired clock for.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    static async notifyClocksExpired(challengeIds) {
-        for (const challengeId of challengeIds) {
-            let challenge;
-            try {
-                challenge = await Challenge.getById(challengeId);
-            } catch (err) {
-                throw new Exception("There was an error notifying that a challenge clock expired.", err);
-            }
-
-            try {
-                await Db.setNotifyClockExpired(challenge);
-            } catch (err) {
-                throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
-            }
-
-            try {
-                await Discord.queue(`The clock deadline has been passed in ${challenge.channel}.`, Discord.alertsChannel);
-            } catch (err) {
-                throw new Exception("There was a critical Discord error notifying a clock expired for a challenge.  Please resolve this manually as soon as possible.", err);
-            }
+    static async notifyClockExpired(challengeId) {
+        let challenge;
+        try {
+            challenge = await Challenge.getById(challengeId);
+        } catch (err) {
+            throw new Exception("There was an error notifying that a challenge clock expired.", err);
         }
+
+        try {
+            await Db.setNotifyClockExpired(challenge);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a clock expired for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue(`The clock deadline has been passed in ${challenge.channel}.`, Discord.alertsChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a clock expired for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+
+        delete clockExpiredJobs[challengeId];
     }
 
-    //              #     #      #         #  #         #          #                  #  #   #                           #
-    //              #           # #        ####         #          #                  ####                               #
-    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    ##    ###   ####  ##     ###    ###    ##    ###
-    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  # ##  ##     #  #   #    ##     ##     # ##  #  #
-    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  ##      ##   #  #   #      ##     ##   ##    #  #
-    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##   ###    #  #  ###   ###    ###     ##    ###
+    //              #     #      #         #  #         #          #     #  #   #                           #
+    //              #           # #        ####         #          #     ####                               #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###   ####  ##     ###    ###    ##    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  #  #   #    ##     ##     # ##  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #      ##     ##   ##    #  #
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #  #  #  ###   ###    ###     ##    ###
     //                                #
     /**
      * Notifies an admin that the challenge's match time was missed.
-     * @param {number[]} challengeIds The challenge IDs to notify missed matches for.
+     * @param {number} challengeId The challenge ID to notify a match missed for.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    static async notifyMatchesMissed(challengeIds) {
-        for (const challengeId of challengeIds) {
-            let challenge;
-            try {
-                challenge = await Challenge.getById(challengeId);
-            } catch (err) {
-                throw new Exception("There was an error notifying that a challenge match was missed.", err);
-            }
-
-            try {
-                await Db.setNotifyMatchMissed(challenge);
-            } catch (err) {
-                throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
-            }
-
-            try {
-                await Discord.queue(`The match time was missed in ${challenge.channel}.`, Discord.alertsChannel);
-            } catch (err) {
-                throw new Exception("There was a critical Discord error notifying a match was missed for a challenge.  Please resolve this manually as soon as possible.", err);
-            }
+    static async notifyMatchMissed(challengeId) {
+        let challenge;
+        try {
+            challenge = await Challenge.getById(challengeId);
+        } catch (err) {
+            throw new Exception("There was an error notifying that a challenge match was missed.", err);
         }
+
+        try {
+            await Db.setNotifyMatchMissed(challenge);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a match was missed for a challenge.", err);
+        }
+
+        try {
+            await Discord.queue(`The match time was missed in ${challenge.channel}.`, Discord.alertsChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a match was missed for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+
+        delete missedMatchJobs[challengeId];
     }
 
-    //              #     #      #         #  #         #          #                   ##    #                 #     #
-    //              #           # #        ####         #          #                  #  #   #                 #
-    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    ##    ###    #    ###    ###  ###   ###   ##    ###    ###
-    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #  # ##  ##       #    #    #  #  #  #   #     #    #  #  #  #
-    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  ##      ##   #  #   #    # ##  #      #     #    #  #   ##
-    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##   ###     ##     ##   # #  #       ##  ###   #  #  #
-    //                                #                                                                                          ###
+    //              #     #      #         #  #         #          #      ##    #                 #     #
+    //              #           # #        ####         #          #     #  #   #                 #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###    #    ###    ###  ###   ###   ##    ###    ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #    #    #    #  #  #  #   #     #    #  #  #  #
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #  #  #   #    # ##  #      #     #    #  #   ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #   ##     ##   # #  #       ##  ###   #  #  #
+    //                                #                                                                             ###
     /**
      * Notifies the challenge channel that the match is about to start.
-     * @param {number[]} challengeIds The challenge IDs to notify matches starting for.
+     * @param {number} challengeId The challenge ID to notify a match starting for.
      * @returns {Promise} A promise that resolves when the notification has been sent.
      */
-    static async notifyMatchesStarting(challengeIds) {
-        for (const challengeId of challengeIds) {
-            let challenge;
-            try {
-                challenge = await Challenge.getById(challengeId);
-            } catch (err) {
-                throw new Exception("There was an error notifying that a challenge match is about to start.", err);
-            }
-
-            try {
-                await Db.setNotifyMatchStarting(challenge);
-            } catch (err) {
-                throw new Exception("There was a database error notifying a match starting for a challenge.", err);
-            }
-
-            if (!challenge.channel) {
-                return;
-            }
-
-            await challenge.loadDetails();
-
-            try {
-                const msg = Discord.richEmbed({
-                    fields: []
-                });
-                if (Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
-                    msg.setTitle(`Polish your gunships, this match begins in ${Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`);
-                } else {
-                    msg.setTitle("Polish your gunships, this match begins NOW!");
-                }
-
-                if (!challenge.details.map) {
-                    msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
-                }
-
-                if (!challenge.details.teamSize) {
-                    msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
-                }
-
-                msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
-
-                await Discord.richQueue(msg, challenge.channel);
-            } catch (err) {
-                throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
-            }
+    static async notifyMatchStarting(challengeId) {
+        let challenge;
+        try {
+            challenge = await Challenge.getById(challengeId);
+        } catch (err) {
+            throw new Exception("There was an error notifying that a challenge match is about to start.", err);
         }
+
+        try {
+            await Db.setNotifyMatchStarting(challenge);
+        } catch (err) {
+            throw new Exception("There was a database error notifying a match starting for a challenge.", err);
+        }
+
+        if (!challenge.channel) {
+            return;
+        }
+
+        await challenge.loadDetails();
+
+        try {
+            const msg = Discord.richEmbed({
+                fields: []
+            });
+            if (Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
+                msg.setTitle(`Polish your gunships, this match begins in ${Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) * 5} minutes!`);
+            } else {
+                msg.setTitle("Polish your gunships, this match begins NOW!");
+            }
+
+            if (!challenge.details.map) {
+                msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
+            }
+
+            if (!challenge.details.teamSize) {
+                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+            }
+
+            msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
+
+            await Discord.richQueue(msg, challenge.channel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error notifying a match starting for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+
+        delete upcomingMatchJobs[challengeId];
     }
 
     //        #          #     #  #
@@ -1779,6 +1899,21 @@ class Challenge {
             await Discord.richQueue(embed, this.channel);
 
             await this.updateTopic();
+
+            if (clockExpiredJobs[this.id]) {
+                clockExpiredJobs[this.id].cancel();
+                delete clockExpiredJobs[this.id];
+            }
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the score for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1902,6 +2037,20 @@ class Challenge {
             }), Discord.scheduledMatchesChannel);
 
             await this.updateTopic();
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            upcomingMatchJobs[this.id] = schedule.scheduleJob(new Date(Math.max(this.details.matchTime.getTime() - 1800000, new Date().getTime() + 5000)), Challenge.notifyMatchStarting.bind(null, this.id));
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
+
+            missedMatchJobs[this.id] = schedule.scheduleJob(new Date(Math.max(this.details.matchTime.getTime() + 3600000, new Date().getTime() + 5000)), Challenge.notifyMatchMissed.bind(null, this.id));
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2359,6 +2508,21 @@ class Challenge {
         this.details.dateVoided = new Date();
 
         try {
+            if (clockExpiredJobs[this.id]) {
+                clockExpiredJobs[this.id].cancel();
+                delete clockExpiredJobs[this.id];
+            }
+
+            if (upcomingMatchJobs[this.id]) {
+                upcomingMatchJobs[this.id].cancel();
+                delete upcomingMatchJobs[this.id];
+            }
+
+            if (missedMatchJobs[this.id]) {
+                missedMatchJobs[this.id].cancel();
+                delete missedMatchJobs[this.id];
+            }
+
             if (this.channel) {
                 if (teamDisbanding) {
                     await Discord.queue(`${teamDisbanding.name} has disbanded, and thus this challenge has been automatically voided.  An admin will close this channel soon.`, this.channel);

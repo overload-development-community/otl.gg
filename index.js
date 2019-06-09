@@ -8,7 +8,6 @@ const compression = require("compression"),
 
     Discord = require("./src/discord"),
     Log = require("./src/logging/log"),
-    Notify = require("./src/notify"),
     Router = require("./src/router"),
     settings = require("./settings"),
 
@@ -47,9 +46,6 @@ const compression = require("compression"),
     // Startup Discord.
     Discord.startup();
     Discord.connect();
-
-    // Begin notifications.
-    setInterval(Notify.notify, 60 * 1000);
 
     // Add morgan extensions.
     morganExtensions(morgan);

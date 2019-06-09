@@ -3,6 +3,7 @@ const DiscordJs = require("discord.js"),
     Commands = require("./commands"),
     Exception = require("./logging/exception"),
     Log = require("./logging/log"),
+    Notify = require("./notify"),
     settings = require("../settings"),
     Warning = require("./logging/warning"),
 
@@ -270,6 +271,8 @@ class Discord {
             scheduledMatchesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "scheduled-matches")); // eslint-disable-line no-extra-parens
 
             challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (otlGuild.channels.find((c) => c.name === "Challenges")); // eslint-disable-line no-extra-parens
+
+            Notify.setupNotifications();
         });
 
         discord.on("disconnect", (ev) => {

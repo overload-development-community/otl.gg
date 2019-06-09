@@ -795,39 +795,45 @@ class ChallengeDb {
     //  ###
     /**
      * Gets the notifications to send out.
-     * @returns {Promise<{expiredClocks: number[], startingMatches: number[], missedMatches: number[]}>} A promise that resolves with the notifications to send out.
+     * @returns {Promise<{expiredClocks: {challengeId: number, dateClockDeadline: Date}[], startingMatches: {challengeId: number, matchTime: Date}[], missedMatches: {challengeId: number, matchTime: Date}[]}>} A promise that resolves with the notifications to send out.
      */
     static async getNotifications() {
         /**
-         * @type {{recordsets: [{ChallengeId: number}[], {ChallengeId: number}[], {ChallengeId: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, DateClockDeadline: Date}[], {ChallengeId: number, MatchTime: Date}[], {ChallengeId: number, MatchTime: Date}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT ChallengeId
+            SELECT ChallengeId, DateClockDeadline
             FROM tblChallenge
-            WHERE DateClockDeadline < GETUTCDATE()
-                AND DateClockDeadlineNotified IS NULL
+            WHERE DateClockDeadlineNotified IS NULL
                 AND DateClosed IS NULL
 
             SELECT ChallengeId, MatchTime
             FROM tblChallenge
-            WHERE MatchTime <= DATEADD(MINUTE, 30, GETUTCDATE())
-                AND DateMatchTimeNotified IS NULL
+            WHERE DateMatchTimeNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
                 AND DateClosed IS NULL
 
-            SELECT ChallengeId
+            SELECT ChallengeId, MatchTime
             FROM tblChallenge
-            WHERE MatchTime <= DATEADD(HOUR, -1, GETUTCDATE())
-                AND DateMatchTimePassedNotified IS NULL
+            WHERE DateMatchTimePassedNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
                 AND DateClosed IS NULL
         `);
         return data && data.recordsets && data.recordsets.length === 3 && {
-            expiredClocks: data.recordsets[0].map((row) => row.ChallengeId),
-            startingMatches: data.recordsets[1].map((row) => row.ChallengeId),
-            missedMatches: data.recordsets[2].map((row) => row.ChallengeId)
+            expiredClocks: data.recordsets[0].map((row) => ({
+                challengeId: row.ChallengeId,
+                dateClockDeadline: row.DateClockDeadline
+            })),
+            startingMatches: data.recordsets[1].map((row) => ({
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime
+            })),
+            missedMatches: data.recordsets[2].map((row) => ({
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime
+            }))
         } || {expiredClocks: [], startingMatches: [], missedMatches: []};
     }
 

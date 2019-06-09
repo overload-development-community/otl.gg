@@ -1,5 +1,7 @@
 const Challenge = require("./models/challenge");
 
+let setup = false;
+
 //  #   #          #       #      ##
 //  #   #          #             #  #
 //  ##  #   ###   ####    ##     #     #   #
@@ -26,6 +28,27 @@ class Notify {
      */
     static notify() {
         return Challenge.notify();
+    }
+
+    //               #                #  #         #     #      #    #                 #     #
+    //               #                ## #         #           # #                     #
+    //  ###    ##   ###   #  #  ###   ## #   ##   ###   ##     #    ##     ##    ###  ###   ##     ##   ###    ###
+    // ##     # ##   #    #  #  #  #  # ##  #  #   #     #    ###    #    #     #  #   #     #    #  #  #  #  ##
+    //   ##   ##     #    #  #  #  #  # ##  #  #   #     #     #     #    #     # ##   #     #    #  #  #  #    ##
+    // ###     ##     ##   ###  ###   #  #   ##     ##  ###    #    ###    ##    # #    ##  ###    ##   #  #  ###
+    //                          #
+    /**
+     * Setup notifications.
+     * @returns {void}
+     */
+    static setupNotifications() {
+        if (setup) {
+            return;
+        }
+
+        Challenge.notify();
+
+        setup = true;
     }
 }
 
