@@ -33,7 +33,8 @@ const tz = require("timezone-js"),
     teamPilotMatch = /^(.+) (<@!?[0-9]+>)$/,
     teamTagMatch = /^[0-9A-Za-z]{1,5}$/,
     teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
-    twoTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/;
+    twoTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/,
+    vodMatch = /^(?:[1-9][0-9]*) (https?:\/\/.+)$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -3585,9 +3586,9 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
-        if (challenge.details.caster) {
+        if (!challenge.details.caster) {
             await Discord.queue(`Sorry, ${member}, but no one is scheduled to cast this match yet.  Did you mean to \`!cast ${challenge.id}\` instead?`, channel);
-            throw new Warning("Caster is already set.");
+            throw new Warning("Caster is not set.");
         }
 
         if (challenge.details.caster.id === member.id) {
@@ -3603,6 +3604,63 @@ class Commands {
         }
 
         await Discord.queue(`${member}, you are no longer scheduled to cast the match, and have been removed from ${challenge.channel}.`, member);
+
+        return true;
+    }
+
+    //                #
+    //                #
+    // # #    ##    ###
+    // # #   #  #  #  #
+    // # #   #  #  #  #
+    //  #     ##    ###
+    /**
+     * Adds a VoD to a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async vod(member, channel, message) {
+        if (!await Commands.checkHasParameters(message, member, "To submit a VoD, enter the commnad followed by the challenge ID and the URL of the VoD, for example `!vod 125 https://twitch.tv/videos/12345`.", channel)) {
+            return false;
+        }
+
+        if (!vodMatch.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but to submit a VoD, enter the commnad followed by the challenge ID and the URL of the VoD, for example \`!vod 125 https://twitch.tv/videos/12345\`.`, channel);
+            return false;
+        }
+
+        const {1: challengeId, 2: vod} = vodMatch.exec(message);
+
+        const challenge = await Commands.checkChallengeIdExists(+challengeId, member, channel);
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        if (!challenge.details.caster) {
+            await Discord.queue(`Sorry, ${member}, but no one cast this match.`, channel);
+            throw new Warning("Caster is not set.");
+        }
+
+        if (challenge.details.caster.id === member.id) {
+            await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} cast this match already.`, channel);
+            throw new Warning("Caster is already set.");
+        }
+
+        try {
+            await challenge.setVoD(vod);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (vod && vod.length > 0) {
+            await Discord.queue(`${member}, you have successfully added the vod <${vod}> to challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
+        } else {
+            await Discord.queue(`${member}, you have cleared the vod for challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
+        }
 
         return true;
     }

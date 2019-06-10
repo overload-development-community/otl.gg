@@ -1168,7 +1168,8 @@ class Challenge {
             dateRematched: details.dateRematched,
             dateVoided: details.dateVoided,
             overtimePeriods: details.overtimePeriods,
-            homeMaps: details.homeMaps
+            homeMaps: details.homeMaps,
+            vod: details.vod
         };
     }
 
@@ -2032,6 +2033,31 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
+    }
+
+    //               #    #  #        ###
+    //               #    #  #        #  #
+    //  ###    ##   ###   #  #   ##   #  #
+    // ##     # ##   #    #  #  #  #  #  #
+    //   ##   ##     #     ##   #  #  #  #
+    // ###     ##     ##   ##    ##   ###
+    /**
+     * Sets the VoD for a challenge.
+     * @param {string} vod The URL of the VoD.
+     * @returns {Promise} A promise that resolves when the VoD has been set.
+     */
+    async setVoD(vod) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setVoD(this, vod);
+        } catch (err) {
+            throw new Exception("There was a database error updating the VoD for a challenge.", err);
+        }
+
+        this.details.vod = vod && vod.length > 0 ? vod : void 0;
     }
 
     //                                        #    #  #

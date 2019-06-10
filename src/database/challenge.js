@@ -709,11 +709,11 @@ class ChallengeDb {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, homeServerTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, usingHomeServerTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedNeutralServerTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, vod: string, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getDetails(challenge) {
         /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, HomeServerTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, UsingHomeServerTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedNeutralServerTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date, VoD: string}[], {Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -755,7 +755,8 @@ class ChallengeDb {
                 c.RematchTeamId,
                 c.DateRematched,
                 c.DateVoided,
-                c.OvertimePeriods
+                c.OvertimePeriods,
+                c.VoD
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -802,6 +803,7 @@ class ChallengeDb {
             rematchTeamId: data.recordsets[0][0].RematchTeamId,
             dateRematched: data.recordsets[0][0].DateRematched,
             overtimePeriods: data.recordsets[0][0].OvertimePeriods,
+            vod: data.recordsets[0][0].VoD,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -933,30 +935,30 @@ class ChallengeDb {
             DECLARE @postseason BIT
             DECLARE @challengingTeamId INT
             DECLARE @challengedTeamId INT
-            
+
             SELECT @season = Season,
                 @postseason = Postseason,
                 @challengingTeamId = ChallengingTeamId,
                 @challengedTeamId = ChallengedTeamId
             FROM vwCompletedChallenge
             WHERE ChallengeId = @challengeId
-            
+
             IF @season IS NULL
             BEGIN
                 DECLARE @matchTime DATETIME
-            
+
                 SELECT @matchTime = MatchTime,
                     @postseason = Postseason,
                     @challengingTeamId = ChallengingTeamId,
                     @challengedTeamId = ChallengedTeamId
                 FROM tblChallenge
                 WHERE ChallengeId = @challengeId
-            
+
                 SELECT @season = MAX(Season)
                 FROM tblSeason
                 WHERE @matchTime IS NULL OR (@matchTime >= DateStart AND @matchTime < DateEnd)
             END
-            
+
             SELECT
                 TeamId, Name, Tag,
                 CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
@@ -975,13 +977,13 @@ class ChallengeDb {
                 LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
                 WHERE t.TeamId IN (@challengingTeamId, @challengedTeamId)
             ) a
-            
+
             SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
             WHERE s.ChallengeId = @challengeId
-            
+
             SELECT @Season Season, @Postseason Postseason
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets.length === 3 && {
@@ -1541,6 +1543,29 @@ class ChallengeDb {
             UPDATE tblChallenge SET Title = CASE WHEN ISNULL(@title, '') = '' THEN NULL ELSE @title END WHERE ChallengeId = @challengeId
         `, {
             title: {type: Db.VARCHAR(100), value: title},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+    }
+
+    //               #    #  #        ###
+    //               #    #  #        #  #
+    //  ###    ##   ###   #  #   ##   #  #
+    // ##     # ##   #    #  #  #  #  #  #
+    //   ##   ##     #     ##   #  #  #  #
+    // ###     ##     ##   ##    ##   ###
+    /**
+     * Sets a VoD for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {string} vod The URL of the VoD.
+     * @returns {Promise} A promise that resolves when the VoD is set.
+     */
+    static async setVoD(challenge, vod) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET VoD = CASE WHEN ISNULL(@vod, '') = '' THEN NULL ELSE @vod END WHERE ChallengeId = @challengeId
+        `, {
+            vod: {type: Db.VARCHAR(100), value: vod},
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
