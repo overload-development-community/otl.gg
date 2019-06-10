@@ -753,6 +753,10 @@ class Challenge {
                         }
                     ]
                 }), Discord.matchResultsChannel);
+
+                if (this.details.caster) {
+                    await Discord.queue(`Thanks for casting the ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} match between ${this.challengingTeam.name} and ${this.challengedTeam.name}!  The final score was ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore}.  Use the command \`!vod ${this.id} <url>\` to add the VoD.`, this.details.caster);
+                }
             }
 
             if (!this.challengingTeam.disbanded) {
