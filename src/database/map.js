@@ -48,6 +48,10 @@ class MapDb {
      * @returns {Promise<string[]>} The list of maps played in a season.
      */
     static async getPlayedBySeason(season) {
+        // TODO: Redis
+        // Key: otl.gg:db:map:getPlayedBySeasaon:<season>
+        // Expiration: End of season (only if null season passed)
+        // Invalidation: otl.gg:invalidate:challenge:closed
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */

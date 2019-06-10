@@ -31,6 +31,10 @@ class MatchDb {
      * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
+        // TODO: Redis
+        // Key: otl.gg:db:match:getConfirmed:<season>:<page>:<matchesPerPage>
+        // Expiration: End of season (only if null season passed)
+        // Invalidation: otl.gg:invalidate:challenge:closed
         /**
          * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
          */
@@ -166,6 +170,9 @@ class MatchDb {
      * @returns {Promise<{id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
+        // TODO: Redis
+        // Key: otl.gg:db:match:getCurrent
+        // Invalidation: otl.gg:invalidate:challenge:closed, otl.gg:invalidate:challenge:updated
         /**
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
          */
@@ -240,6 +247,10 @@ class MatchDb {
      * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
+        // TODO: Redis
+        // Key: otl.gg:db:match:getPending:<season>
+        // Expiration: End of season (only if null season passed)
+        // Invalidation: otl.gg:invalidate:challenge:closed, otl.gg:invalidate:challenge:updated
         /**
          * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[]]}}
          */

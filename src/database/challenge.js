@@ -906,7 +906,7 @@ class ChallengeDb {
      */
     static async getTeamDetails(challenge) {
         /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Season: number, Postseason: boolean}[]}}
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Season: number, Postseason: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
