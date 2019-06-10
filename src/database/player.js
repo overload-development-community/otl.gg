@@ -130,12 +130,15 @@ class PlayerDb {
      * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, teamSize: number, matchTime: Date, map: string}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
-        // TODO: Redis
-        // Key: otl.gg:db:player:getCareer:<playerId>:<season>:<postseason>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:player:<id>:updated
+        const key = `otl.gg:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, TeamSize: number, MatchTime: Date, Map: string}[]]}}
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, TeamSize: number, MatchTime: Date, Map: string}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -247,12 +250,14 @@ class PlayerDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
             ORDER BY c.MatchTime
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             playerId: {type: Db.INT, value: playerId},
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        return data && data.recordsets && data.recordsets.length === 6 && data.recordsets[0].length > 0 && {
+        cache = data && data.recordsets && data.recordsets.length >= 6 && data.recordsets[0].length > 0 && {
             player: {
                 name: data.recordsets[0][0].Name,
                 twitchName: data.recordsets[0][0].TwitchName,
@@ -340,6 +345,10 @@ class PlayerDb {
                 map: row.Map
             }))
         } || void 0;
+
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`otl.gg:invalidate:player:${playerId}:updated`]);
+
+        return cache;
     }
 
     //              #     ##                 #             #   ##   #           ##    ##
@@ -380,9 +389,13 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, discordId: string, timezone: string}[]>} The list of free agents.
      */
     static async getFreeAgents() {
-        // TODO: Redis
-        // Key: otl.gg:db:player:getFreeAgents
-        // Invalidation: otl.gg:invalidate:player:freeagents
+        const key = "otl.gg:db:player:getFreeAgents";
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
          * @type {{recordsets: [{PlayerId: number, Name: string, DiscordId: string, Timezone: string}[]]}}
          */
@@ -394,7 +407,11 @@ class PlayerDb {
                 AND Timezone IS NOT NULL
             ORDER BY Name
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
+
+        Cache.add(key, cache, void 0, ["otl.gg:invalidate:player:freeagents"]);
+
+        return cache;
     }
 
     //              #    ###                              #
@@ -411,12 +428,15 @@ class PlayerDb {
      * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[]}>} A promise that resolves with the league records.
      */
     static async getRecords(season, postseason) {
-        // TODO: Redis
-        // Key: otl.gg:db:player:getRecords:<season>:<postseason>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:challenge:closed
+        const key = `otl.gg:db:player:getRecords:${season === void 0 ? "null" : season}:${!!postseason}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[]]}}
+         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -585,11 +605,13 @@ class PlayerDb {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        return data && data.recordsets && data.recordsets.length === 8 && {
+        cache = data && data.recordsets && data.recordsets.length >= 8 && {
             teamKda: data.recordsets[0].map((row) => ({
                 teamSize: row.TeamSize,
                 teamId: row.TeamId,
@@ -711,6 +733,10 @@ class PlayerDb {
                 overtimePeriods: row.OvertimePeriods
             }))
         } || void 0;
+
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[8] && data.recordsets[8][0] && data.recordsets[8][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+
+        return cache;
     }
 
     //              #    ###                                   #             #   ##         ###                #     #             #  ###
@@ -759,12 +785,15 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason) {
-        // TODO: Redis
-        // Key: otl.gg:db:player:getSeasonStats:<season>:<postseason>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:challenge:closed
+        const key = `otl.gg:db:player:getSeasonStats:${season || "null"}:${!!postseason}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -800,11 +829,13 @@ class PlayerDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             playerId: row.PlayerId,
             name: row.Name,
             teamId: row.TeamId,
@@ -817,6 +848,10 @@ class PlayerDb {
             avgDeaths: row.AvgDeaths,
             kda: row.KDA
         })) || [];
+
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+
+        return cache;
     }
 
     //              #     ##    #           #
@@ -900,12 +935,15 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getTopKda() {
-        // TODO: Redis
-        // Key: otl.gg:db:player:getTopKda
-        // Expiration: End of season
-        // Invalidation: otl.gg:invalidate:challenge:closed
+        const key = "otl.gg:db:player:getTopKda";
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -935,8 +973,10 @@ class PlayerDb {
                 AND c.Season = @season
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
             ORDER BY CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END DESC
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             playerId: row.PlayerId,
             name: row.Name,
             teamId: row.TeamId,
@@ -946,6 +986,10 @@ class PlayerDb {
             locked: row.Locked,
             kda: row.KDA
         })) || [];
+
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+
+        return cache;
     }
 
     //              #    ###          #     #          #     #  #

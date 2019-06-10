@@ -32,12 +32,15 @@ class MatchDb {
      * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
-        // TODO: Redis
-        // Key: otl.gg:db:match:getConfirmed:<season>:<page>:<matchesPerPage>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:challenge:closed
+        const key = `otl.gg:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -116,12 +119,14 @@ class MatchDb {
                 FROM tblTeam t
                 LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
             ) a
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
             page: {type: Db.INT, value: page},
             matchesPerPage: {type: Db.INT, value: matchesPerPage}
         });
-        return data && data.recordsets && data.recordsets.length === 3 && {
+        cache = data && data.recordsets && data.recordsets.length >= 3 && {
             completed: data.recordsets[0].map((row) => ({
                 challengeId: row.ChallengeId,
                 title: row.Title,
@@ -157,6 +162,10 @@ class MatchDb {
                 ties: row.Ties
             }))
         } || {completed: [], stats: [], standings: []};
+
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+
+        return cache;
     }
 
     //              #     ##                                  #
@@ -171,11 +180,15 @@ class MatchDb {
      * @returns {Promise<{id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
-        // TODO: Redis
-        // Key: otl.gg:db:match:getCurrent
-        // Invalidation: otl.gg:invalidate:challenge:closed, otl.gg:invalidate:challenge:updated
+        const key = "otl.gg:db:match:getCurrent";
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -222,7 +235,7 @@ class MatchDb {
                 AND DateVoided IS NULL
             ORDER BY MatchTime
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             id: row.ChallengeId,
             challengingTeamId: row.ChallengingTeamId,
             challengedTeamId: row.ChallengedTeamId,
@@ -233,6 +246,10 @@ class MatchDb {
             dateClosed: row.DateClosed,
             overtimePeriods: row.OvertimePeriods
         })) || [];
+
+        Cache.add(key, cache, void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
+
+        return cache;
     }
 
     //              #    ###                  #   #
@@ -248,12 +265,15 @@ class MatchDb {
      * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
-        // TODO: Redis
-        // Key: otl.gg:db:match:getPending:<season>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:challenge:closed, otl.gg:invalidate:challenge:updated
+        const key = `otl.gg:db:match:getPending:${season || "null"}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -310,7 +330,7 @@ class MatchDb {
                 AND DateConfirmed IS NOT NULL
         `, {season: {type: Db.INT, value: season}});
 
-        return data && data.recordsets && data.recordsets.length === 3 && {
+        cache = data && data.recordsets && data.recordsets.length >= 3 && {
             matches: data.recordsets[0].map((row) => ({
                 challengeId: row.ChallengeId,
                 title: row.Title,
@@ -333,6 +353,10 @@ class MatchDb {
             })),
             completed: data.recordsets[2] && data.recordsets[2][0] && data.recordsets[2][0].Completed || 0
         } || {matches: [], standings: [], completed: 0};
+
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
+
+        return cache;
     }
 
     //              #     ##                                  ###          #          ####                     ##   #           ##    ##

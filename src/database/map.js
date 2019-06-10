@@ -1,4 +1,5 @@
-const Db = require("node-database"),
+const Cache = require("../cache"),
+    Db = require("node-database"),
     db = require("./index");
 
 //  #   #                ####   #
@@ -48,12 +49,15 @@ class MapDb {
      * @returns {Promise<string[]>} The list of maps played in a season.
      */
     static async getPlayedBySeason(season) {
-        // TODO: Redis
-        // Key: otl.gg:db:map:getPlayedBySeasaon:<season>
-        // Expiration: End of season (only if null season passed)
-        // Invalidation: otl.gg:invalidate:challenge:closed
+        const key = `otl.gg:db:map:getPlayedBySeason:${season || "null"}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{Map: string}[]]}}
+         * @type {{recordsets: [{Map: string}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -71,8 +75,14 @@ class MapDb {
             WHERE MatchTime IS NOT NULL
                 AND Season = @season
             ORDER BY Map
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {season: {type: Db.INT, value: season}});
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || void 0;
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || void 0;
+
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+
+        return cache;
     }
 
     // ###    ##   # #    ##   # #    ##

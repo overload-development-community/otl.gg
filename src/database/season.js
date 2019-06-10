@@ -1,4 +1,5 @@
-const db = require("./index");
+const Cache = require("../cache"),
+    db = require("./index");
 
 //   ###                                      ####   #
 //  #   #                                      #  #  #
@@ -23,20 +24,29 @@ class SeasonDb {
      * @returns {Promise<number[]>} A promise that resolves with the list of available seasons.
      */
     static async getSeasonNumbers() {
-        // TODO: Redis
-        // Key: otl.gg:db:season:getSeasonNumbers
-        // Expiration: End of season
-        // Invalidation: otl.gg:invalidate:season:added
+        const key = "otl.gg:db:season:getSeasonNumbers";
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
         /**
-         * @type {{recordsets: [{Season: number}[]]}}
+         * @type {{recordsets: [{Season: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT Season
             FROM tblSeason
             WHERE DateStart < GETUTCDATE()
             ORDER BY Season
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Season) || [];
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Season) || [];
+
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:season:added"]);
+
+        return cache;
     }
 }
 
