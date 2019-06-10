@@ -284,22 +284,26 @@ class Discord {
         });
 
         discord.on("guildMemberRemove", async (member) => {
-            try {
-                await member.leftDiscord();
-            } catch (err) {
-                Log.exception(`There was a problem with ${member.displayName} leaving the server.`, err);
+            if (member.guild && member.guild.id === otlGuild.id) {
+                try {
+                    await member.leftDiscord();
+                } catch (err) {
+                    Log.exception(`There was a problem with ${member.displayName} leaving the server.`, err);
+                }
             }
         });
 
         discord.on("guildMemberUpdate", async (oldMember, newMember) => {
-            if (oldMember.displayName === newMember.displayName) {
-                return;
-            }
+            if (newMember.guild && newMember.guild.id === otlGuild.id) {
+                if (oldMember.displayName === newMember.displayName) {
+                    return;
+                }
 
-            try {
-                await newMember.updateName(oldMember);
-            } catch (err) {
-                Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
+                try {
+                    await newMember.updateName(oldMember);
+                } catch (err) {
+                    Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
+                }
             }
         });
     }
