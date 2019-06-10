@@ -5,7 +5,8 @@
  * @typedef {import("../models/team")} Team
  */
 
-const Db = require("node-database"),
+const Cache = require("../cache"),
+    Db = require("node-database"),
     db = require("./index");
 
 //   ###   #              ##     ##                                ####   #
@@ -132,7 +133,10 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     static async close(challenge) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             DECLARE @challengingTeamId INT
             DECLARE @challengedTeamId INT
 
@@ -176,7 +180,13 @@ class ChallengeDb {
                     DELETE FROM tblTeamPenalty WHERE TeamId = @challengedTeamId
                 END
             END
+
+            SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+            Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+        }
     }
 
     //                     #    #                #  #
@@ -195,6 +205,8 @@ class ChallengeDb {
         await db.query(/* sql */`
             UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
     }
 
     //                     #    #                ###                      ##    #
@@ -229,6 +241,8 @@ class ChallengeDb {
         await db.query(/* sql */`
             UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
     }
 
     //                          #
@@ -358,6 +372,9 @@ class ChallengeDb {
             teamSize: {type: Db.INT, value: teamSize},
             matchTime: {type: Db.DATETIME, value: startNow ? new Date((date = new Date()).getTime() + 300000 - date.getTime() % 300000) : void 0}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             id: data.recordsets[0][0].ChallengeId,
             orangeTeam: data.recordsets[0][0].OrangeTeamId === team1.id ? team1 : team2,
@@ -397,6 +414,9 @@ class ChallengeDb {
 
             SELECT DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateClockDeadline || void 0;
     }
 
@@ -1018,6 +1038,9 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id},
             number: {type: Db.INT, value: number}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
 
@@ -1213,6 +1236,9 @@ class ChallengeDb {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
@@ -1278,6 +1304,8 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: map}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
     }
 
     //               #    #  #               #                ##     ##
@@ -1492,6 +1520,8 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
     }
 
     //               #    ###    #     #    ##
@@ -1513,6 +1543,8 @@ class ChallengeDb {
             title: {type: Db.VARCHAR(100), value: title},
             challengeId: {type: Db.INT, value: challenge.id}
         });
+
+        Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
     }
 
     //                                        #    #  #
@@ -1621,9 +1653,18 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is unvoided.
      */
     static async unvoid(challenge) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId
+
+            SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+            Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+        }
     }
 
     //              #       #
@@ -1638,7 +1679,10 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is voided.
      */
     static async void(challenge) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
 
             IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND ChallengingTeamPenalized = 1)
@@ -1652,7 +1696,13 @@ class ChallengeDb {
                 UPDATE tblTeamPenalty SET PenaltiesRemaining = PenaltiesRemaining + 1 WHERE TeamId = (SELECT ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @challengeId)
                 UPDATE tblChallenge SET ChallengedTeamPenalized = 0 WHERE ChallengeId = @challengeId
             END
+
+            SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+            Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+        }
     }
 
     //              #       #  #  #   #     #    #     ###                     ##     #     #
@@ -1687,6 +1737,8 @@ class ChallengeDb {
             SELECT t.TeamId, CAST(CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblTeamPenalty tp WHERE tp.TeamId = t.TeamId) THEN 0 ELSE 1 END AS BIT) First
             FROM tblTeam t
             WHERE t.TeamId IN (${teams.map((t, index) => `@team${index}Id`).join(", ")})
+
+            SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `;
 
         teams.forEach((team, index) => {
@@ -1719,9 +1771,14 @@ class ChallengeDb {
         });
 
         /**
-         * @type {{recordsets: [{TeamId: number, First: boolean}[]]}}
+         * @type {{recordsets: [{TeamId: number, First: boolean}[], {PlayerId: number}[]]}}
          */
         const data = await db.query(sql, params);
+
+        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {
+            Cache.invalidate(data.recordsets[1].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+        }
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, first: row.First})) || [];
     }
 }

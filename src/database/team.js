@@ -7,7 +7,8 @@
  * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
-const Db = require("node-database"),
+const Cache = require("../cache"),
+    Db = require("node-database"),
     db = require("./index");
 
 //  #####                       ####   #
@@ -66,7 +67,10 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the pilot has been added to the team.
      */
     static async addPilot(member, team) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -77,10 +81,18 @@ class TeamDb {
             DELETE FROM tblJoinBan WHERE PlayerId = @playerId
             INSERT INTO tblJoinBan (PlayerId) VALUES (@playerId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+
+            SELECT @playerId PlayerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             teamId: {type: Db.INT, value: team.id}
         });
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
     }
 
     //                          #
@@ -96,7 +108,7 @@ class TeamDb {
      */
     static async create(newTeam) {
         /**
-         * @type {{recordsets: [{TeamId: number}[]]}}
+         * @type {{recordsets: [{TeamId: number, PlayerId: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
@@ -121,7 +133,7 @@ class TeamDb {
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId
 
-            SELECT @teamId TeamId
+            SELECT @teamId TeamId, @playerId PlayerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: newTeam.member.id},
             name: {type: Db.VARCHAR(25), value: newTeam.name},
@@ -130,6 +142,12 @@ class TeamDb {
         });
 
         const teamId = data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TeamId || void 0;
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
 
         return teamId ? {member: newTeam.member, id: teamId, name: newTeam.name, tag: newTeam.tag, isFounder: true, disbanded: false, locked: false} : void 0;
     }
@@ -147,7 +165,7 @@ class TeamDb {
      */
     static async disband(team) {
         /**
-         * @type {{recordsets: [{ChallengeId: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number}[], {PlayerId: number}[]]}}
          */
         const data = await db.query(/* sql */`
             UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @teamId
@@ -183,7 +201,16 @@ class TeamDb {
                 AND DateConfirmed IS NULL
                 AND DateClosed IS NULL
                 AND DateVoided IS NULL
+
+            SELECT @playerId PlayerId
         `, {teamId: {type: Db.INT, value: team.id}});
+
+        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[1][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
     }
 
@@ -975,7 +1002,10 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the team is reinstated.
      */
     static async reinstate(member, team) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -987,10 +1017,18 @@ class TeamDb {
             DELETE FROM tblJoinBan WHERE PlayerId = @playerId
             INSERT INTO tblJoinBan (PlayerId) VALUES (@playerId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+
+            SELECT @playerId PlayerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             teamId: {type: Db.INT, value: team.id}
         });
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
     }
 
     //                                      ##                #           #
@@ -1032,7 +1070,10 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
     static async removePilot(member, team) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1072,10 +1113,18 @@ class TeamDb {
             DELETE FROM tblChallengeStreamer WHERE PlayerId = @playerId
             DELETE FROM tblRequest WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblInvite WHERE TeamId = @teamId AND PlayerId = @playerId
+
+            SELECT @playerId PlayerId
         `, {
             teamId: {type: Db.INT, value: team.id},
             discordId: {type: Db.VARCHAR(24), value: member.id}
         });
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
     }
 
     //               #    #                 #              #

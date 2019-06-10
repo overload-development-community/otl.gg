@@ -4,7 +4,8 @@
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  */
 
-const Db = require("node-database"),
+const Cache = require("../cache"),
+    Db = require("node-database"),
     db = require("./index");
 
 //  ####    ##                                ####   #
@@ -1122,7 +1123,10 @@ class PlayerDb {
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
     static async setTimezone(member, timezone) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
@@ -1136,11 +1140,19 @@ class PlayerDb {
             END
 
             UPDATE tblPlayer SET Timezone = @timezone WHERE PlayerId = @playerId
+
+            SELECT @playerId PlayerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
             name: {type: Db.VARCHAR(24), value: member.displayName},
             timezone: {type: Db.VARCHAR(50), value: timezone}
         });
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
     }
 
     //               #    ###          #     #          #     #  #

@@ -2,7 +2,8 @@
  * @typedef {import("../models/challenge")} Challenge
  */
 
-const Db = require("node-database"),
+const Cache = require("../cache"),
+    Db = require("node-database"),
     db = require("./index");
 
 //  #   #          #            #      ####   #
@@ -348,12 +349,13 @@ class MatchDb {
      */
     static async getSeasonDataFromChallenge(challenge) {
         /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number}[]]}}
+         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number, SeasonAdded: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @matchTime DATETIME
             DECLARE @k FLOAT
             DECLARE @season INT
+            DECLARE @seasonAdded BIT = 0
 
             SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
 
@@ -372,6 +374,8 @@ class MatchDb {
                         Season + 1, K, DATEADD(MONTH, 6, DateStart), DATEADD(MONTH, 6, DateEnd)
                     FROM tblSeason
                     ORDER BY Season DESC
+
+                    SET @seasonAdded = 1
                 END
 
                 SELECT @k = K, @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
@@ -386,9 +390,14 @@ class MatchDb {
                     AND Postseason = 0
                 ORDER BY MatchTime, ChallengeId
 
-                SELECT @k K
+                SELECT @k K, @seasonAdded SeasonAdded
             END
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].SeasonAdded) {
+            await Cache.invalidate(["otl.gg:invalidate:season:added"]);
+        }
+
         return data && data.recordsets && data.recordsets.length === 2 && {
             matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
                 challengingTeamId: row.ChallengingTeamId,
