@@ -30,7 +30,7 @@ class Match {
      * Gets paginated matches for a season.
      * @param {number} [season] The season number.
      * @param {number} [page] The page to get.
-     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}[]>} A promise that resolves with the completed matches.
+     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}[]>} A promise that resolves with the completed matches.
      */
     static async getBySeason(season, page) {
         let completed, stats, standings;
@@ -81,7 +81,8 @@ class Match {
                     matchTime: match.matchTime,
                     map: match.map,
                     dateClosed: match.dateClosed,
-                    overtimePeriods: match.overtimePeriods
+                    overtimePeriods: match.overtimePeriods,
+                    vod: match.vod
                 },
                 stats: stats.filter((stat) => stat.challengeId === match.challengeId).map((stat) => ({
                     teamId: stat.teamId,

@@ -132,6 +132,10 @@ class MatchView {
                             `}
                         ` : "Neutral"}
                     </div>
+                    <div>VoD:</div>
+                    <div>${challenge.details.vod ? /* html */`
+                        <a href="${encodeURI(challenge.details.vod)}" target="_blank">${MatchView.Common.htmlEncode(challenge.details.vod)}</a>
+                    ` : "None"}</div>
                 </div>
             </div>
         `;

@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
+     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
@@ -66,6 +66,11 @@ class MatchView {
                     <div class="date">
                         <a href="/match/${match.challengeId}/${match.challengingTeam.tag}/${match.challengedTeam.tag}"><script>document.write(MatchView.Common.formatDate(new Date("${match.matchTime}")));</script></a>
                     </div>
+                    ${match.vod ? /* html */`
+                        <div class="vod">
+                            VoD at <a href="${encodeURI(match.vod)}" target="_blank">${MatchView.Common.htmlEncode(match.vod)}</a>
+                        </div>
+                    ` : ""}
                 </div>
                 <div class="stats">
                     <div class="header">Team</div>

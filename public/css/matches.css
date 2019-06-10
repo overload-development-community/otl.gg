@@ -286,6 +286,14 @@
     margin-top: 3px;
 }
 
+#matches #completed .match .vod {
+    grid-column: 1 / span 2;
+    grid-row: 9;
+    font-size: 18px;
+    text-align: center;
+    margin-top: 3px;
+}
+
 #matches #completed .match .winner {
     color: white;
 }
