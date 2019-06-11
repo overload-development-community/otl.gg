@@ -755,7 +755,7 @@ class Challenge {
                 }), Discord.matchResultsChannel);
 
                 if (this.details.caster) {
-                    await Discord.queue(`Thanks for casting the ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} match between ${this.challengingTeam.name} and ${this.challengedTeam.name}!  The final score was ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore}.  Use the command \`!vod ${this.id} <url>\` to add the VoD.`, this.details.caster);
+                    await Discord.queue(`Thanks for casting the ${this.details.matchTime.toLocaleString("en-US", {timeZone: await this.details.caster.getTimezone(), month: "numeric", day: "numeric", year: "numeric"})} match between ${this.challengingTeam.name} and ${this.challengedTeam.name}!  The final score was ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore}.  Use the command \`!vod ${this.id} <url>\` to add the VoD.`, this.details.caster);
                 }
             }
 
@@ -2062,6 +2062,14 @@ class Challenge {
         }
 
         this.details.vod = vod && vod.length > 0 ? vod : void 0;
+
+        if (this.details.vod) {
+            try {
+                await Discord.queue(`The match between ${this.challengingTeam.name} and ${this.challengedTeam.name} on ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric"})} with the score ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore} now has a VoD from ${this.details.caster} available at ${vod}`, Discord.vodsChannel);
+            } catch (err) {
+                throw new Exception("There was a Discord error adding a VoD to the VoDs channel.", err);
+            }
+        }
     }
 
     //                                        #    #  #
