@@ -17,24 +17,24 @@ const tz = require("timezone-js"),
     Team = require("./models/team"),
     Warning = require("./logging/warning"),
 
-    adjudicateMatch = /^(cancel|extend|penalize)(?: ([^ ]{1,5}))?$/,
-    colorMatch = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
-    eventParse = /^(.+) ((?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) ((?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
-    idParse = /^<@!?([0-9]+)>$/,
-    idConfirmParse = /^<@!?([0-9]+)>(?: (confirm|[^ ]*))?$/,
-    idMessageParse = /^<@!?([0-9]+)> ([^ ]+)(?: (.+))?$/,
-    mapMatch = /^([123]) (.+)$/,
-    nameConfirmParse = /^@?(.+?)(?: (confirm))?$/,
-    numberMatch = /^(?:[1-9][0-9]*)$/,
-    numberOrZeroMatch = /^(?:0|[1-9][0-9]*)$/,
-    scoreMatch = /^((?:0|-?[1-9][0-9]*)) ((?:0|-?[1-9][0-9]*))$/,
-    statMatch = /^(.+) ([^ ]{1,5}) (0|[1-9][0-9]*) (0|[1-9][0-9]*) (0|[1-9][0-9]*)$/,
-    teamNameMatch = /^[0-9a-zA-Z' -]{6,25}$/,
-    teamPilotMatch = /^(.+) (<@!?[0-9]+>)$/,
-    teamTagMatch = /^[0-9A-Za-z]{1,5}$/,
-    teamTagTeamNameMatch = /^([^ ]{1,5}) (.{6,25})$/,
-    twoTeamTagMatch = /^([^ ]{1,5}) ([^ ]{1,5})$/,
-    vodMatch = /^(?:[1-9][0-9]*) (https?:\/\/.+)$/;
+    adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
+    colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
+    idParse = /^<@!?(?<id>[0-9]+)>$/,
+    idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
+    idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
+    mapParse = /^(?<number>[123]) (?<mapToCheck>.+)$/,
+    nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
+    numberParse = /^(?:[1-9][0-9]*)$/,
+    numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
+    scoreParse = /^(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))$/,
+    statParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<kills>0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
+    teamNameParse = /^[0-9a-zA-Z' -]{6,25}$/,
+    teamPilotParse = /^(?<teamName>.+) (?<id><@!?[0-9]+>)$/,
+    teamTagParse = /^[0-9A-Za-z]{1,5}$/,
+    teamTagteamNameParse = /^(?<teamTag>[^ ]{1,5}) (?<teamName>.{6,25})$/,
+    twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
+    vodParse = /^(?<challengeId>[1-9][0-9]*) (?<vod>https?:\/\/.+)$/;
 
 /**
  * @type {typeof import("./discord")}
@@ -788,7 +788,7 @@ class Commands {
     static async checkPilotExists(message, member, channel) {
         let pilot;
         if (idParse.test(message)) {
-            const {1: id} = idParse.exec(message);
+            const {groups: {id}} = idParse.exec(message);
 
             pilot = Discord.findGuildMemberById(id);
         } else {
@@ -819,12 +819,12 @@ class Commands {
     static async checkPilotExistsWithConfirmation(message, member, channel) {
         let pilot, confirm;
         if (idConfirmParse.test(message)) {
-            const {1: id, 2: confirmed} = idConfirmParse.exec(message);
+            const {groups: {id, confirmed}} = idConfirmParse.exec(message);
 
             pilot = Discord.findGuildMemberById(id);
             confirm = confirmed;
         } else if (nameConfirmParse.test(message)) {
-            const {1: name, 2: confirmed} = nameConfirmParse.exec(message);
+            const {groups: {name, confirmed}} = nameConfirmParse.exec(message);
 
             pilot = Discord.findGuildMemberByDisplayName(name);
             confirm = confirmed;
@@ -903,7 +903,7 @@ class Commands {
      * @returns {Promise<{team: Team, confirm: string}>} A promise that resolves with the team and whether there was confirmation.
      */
     static async checkTeamExistsWithConfirmation(message, member, channel) {
-        const {1: name, 2: confirm} = nameConfirmParse.exec(message);
+        const {groups: {name, confirmed}} = nameConfirmParse.exec(message);
         let team;
         try {
             team = await Team.getByNameOrTag(name);
@@ -917,7 +917,7 @@ class Commands {
             throw new Warning("Team does not exist.");
         }
 
-        return {team, confirm};
+        return {team, confirm: confirmed};
     }
 
     //       #                 #     ###                     ###          ###          ##   #           ##    ##
@@ -992,7 +992,7 @@ class Commands {
             return false;
         }
 
-        const {1: id, 2: command, 3: newMessage} = idMessageParse.exec(message);
+        const {groups: {id, command, newMessage}} = idMessageParse.exec(message);
         if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) === -1) {
             throw new Warning("Invalid command.");
         }
@@ -1145,7 +1145,7 @@ class Commands {
             return false;
         }
 
-        if (!teamNameMatch.test(message)) {
+        if (!teamNameParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to prevent abuse, you can only use alphanumeric characters and spaces, and names must be between 6 and 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`, channel);
             throw new Warning("Invalid team name.");
         }
@@ -1193,7 +1193,7 @@ class Commands {
 
         message = message.toUpperCase();
 
-        if (!teamTagMatch.test(message)) {
+        if (!teamTagParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you can only use alphanumeric characters, and are limited to 5 characters.`, channel);
             throw new Warning("Invalid team tag.");
         }
@@ -1342,7 +1342,7 @@ class Commands {
             return false;
         }
 
-        if (!colorMatch.test(message)) {
+        if (!colorParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you can only use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`, channel);
             throw new Warning("Invalid color.");
         }
@@ -1780,12 +1780,12 @@ class Commands {
             return false;
         }
 
-        if (!mapMatch.test(message)) {
+        if (!mapParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must include the home number you wish to set, followed by the name of the map, such as \`!home 2 Vault\`.`, channel);
             throw new Warning("Pilot is not a founder or captain.");
         }
 
-        const {1: number, 2: mapToCheck} = mapMatch.exec(message),
+        const {groups: {number, mapToCheck}} = mapParse.exec(message),
             map = await Commands.checkMapIsValid(mapToCheck, member, channel),
             team = await Commands.checkMemberOnTeam(member, channel);
 
@@ -3518,7 +3518,7 @@ class Commands {
             return true;
         }
 
-        if (!numberMatch.test(message)) {
+        if (!numberParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use \`!cast\` along with the challenge ID of the match you wish to cast, for example \`!cast 1\`.`, channel);
             return false;
         }
@@ -3626,12 +3626,12 @@ class Commands {
             return false;
         }
 
-        if (!vodMatch.test(message)) {
+        if (!vodParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to submit a VoD, enter the commnad followed by the challenge ID and the URL of the VoD, for example \`!vod 125 https://twitch.tv/videos/12345\`.`, channel);
             return false;
         }
 
-        const {1: challengeId, 2: vod} = vodMatch.exec(message);
+        const {groups: {challengeId, vod}} = vodParse.exec(message);
 
         const challenge = await Commands.checkChallengeIdExists(+challengeId, member, channel);
 
@@ -3705,14 +3705,14 @@ class Commands {
         await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
         await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
-        if (!scoreMatch.test(message)) {
+        if (!scoreParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
             return false;
         }
 
-        const matches = scoreMatch.exec(message);
-        let score1 = +matches[1],
-            score2 = +matches[2];
+        const {groups: {scoreStr1, scoreStr2}} = scoreParse.exec(message);
+        let score1 = +scoreStr1,
+            score2 = +scoreStr2;
 
         if (score2 > score1) {
             [score1, score2] = [score2, score1];
@@ -3941,12 +3941,12 @@ class Commands {
             return false;
         }
 
-        if (!teamTagTeamNameMatch.test(message)) {
+        if (!teamTagteamNameParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the team tag followed by the new team name to rename a team, for example \`!rename CF Juno Offworld Automation\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: teamTag, 2: teamName} = teamTagTeamNameMatch.exec(message),
+        const {groups: {teamTag, teamName}} = teamTagteamNameParse.exec(message),
             team = await Commands.checkTeamExists(teamTag, member, channel);
         if (Team.nameExists(teamName)) {
             await Discord.queue(`Sorry, ${member}, but there is already a team named ${teamName}.`, channel);
@@ -3988,15 +3988,15 @@ class Commands {
             return false;
         }
 
-        if (!twoTeamTagMatch.test(message)) {
+        if (!twoTeamTagParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the old team tag followed by the new team tag to rename a team tag, for example \`!rename CF JOA\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: oldTeamTag, 2: newTeamTag} = twoTeamTagMatch.exec(message),
-            team = await Commands.checkTeamExists(oldTeamTag, member, channel);
+        const {groups: {teamTag1, teamTag2}} = twoTeamTagParse.exec(message),
+            team = await Commands.checkTeamExists(teamTag1, member, channel);
 
-        const tag = newTeamTag.toUpperCase();
+        const tag = teamTag2.toUpperCase();
 
         if (Team.tagExists(tag)) {
             await Discord.queue(`Sorry, ${member}, but there is already a team with a tag of ${tag}.`, channel);
@@ -4038,12 +4038,12 @@ class Commands {
             return false;
         }
 
-        if (!teamPilotMatch.test(message)) {
+        if (!teamPilotParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the team and mention the pilot, for example, \`!replacefounder CF @roncli\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: teamName, 2: id} = teamPilotMatch.exec(message);
+        const {groups: {teamName, id}} = teamPilotParse.exec(message);
 
         const team = await Commands.checkTeamExists(teamName, member, channel),
             pilot = await Commands.checkPilotExists(id, member, channel);
@@ -4189,12 +4189,12 @@ class Commands {
             return false;
         }
 
-        if (!twoTeamTagMatch.test(message)) {
+        if (!twoTeamTagParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the two teams to create a match for.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: teamTag1, 2: teamTag2} = twoTeamTagMatch.exec(message);
+        const {groups: {teamTag1, teamTag2}} = twoTeamTagParse.exec(message);
 
         const team1 = await Commands.checkTeamExists(teamTag1, member, channel);
 
@@ -4728,7 +4728,7 @@ class Commands {
             return false;
         }
 
-        if (!scoreMatch.test(message)) {
+        if (!scoreParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
             throw new Warning("Invalid parameters.");
         }
@@ -4738,9 +4738,9 @@ class Commands {
         await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
         await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
-        const matches = scoreMatch.exec(message),
-            score1 = +matches[1],
-            score2 = +matches[2];
+        const {groups: {scoreStr1, scoreStr2}} = scoreParse.exec(message),
+            score1 = +scoreStr1,
+            score2 = +scoreStr2;
 
         try {
             await challenge.setScore(score1, score2);
@@ -4786,7 +4786,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
-        if (!adjudicateMatch.test(message)) {
+        if (!adjudicateParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!adjudicate\` command followed by how you wish to adjudicate this match, either \`cancel\`, \`extend\`, or \`penalize\`.  If you penalize a team, include the name of the team.`, channel);
             throw new Warning("Invalid parameters.");
         }
@@ -4808,7 +4808,7 @@ class Commands {
             throw new Warning("Match clock deadline not passed yet.");
         }
 
-        const {1: decision, 2: teamTag} = adjudicateMatch.exec(message);
+        const {groups: {decision, teamTag}} = adjudicateParse.exec(message);
 
         let teams;
         if (decision === "penalize") {
@@ -4869,7 +4869,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        if (!numberOrZeroMatch.test(message)) {
+        if (!numberOrZeroParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use \`!overtime\` followed by the number of overtime periods played in this match.`, channel);
             return false;
         }
@@ -4919,12 +4919,12 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        if (!statMatch.test(message)) {
+        if (!statParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {1: pilotName, 2: teamName, 3: kills, 4: assists, 5: deaths} = statMatch.exec(message),
+        const {groups: {pilotName, teamName, kills, assists, deaths}} = statParse.exec(message),
             pilot = await Commands.checkPilotExists(pilotName, member, channel),
             team = await Commands.checkTeamExists(teamName, member, channel);
 
@@ -5045,10 +5045,10 @@ class Commands {
                 return false;
             }
 
-            if (twoTeamTagMatch.test(message)) {
-                const {1: team1Tag, 2: team2Tag} = twoTeamTagMatch.exec(message),
-                    team1 = await Commands.checkTeamExists(team1Tag, member, channel),
-                    team2 = await Commands.checkTeamExists(team2Tag, member, channel),
+            if (twoTeamTagParse.test(message)) {
+                const {groups: {teamTag1, teamTag2}} = twoTeamTagParse.exec(message),
+                    team1 = await Commands.checkTeamExists(teamTag1, member, channel),
+                    team2 = await Commands.checkTeamExists(teamTag2, member, channel),
                     challenges = await Challenge.getAllByTeams(team1, team2),
                     results = [];
 
@@ -5068,7 +5068,7 @@ class Commands {
                 }
 
                 await Discord.queue(`Use \`!voidgame\` along with the challenge ID from the list below to void a specific game.\n${results.join("\n")}`, member);
-            } else if (numberMatch.test(message)) {
+            } else if (numberParse.test(message)) {
                 challenge = await Commands.checkChallengeIdExists(+message, member, channel);
 
                 try {
@@ -5113,7 +5113,7 @@ class Commands {
             return false;
         }
 
-        if (!numberMatch.test(message)) {
+        if (!numberParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must use the \`!unvoidgame\` command with the challenge ID of the challenge you wish to unvoid.`, channel);
             throw new Warning("Invalid parameters.");
         }
@@ -5326,7 +5326,7 @@ class Commands {
             return false;
         }
 
-        const {1: title, 2: dateStartStr, 3: dateEndStr} = eventParse.exec(message);
+        const {groups: {title, dateStartStr, dateEndStr}} = eventParse.exec(message);
 
         let dateStart;
         try {

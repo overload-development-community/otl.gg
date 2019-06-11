@@ -12,8 +12,8 @@ const Common = require("../../web/includes/common"),
     settings = require("../../settings"),
     Team = require("./team"),
 
-    channelParse = /^([0-9a-z]{1,5})-([0-9a-z]{1,5})-([1-9][0-9]*)$/,
-    timezoneParse = /^[1-9][0-9]*, (.*)$/;
+    channelParse = /^(?<challengingTeamTag>[0-9a-z]{1,5})-(?<challengedTeamTag>[0-9a-z]{1,5})-(?<id>[1-9][0-9]*)$/,
+    timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/;
 
 /**
  * @type {Object.<number, schedule.Job>}
@@ -345,7 +345,7 @@ class Challenge {
             return void 0;
         }
 
-        const {1: challengingTeamTag, 2: challengedTeamTag, 3: id} = channelParse.exec(channel.name);
+        const {groups: {challengingTeamTag, challengedTeamTag, id}} = channelParse.exec(channel.name);
 
         let challengingTeam;
         try {
@@ -969,7 +969,7 @@ class Challenge {
                     yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
@@ -982,7 +982,7 @@ class Challenge {
                     yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
@@ -1985,7 +1985,7 @@ class Challenge {
                     yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
@@ -1998,7 +1998,7 @@ class Challenge {
                     yearWithTimezone = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.matchTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
@@ -2212,7 +2212,7 @@ class Challenge {
                     yearWithTimezone = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
@@ -2225,7 +2225,7 @@ class Challenge {
                     yearWithTimezone = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
 
                 if (timezoneParse.test(yearWithTimezone)) {
-                    const {1: timezoneName} = timezoneParse.exec(yearWithTimezone);
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
 
                     if (timezoneName) {
                         times[timezoneName] = this.details.suggestedTime.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});

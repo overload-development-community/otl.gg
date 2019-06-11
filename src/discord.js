@@ -9,7 +9,7 @@ const DiscordJs = require("discord.js"),
 
     commands = new Commands(),
     discord = new DiscordJs.Client(/** @type {DiscordJs.ClientOptions} */ (settings.discord.options)), // eslint-disable-line no-extra-parens
-    messageParse = /^!([^ ]+)(?: +(.*[^ ]))? *$/;
+    messageParse = /^!(?<command>[^ ]+)(?: +(?<args>.*[^ ]))? *$/;
 
 let readied = false;
 
@@ -256,7 +256,7 @@ class Discord {
      * @returns {DiscordJs.TextChannel} The VoDs channel.
      */
     static get vodsChannel() {
-        return this.vodsChannel;
+        return vodsChannel;
     }
 
     //         #                 #
@@ -387,31 +387,31 @@ class Discord {
         const member = otlGuild.members.find((m) => m.id === user.id);
 
         for (const text of message.split("\n")) {
-            const matches = messageParse.exec(text);
+            if (!messageParse.test(text)) {
+                continue;
+            }
 
-            if (matches) {
-                const command = matches[1].toLocaleLowerCase(),
-                    args = matches[2];
+            const {groups: {cmd, args}} = messageParse.exec(text),
+                command = cmd.toLocaleLowerCase();
 
-                if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
-                    let success;
-                    try {
-                        success = await commands[command](member, channel, args);
-                    } catch (err) {
-                        if (err instanceof Warning) {
-                            Log.warning(`${channel} ${member}: ${text}\n${err}`);
-                        } else if (err instanceof Exception) {
-                            Log.exception(`${channel} ${member}: ${text}\n${err.message}`, err.innerError);
-                        } else {
-                            Log.exception(`${channel} ${member}: ${text}`, err);
-                        }
-
-                        return;
+            if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
+                let success;
+                try {
+                    success = await commands[command](member, channel, args);
+                } catch (err) {
+                    if (err instanceof Warning) {
+                        Log.warning(`${channel} ${member}: ${text}\n${err}`);
+                    } else if (err instanceof Exception) {
+                        Log.exception(`${channel} ${member}: ${text}\n${err.message}`, err.innerError);
+                    } else {
+                        Log.exception(`${channel} ${member}: ${text}`, err);
                     }
 
-                    if (success) {
-                        Log.log(`${channel} ${member}: ${text}`);
-                    }
+                    return;
+                }
+
+                if (success) {
+                    Log.log(`${channel} ${member}: ${text}`);
                 }
             }
         }
