@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const fs = require("fs"),
     path = require("path"),
     promisify = require("util").promisify,
@@ -102,7 +107,7 @@ class Router {
             const classInfo = classes[filename];
 
             classInfo.methods.forEach((method) => {
-                router[method](classInfo.path, async (req, res, next) => {
+                router[method](classInfo.path, async (/** @type {Express.Request} */ req, /** @type {Express.Response} */ res, /** @type {function} */ next) => {
                     try {
                         for (const include of includes) {
                             await Router.checkCache(include);
@@ -115,7 +120,7 @@ class Router {
 
                         return await classInfo.class[req.method.toLowerCase()](req, res, next);
                     } catch (err) {
-                        Log.exception(`A web exception occurred in ${method} ${classInfo.path}.`, err);
+                        Log.exception(`A web exception occurred in ${req.method.toLowerCase()} ${classInfo.path} from ${(req.headers["x-forwarded-for"] ? `${req.headers["x-forwarded-for"]}` : void 0) || req.ip} for ${req.url}.`, err);
                     }
 
                     return classes[path.resolve(`${__dirname}/../web/controllers/500.js`)].class.get(req, res, next);
