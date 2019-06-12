@@ -110,7 +110,7 @@ class Router {
                         await Router.checkCache(filename);
 
                         if (!classInfo.class[req.method.toLowerCase()]) {
-                            return classes[path.resolve(`${__dirname}/../web/controllers/404.js`)].class.get(req, res, next);
+                            return classes[path.resolve(`${__dirname}/../web/controllers/405.js`)].class.get(req, res, next);
                         }
 
                         return await classInfo.class[req.method.toLowerCase()](req, res, next);
