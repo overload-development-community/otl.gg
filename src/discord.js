@@ -326,6 +326,15 @@ class Discord {
                 }
             }
         });
+
+        discord.on("error", (err) => {
+            if (err.message === "read ECONNRESET") {
+                // Swallow this error, see https://github.com/discordjs/discord.js/issues/3043#issuecomment-465543902
+                return;
+            }
+
+            Log.exception("Discord error.", err);
+        });
     }
 
     //                                      #
@@ -336,25 +345,17 @@ class Discord {
     //  ##    ##   #  #  #  #   ##    ##     ##
     /**
      * Connects to Discord.
-     * @returns {void}
+     * @returns {Promise} A promise that resolves once Discord is connected.
      */
-    static connect() {
+    static async connect() {
         Log.log("Connecting to Discord...");
 
-        discord.login(settings.discord.token).then(() => {
+        try {
+            await discord.login(settings.discord.token);
             Log.log("Connected.");
-        }).catch((err) => {
+        } catch (err) {
             Log.exception("Error connecting to Discord, will automatically retry.", err);
-        });
-
-        discord.on("error", (err) => {
-            if (err.message === "read ECONNRESET") {
-                // Swallow this error, see https://github.com/discordjs/discord.js/issues/3043#issuecomment-465543902
-                return;
-            }
-
-            Log.exception("Discord error.", err);
-        });
+        }
     }
 
     //  #            ##                                  #             #
@@ -519,6 +520,9 @@ class Discord {
      * @returns {Promise<DiscordJs.TextChannel|DiscordJs.VoiceChannel|DiscordJs.CategoryChannel>} The created channel.
      */
     static createChannel(name, type, overwrites, reason) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.createChannel(name, type, overwrites, reason);
     }
 
@@ -535,6 +539,9 @@ class Discord {
      * @returns {Promise<DiscordJs.Role>} A promise that resolves with the created role.
      */
     static createRole(data, reason) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.createRole(data, reason);
     }
 
@@ -551,6 +558,9 @@ class Discord {
      * @returns {DiscordJs.GuildChannel} The Discord channel.
      */
     static findChannelById(id) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.channels.find((c) => c.id === id);
     }
 
@@ -567,6 +577,9 @@ class Discord {
      * @returns {DiscordJs.GuildChannel} The Discord channel.
      */
     static findChannelByName(name) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.channels.find((c) => c.name === name);
     }
 
@@ -583,6 +596,9 @@ class Discord {
      * @returns {DiscordJs.GuildMember} The guild member.
      */
     static findGuildMemberByDisplayName(displayName) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.members.find((m) => m.displayName === displayName);
     }
 
@@ -599,6 +615,9 @@ class Discord {
      * @returns {DiscordJs.GuildMember} The guild member.
      */
     static findGuildMemberById(id) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.members.find((m) => m.id === id);
     }
 
@@ -615,6 +634,9 @@ class Discord {
      * @returns {DiscordJs.Role} The Discord role.
      */
     static findRoleById(id) {
+        if (!otlGuild) {
+            return void 0;
+        }
         return otlGuild.roles.find((r) => r.id === id);
     }
 

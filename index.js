@@ -45,7 +45,7 @@ const compression = require("compression"),
 
     // Startup Discord.
     Discord.startup();
-    Discord.connect();
+    await Discord.connect();
 
     // Add morgan extensions.
     morganExtensions(morgan);
