@@ -83,6 +83,10 @@ class AboutView {
                     <div>You must use this command in a challenge room you are casting a match for.  Indicates that you no longer wish to cast a scheduled match.</div>
                     <div class="example">!uncast</div>
 
+                    <div class="command">!vod &lt;challengeId> &lt;url></div>
+                    <div>Post a video on demand for a match that you cast.  Only works if you !cast the match.  The challengeId will be messaged to you by the bot upon the closure of the match.</div>
+                    <div class="example">!vod 1 https://twitch.tv/videos/12345678</div>
+
                     <div class="command">!stats [&lt;pilot>]</div>
                     <div>Gets the current season stats for the player, or yourself if used without mentioning a pilot.</div>
                     <div class="example">!stats @Kantor<br />!stats</div>

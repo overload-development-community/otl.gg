@@ -4,6 +4,27 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v1.1.1 - 6/17/2019
+
+### Bot:
+
+* Improvements to the performance of the match notification system.
+* Added `!vod` command for casters to record a video on demand.  Lists the video in the new #vods channel.
+* Unvoiding a match with no match time set no longer causes an error.
+* Bot no longer listens to server member changes on servers other than the OTL.
+* Start Discord before the website.
+* Improved error handling.
+
+### Website:
+
+* Much of the website data is now cached, with cache invalidations happening automatically upon certain events.
+* Match page now properly normalizes names.
+* Streamers are now noted on the match page.
+* Casters and VoDs are now displayed on the match page.
+* Dates now display on the matches page when paging.
+* Dates on matches page now link to their match page.
+* Display fixes on the standings page.
+
 ## v1.1 - 4/30/2019
 
 ### Bot:
