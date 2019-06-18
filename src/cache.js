@@ -1,4 +1,6 @@
-const Redis = require("./redis");
+const Redis = require("./redis"),
+
+    dateMatch = /^(?:\d{4})-(?:\d{2})-(?:\d{2})T(?:\d{2}):(?:\d{2}):(?:\d{2}(?:\.\d*))(?:Z|(?:\+|-)(?:[\d|:]*))?$/;
 
 //   ###                 #
 //  #   #                #
@@ -63,7 +65,13 @@ class Cache {
             return void 0;
         }
 
-        return JSON.parse(value);
+        return JSON.parse(value, (k, v) => {
+            if (typeof v === "string" && dateMatch.test(v)) {
+                return new Date(v);
+            }
+
+            return v;
+        });
     }
 
     //  #                      ##     #       #         #

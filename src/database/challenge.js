@@ -826,19 +826,22 @@ class ChallengeDb {
         const data = await db.query(/* sql */`
             SELECT ChallengeId, DateClockDeadline
             FROM tblChallenge
-            WHERE DateClockDeadlineNotified IS NULL
+            WHERE DateClockDeadline IS NOT NULL
+                AND DateClockDeadlineNotified IS NULL
                 AND DateClosed IS NULL
 
             SELECT ChallengeId, MatchTime
             FROM tblChallenge
-            WHERE DateMatchTimeNotified IS NULL
+            WHERE MatchTime IS NOT NULL
+                AND DateMatchTimeNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
                 AND DateClosed IS NULL
 
             SELECT ChallengeId, MatchTime
             FROM tblChallenge
-            WHERE DateMatchTimePassedNotified IS NULL
+            WHERE MatchTime IS NOT NULL
+                AND DateMatchTimePassedNotified IS NULL
                 AND DateConfirmed IS NULL
                 AND DateVoided IS NULL
                 AND DateClosed IS NULL

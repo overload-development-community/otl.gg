@@ -168,7 +168,7 @@
 
 #stats {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto;
+    grid-template-columns: auto 18px auto auto auto auto auto;
     color: white;
     font-size: 14px;
     margin-top: 5px;
@@ -179,6 +179,10 @@
 #stats .header {
     color: #999999;
     font-size: 14px;
+}
+
+#stats .header.name {
+    grid-column-end: span 2;
 }
 
 #stats .diamond, #details .diamond {
@@ -222,7 +226,7 @@
     white-space: nowrap;
 }
 
-.twitch-image {
+#stats .twitch-image {
     display: inline-block;
     background-image: url(/images/twitch.png);
     background-size: 14px 14px;
@@ -236,16 +240,16 @@
     color: white;
     font-size: 14px;
     margin-top: 5px;
-    max-width: 500px;
-    width: 100%;
 }
 
 #details > div:nth-child(odd) {
     text-align: right;
+    padding-left: 5px;
     padding-right: 3px;
 }
 
 #details > div:nth-child(even) {
     text-align: left;
     padding-left: 3px;
+    padding-right: 5px;
 }

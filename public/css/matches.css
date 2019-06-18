@@ -167,6 +167,7 @@
 
 #matches #completed .paginator {
     display: flex;
+    flex-wrap: wrap;
     border-collapse: collapse;
     color: white;
     padding: 0 10px;

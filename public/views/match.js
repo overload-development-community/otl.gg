@@ -83,7 +83,7 @@ class MatchView {
                 ${details.stats && details.stats.length > 0 ? /* html */`
                     <div id="stats">
                         <div class="header">Team</div>
-                        <div class="header">Name</div>
+                        <div class="header name">Name</div>
                         <div class="header">KDA</div>
                         <div class="header">Kills</div>
                         <div class="header">Assists</div>
@@ -92,10 +92,10 @@ class MatchView {
                             <div class="tag">${(team = challenge.challengingTeam.id === s.teamId ? challenge.challengingTeam : challenge.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
-                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
                             <div class="twitch">${s.twitchName ? /* html */`
                                 <a href="https://twitch.tv/${encodeURIComponent(s.twitchName)}"><div class="twitch-image"></div></a>
                             ` : ""}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
                             <div class="numeric kda">${((s.kills + s.assists) / Math.max(s.deaths, 1)).toFixed(3)}</div>
                             <div class="numeric kills">${s.kills}</div>
                             <div class="numeric assists">${s.assists}</div>

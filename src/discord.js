@@ -9,7 +9,7 @@ const DiscordJs = require("discord.js"),
 
     commands = new Commands(),
     discord = new DiscordJs.Client(/** @type {DiscordJs.ClientOptions} */ (settings.discord.options)), // eslint-disable-line no-extra-parens
-    messageParse = /^!(?<command>[^ ]+)(?: +(?<args>.*[^ ]))? *$/;
+    messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/;
 
 let readied = false;
 

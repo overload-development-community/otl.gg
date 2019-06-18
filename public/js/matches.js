@@ -11,6 +11,23 @@
  * A class that handles the matches page.
  */
 class Matches {
+    //                                ###    #
+    //                                 #
+    // ###    ###  ###    ###    ##    #    ##    # #    ##
+    // #  #  #  #  #  #  ##     # ##   #     #    ####  # ##
+    // #  #  # ##  #       ##   ##     #     #    #  #  ##
+    // ###    # #  #     ###     ##    #    ###   #  #   ##
+    // #
+    /**
+     * Parses time elements to display the local time.
+     * @returns {void}
+     */
+    static parseTime() {
+        for (const time of document.getElementsByClassName("local")) {
+            time.innerText = MatchView.Common.formatDate(new Date(time.dateTime));
+        }
+    }
+
     // ###    ##   #  #   ##                #                 #    #                    #           #
     // #  #  #  #  ####  #  #               #                 #    #                    #           #
     // #  #  #  #  ####  #      ##   ###   ###    ##   ###   ###   #      ##    ###   ###   ##    ###
@@ -38,7 +55,9 @@ class Matches {
 
                 Matches.page = +paginator.innerText;
 
-                Common.loadDataIntoTemplate(`/api/match?season=${document.getElementById("season").innerText}&page=${Matches.page}`, "#completed-matches", MatchView.get);
+                Common.loadDataIntoTemplate(`/api/match?season=${document.getElementById("season").innerText}&page=${Matches.page}`, "#completed-matches", MatchView.get).then(() => {
+                    Matches.parseTime();
+                });
             });
 
             paginator.addEventListener("selectstart", (ev) => {
@@ -69,6 +88,8 @@ class Matches {
         document.getElementById("select-next").addEventListener("selectstart", (ev) => {
             ev.preventDefault();
         });
+
+        Matches.parseTime();
     }
 }
 

@@ -212,7 +212,7 @@ class Match {
                     matchTime: match.matchTime,
                     map: match.map,
                     twitchName: match.twitchName,
-                    timeRemaining: match.matchTime.getTime() - new Date().getTime()
+                    timeRemaining: match.matchTime ? match.matchTime.getTime() - new Date().getTime() : void 0
                 };
             }),
             completed

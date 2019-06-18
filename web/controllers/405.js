@@ -1,5 +1,5 @@
 const Common = require("../includes/common"),
-    NotFoundView = require("../../public/views/404");
+    MethodNotAllowedView = require("../../public/views/405");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -35,7 +35,7 @@ class MethodNotAllowed {
             /* html */`
                 <link rel="stylesheet" href="/css/error.css" />
             `,
-            NotFoundView.get({message: "This method not allowed."}),
+            MethodNotAllowedView.get({message: "This method not allowed."}),
             req
         ));
     }

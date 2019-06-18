@@ -3644,7 +3644,7 @@ class Commands {
             throw new Warning("Caster is not set.");
         }
 
-        if (challenge.details.caster.id === member.id) {
+        if (challenge.details.caster.id !== member.id) {
             await Discord.queue(`Sorry, ${member}, but ${challenge.details.caster} cast this match already.`, channel);
             throw new Warning("Caster is already set.");
         }
