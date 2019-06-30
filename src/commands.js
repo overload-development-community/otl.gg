@@ -2666,7 +2666,7 @@ class Commands {
 
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!message || ["2", "3", "4", "2v2", "3v3", "4v4", "2V2", "3V3", "4V4"].indexOf(message) === -1) {
+        if (!message || ["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
             throw new Warning("Missing team size.");
         }
@@ -4570,7 +4570,7 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        if (!message || ["2", "3", "4", "2v2", "3v3", "4v4", "2V2", "3V3", "4V4"].indexOf(message) === -1) {
+        if (!message || ["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
             throw new Warning("Missing team size.");
         }

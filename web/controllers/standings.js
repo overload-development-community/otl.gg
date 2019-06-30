@@ -51,7 +51,7 @@ class Standings {
                 recordsTitle = "Team Size Records";
                 records1 = "2v2";
                 records2 = "3v3";
-                records3 = "4v4";
+                records3 = "4v4+";
                 break;
             default:
                 recordsTitle = "Map Records";
