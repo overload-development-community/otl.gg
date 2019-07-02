@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.0 - 7/1/2019
+
+* Support matches up to 8 players per team.
+* Improved error handling.
+
 ## v1.1.1 - 6/17/2019
 
 ### Bot:
