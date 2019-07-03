@@ -75,7 +75,7 @@ class IndexView {
                                 Version ${version}, &copy;${+year > 2019 ? "2019-" : ""}${year} roncli Productions
                             </div>
                             <div class="right">
-                                Bugs?  <a href="https://github.com/roncli/otl-bot/issues" target="_blank">Report on GitHub</a>
+                                Bugs?  <a href="https://github.com/overload-development-community/otl-bot/issues" target="_blank">Report on GitHub</a>
                             </div>
                         </div>
                     </div>
