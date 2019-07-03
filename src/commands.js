@@ -1146,7 +1146,11 @@ class Commands {
         }
 
         if (!teamNameParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to prevent abuse, you can only use alphanumeric characters and spaces, and names must be between 6 and 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`, channel);
+            if (teamTagParse.test(message)) {
+                await Discord.queue(`Sorry, ${member}, but that is too short for a team name.  Did you mean to use \`!tag ${message}\`?`, channel);
+            } else {
+                await Discord.queue(`Sorry, ${member}, but to prevent abuse, you can only use alphanumeric characters and spaces, and names must be between 6 and 25 characters.  In the event you need to use other characters, please name your team within the rules for now, and then contact an admin after your team is created.`, channel);
+            }
             throw new Warning("Invalid team name.");
         }
 
@@ -1194,7 +1198,11 @@ class Commands {
         message = message.toUpperCase();
 
         if (!teamTagParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you can only use alphanumeric characters, and are limited to 5 characters.`, channel);
+            if (teamNameParse.test(message)) {
+                await Discord.queue(`Sorry, ${member}, but that is too long for a tag name.  Did you mean to use \`!name ${message}\`?`, channel);
+            } else {
+                await Discord.queue(`Sorry, ${member}, but you can only use alphanumeric characters, and are limited to 5 characters.`, channel);
+            }
             throw new Warning("Invalid team tag.");
         }
 
