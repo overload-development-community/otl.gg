@@ -5448,7 +5448,7 @@ class Commands {
             return false;
         }
 
-        const team = await Commands.checkMemberOnTeam(member, channel);
+        const team = await Commands.checkTeamExists(message, member, channel);
 
         try {
             await team.setLock(true);
