@@ -1975,8 +1975,10 @@ class Challenge {
         this.details.suggestedTime = void 0;
         this.details.suggestedTimeTeam = void 0;
 
-        this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
-        this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
+        if (!this.details.dateConfirmed) {
+            this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
+            this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
+        }
 
         try {
             const times = {};
