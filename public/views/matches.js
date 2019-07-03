@@ -38,7 +38,6 @@ class MatchesView {
                 ${pending.length === 0 ? "" : /* html */`
                     <div id="pending">
                         <div class="section">Pending Matches</div>
-                        <div class="subsection">for Season ${season || Math.max(...seasonList)}</div>
                         <div class="matches">
                             ${pending.map((m) => /* html */`
                                 <div class="match">
