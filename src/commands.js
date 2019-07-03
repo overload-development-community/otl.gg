@@ -1870,7 +1870,7 @@ class Commands {
         }
 
         if (hasRequested) {
-            await Discord.queue(`Sorry, ${member}, but to prevent abuse, you may only requeset to join a team once.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to prevent abuse, you may only request to join a team once.`, channel);
             throw new Warning("Request already exists.");
         }
 
