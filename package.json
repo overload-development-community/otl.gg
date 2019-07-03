@@ -2,9 +2,9 @@
     "name": "otl-bot",
     "version": "2.0.0",
     "description": "A Discord bot for the Overload Teams League.",
-    "homepage": "https://github.com/roncli/otl-bot",
+    "homepage": "https://github.com/overload-development-community/otl-bot",
     "bugs": {
-        "url": "https://github.com/roncli/otl-bot/issues",
+        "url": "https://github.com/overload-development-community/otl-bot/issues",
         "email": "roncli@roncli.com"
     },
     "license": "None",
@@ -15,7 +15,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/roncli/otl-bot.git"
+        "url": "https://github.com/overload-development-community/otl-bot.git"
     },
     "dependencies": {
         "compression": "1.7.4",
