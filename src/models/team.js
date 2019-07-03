@@ -1046,6 +1046,11 @@ class Team {
                     throw new Error("Captain's channel does not exist for the team.");
                 }
 
+                const captainsVoiceChannel = this.captainsVoiceChannel;
+                if (!captainsVoiceChannel) {
+                    throw new Error("Captain's voice channel does not exist for the team.");
+                }
+
                 const teamChannel = this.teamChannel;
                 if (!teamChannel) {
                     throw new Error("Team's channel does not exist.");
@@ -1054,6 +1059,18 @@ class Team {
                 if (Discord.findGuildMemberById(member.id)) {
                     await member.removeRole(Discord.captainRole, `${member.displayName} left the team.`);
                     await member.removeRole(this.role, `${member.displayName} left the team.`);
+
+                    await captainsChannel.overwritePermissions(
+                        member,
+                        {"VIEW_CHANNEL": null},
+                        `${member.displayName} left the team.`
+                    );
+        
+                    await captainsVoiceChannel.overwritePermissions(
+                        member,
+                        {"VIEW_CHANNEL": null},
+                        `${member.displayName} left the team.`
+                    );
                 }
 
                 await Discord.queue(`${member.displayName} has left the team.`, captainsChannel);
