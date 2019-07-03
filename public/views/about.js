@@ -28,6 +28,10 @@ class AboutView {
                     The Overload Teams League is a community of players who compete in the game <a href="https://playoverload.com" target="_blank">Overload</a>, a Six Degrees of Freedom First Person Shooter by Revival Productions.<br /><br />
                     To play, join the Discord server (link is at the bottom of the page), where you may join an existing team or create your own.  For rules specific to the league, please see the Rules section on the Discord server.
                 </div>
+                <div class="section">Available Maps</div>
+                <div class="text">
+                    For a complete list of maps available to play in the OTL, visit the <a href="/maplist">map list</a>.
+                </div>
                 <div class="section">Discord Bot Commands</div>
                 <div class="text">
                     The following commands are available on the Discord server.  You may issue most commands in any channel, or in private messages to The Fourth Sovereign.  Don't worry, she won't try to absorb your consciousness into her own.

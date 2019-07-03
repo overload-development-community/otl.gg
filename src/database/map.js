@@ -36,6 +36,27 @@ class MapDb {
         });
     }
 
+    //              #     ##   ##    ##     ##   ##    ##                         #
+    //              #    #  #   #     #    #  #   #     #                         #
+    //  ###   ##   ###   #  #   #     #    #  #   #     #     ##   #  #   ##    ###
+    // #  #  # ##   #    ####   #     #    ####   #     #    #  #  #  #  # ##  #  #
+    //  ##   ##     #    #  #   #     #    #  #   #     #    #  #  ####  ##    #  #
+    // #      ##     ##  #  #  ###   ###   #  #  ###   ###    ##   ####   ##    ###
+    //  ###
+    /**
+     * Gets the full list of allowed maps in the OTL.
+     * @returns {Promise<string[]>} A promise that resolves with the list of maps allowed.
+     */
+    static async getAllAllowed() {
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT Map FROM tblAllowedMap ORDER BY Map
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length && data.recordsets[0].map((row) => row.Map) || [];
+    }
+
     //              #    ###   ##                         #  ###          ##
     //              #    #  #   #                         #  #  #        #  #
     //  ###   ##   ###   #  #   #     ###  #  #   ##    ###  ###   #  #   #     ##    ###   ###    ##   ###

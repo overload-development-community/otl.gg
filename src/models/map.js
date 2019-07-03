@@ -33,6 +33,25 @@ class Map {
         }
     }
 
+    //              #     ##   ##    ##     ##   ##    ##                         #
+    //              #    #  #   #     #    #  #   #     #                         #
+    //  ###   ##   ###   #  #   #     #    #  #   #     #     ##   #  #   ##    ###
+    // #  #  # ##   #    ####   #     #    ####   #     #    #  #  #  #  # ##  #  #
+    //  ##   ##     #    #  #   #     #    #  #   #     #    #  #  ####  ##    #  #
+    // #      ##     ##  #  #  ###   ###   #  #  ###   ###    ##   ####   ##    ###
+    //  ###
+    /**
+     * Gets the full list of allowed maps in the OTL.
+     * @returns {Promise<string[]>} A promise that resolves with the list of maps allowed.
+     */
+    static async getAllAllowed() {
+        try {
+            return await Db.getAllAllowed();
+        } catch (err) {
+            throw new Exception("There was a database error getting the list of allowed maps.", err);
+        }
+    }
+
     //              #    ###   ##                         #  ###          ##
     //              #    #  #   #                         #  #  #        #  #
     //  ###   ##   ###   #  #   #     ###  #  #   ##    ###  ###   #  #   #     ##    ###   ###    ##   ###

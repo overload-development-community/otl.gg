@@ -1065,7 +1065,7 @@ class Team {
                         {"VIEW_CHANNEL": null},
                         `${member.displayName} left the team.`
                     );
-        
+
                     await captainsVoiceChannel.overwritePermissions(
                         member,
                         {"VIEW_CHANNEL": null},
