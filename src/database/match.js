@@ -45,12 +45,7 @@ class MatchDb {
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
-                SELECT TOP 1
-                    @season = Season
-                FROM tblSeason
-                WHERE DateStart <= GETUTCDATE()
-                    AND DateEnd > GETUTCDATE()
-                ORDER BY Season DESC
+                SELECT @season = MAX(Season) FROM vwCompletedChallenge
             END
 
             SELECT
