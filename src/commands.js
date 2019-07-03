@@ -430,7 +430,7 @@ class Commands {
         }
 
         if (!correctedMap) {
-            await Discord.queue(`Sorry, ${member}, but you that is not a map you can use.  You can only use stock maps or any of the custom maps listed in #teams.`, channel);
+            await Discord.queue(`Sorry, ${member}, but that is not a map you can use.  See https://otl.gg/maplist for a complete list of maps you can use.`, channel);
             throw new Warning("Invalid map.");
         }
 
@@ -2702,7 +2702,7 @@ class Commands {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!message || ["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use the \`!suggestteamsize <size>\` command, for example, \`!suggestteamsize 3\`.`, channel);
             throw new Warning("Missing team size.");
         }
 
@@ -3361,7 +3361,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, your Twitch channel is now linked as https://twitch.tv/${message}.  If you wish to unlik your channel, use the \`!removetwitch\` command.`, channel);
+        await Discord.queue(`${member}, your Twitch channel is now linked as https://twitch.tv/${message}.  If you wish to unlink your channel, use the \`!removetwitch\` command.`, channel);
 
         return true;
     }
@@ -3657,12 +3657,12 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async vod(member, channel, message) {
-        if (!await Commands.checkHasParameters(message, member, "To submit a VoD, enter the commnad followed by the challenge ID and the URL of the VoD, for example `!vod 125 https://twitch.tv/videos/12345`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To submit a VoD, enter the command followed by the challenge ID and the URL of the VoD, for example `!vod 125 https://twitch.tv/videos/12345`.", channel)) {
             return false;
         }
 
         if (!vodParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to submit a VoD, enter the commnad followed by the challenge ID and the URL of the VoD, for example \`!vod 125 https://twitch.tv/videos/12345\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to submit a VoD, enter the command followed by the challenge ID and the URL of the VoD, for example \`!vod 125 https://twitch.tv/videos/12345\`.`, channel);
             return false;
         }
 
@@ -3692,9 +3692,9 @@ class Commands {
         }
 
         if (vod && vod.length > 0) {
-            await Discord.queue(`${member}, you have successfully added the vod <${vod}> to challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
+            await Discord.queue(`${member}, you have successfully added the VoD <${vod}> to challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
         } else {
-            await Discord.queue(`${member}, you have cleared the vod for challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
+            await Discord.queue(`${member}, you have cleared the VoD for challenge ${challenge.id} between **${challenge.challengingTeam.tag}** and **${challenge.challengedTeam.tag}**.`, member);
         }
 
         return true;
@@ -3726,7 +3726,7 @@ class Commands {
 
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!await Commands.checkHasParameters(message, member, "To report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example `!report 49 27`.  Note that only the losing team should report the score.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To report a completed match, enter the command followed by the score, using a space to separate the scores, for example `!report 49 27`.  Note that only the losing team should report the score.", channel)) {
             return false;
         }
 
@@ -3741,7 +3741,7 @@ class Commands {
         await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
         if (!scoreParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the command followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
             return false;
         }
 
@@ -4606,7 +4606,7 @@ class Commands {
         await Commands.checkMemberIsOwner(member);
 
         if (!message || ["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To suggest a team size, use \`!suggestteamsize 2\`, \`!suggestteamsize 3\`, or \`!suggestteamsize 4\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To force a team size, use the \`!forceteamsize <size>\` command, for example, \`!forceteamsize 3\`.`, channel);
             throw new Warning("Missing team size.");
         }
 
@@ -4764,7 +4764,7 @@ class Commands {
         }
 
         if (!scoreParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the commnad followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the command followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
