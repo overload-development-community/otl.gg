@@ -1084,6 +1084,33 @@ class Commands {
         return true;
     }
 
+    //                   ##     #            #
+    //                    #                  #
+    // # #    ###  ###    #    ##     ###   ###
+    // ####  #  #  #  #   #     #    ##      #
+    // #  #  # ##  #  #   #     #      ##    #
+    // #  #   # #  ###   ###   ###   ###      ##
+    //             #
+    /**
+     * Replies with the URL of the map list.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async maplist(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        if (message) {
+            return false;
+        }
+
+        await Discord.queue("View the complete list of maps approved for play at https://otl.gg/maplist.", channel);
+        return true;
+    }
+
     //                          #           #
     //                          #           #
     //  ##   ###    ##    ###  ###    ##   ###    ##    ###  # #
