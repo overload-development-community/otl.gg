@@ -41,8 +41,6 @@ class MethodNotAllowed {
     }
 }
 
-MethodNotAllowed.route = {
-    path: "/405"
-};
+MethodNotAllowed.route = {};
 
 module.exports = MethodNotAllowed;
