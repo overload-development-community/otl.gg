@@ -116,6 +116,10 @@ class Log {
                         log.obj = `${log.obj.message} - ${log.obj.innerError.message} - ETIMEOUT`;
                     }
 
+                    if (log.obj.message && log.obj.originalError && log.obj.originalError.message && log.obj.originalError.code === "ETIMEOUT") {
+                        log.obj = `${log.obj.message} - ${log.obj.originalError.message} - ETIMEOUT`;
+                    }
+
                     if (log.obj.message && log.obj.syscall && log.obj.code === "ETIMEDOUT") {
                         log.obj = `${log.obj.message} - ${log.obj.syscall} - ETIMEDOUT`;
                     }
