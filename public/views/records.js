@@ -32,8 +32,8 @@ class RecordsView {
         return /* html */`
             <div id="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                    ${!isNaN(season) && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/records?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber} | ${season === 0 ? "All Time" : /* html */`<a href="/records?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}
-                `).join(" | ")}<br />
+                    ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/records?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
+                `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/records?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/records?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/records${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
             </div>
             <div class="section">Records</div>
