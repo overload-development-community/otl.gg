@@ -112,16 +112,24 @@ class Log {
 
             for (const log of queue) {
                 if (log.obj) {
-                    if (log.obj.message && log.obj.innerError && log.obj.innerError.message && log.obj.innerError.code && log.obj.innerError.code === "ETIMEOUT") {
+                    if (log.obj.message && log.obj.innerError && log.obj.innerError.message && log.obj.innerError.code === "ETIMEOUT") {
                         log.obj = `${log.obj.message} - ${log.obj.innerError.message} - ETIMEOUT`;
                     }
-                    
-                    if (log.obj.message && log.obj.syscall && log.obj.code && log.obj.code === "ETIMEDOUT") {
+
+                    if (log.obj.message && log.obj.syscall && log.obj.code === "ETIMEDOUT") {
                         log.obj = `${log.obj.message} - ${log.obj.syscall} - ETIMEDOUT`;
                     }
 
-                    if (log.obj.name && log.obj.name === "TimeoutError") {
+                    if (log.obj.name === "TimeoutError") {
                         log.obj = `${log.obj.message} - TimeoutError`;
+                    }
+
+                    if (log.obj.error && log.obj.message && log.obj.error.syscall && log.obj.error.code === "ETIMEDOUT") {
+                        log.obj = `${log.obj.message} - ${log.obj.error.syscall} - ETIMEDOUT`;
+                    }
+
+                    if (log.obj.message && log.obj.message === "Unexpected server response: 502") {
+                        log.obj = `${log.obj.message}`;
                     }
 
                     let value = util.inspect(log.obj),
