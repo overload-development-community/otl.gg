@@ -780,7 +780,7 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason) {
-        const key = `otl.gg:db:player:getSeasonStats:${season || "null"}:${!!postseason}`;
+        const key = `otl.gg:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}`;
         let cache = await Cache.get(key);
 
         if (cache) {

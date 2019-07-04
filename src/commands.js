@@ -1222,9 +1222,9 @@ class Commands {
             return false;
         }
 
-        message = message.toUpperCase();
+        const tag = message.toUpperCase();
 
-        if (!teamTagParse.test(message)) {
+        if (!teamTagParse.test(tag)) {
             if (teamNameParse.test(message)) {
                 await Discord.queue(`Sorry, ${member}, but that is too long for a tag name.  Did you mean to use \`!name ${message}\`?`, channel);
             } else {
@@ -1233,19 +1233,19 @@ class Commands {
             throw new Warning("Invalid team tag.");
         }
 
-        if (Team.tagExists(message)) {
+        if (Team.tagExists(tag)) {
             await Discord.queue(`Sorry, ${member}, but this team tag already exists!`, channel);
             throw new Warning("Team tag already exists.");
         }
 
         try {
-            await newTeam.setTag(message);
+            await newTeam.setTag(tag);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        await Discord.queue(`${member}, your team tag is now set to ${message}.`, channel);
+        await Discord.queue(`${member}, your team tag is now set to ${tag}.`, channel);
         return true;
     }
 
@@ -5512,7 +5512,7 @@ class Commands {
             return false;
         }
 
-        const team = await Commands.checkMemberOnTeam(member, channel);
+        const team = await Commands.checkTeamExists(message, member, channel);
 
         try {
             await team.setLock(false);
