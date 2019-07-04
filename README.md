@@ -4,6 +4,29 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.0.1 - 7/4/2019
+
+### Bot:
+
+* New command `!maplist` to point to the webpage that lists all maps in play.
+* Piots who leave a team while being a team captain now leave that team's captains channel as well.
+* Display a better message when team creators mix up `!name` and `!tag`.
+* `!lockteam` and `!unlockteam` now lock and unlock the specified team, not the person's team who issued the command.
+* When the match time is forced in a challenge that's already been confirmed, notifications that the match is about to begin are no longer sent.
+* Fix several instances of caching not taking advantage of promises.
+* Many typos fixed across the bot, thanks @SiriusTR.
+* `!version` points to the overload-development-community repository.
+* Improved error handling.
+
+### Website:
+
+* Season selectors are fixed across the site.
+* New map list page under About.
+* Show the most recent season when going to the Matches, Players, and Records page.
+* Pending matches no longer showes the season number, which doesn't make sense.
+* Footer points to the overload-development-community repository.
+* Remove /405 route.
+
 ## v2.0 - 7/1/2019
 
 * Support matches up to 8 players per team.
