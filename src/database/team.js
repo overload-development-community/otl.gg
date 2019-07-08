@@ -89,9 +89,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
         }
     }
 
@@ -144,9 +144,9 @@ class TeamDb {
         const teamId = data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TeamId || void 0;
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
         }
 
         return teamId ? {member: newTeam.member, id: teamId, name: newTeam.name, tag: newTeam.tag, isFounder: true, disbanded: false, locked: false} : void 0;
@@ -1045,9 +1045,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
         }
     }
 
@@ -1141,9 +1141,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
         }
     }
 

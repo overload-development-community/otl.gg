@@ -729,7 +729,7 @@ class PlayerDb {
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[8] && data.recordsets[8][0] && data.recordsets[8][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[8] && data.recordsets[8][0] && data.recordsets[8][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:player:updated"]);
 
         return cache;
     }
@@ -839,7 +839,7 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:player:updated"]);
 
         return cache;
     }
@@ -977,7 +977,7 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"].concat(cache.map((player) => `otl.gg:invalidate:player:${player.id}:updated`)));
 
         return cache;
     }
