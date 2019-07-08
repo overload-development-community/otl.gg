@@ -491,6 +491,8 @@ class TeamDb {
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
             WHERE s.TeamId = @teamId
+                AND (@season = 0 OR cc.Season = @season)
+                AND cc.Postseason = @postseason
             GROUP BY s.PlayerId, p.Name, t.TeamId, t.Tag, t.Name, c.ChallengeId, t1.Tag, t2.Tag, c.Map, c.MatchTime, sb.Kills, sb.Deaths, sb.Assists
             ORDER BY p.Name
 
