@@ -107,21 +107,20 @@ class Match {
     //  ###
     /**
      * Gets the current matches.
-     * @param {Standing[]} standings The standings.
      * @returns {Promise<{id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
      */
-    static async getCurrent(standings) {
-        let matches;
+    static async getCurrent() {
+        let matches, standings, previousStandings;
         try {
-            matches = await Db.getCurrent();
+            ({matches, standings, previousStandings} = await Db.getCurrent());
         } catch (err) {
             throw new Exception("There was a database error getting current matches.", err);
         }
 
         return matches.map((match) => ({
             id: match.id,
-            challengingTeam: standings.find((s) => s.teamId === match.challengingTeamId),
-            challengedTeam: standings.find((s) => s.teamId === match.challengedTeamId),
+            challengingTeam: (match.postseason ? previousStandings : standings).find((s) => s.teamId === match.challengingTeamId),
+            challengedTeam: (match.postseason ? previousStandings : standings).find((s) => s.teamId === match.challengedTeamId),
             challengingTeamScore: match.challengingTeamScore,
             challengedTeamScore: match.challengedTeamScore,
             matchTime: match.matchTime,

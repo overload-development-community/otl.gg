@@ -174,7 +174,7 @@ class MatchDb {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
         const key = "otl.gg:db:match:getCurrent";
@@ -185,7 +185,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Postseason: boolean, Map: string, DateClosed: Date, OvertimePeriods: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -195,6 +195,7 @@ class MatchDb {
                 ChallengingTeamScore,
                 ChallengedTeamScore,
                 MatchTime,
+                Postseason,
                 Map,
                 DateClosed,
                 OvertimePeriods
@@ -207,6 +208,7 @@ class MatchDb {
                     CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
                     CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                     MatchTime,
+                    Postseason,
                     Map,
                     DateClosed,
                     OvertimePeriods
@@ -223,6 +225,7 @@ class MatchDb {
                 CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengingTeamScore END ChallengingTeamScore,
                 CASE WHEN DateConfirmed IS NULL THEN NULL ELSE ChallengedTeamScore END ChallengedTeamScore,
                 MatchTime,
+                Postseason,
                 Map,
                 DateClosed,
                 OvertimePeriods
@@ -231,18 +234,83 @@ class MatchDb {
                 AND MatchTime > GETUTCDATE()
                 AND DateVoided IS NULL
             ORDER BY MatchTime
+
+            SELECT
+                TeamId, Name, Tag, Disbanded, Locked,
+                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Wins, Losses, Ties
+            FROM
+            (
+                SELECT
+                    t.TeamId,
+                    t.Name,
+                    t.Tag,
+                    t.Disbanded,
+                    t.Locked,
+                    tr.Rating,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                FROM tblTeam t
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @currentSeason
+            ) a
+
+            SELECT
+                TeamId, Name, Tag, Disbanded, Locked,
+                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Wins, Losses, Ties
+            FROM
+            (
+                SELECT
+                    t.TeamId,
+                    t.Name,
+                    t.Tag,
+                    t.Disbanded,
+                    t.Locked,
+                    tr.Rating,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                FROM tblTeam t
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @currentSeason - 1
+            ) a
         `);
-        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
-            id: row.ChallengeId,
-            challengingTeamId: row.ChallengingTeamId,
-            challengedTeamId: row.ChallengedTeamId,
-            challengingTeamScore: row.ChallengingTeamScore,
-            challengedTeamScore: row.ChallengedTeamScore,
-            matchTime: row.MatchTime,
-            map: row.Map,
-            dateClosed: row.DateClosed,
-            overtimePeriods: row.OvertimePeriods
-        })) || [];
+        cache = data && data.recordsets && data.recordsets.length === 3 && {
+            matches: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+                id: row.ChallengeId,
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamScore: row.ChallengedTeamScore,
+                matchTime: row.MatchTime,
+                postseason: row.Postseason,
+                map: row.Map,
+                dateClosed: row.DateClosed,
+                overtimePeriods: row.OvertimePeriods
+            })) || [],
+            standings: data.recordsets[1].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                disbanded: row.Disbanded,
+                locked: row.Locked,
+                rating: row.Rating,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            })),
+            previousStandings: data.recordsets[2].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                disbanded: row.Disbanded,
+                locked: row.Locked,
+                rating: row.Rating,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            }))
+        } || {matches: void 0, standings: void 0, previousStandings: void 0};
 
         Cache.add(key, cache, void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
 
@@ -392,7 +460,7 @@ class MatchDb {
             completed: data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].Completed || 0
         } || {matches: [], standings: [], completed: 0};
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
 
         return cache;
     }
