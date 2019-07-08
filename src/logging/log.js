@@ -2,7 +2,10 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  */
 
-const util = require("util");
+const request = require("request-promise-native"),
+    util = require("util"),
+
+    settings = require("../../settings");
 
 /**
  * @type {{type: string, date: Date, obj?: object, message?: string}[]}
@@ -111,57 +114,89 @@ class Log {
         if (Discord.isConnected()) {
 
             for (const log of queue) {
-                if (log.obj) {
-                    if (log.obj.message && log.obj.innerError && log.obj.innerError.message && log.obj.innerError.code === "ETIMEOUT") {
-                        log.obj = `${log.obj.message} - ${log.obj.innerError.message} - ETIMEOUT`;
-                    }
-
-                    if (log.obj.message && log.obj.originalError && log.obj.originalError.message && log.obj.originalError.code === "ETIMEOUT") {
-                        log.obj = `${log.obj.message} - ${log.obj.originalError.message} - ETIMEOUT`;
-                    }
-
-                    if (log.obj.message && log.obj.syscall && log.obj.code === "ETIMEDOUT") {
-                        log.obj = `${log.obj.message} - ${log.obj.syscall} - ETIMEDOUT`;
-                    }
-
-                    if (log.obj.name === "TimeoutError") {
-                        log.obj = `${log.obj.message} - TimeoutError`;
-                    }
-
-                    if (log.obj.error && log.obj.message && log.obj.error.syscall && log.obj.error.code === "ETIMEDOUT") {
-                        log.obj = `${log.obj.message} - ${log.obj.error.syscall} - ETIMEDOUT`;
-                    }
-
-                    if (log.obj.message && log.obj.message === "Unexpected server response: 502") {
-                        log.obj = `${log.obj.message}`;
-                    }
-
-                    let value = util.inspect(log.obj),
-                        continued = false;
-
-                    while (value.length > 0) {
-                        if (continued) {
-                            await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
-                        } else if (log.message) {
-                            const message = Discord.richEmbed({
-                                color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
-                                fields: [],
-                                timestamp: log.date
-                            });
-
-                            message.setDescription(log.message);
-
-                            message.fields.push({
-                                name: "Message",
-                                value: value.substring(0, 1024)
-                            });
-
-                            continued = true;
-
-                            await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
+                if (log.type === "exception") {
+                    if (log.obj) {
+                        if (log.obj.message && log.obj.innerError && log.obj.innerError.message && log.obj.innerError.code === "ETIMEOUT") {
+                            log.obj = `${log.obj.message} - ${log.obj.innerError.message} - ETIMEOUT`;
                         }
 
-                        value = value.substring(1024);
+                        if (log.obj.message && log.obj.originalError && log.obj.originalError.message && log.obj.originalError.code === "ETIMEOUT") {
+                            log.obj = `${log.obj.message} - ${log.obj.originalError.message} - ETIMEOUT`;
+                        }
+
+                        if (log.obj.message && log.obj.syscall && log.obj.code === "ETIMEDOUT") {
+                            log.obj = `${log.obj.message} - ${log.obj.syscall} - ETIMEDOUT`;
+                        }
+
+                        if (log.obj.name === "TimeoutError") {
+                            log.obj = `${log.obj.message} - TimeoutError`;
+                        }
+
+                        if (log.obj.error && log.obj.message && log.obj.error.syscall && log.obj.error.code === "ETIMEDOUT") {
+                            log.obj = `${log.obj.message} - ${log.obj.error.syscall} - ETIMEDOUT`;
+                        }
+
+                        if (log.obj.message && log.obj.message === "Unexpected server response: 502") {
+                            log.obj = `${log.obj.message}`;
+                        }
+
+                        await request.post({
+                            uri: "http://logger.roncli.com/api/add",
+                            body: {
+                                key: settings.logger.key,
+                                application: "otl.gg",
+                                category: "exception",
+                                message: `${log.message}\n${util.inspect(log.obj)}`,
+                                date: new Date().getTime()
+                            },
+                            json: true
+                        }).then(async (res) => {
+                            if (res.id) {
+                                await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                            } else {
+                                await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                            }
+                        }).catch(async () => {
+                            let value = util.inspect(log.obj),
+                                continued = false;
+
+                            while (value.length > 0) {
+                                if (continued) {
+                                    await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                                } else if (log.message) {
+                                    const message = Discord.richEmbed({
+                                        color: 0xFF0000,
+                                        fields: [],
+                                        timestamp: log.date
+                                    });
+
+                                    message.setDescription(log.message);
+
+                                    message.fields.push({
+                                        name: "Message",
+                                        value: value.substring(0, 1024)
+                                    });
+
+                                    continued = true;
+
+                                    await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                                }
+
+                                value = value.substring(1024);
+                            }
+                        });
+                    } else {
+                        const message = Discord.richEmbed({
+                            color: 0xFF0000,
+                            fields: [],
+                            timestamp: log.date
+                        });
+
+                        if (log.message) {
+                            message.setDescription(log.message);
+                        }
+
+                        await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
                     }
                 } else {
                     const message = Discord.richEmbed({
@@ -174,7 +209,7 @@ class Log {
                         message.setDescription(log.message);
                     }
 
-                    await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName(log.type === "exception" ? "otlbot-errors" : "otlbot-log"))); // eslint-disable-line no-extra-parens
+                    await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-log"))); // eslint-disable-line no-extra-parens
                 }
             }
 
