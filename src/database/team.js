@@ -206,7 +206,7 @@ class TeamDb {
         `, {teamId: {type: Db.INT, value: team.id}});
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[1][0].PlayerId}:updated`]);
         } else {
             await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"]);
         }
