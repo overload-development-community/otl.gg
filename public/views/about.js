@@ -55,6 +55,10 @@ class AboutView {
                     <div>Get a link to the website.</div>
                     <div class="example">!website</div>
 
+                    <div class="command">!maplist</div>
+                    <div>Get a link to the map list.</div>
+                    <div class="example">!maplist</div>
+
                     <div class="command">!timezone &lt;timezone></div>
                     <div>Changes your personal time zone.  See #timezone-faq on the Discord server for details.</div>
                     <div class="example">!timezone America/Los_Angeles<br />!timezone Europe/Berlin</div>
@@ -221,7 +225,7 @@ class AboutView {
                     <div>Founder or Captain only.  Confirms a neutral server suggestion from the other team.</div>
                     <div class="example">!confirmneutralserver</div>
 
-                    <div class="command">!suggestteamsize (2|3|4)</div>
+                    <div class="command">!suggestteamsize (2|3|4|5|6|7|8)</div>
                     <div>Founder or Captain only.  Suggests the team size for the match.</div>
                     <div class="example">!suggestteamsize 3</div>
 
