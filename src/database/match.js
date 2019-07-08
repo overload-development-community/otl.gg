@@ -259,7 +259,7 @@ class MatchDb {
     /**
      * Gets the pending matches.  Includes the number of completed matches for the season.
      * @param {number} [season] The season number, or void for the latest season.
-     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
+     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
         const key = `otl.gg:db:match:getPending:${season || "null"}`;
@@ -270,7 +270,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, Postseason: boolean, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -283,6 +283,14 @@ class MatchDb {
                 ORDER BY Season DESC
             END
 
+            DECLARE @currentSeason INT
+            SELECT TOP 1
+                @currentSeason = Season
+            FROM tblSeason
+            WHERE DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
             SELECT
                 c.ChallengeId,
                 c.Title,
@@ -290,6 +298,7 @@ class MatchDb {
                 c.ChallengedTeamId,
                 c.MatchTime,
                 c.Map,
+                c.Postseason,
                 p.TwitchName
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
@@ -312,11 +321,31 @@ class MatchDb {
                     t.Disbanded,
                     t.Locked,
                     tr.Rating,
-                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
-                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
-                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
                 FROM tblTeam t
-                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @currentSeason
+            ) a
+
+            SELECT
+                TeamId, Name, Tag, Disbanded, Locked,
+                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Wins, Losses, Ties
+            FROM
+            (
+                SELECT
+                    t.TeamId,
+                    t.Name,
+                    t.Tag,
+                    t.Disbanded,
+                    t.Locked,
+                    tr.Rating,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                    (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @currentSeason - 1 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties
+                FROM tblTeam t
+                LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @currentSeason - 1
             ) a
 
             SELECT COUNT(ChallengeId) Completed
@@ -335,6 +364,7 @@ class MatchDb {
                 challengedTeamId: row.ChallengedTeamId,
                 matchTime: row.MatchTime,
                 map: row.Map,
+                postseason: row.Postseason,
                 twitchName: row.TwitchName
             })),
             standings: data.recordsets[1].map((row) => ({
@@ -348,7 +378,18 @@ class MatchDb {
                 losses: row.Losses,
                 ties: row.Ties
             })),
-            completed: data.recordsets[2] && data.recordsets[2][0] && data.recordsets[2][0].Completed || 0
+            previousStandings: data.recordsets[2].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                disbanded: row.Disbanded,
+                locked: row.Locked,
+                rating: row.Rating,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            })),
+            completed: data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].Completed || 0
         } || {matches: [], standings: [], completed: 0};
 
         Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);

@@ -166,9 +166,9 @@ class Match {
      * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getUpcomingAndCompletedCount(season) {
-        let matches, standings, completed;
+        let matches, standings, previousStandings, completed;
         try {
-            ({matches, standings, completed} = await Db.getPending(isNaN(season) ? void 0 : season));
+            ({matches, standings, previousStandings, completed} = await Db.getPending(isNaN(season) ? void 0 : season));
         } catch (err) {
             throw new Exception("There was a database error retrieving pending matches.", err);
         }
@@ -179,6 +179,8 @@ class Match {
             matches: matches.map((match) => {
                 const challengingTeamStandings = standings.find((standing) => standing.teamId === match.challengingTeamId),
                     challengedTeamStandings = standings.find((standing) => standing.teamId === match.challengedTeamId),
+                    challengingTeamPreviousStandings = previousStandings.find((standing) => standing.teamId === match.challengingTeamId),
+                    challengedTeamPreviousStandings = previousStandings.find((standing) => standing.teamId === match.challengedTeamId),
                     challengingTeam = teams.getTeam(match.challengingTeamId, challengingTeamStandings.name, challengingTeamStandings.tag, challengingTeamStandings.disbanded, challengingTeamStandings.locked),
                     challengedTeam = teams.getTeam(match.challengedTeamId, challengedTeamStandings.name, challengedTeamStandings.tag, challengedTeamStandings.disbanded, challengedTeamStandings.locked);
 
@@ -192,10 +194,10 @@ class Match {
                         color: challengingTeam.role ? challengingTeam.role.hexColor : void 0,
                         disbanded: challengingTeamStandings.disbanded,
                         locked: challengingTeamStandings.locked,
-                        rating: challengingTeamStandings.rating,
-                        wins: challengingTeamStandings.wins,
-                        losses: challengingTeamStandings.losses,
-                        ties: challengingTeamStandings.ties
+                        rating: match.postseason ? challengingTeamPreviousStandings.rating : challengingTeamStandings.rating,
+                        wins: match.postseason ? challengingTeamPreviousStandings.wins : challengingTeamStandings.wins,
+                        losses: match.postseason ? challengingTeamPreviousStandings.losses : challengingTeamStandings.losses,
+                        ties: match.postseason ? challengingTeamPreviousStandings.ties : challengingTeamStandings.ties
                     },
                     challengedTeam: {
                         teamId: challengedTeamStandings.teamId,
@@ -204,10 +206,10 @@ class Match {
                         color: challengedTeam.role ? challengedTeam.role.hexColor : void 0,
                         disbanded: challengedTeamStandings.disbanded,
                         locked: challengedTeamStandings.locked,
-                        rating: challengedTeamStandings.rating,
-                        wins: challengedTeamStandings.wins,
-                        losses: challengedTeamStandings.losses,
-                        ties: challengedTeamStandings.ties
+                        rating: match.postseason ? challengedTeamPreviousStandings.rating : challengedTeamStandings.rating,
+                        wins: match.postseason ? challengedTeamPreviousStandings.wins : challengedTeamStandings.wins,
+                        losses: match.postseason ? challengedTeamPreviousStandings.losses : challengedTeamStandings.losses,
+                        ties: match.postseason ? challengedTeamPreviousStandings.ties : challengedTeamStandings.ties
                     },
                     matchTime: match.matchTime,
                     map: match.map,
