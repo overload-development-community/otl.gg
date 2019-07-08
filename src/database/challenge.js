@@ -957,7 +957,7 @@ class ChallengeDb {
                 FROM tblChallenge
                 WHERE ChallengeId = @challengeId
 
-                SELECT @season = MAX(Season)
+                SELECT @season = MAX(Season) - CAST(@postseason AS INT)
                 FROM tblSeason
                 WHERE @matchTime IS NULL OR (@matchTime >= DateStart AND @matchTime < DateEnd)
             END
