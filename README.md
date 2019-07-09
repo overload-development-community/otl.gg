@@ -4,6 +4,18 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.0.2 - 7/8/2019
+
+### Bot:
+
+* Switched logging from Discord to a website.
+* Better cache invalidation when players join, leave, create, disband, or reinstate teams.
+
+### Website:
+
+* Records for matches now show the record for the season the match was/will be played in.
+* Fix stats on team page showing all time stats regardless of the season selected.
+
 ## v2.0.1 - 7/4/2019
 
 ### Bot:
