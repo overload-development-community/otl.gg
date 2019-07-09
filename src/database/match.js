@@ -188,6 +188,14 @@ class MatchDb {
          * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Postseason: boolean, Map: string, DateClosed: Date, OvertimePeriods: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
          */
         const data = await db.query(/* sql */`
+            DECLARE @currentSeason INT
+            SELECT TOP 1
+                @currentSeason = Season
+            FROM tblSeason
+            WHERE DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
             SELECT
                 ChallengeId,
                 ChallengingTeamId,
