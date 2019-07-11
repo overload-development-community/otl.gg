@@ -132,6 +132,10 @@ class Log {
                             log.obj = `${log.obj.message} - TimeoutError`;
                         }
 
+                        if (log.obj.innerError && log.obj.message && log.obj.innerError.name === "TimeoutError") {
+                            log.obj = `${log.obj.message} - TimeoutError`;
+                        }
+
                         if (log.obj.error && log.obj.message && log.obj.error.syscall && log.obj.error.code === "ETIMEDOUT") {
                             log.obj = `${log.obj.message} - ${log.obj.error.syscall} - ETIMEDOUT`;
                         }
