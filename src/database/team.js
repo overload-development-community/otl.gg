@@ -191,6 +191,8 @@ class TeamDb {
             WHERE TeamId = @teamId
                 AND Founder = 1
 
+            SELECT PlayerId FROM tblRoster WHERE TeamId = @teamId
+
             DELETE FROM tblRoster WHERE TeamId = @teamId
             DELETE FROM tblRequest WHERE TeamId = @teamId
             DELETE FROM tblInvite WHERE TeamId = @teamId
@@ -201,12 +203,10 @@ class TeamDb {
                 AND DateConfirmed IS NULL
                 AND DateClosed IS NULL
                 AND DateVoided IS NULL
-
-            SELECT @playerId PlayerId
         `, {teamId: {type: Db.INT, value: team.id}});
 
-        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[1][0].PlayerId}:updated`]);
+        if (data && data.recordsets && data.recordsets[1]) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"].concat(data.recordsets[1].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`)));
         } else {
             await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"]);
         }
