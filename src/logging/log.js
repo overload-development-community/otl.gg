@@ -1,5 +1,6 @@
 /**
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ * @typedef {{type: string, date: Date, obj?: object, message?: string}} LogEntry
  */
 
 const request = require("request-promise-native"),
@@ -8,7 +9,7 @@ const request = require("request-promise-native"),
     settings = require("../../settings");
 
 /**
- * @type {{type: string, date: Date, obj?: object, message?: string}[]}
+ * @type {LogEntry[]}
  */
 const queue = [];
 
@@ -144,51 +145,29 @@ class Log {
                             log.obj = `${log.obj.message}`;
                         }
 
-                        await request.post({
-                            uri: "http://logger.roncli.com/api/add",
-                            body: {
-                                key: settings.logger.key,
-                                application: "otl.gg",
-                                category: "exception",
-                                message: `${log.message}\n${util.inspect(log.obj)}`,
-                                date: new Date().getTime()
-                            },
-                            json: true
-                        }).then(async (res) => {
-                            if (res.id) {
-                                await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
-                            } else {
-                                await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
-                            }
-                        }).catch(async () => {
-                            let value = util.inspect(log.obj),
-                                continued = false;
-
-                            while (value.length > 0) {
-                                if (continued) {
-                                    await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
-                                } else if (log.message) {
-                                    const message = Discord.richEmbed({
-                                        color: 0xFF0000,
-                                        fields: [],
-                                        timestamp: log.date
-                                    });
-
-                                    message.setDescription(log.message);
-
-                                    message.fields.push({
-                                        name: "Message",
-                                        value: value.substring(0, 1024)
-                                    });
-
-                                    continued = true;
-
-                                    await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                        try {
+                            await request.post({
+                                uri: settings.logger.url,
+                                body: {
+                                    key: settings.logger.key,
+                                    application: "otl.gg",
+                                    category: "exception",
+                                    message: `${log.message}\n${util.inspect(log.obj)}`,
+                                    date: new Date().getTime()
+                                },
+                                json: true
+                            }).then(async (res) => {
+                                if (res.id) {
+                                    await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                                } else {
+                                    await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
                                 }
-
-                                value = value.substring(1024);
-                            }
-                        });
+                            }).catch(async (err) => {
+                                await Log.outputToDiscord(log, err);
+                            });
+                        } catch (err) {
+                            await Log.outputToDiscord(log, err);
+                        }
                     } else {
                         const message = Discord.richEmbed({
                             color: 0xFF0000,
@@ -220,6 +199,77 @@ class Log {
             queue.splice(0, queue.length);
         } else {
             console.log(queue[queue.length - 1]);
+        }
+    }
+
+    //              #                 #    ###         ###    #                                #
+    //              #                 #     #          #  #                                    #
+    //  ##   #  #  ###   ###   #  #  ###    #     ##   #  #  ##     ###    ##    ##   ###    ###
+    // #  #  #  #   #    #  #  #  #   #     #    #  #  #  #   #    ##     #     #  #  #  #  #  #
+    // #  #  #  #   #    #  #  #  #   #     #    #  #  #  #   #      ##   #     #  #  #     #  #
+    //  ##    ###    ##  ###    ###    ##   #     ##   ###   ###   ###     ##    ##   #      ###
+    //                   #
+    /**
+     * Outputs a log to Discord.
+     * @param {LogEntry} log The log to write.
+     * @param {Error} err The error that caused the initial failure.
+     * @returns {Promise} A promise that resolves when the output has been completed.
+     */
+    static async outputToDiscord(log, err) {
+        let value = util.inspect(log.obj),
+            continued = false;
+
+        while (value.length > 0) {
+            if (continued) {
+                await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+            } else if (log.message) {
+                const message = Discord.richEmbed({
+                    color: 0xFF0000,
+                    fields: [],
+                    timestamp: log.date
+                });
+
+                message.setDescription(log.message);
+
+                message.fields.push({
+                    name: "Message",
+                    value: value.substring(0, 1024)
+                });
+
+                continued = true;
+
+                await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+            }
+
+            value = value.substring(1024);
+        }
+
+        value = `Error while writing to logging database: ${util.inspect(err)}`;
+        continued = false;
+
+        while (value.length > 0) {
+            if (continued) {
+                await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+            } else if (log.message) {
+                const message = Discord.richEmbed({
+                    color: 0xFF0000,
+                    fields: [],
+                    timestamp: log.date
+                });
+
+                message.setDescription(log.message);
+
+                message.fields.push({
+                    name: "Message",
+                    value: value.substring(0, 1024)
+                });
+
+                continued = true;
+
+                await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+            }
+
+            value = value.substring(1024);
         }
     }
 }
