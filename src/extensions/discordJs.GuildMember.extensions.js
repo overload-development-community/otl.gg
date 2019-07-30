@@ -93,6 +93,24 @@ DiscordJs.GuildMember.prototype.canRemovePilot = async function(pilot) {
     }
 };
 
+//       ##                      ###    #
+//        #                       #
+//  ##    #     ##    ###  ###    #    ##    # #    ##   ####   ##   ###    ##
+// #      #    # ##  #  #  #  #   #     #    ####  # ##    #   #  #  #  #  # ##
+// #      #    ##    # ##  #      #     #    #  #  ##     #    #  #  #  #  ##
+//  ##   ###    ##    # #  #      #    ###   #  #   ##   ####   ##   #  #   ##
+/**
+ * Clears a pilot's timezone.
+ * @returns {Promise<void>} A promise that resolves when the timezone is clear.
+ */
+DiscordJs.GuildMember.prototype.clearTimezone = async function() {
+    try {
+        return await Db.clearTimezone(this);
+    } catch (err) {
+        throw new Exception("There was a database error clearing a pilot's timezone.", err);
+    }
+};
+
 //                          #          #  #              ###
 //                          #          ## #               #
 //  ##   ###    ##    ###  ###    ##   ## #   ##   #  #   #     ##    ###  # #

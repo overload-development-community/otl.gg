@@ -115,6 +115,49 @@ class PlayerDb {
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
 
+    //       ##                      ###    #
+    //        #                       #
+    //  ##    #     ##    ###  ###    #    ##    # #    ##   ####   ##   ###    ##
+    // #      #    # ##  #  #  #  #   #     #    ####  # ##    #   #  #  #  #  # ##
+    // #      #    ##    # ##  #      #     #    #  #  ##     #    #  #  #  #  ##
+    //  ##   ###    ##    # #  #      #    ###   #  #   ##   ####   ##   #  #   ##
+    /**
+     * Clears a pilot's timezone.
+     * @param {DiscordJs.GuildMember} member The pilot to clear the timezone for.
+     * @returns {Promise<void>} A promise that resolves when the timezone is clear.
+     */
+    static async clearTimezone(member) {
+        /**
+         * @type {{recordsets: [{PlayerId: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
+            UPDATE tblPlayer SET Timezone = null WHERE PlayerId = @playerId
+
+            SELECT @playerId PlayerId
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(24), value: member.displayName}
+        });
+
+        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+        } else {
+            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+        }
+    }
+
     //              #     ##
     //              #    #  #
     //  ###   ##   ###   #      ###  ###    ##    ##   ###

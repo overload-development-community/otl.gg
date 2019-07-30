@@ -2254,21 +2254,26 @@ class Commands {
             return false;
         }
 
-        if (!await Commands.checkHasParameters(message, member, "You must specify a time zone with this command.", channel)) {
-            return false;
+        if (message) {
+            const time = await Commands.checkTimezoneIsValid(message, member, channel);
+
+            try {
+                await member.setTimezone(message);
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw err;
+            }
+
+            await Discord.queue(`${member}, your time zone has been set to ${message}, where the current local time is ${time}.`, channel);
+            return true;
+        } else {
+            try {
+                await member.clearTimezone();
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                throw err;
+            }
         }
-
-        const time = await Commands.checkTimezoneIsValid(message, member, channel);
-
-        try {
-            await member.setTimezone(message);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        await Discord.queue(`${member}, your time zone has been set to ${message}, where the current local time is ${time}.`, channel);
-        return true;
     }
 
     //       #           ##    ##

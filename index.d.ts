@@ -10,6 +10,7 @@ declare module "discord.js" {
         bannedFromTeamUntil(team: Team): Promise<Date>;
         canBeCaptain(): Promise<boolean>;
         canRemovePilot(pilot: GuildMember): Promise<boolean>;
+        clearTimezone(): Promise<void>;
         createNewTeam(): Promise<NewTeam>;
         getNewTeam(): Promise<NewTeam>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;

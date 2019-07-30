@@ -59,9 +59,9 @@ class AboutView {
                     <div>Get a link to the map list.</div>
                     <div class="example">!maplist</div>
 
-                    <div class="command">!timezone &lt;timezone></div>
-                    <div>Changes your personal time zone.  See #timezone-faq on the Discord server for details.</div>
-                    <div class="example">!timezone America/Los_Angeles<br />!timezone Europe/Berlin</div>
+                    <div class="command">!timezone [&lt;timezone>]</div>
+                    <div>Changes your personal time zone.  See #timezone-faq on the Discord server for details.  Pass no parameters to clear your timezone.</div>
+                    <div class="example">!timezone America/Los_Angeles<br />!timezone Europe/Berlin<br />!timezone</div>
 
                     <div class="command">!twitch &lt;channel></div>
                     <div>Sets your Twitch channel.  Useful if you will be streaming your team's matches, or if you will be casting matches.</div>
