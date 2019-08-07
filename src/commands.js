@@ -23,7 +23,7 @@ const tz = require("timezone-js"),
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
-    mapParse = /^(?<number>[123]) (?<mapToCheck>.+)$/,
+    mapParse = /^(?<number>[1-5]) (?<mapToCheck>.+)$/,
     nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
     numberParse = /^(?:[1-9][0-9]*)$/,
     numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
@@ -2327,9 +2327,9 @@ class Commands {
             throw err;
         }
 
-        if (homeMaps.length !== 3) {
-            await Discord.queue(`Sorry, ${member}, but your team must have 3 home maps set before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
-            throw new Warning("Team does not have 3 home maps set.");
+        if (homeMaps.length !== 5) {
+            await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
+            throw new Warning("Team does not have 5 home maps set.");
         }
 
         const opponent = await Commands.checkTeamExists(message, member, channel);
@@ -2360,9 +2360,9 @@ class Commands {
             throw err;
         }
 
-        if (opponentHomeMaps.length !== 3) {
-            await Discord.queue(`Sorry, ${member}, but your opponents must have 3 home maps set before you can challenge them.`, channel);
-            throw new Warning("Opponent does not have 3 home maps set.");
+        if (opponentHomeMaps.length !== 5) {
+            await Discord.queue(`Sorry, ${member}, but your opponents must have 5 home maps set before you can challenge them.`, channel);
+            throw new Warning("Opponent does not have 5 home maps set.");
         }
 
         let existingChallenge;
@@ -2428,7 +2428,7 @@ class Commands {
             throw new Warning("Wrong team.");
         }
 
-        if (!message || ["a", "b", "c"].indexOf(message.toLowerCase()) === -1) {
+        if (!message || ["a", "b", "c", "d", "e"].indexOf(message.toLowerCase()) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`!pickmap a\`, \`!pickmap b\`, or \`!pickmap c\`.`, channel);
             throw new Warning("Missing map selection.");
         }
@@ -4264,9 +4264,9 @@ class Commands {
             throw err;
         }
 
-        if (team1HomeMaps.length !== 3) {
-            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 3 home maps set to be in a match.`, channel);
-            throw new Warning("Team does not have 3 home maps set.");
+        if (team1HomeMaps.length !== 5) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set to be in a match.`, channel);
+            throw new Warning("Team does not have 5 home maps set.");
         }
 
         const team2 = await Commands.checkTeamExists(teamTag2, member, channel);
@@ -4297,9 +4297,9 @@ class Commands {
             throw err;
         }
 
-        if (team2HomeMaps.length !== 3) {
-            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 3 home maps set to be in a match.`, channel);
-            throw new Warning("Team does not have 3 home maps set.");
+        if (team2HomeMaps.length !== 5) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set to be in a match.`, channel);
+            throw new Warning("Team does not have 5 home maps set.");
         }
 
         try {
@@ -4480,7 +4480,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
-        if (["a", "b", "c"].indexOf(message) !== -1) {
+        if (["a", "b", "c", "d", "e"].indexOf(message) !== -1) {
             try {
                 await challenge.pickMap(message.charCodeAt(0) - 96);
             } catch (err) {

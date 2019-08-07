@@ -143,9 +143,9 @@ class AboutView {
                     <div>Changes your team's time zone.  See #timezone-faq on the Discord server for details.</div>
                     <div class="example">!teamtimezone America/Los_Angeles<br />!teamtimezone Europe/Berlin</div>
 
-                    <div class="command">!home (1|2|3) &lt;map></div>
-                    <div>Founder only.  Sets a map for your team.  You must have 3 maps set before you can issue a challenge.</div>
-                    <div class="example">!home 1 Vault<br />!home 2 Wraith<br />!home 3 Terminal</div>
+                    <div class="command">!home (1|2|3|4|5) &lt;map></div>
+                    <div>Founder only.  Sets a map for your team.  You must have 5 maps set before you can issue a challenge.</div>
+                    <div class="example">!home 1 Vault<br />!home 3 Wraith<br />!home 5 Terminal</div>
 
                     <div class="command">!invite &lt;pilot></div>
                     <div>Founder or Captain only.  Invites a pilot to your team.  You must have 2 pilots on your team before you can issue a challenge.</div>
@@ -205,7 +205,7 @@ class AboutView {
                     <div>Indicates that you will not be streaming this match as you play it.  This is the default, you only need to issue this command if you previously used the !streaming command but no longer will be streaming the match as you play.</div>
                     <div class="example">!notstreaming</div>
 
-                    <div class="command">!pickmap (a|b|c)</div>
+                    <div class="command">!pickmap (a|b|c|d|e)</div>
                     <div>Founder or Captain only.  Picks a map from the home map team's home maps and locks in that map for the match.  Cannot be used once the map is locked in.</div>
                     <div class="example">!pickmap b</div>
 

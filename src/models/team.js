@@ -1734,8 +1734,8 @@ class Team {
             title: "Captain commands",
             fields: [
                 {
-                    name: "!home [1|2|3] <map>",
-                    value: "Set a home map.  You must set all 3 home maps before you can send or receive challenges."
+                    name: "!home [1|2|3|4|5] <map>",
+                    value: "Set a home map.  You must set all 5 home maps before you can send or receive challenges."
                 },
                 {
                     name: "!invite <pilot>",

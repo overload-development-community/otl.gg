@@ -121,7 +121,7 @@ class Challenge {
                 color: data.homeMapTeam.role.color,
                 fields: [
                     {
-                        name: "!pickmap <a|b|c>",
+                        name: "!pickmap <a|b|c|d|e>",
                         value: "Pick the map to play.  Locks the map for the match."
                     }
                 ]
@@ -180,7 +180,7 @@ class Challenge {
                 optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
             }
 
-            optionsEmbed.addField("!suggestteamsize <2|3|4>", "Suggests a team size for the match.");
+            optionsEmbed.addField("!suggestteamsize <2|3|4|5|6|7|8>", "Suggests a team size for the match.");
             optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
 
             if (!adminCreated) {
@@ -1364,7 +1364,7 @@ class Challenge {
             }
 
             if (!challenge.details.teamSize) {
-                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
             }
 
             msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");

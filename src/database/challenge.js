@@ -1022,7 +1022,7 @@ class ChallengeDb {
     /**
      * Picks the map for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @param {number} number The number of the map, 1, 2, or 3.
+     * @param {number} number The number of the map, 1 through 5.
      * @returns {Promise<string>} A promise that resolves with the name of the map that was picked.
      */
     static async pickMap(challenge, number) {
