@@ -3598,7 +3598,11 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are now scheduled to cast the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use https://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
+        if (challenge.channel) {
+            await Discord.queue(`${member}, you are now scheduled to cast the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**!  Use ${challenge.channel} to coordinate with the pilots who will be streaming the match.  Be sure to use https://otl.gg/cast/${challenge.id} to help you cast this match.  If you no longer wish to cast this match, use the \`!uncast\` command in ${challenge.channel}.`, member);
+        } else {
+            await Discord.queue(`${member}, you have been recorded as casting the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}**.`, member);
+        }
 
         return true;
     }
@@ -3651,7 +3655,11 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, you are no longer scheduled to cast the match, and have been removed from ${challenge.channel}.`, member);
+        if (challenge.channel) {
+            await Discord.queue(`${member}, you are no longer scheduled to cast the match, and have been removed from ${challenge.channel}.`, member);
+        } else {
+            await Discord.queue(`${member}, you are no longer scheduled to cast the match.`, member);
+        }
 
         return true;
     }

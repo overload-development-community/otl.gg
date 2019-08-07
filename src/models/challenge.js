@@ -1551,18 +1551,20 @@ class Challenge {
 
         this.details.caster = member;
 
-        try {
-            await this.channel.overwritePermissions(
-                member,
-                {"VIEW_CHANNEL": true},
-                `${member} is scheduled to cast this match.`
-            );
+        if (this.channel) {
+            try {
+                await this.channel.overwritePermissions(
+                    member,
+                    {"VIEW_CHANNEL": true},
+                    `${member} is scheduled to cast this match.`
+                );
 
-            await this.updateTopic();
+                await this.updateTopic();
 
-            await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
+                await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
+            } catch (err) {
+                throw new Exception("There was a critical Discord error adding a pilot as a caster to a challenge.  Please resolve this manually as soon as possible.", err);
+            }
         }
     }
 
@@ -2347,20 +2349,22 @@ class Challenge {
 
         this.details.caster = void 0;
 
-        try {
-            if (Discord.findGuildMemberById(member.id)) {
-                await this.channel.overwritePermissions(
-                    member,
-                    {"VIEW_CHANNEL": null},
-                    `${member} is no longer scheduled to cast this match.`
-                );
+        if (this.channel) {
+            try {
+                if (Discord.findGuildMemberById(member.id)) {
+                    await this.channel.overwritePermissions(
+                        member,
+                        {"VIEW_CHANNEL": null},
+                        `${member} is no longer scheduled to cast this match.`
+                    );
+                }
+
+                await this.updateTopic();
+
+                await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
+            } catch (err) {
+                throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
             }
-
-            await this.updateTopic();
-
-            await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error removing a pilot as a caster from a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
