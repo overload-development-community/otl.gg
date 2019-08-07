@@ -42,12 +42,20 @@ class Home {
         const standings = await Team.getSeasonStandings(),
             stats = await Player.getTopKda(),
             matches = await Match.getCurrent(),
-            news = (await Discord.announcementsChannel.fetchMessages({limit: 5})).map((m) => {
+            teams = new Teams();
+
+        let news;
+        try {
+            const discordNews = await Discord.announcementsChannel.fetchMessages({limit: 5});
+
+            news = discordNews.map((m) => {
                 m.content = DiscordMarkdown.toHTML(m.content, {discordCallback: {user: (user) => `@${Discord.findGuildMemberById(user.id).displayName}`, channel: (channel) => `#${Discord.findChannelById(channel.id).name}`, role: (role) => `@${Discord.findRoleById(role.id).name}`, emoji: () => ""}});
 
                 return m;
-            }),
-            teams = new Teams();
+            });
+        } catch (err) {
+            news = [];
+        }
 
         standings.forEach((standing) => {
             teams.getTeam(standing.teamId, standing.name, standing.tag, standing.disbanded, standing.locked);
