@@ -718,7 +718,7 @@ class Challenge {
                     title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? `${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
                     description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
-                    fields: [
+                    fields: stats.challengingTeamStats.length > 0 && stats.challengedTeamStats.length > 0 ? [
                         {
                             name: `${this.challengingTeam.name} Stats`,
                             value: `${stats.challengingTeamStats.sort((a, b) => {
@@ -751,7 +751,7 @@ class Challenge {
                                 return a.pilot.displayName.localeCompare(b.pilot.displayName);
                             }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }
-                    ]
+                    ] : []
                 }), Discord.matchResultsChannel);
 
                 if (this.details.caster) {

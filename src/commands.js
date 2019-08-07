@@ -280,7 +280,7 @@ class Commands {
             throw err;
         }
 
-        if (stats.challengingTeamStats.length !== challenge.details.teamSize) {
+        if (stats.challengingTeamStats.length > 0 && stats.challengingTeamStats.length !== challenge.details.teamSize) {
             await Discord.queue(`Sorry, ${member}, but **${challenge.challengingTeam.tag}** has **${stats.challengingTeamStats.length}** player stats and this match requires **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
         }
@@ -292,9 +292,14 @@ class Commands {
             throw err;
         }
 
-        if (stats.challengedTeamStats.length !== challenge.details.teamSize) {
+        if (stats.challengedTeamStats.length > 0 && stats.challengedTeamStats.length !== challenge.details.teamSize) {
             await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.tag}** has **${stats.challengedTeamStats.length}** player stats and this match requires **${challenge.details.teamSize}**.`, channel);
             throw new Warning("Insufficient number of stats.");
+        }
+
+        if (stats.challengingTeamStats.length !== stats.challengedTeamStats.length) {
+            await Discord.queue(`Sorry, ${member}, but you must enter stats for either both teams or neither team.`, channel);
+            throw new Warning("Mismatched number of stats.");
         }
 
         return stats;
@@ -2266,14 +2271,17 @@ class Commands {
 
             await Discord.queue(`${member}, your time zone has been set to ${message}, where the current local time is ${time}.`, channel);
             return true;
-        } else {
-            try {
-                await member.clearTimezone();
-            } catch (err) {
-                await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-                throw err;
-            }
         }
+
+        try {
+            await member.clearTimezone();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your time zone has been cleared.`, channel);
+        return true;
     }
 
     //       #           ##    ##
