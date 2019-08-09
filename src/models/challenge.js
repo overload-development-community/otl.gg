@@ -636,6 +636,8 @@ class Challenge {
         }
 
         this.details.matchTime = void 0;
+        this.details.suggestedTime = void 0;
+        this.details.suggestedTimeTeam = void 0;
 
         this.setNotifyMatchMissed();
         this.setNotifyMatchStarting();
