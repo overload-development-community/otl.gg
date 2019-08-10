@@ -73,22 +73,24 @@ class MatchView {
                     ` : ""}
                 </div>
                 <div class="stats">
-                    <div class="header">Team</div>
-                    <div class="header">Name</div>
-                    <div class="header">KDA</div>
-                    <div class="header">Kills</div>
-                    <div class="header">Assists</div>
-                    <div class="header">Deaths</div>
-                    ${stats.sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
-                        <div class="tag">${(team = match.challengingTeam.teamId === s.teamId ? match.challengingTeam : match.challengedTeam) === null ? "" : /* html */`
-                            <div class="diamond${team.color ? "" : "-empty"}" ${team.color ? `style="background-color: ${team.color};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                        `}</div>
-                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
-                        <div class="numeric kda">${s.kda.toFixed(3)}</div>
-                        <div class="numeric kills">${s.kills}</div>
-                        <div class="numeric assists">${s.assists}</div>
-                        <div class="numeric deaths">${s.deaths}</div>
-                    `).join("")}
+                    ${stats.length === 0 ? "" : /* html */`
+                        <div class="header">Team</div>
+                        <div class="header">Name</div>
+                        <div class="header">KDA</div>
+                        <div class="header">Kills</div>
+                        <div class="header">Assists</div>
+                        <div class="header">Deaths</div>
+                        ${stats.sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
+                            <div class="tag">${(team = match.challengingTeam.teamId === s.teamId ? match.challengingTeam : match.challengedTeam) === null ? "" : /* html */`
+                                <div class="diamond${team.color ? "" : "-empty"}" ${team.color ? `style="background-color: ${team.color};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}</div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
+                            <div class="numeric kda">${s.kda.toFixed(3)}</div>
+                            <div class="numeric kills">${s.kills}</div>
+                            <div class="numeric assists">${s.assists}</div>
+                            <div class="numeric deaths">${s.deaths}</div>
+                        `).join("")}
+                    `}
                 </div>
             </div>
         `;
