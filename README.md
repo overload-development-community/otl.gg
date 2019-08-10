@@ -4,6 +4,24 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.0.3 - 8/10/2019
+
+### Bot:
+
+* 5 home maps are now required for challenges.
+* Games with no stats are allowed to be closed.
+* `!timezone` by itself will clear your timezone.  If you are on a team, your timezone will default to the team's timezone, otherwise it will default to America/Los_Angeles.  This also has the side effect of removing you from the listing of free agents.
+* `!disband` no longer causes errors.
+* You can now `!cast` an old match.  Use this for adding VODs to old matches.
+* `!cleartime` now behaves as expected.
+* Improved error handling.
+* Many minor performance updates.
+
+### Website:
+
+* Rating no longer shown on postseason page, since ratings don't apply to postseason.
+* Games with no stats will no longer awkwardly show the header for stats.
+
 ## v2.0.2 - 7/8/2019
 
 ### Bot:
