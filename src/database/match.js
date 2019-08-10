@@ -2,9 +2,11 @@
  * @typedef {import("../models/challenge")} Challenge
  */
 
-const Cache = require("../cache"),
-    Db = require("node-database"),
-    db = require("./index");
+const Db = require("node-database"),
+
+    Cache = require("../cache"),
+    db = require("./index"),
+    settings = require("../../settings");
 
 //  #   #          #            #      ####   #
 //  #   #          #            #       #  #  #
@@ -32,7 +34,7 @@ class MatchDb {
      * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
-        const key = `otl.gg:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
+        const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -160,7 +162,7 @@ class MatchDb {
             }))
         } || {completed: [], stats: [], standings: []};
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return cache;
     }
@@ -177,7 +179,7 @@ class MatchDb {
      * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
-        const key = "otl.gg:db:match:getCurrent";
+        const key = `${settings.redisPrefix}:db:match:getCurrent`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -320,7 +322,7 @@ class MatchDb {
             }))
         } || {matches: void 0, standings: void 0, previousStandings: void 0};
 
-        Cache.add(key, cache, void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
+        Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return cache;
     }
@@ -338,7 +340,7 @@ class MatchDb {
      * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
-        const key = `otl.gg:db:match:getPending:${season || "null"}`;
+        const key = `${settings.redisPrefix}:db:match:getPending:${season || "null"}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -468,7 +470,7 @@ class MatchDb {
             completed: data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].Completed || 0
         } || {matches: [], standings: [], completed: 0};
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:challenge:updated"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return cache;
     }
@@ -533,7 +535,7 @@ class MatchDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].SeasonAdded) {
-            await Cache.invalidate(["otl.gg:invalidate:season:added"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:season:added`]);
         }
 
         return data && data.recordsets && data.recordsets.length === 2 && {

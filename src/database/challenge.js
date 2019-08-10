@@ -5,9 +5,11 @@
  * @typedef {import("../models/team")} Team
  */
 
-const Cache = require("../cache"),
-    Db = require("node-database"),
-    db = require("./index");
+const Db = require("node-database"),
+
+    Cache = require("../cache"),
+    db = require("./index"),
+    settings = require("../../settings");
 
 //   ###   #              ##     ##                                ####   #
 //  #   #  #               #      #                                 #  #  #
@@ -185,7 +187,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
         }
     }
 
@@ -206,7 +208,7 @@ class ChallengeDb {
             UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //                     #    #                ###                      ##    #
@@ -242,7 +244,7 @@ class ChallengeDb {
             UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //                          #
@@ -373,7 +375,7 @@ class ChallengeDb {
             matchTime: {type: Db.DATETIME, value: startNow ? new Date((date = new Date()).getTime() + 300000 - date.getTime() % 300000) : void 0}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             id: data.recordsets[0][0].ChallengeId,
@@ -415,7 +417,7 @@ class ChallengeDb {
             SELECT DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateClockDeadline || void 0;
     }
@@ -1044,7 +1046,7 @@ class ChallengeDb {
             number: {type: Db.INT, value: number}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
@@ -1242,7 +1244,7 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -1310,7 +1312,7 @@ class ChallengeDb {
             map: {type: Db.VARCHAR(100), value: map}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //               #    #  #               #                ##     ##
@@ -1526,7 +1528,7 @@ class ChallengeDb {
             date: {type: Db.DATETIME, value: date}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //               #    ###    #     #    ##
@@ -1549,7 +1551,7 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //               #    #  #        ###
@@ -1572,7 +1574,7 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate(["otl.gg:invalidate:challenge:updated"]);
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
     }
 
     //                                        #    #  #
@@ -1691,7 +1693,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
         }
     }
 
@@ -1729,7 +1731,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
         }
     }
 
@@ -1804,7 +1806,7 @@ class ChallengeDb {
         const data = await db.query(sql, params);
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {
-            await Cache.invalidate(data.recordsets[1].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`).concat("otl.gg:invalidate:challenge:closed"));
+            await Cache.invalidate(data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, first: row.First})) || [];

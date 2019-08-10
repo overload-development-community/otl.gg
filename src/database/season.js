@@ -1,5 +1,6 @@
 const Cache = require("../cache"),
-    db = require("./index");
+    db = require("./index"),
+    settings = require("../../settings");
 
 //   ###                                      ####   #
 //  #   #                                      #  #  #
@@ -24,7 +25,7 @@ class SeasonDb {
      * @returns {Promise<number[]>} A promise that resolves with the list of available seasons.
      */
     static async getSeasonNumbers() {
-        const key = "otl.gg:db:season:getSeasonNumbers";
+        const key = `${settings.redisPrefix}:db:season:getSeasonNumbers`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -44,7 +45,7 @@ class SeasonDb {
         `);
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Season) || [];
 
-        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:season:added"]);
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:season:added`]);
 
         return cache;
     }

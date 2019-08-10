@@ -7,9 +7,11 @@
  * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
-const Cache = require("../cache"),
-    Db = require("node-database"),
-    db = require("./index");
+const Db = require("node-database"),
+
+    Cache = require("../cache"),
+    db = require("./index"),
+    settings = require("../../settings");
 
 //  #####                       ####   #
 //    #                          #  #  #
@@ -89,9 +91,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
         }
     }
 
@@ -144,9 +146,9 @@ class TeamDb {
         const teamId = data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TeamId || void 0;
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
         }
 
         return teamId ? {member: newTeam.member, id: teamId, name: newTeam.name, tag: newTeam.tag, isFounder: true, disbanded: false, locked: false} : void 0;
@@ -206,9 +208,9 @@ class TeamDb {
         `, {teamId: {type: Db.INT, value: team.id}});
 
         if (data && data.recordsets && data.recordsets[1]) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"].concat(data.recordsets[1].map((row) => `otl.gg:invalidate:player:${row.PlayerId}:updated`)));
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`].concat(data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`)));
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
@@ -331,7 +333,7 @@ class TeamDb {
      * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, winsServer1: number, lossesServer1: number, tiesServer1: number, winsServer2: number, lossesServer2: number, tiesServer2: number, winsServer3: number, lossesServer3: number, tiesServer3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, deaths: number, assists: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} The team data.
      */
     static async getData(team, season, postseason) {
-        const key = `otl.gg:db:team:getData:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
+        const key = `${settings.redisPrefix}:db:team:getData:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -598,7 +600,7 @@ class TeamDb {
             }))
         } || {records: void 0, opponents: void 0, maps: void 0, matches: void 0, stats: void 0};
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[5] && data.recordsets[5][0] && data.recordsets[5][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[5] && data.recordsets[5][0] && data.recordsets[5][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return cache;
     }
@@ -767,7 +769,7 @@ class TeamDb {
      * @returns {Promise<{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[]>} A promise that resolves with the season standings.
      */
     static async getSeasonStandings(season, records, map) {
-        const key = `otl.gg:db:team:getSeasonStandings:${season || "null"}:${records}:${map || "null"}`;
+        const key = `${settings.redisPrefix}:db:team:getSeasonStandings:${season || "null"}:${records}:${map || "null"}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -852,7 +854,7 @@ class TeamDb {
         });
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties, wins1: row.Wins1, losses1: row.Losses1, ties1: row.Ties1, wins2: row.Wins2, losses2: row.Losses2, ties2: row.Ties2, wins3: row.Wins3, losses3: row.Losses3, ties3: row.Ties3, winsMap: row.WinsMap || 0, lossesMap: row.LossesMap || 0, tiesMap: row.TiesMap || 0})) || [];
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:team:status"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:team:status`]);
 
         return cache;
     }
@@ -1045,9 +1047,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:team:status", "otl.gg:invalidate:player:updated"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
         }
     }
 
@@ -1141,9 +1143,9 @@ class TeamDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", "otl.gg:invalidate:player:updated"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
         }
     }
 

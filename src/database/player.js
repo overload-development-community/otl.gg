@@ -4,9 +4,11 @@
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  */
 
-const Cache = require("../cache"),
-    Db = require("node-database"),
-    db = require("./index");
+const Db = require("node-database"),
+
+    Cache = require("../cache"),
+    db = require("./index"),
+    settings = require("../../settings");
 
 //  ####    ##                                ####   #
 //  #   #    #                                 #  #  #
@@ -152,9 +154,9 @@ class PlayerDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
         }
     }
 
@@ -173,7 +175,7 @@ class PlayerDb {
      * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, teamSize: number, matchTime: Date, map: string}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
-        const key = `otl.gg:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
+        const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -389,7 +391,7 @@ class PlayerDb {
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`otl.gg:invalidate:player:${playerId}:updated`]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
 
         return cache;
     }
@@ -432,7 +434,7 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, discordId: string, timezone: string}[]>} The list of free agents.
      */
     static async getFreeAgents() {
-        const key = "otl.gg:db:player:getFreeAgents";
+        const key = `${settings.redisPrefix}:db:player:getFreeAgents`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -452,7 +454,7 @@ class PlayerDb {
         `);
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
 
-        Cache.add(key, cache, void 0, ["otl.gg:invalidate:player:freeagents"]);
+        Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:player:freeagents`]);
 
         return cache;
     }
@@ -471,7 +473,7 @@ class PlayerDb {
      * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[]}>} A promise that resolves with the league records.
      */
     static async getRecords(season, postseason) {
-        const key = `otl.gg:db:player:getRecords:${season === void 0 ? "null" : season}:${!!postseason}`;
+        const key = `${settings.redisPrefix}:db:player:getRecords:${season === void 0 ? "null" : season}:${!!postseason}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -772,7 +774,7 @@ class PlayerDb {
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[8] && data.recordsets[8][0] && data.recordsets[8][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:player:updated"]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[8] && data.recordsets[8][0] && data.recordsets[8][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
 
         return cache;
     }
@@ -823,7 +825,7 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason) {
-        const key = `otl.gg:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}`;
+        const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -882,7 +884,7 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed", "otl.gg:invalidate:player:updated"]);
+        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
 
         return cache;
     }
@@ -968,7 +970,7 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getTopKda() {
-        const key = "otl.gg:db:player:getTopKda";
+        const key = `${settings.redisPrefix}:db:player:getTopKda`;
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -1020,7 +1022,7 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, ["otl.gg:invalidate:challenge:closed"].concat(cache.map((player) => `otl.gg:invalidate:player:${player.id}:updated`)));
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`].concat(cache.map((player) => `${settings.redisPrefix}:invalidate:player:${player.id}:updated`)));
 
         return cache;
     }
@@ -1226,9 +1228,9 @@ class PlayerDb {
         });
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents", `otl.gg:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
         } else {
-            await Cache.invalidate(["otl.gg:invalidate:player:freeagents"]);
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
         }
     }
 
