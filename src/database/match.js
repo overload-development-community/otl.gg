@@ -485,11 +485,11 @@ class MatchDb {
     /**
      * Gets the season data from a challenge that is in the desired season.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{matches: {challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
+     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
      */
     static async getSeasonDataFromChallenge(challenge) {
         /**
-         * @type {{recordsets: [{ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number, SeasonAdded: boolean}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number, SeasonAdded: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @matchTime DATETIME
@@ -521,6 +521,7 @@ class MatchDb {
                 SELECT @k = K, @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
 
                 SELECT
+                    ChallengeId,
                     ChallengingTeamId,
                     ChallengedTeamId,
                     ChallengingTeamScore,
@@ -540,6 +541,7 @@ class MatchDb {
 
         return data && data.recordsets && data.recordsets.length === 2 && {
             matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
+                id: row.ChallengeId,
                 challengingTeamId: row.ChallengingTeamId,
                 challengedTeamId: row.ChallengedTeamId,
                 challengingTeamScore: row.ChallengingTeamScore,

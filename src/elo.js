@@ -80,45 +80,6 @@ class Elo {
     static update(expected, actual, rating, k) {
         return rating + k * (actual - expected);
     }
-
-    //             ##                ##           #          ###          #     #
-    //              #                 #           #          #  #         #
-    //  ##    ###   #     ##   #  #   #     ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###
-    // #     #  #   #    #     #  #   #    #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##
-    // #     # ##   #    #     #  #   #    # ##   #    ##    # #   # ##   #     #    #  #   ##     ##
-    //  ##    # #  ###    ##    ###  ###    # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###
-    //                                                                                      ###
-    /**
-     * Calculates the rating for each team based on their matches.
-     * @param {{challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[]} matches The matches.
-     * @param {number} k The K-Factor to use.
-     * @returns {Object<number, number>} The ratings by team ID.
-     */
-    static calculateRatings(matches, k) {
-
-        /**
-         * @type {Object<number, number>}
-         */
-        const ratings = {};
-
-        matches.forEach((match) => {
-            if (!ratings[match.challengingTeamId]) {
-                ratings[match.challengingTeamId] = 1500;
-            }
-
-            if (!ratings[match.challengedTeamId]) {
-                ratings[match.challengedTeamId] = 1500;
-            }
-
-            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), Elo.actual(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], k),
-                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), Elo.actual(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], k);
-
-            ratings[match.challengingTeamId] = challengingTeamNewRating;
-            ratings[match.challengedTeamId] = challengedTeamNewRating;
-        });
-
-        return ratings;
-    }
 }
 
 module.exports = Elo;

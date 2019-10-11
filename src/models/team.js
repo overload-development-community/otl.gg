@@ -1862,10 +1862,32 @@ class Team {
             return;
         }
 
-        const ratings = Elo.calculateRatings(data.matches, data.k);
+        /** @type {Object<number, number>} */
+        const ratings = {};
+
+        /** @type {Object<number, number>} */
+        const changes = {};
+
+        data.matches.forEach((match) => {
+            if (!ratings[match.challengingTeamId]) {
+                ratings[match.challengingTeamId] = 1500;
+            }
+
+            if (!ratings[match.challengedTeamId]) {
+                ratings[match.challengedTeamId] = 1500;
+            }
+
+            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), Elo.actual(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
+                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), Elo.actual(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
+
+            changes[match.id] = challengingTeamNewRating - ratings[match.challengingTeamId];
+
+            ratings[match.challengingTeamId] = challengingTeamNewRating;
+            ratings[match.challengedTeamId] = challengedTeamNewRating;
+        });
 
         try {
-            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings);
+            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings, changes);
         } catch (err) {
             throw new Exception("There was a database error updating season ratings.", err);
         }

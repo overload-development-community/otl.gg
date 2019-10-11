@@ -1275,9 +1275,10 @@ class TeamDb {
      * Updates the ratins for the season based on the challenge supplied.
      * @param {Challenge} challenge The challenge in the season to update ratings for.
      * @param {Object<number, number>} ratings The ratings.
+     * @param {Object<number, number>} changes The changes in ratings for teams by challenge ID.
      * @returns {Promise} A promise that resolves when the ratings are updated.
      */
-    static async updateRatingsForSeasonFromChallenge(challenge, ratings) {
+    static async updateRatingsForSeasonFromChallenge(challenge, ratings, changes) {
         let sql = /* sql */`
             DECLARE @matchTime DATETIME
             DECLARE @season INT
@@ -1294,7 +1295,8 @@ class TeamDb {
             DELETE FROM tblTeamRating WHERE Season = @season
         `;
 
-        const params = {
+        /** @type {Object<string, {type: object, value: object}>} */
+        let params = {
             challengeId: {type: Db.INT, value: challenge.id}
         };
 
@@ -1310,6 +1312,23 @@ class TeamDb {
 
             params[`team${index}id`] = {type: Db.INT, value: teamId};
             params[`rating${index}`] = {type: Db.FLOAT, value: rating};
+        }
+
+        for (const {challengeId, ratingChange, index} of Object.keys(changes).map((r, i) => ({challengeId: r, ratingChange: ratings[r], index: i}))) {
+            sql = /* sql */`
+                ${sql}
+
+                UPDATE tblChallenge SET RatingChange = @ratingChange${index} WHERE ChallengeId = @challenge${index}Id
+            `;
+
+            params[`ratingChange${index}`] = {type: Db.FLOAT, value: ratingChange};
+            params[`challenge${index}Id`] = {type: Db.INT, value: challengeId};
+
+            if (Object.keys(params).length > 2000) {
+                await db.query(sql, params);
+                sql = "";
+                params = {};
+            }
         }
 
         await db.query(sql, params);
