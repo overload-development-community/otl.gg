@@ -42,6 +42,8 @@ class Cache {
                 await client.sadd(list, key);
             }
         }
+
+        client.disconnect();
     }
 
     //              #
@@ -64,6 +66,8 @@ class Cache {
         if (!value) {
             return void 0;
         }
+
+        client.disconnect();
 
         return JSON.parse(value, (k, v) => {
             if (typeof v === "string" && dateMatch.test(v)) {
@@ -100,6 +104,8 @@ class Cache {
         }
 
         await client.del(...keys);
+
+        client.disconnect();
     }
 }
 

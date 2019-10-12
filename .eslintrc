@@ -18,6 +18,7 @@
         "default-case": "off",
         "dot-location": "off",
         "func-names": "off",
+        "function-call-argument-newline": "off",
         "global-require": "off",
         "id-length": "off",
         "indent": [
