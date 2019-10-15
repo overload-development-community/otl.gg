@@ -337,7 +337,7 @@ class Commands {
     /**
      * Checks to ensure that adding a pilot's stat won't put the team over the number of pilots per side in the challenge.
      * @param {Challenge} challenge The challenge.
-     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to check.
      * @param {Team} team The team to check.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
@@ -346,7 +346,7 @@ class Commands {
     static async checkChallengeTeamStats(challenge, pilot, team, member, channel) {
         const stats = await challenge.getStatsForTeam(team);
 
-        if (!stats.find((s) => s.pilot.id === pilot.id) && stats.length >= challenge.details.teamSize) {
+        if (!stats.find((s) => s.pilot && s.pilot.id === pilot.id) && stats.length >= challenge.details.teamSize) {
             await Discord.queue(`Sorry, ${member}, but you have already provided enough pilot stats for this match.`, channel);
             throw new Warning("Too many stats for team.");
         }
