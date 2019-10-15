@@ -668,7 +668,7 @@ class Discord {
     //                                                         #
     /**
      * Finds a Discord user by user ID.
-     * @param {*} id The user ID.
+     * @param {string} id The user ID.
      * @returns {Promise<DiscordJs.User>} A promise that resolves with the user.
      */
     static findUserById(id) {
