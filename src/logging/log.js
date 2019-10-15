@@ -146,7 +146,7 @@ class Log {
                         }
 
                         try {
-                            await request.post({
+                            const res = await request.post({
                                 uri: settings.logger.url,
                                 body: {
                                     key: settings.logger.key,
@@ -156,15 +156,13 @@ class Log {
                                     date: new Date().getTime()
                                 },
                                 json: true
-                            }).then(async (res) => {
-                                if (res.id) {
-                                    await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
-                                } else {
-                                    await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
-                                }
-                            }).catch(async (err) => {
-                                await Log.outputToDiscord(log, err);
                             });
+
+                            if (res.id) {
+                                await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                            } else {
+                                await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                            }
                         } catch (err) {
                             await Log.outputToDiscord(log, err);
                         }
