@@ -101,7 +101,7 @@ class HomeView {
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)) === void 0 ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
-                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(HomeView.Common.normalizeName(s.name, team.tag))}">${HomeView.Common.htmlEncode(HomeView.Common.normalizeName(s.name, team.tag))}</a></div>
+                            <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(HomeView.Common.normalizeName(s.name, team ? team.tag : ""))}">${HomeView.Common.htmlEncode(HomeView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
                             <div class="numeric value">${s.kda.toFixed(3)}</div>
                         `).join("")}
                     </div>
