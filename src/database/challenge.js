@@ -2,6 +2,7 @@
  * @typedef {import("../models/challenge")} Challenge
  * @typedef {{id?: number, challengingTeamId: number, challengedTeamId: number}} ChallengeData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
+ * @typedef {import("discord.js").User} DiscordJs.User
  * @typedef {import("../models/team")} Team
  */
 
@@ -34,7 +35,7 @@ class ChallengeDb {
      * Adds a stat to a challenge.
      * @param {Challenge} challenge The challenge to add the stat to.
      * @param {Team} team The team to add the stat to.
-     * @param {DiscordJs.GuildMember} pilot The pilot to add a stat for.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to add a stat for.
      * @param {number} kills The number of kills the pilot had.
      * @param {number} assists The number of assists the pilot had.
      * @param {number} deaths The number of deaths the pilot had.

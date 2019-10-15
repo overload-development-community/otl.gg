@@ -659,6 +659,22 @@ class Discord {
         return otlGuild.roles.find((r) => r.name === name);
     }
 
+    //   #    #             #  #  #                     ###         ###      #
+    //  # #                 #  #  #                     #  #         #       #
+    //  #    ##    ###    ###  #  #   ###    ##   ###   ###   #  #   #     ###
+    // ###    #    #  #  #  #  #  #  ##     # ##  #  #  #  #  #  #   #    #  #
+    //  #     #    #  #  #  #  #  #    ##   ##    #     #  #   # #   #    #  #
+    //  #    ###   #  #   ###   ##   ###     ##   #     ###     #   ###    ###
+    //                                                         #
+    /**
+     * Finds a Discord user by user ID.
+     * @param {*} id The user ID.
+     * @returns {Promise<DiscordJs.User>} A promise that resolves with the user.
+     */
+    static findUserById(id) {
+        return discord.fetchUser(id, false);
+    }
+
     //  #            ##
     //              #  #
     // ##     ###   #  #  #  #  ###    ##   ###

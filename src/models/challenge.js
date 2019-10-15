@@ -2,6 +2,7 @@
  * @typedef {{id?: number, challengingTeam: Team, challengedTeam: Team}} ChallengeData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ * @typedef {import("discord.js").User} DiscordJs.User
  */
 
 const Common = require("../../web/includes/common"),
@@ -456,7 +457,7 @@ class Challenge {
     /**
      * Adds a stat to the challenge.
      * @param {Team} team The team to add the stat for.
-     * @param {DiscordJs.GuildMember} pilot The pilot to add the stat for.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to add the stat for.
      * @param {number} kills The number of kills the pilot had.
      * @param {number} assists The number of assists the pilot had.
      * @param {number} deaths The number of deaths the pilot had.

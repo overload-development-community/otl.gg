@@ -1,6 +1,7 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ * @typedef {import("discord.js").User} DiscordJs.User
  * @typedef {import("./models/newteam")} NewTeam
  */
 
@@ -4981,8 +4982,26 @@ class Commands {
         }
 
         const {groups: {pilotName, teamName, kills, assists, deaths}} = statParse.exec(message),
-            pilot = await Commands.checkPilotExists(pilotName, member, channel),
             team = await Commands.checkTeamExists(teamName, member, channel);
+
+        /** @type {DiscordJs.GuildMember|DiscordJs.User} */
+        let pilot;
+        if (idParse.test(pilotName)) {
+            const {groups: {id}} = idParse.exec(pilotName);
+
+            pilot = Discord.findGuildMemberById(id);
+
+            if (!pilot) {
+                pilot = await Discord.findUserById(id);
+            }
+        } else {
+            pilot = Discord.findGuildMemberByDisplayName(pilotName);
+        }
+
+        if (!pilot) {
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but I can't find that pilot on this server.  You must mention the pilot.`, channel);
+            throw new Warning("Pilot not found.");
+        }
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
         await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
