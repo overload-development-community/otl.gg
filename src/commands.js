@@ -2,6 +2,7 @@
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
+ * @typedef {DiscordJs.GuildMember|DiscordJs.User} DiscordJs.UserOrGuildMember
  * @typedef {import("./models/newteam")} NewTeam
  */
 
@@ -270,7 +271,7 @@ class Commands {
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the stats for the game.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the stats for the game.
      */
     static async checkChallengeStatsComplete(challenge, member, channel) {
         const stats = {};
@@ -337,7 +338,7 @@ class Commands {
     /**
      * Checks to ensure that adding a pilot's stat won't put the team over the number of pilots per side in the challenge.
      * @param {Challenge} challenge The challenge.
-     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to check.
+     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to check.
      * @param {Team} team The team to check.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
@@ -976,6 +977,42 @@ class Commands {
         }
 
         return time;
+    }
+
+    //       #                 #     #  #                     ####         #            #
+    //       #                 #     #  #                     #                         #
+    //  ##   ###    ##    ##   # #   #  #   ###    ##   ###   ###   #  #  ##     ###   ###    ###
+    // #     #  #  # ##  #     ##    #  #  ##     # ##  #  #  #      ##    #    ##      #    ##
+    // #     #  #  ##    #     # #   #  #    ##   ##    #     #      ##    #      ##    #      ##
+    //  ##   #  #   ##    ##   #  #   ##   ###     ##   #     ####  #  #  ###   ###      ##  ###
+    /**
+     * Checks to ensure the pilot exists, and returns the pilot.
+     * @param {string} message The message sent.
+     * @param {DiscordJs.GuildMember} member The pilot sending the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise<DiscordJs.UserOrGuildMember>} A promise that resolves with the pilot if they exist on the server, or the user if not.
+     */
+    static async checkUserExists(message, member, channel) {
+        /** @type {DiscordJs.UserOrGuildMember} */
+        let pilot;
+        if (idParse.test(message)) {
+            const {groups: {id}} = idParse.exec(message);
+
+            pilot = Discord.findGuildMemberById(id);
+
+            if (!pilot) {
+                pilot = await Discord.findUserById(id);
+            }
+        } else {
+            pilot = Discord.findGuildMemberByDisplayName(message);
+        }
+
+        if (!pilot) {
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but I can't find that user on Discord.  You must mention the user.`, channel);
+            throw new Warning("User not found.");
+        }
+
+        return pilot;
     }
 
     //         #                ##           #
@@ -4982,26 +5019,8 @@ class Commands {
         }
 
         const {groups: {pilotName, teamName, kills, assists, deaths}} = statParse.exec(message),
+            pilot = await Commands.checkUserExists(pilotName, member, channel),
             team = await Commands.checkTeamExists(teamName, member, channel);
-
-        /** @type {DiscordJs.GuildMember|DiscordJs.User} */
-        let pilot;
-        if (idParse.test(pilotName)) {
-            const {groups: {id}} = idParse.exec(pilotName);
-
-            pilot = Discord.findGuildMemberById(id);
-
-            if (!pilot) {
-                pilot = await Discord.findUserById(id);
-            }
-        } else {
-            pilot = Discord.findGuildMemberByDisplayName(pilotName);
-        }
-
-        if (!pilot) {
-            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but I can't find that pilot on this server.  You must mention the pilot.`, channel);
-            throw new Warning("Pilot not found.");
-        }
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
         await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
@@ -5049,7 +5068,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        const pilot = await Commands.checkPilotExists(message, member, channel),
+        const pilot = await Commands.checkUserExists(message, member, channel),
             stats = {};
 
         try {
@@ -5067,7 +5086,7 @@ class Commands {
         }
 
         if (!stats.challengingTeamStats.find((s) => s.pilot.id === pilot.id) && !stats.challengedTeamStats.find((s) => s.pilot.id === pilot.id)) {
-            await Discord.queue(`Sorry, ${member}, but ${pilot.displayName} does not have a recorded stat for this match.`, channel);
+            await Discord.queue(`Sorry, ${member}, but ${pilot} does not have a recorded stat for this match.`, channel);
             throw new Warning("No stat for pilot.");
         }
 
@@ -5246,6 +5265,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
+        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}} */
         let stats;
         if (!challenge.details.dateVoided) {
             await Commands.checkChallengeIsConfirmed(challenge, member, channel);

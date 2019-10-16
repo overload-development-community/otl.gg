@@ -876,14 +876,14 @@ class ChallengeDb {
      * Gets the team stats for a challenge.
      * @param {Challenge} challenge The challenge to get stats for.
      * @param {Team} team The team to get stats for.
-     * @returns {Promise<{discordId: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with the team's stats for the challenge.
+     * @returns {Promise<{discordId: string, name: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with the team's stats for the challenge.
      */
     static async getStatsForTeam(challenge, team) {
         /**
-         * @type {{recordsets: [{DiscordId: string, Kills: number, Assists: number, Deaths: number}[]]}}
+         * @type {{recordsets: [{DiscordId: string, Name: string, Kills: number, Assists: number, Deaths: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT p.DiscordId, s.Kills, s.Assists, s.Deaths
+            SELECT p.DiscordId, p.Name, s.Kills, s.Assists, s.Deaths
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE s.ChallengeId = @challengeId
@@ -892,7 +892,13 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id},
             teamId: {type: Db.INT, value: team.id}
         });
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({discordId: row.DiscordId, kills: row.Kills, assists: row.Assists, deaths: row.Deaths})) || [];
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            discordId: row.DiscordId,
+            name: row.Name,
+            kills: row.Kills,
+            assists: row.Assists,
+            deaths: row.Deaths
+        })) || [];
     }
 
     //              #     ##    #
@@ -1061,7 +1067,7 @@ class ChallengeDb {
     /**
      * Removes a stat from a challenge.
      * @param {Challenge} challenge The challenge.
-     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot.
      * @returns {Promise} A promise that resolves when the stat has been removed.
      */
     static async removeStat(challenge, pilot) {

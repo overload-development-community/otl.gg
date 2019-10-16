@@ -3,15 +3,18 @@
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
+ * @typedef {DiscordJs.GuildMember|DiscordJs.User} DiscordJs.UserOrGuildMember
  */
 
-const Common = require("../../web/includes/common"),
+const Cache = require("../cache"),
+    Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
     schedule = require("node-schedule"),
     settings = require("../../settings"),
     Team = require("./team"),
+    Tracker = require("../tracker"),
 
     channelParse = /^(?<challengingTeamTag>[0-9a-z]{1,5})-(?<challengedTeamTag>[0-9a-z]{1,5})-(?<id>[1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/;
@@ -457,7 +460,7 @@ class Challenge {
     /**
      * Adds a stat to the challenge.
      * @param {Team} team The team to add the stat for.
-     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to add the stat for.
+     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to add the stat for.
      * @param {number} kills The number of kills the pilot had.
      * @param {number} assists The number of assists the pilot had.
      * @param {number} deaths The number of deaths the pilot had.
@@ -471,6 +474,176 @@ class Challenge {
         }
 
         await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+    }
+
+    //          #     #   ##    #           #
+    //          #     #  #  #   #           #
+    //  ###   ###   ###   #    ###    ###  ###    ###
+    // #  #  #  #  #  #    #    #    #  #   #    ##
+    // # ##  #  #  #  #  #  #   #    # ##   #      ##
+    //  # #   ###   ###   ##     ##   # #    ##  ###
+    /**
+     * Adds stats to the challenge from the tracker.
+     * @param {number} gameId The game ID from the tracker.
+     * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, kills: number, assists: number, deaths: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
+     */
+    async addStats(gameId, nameMap) {
+        let game;
+        try {
+            game = await Tracker.getMatch(gameId);
+        } catch (err) {
+            throw new Error("That is not a valid game ID.");
+        }
+
+        if (!game) {
+            throw new Error("That is not a valid game ID.");
+        }
+
+        if (game.settings.gameMode !== "TEAM ANARCHY") {
+            throw new Error("Currently, only team anarchy games are supported.");
+        }
+
+        /** @type {Object<string, string>} */
+        let map = await Cache.get(`${settings.redisPrefix}:nameMap`);
+
+        if (!map) {
+            map = {};
+        }
+
+        const notFound = [];
+
+        Object.keys(nameMap).forEach((alias) => {
+            map[alias] = nameMap[alias];
+        });
+
+        for (const player of game.players) {
+            if (!nameMap[player.name]) {
+                let found = false;
+
+                // We guess at the name.
+                for (const [id, member] of this.channel.members) {
+                    if (member.displayName.toUpperCase().indexOf(player.name.toUpperCase()) !== -1) {
+                        map[player.name] = id;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    notFound.push(player.name);
+                }
+            }
+        }
+
+        if (notFound.length > 0) {
+            throw new Error(`Please add mappings for the following players: **${notFound.join("**, **")}**`);
+        }
+
+        await Cache.add(`${settings.redisPrefix}:nameMap`, map);
+
+        let challengingTeamMembers = 0,
+            challengedTeamMembers = 0;
+
+        /** @type {Object<string, {member: DiscordJs.UserOrGuildMember, team: Team}>} */
+        const playerTeam = {};
+
+        await this.loadDetails();
+
+        for (const player of game.players) {
+            const member = Discord.findGuildMemberById(map[player.name]) || await Discord.findUserById(map[player.name]),
+                team = player.team === "BLUE" ? this.details.blueTeam : this.details.orangeTeam;
+
+            if (team.id === this.challengingTeam.id) {
+                challengingTeamMembers++;
+            } else if (team.id === this.challengedTeam.id) {
+                challengedTeamMembers++;
+            } else {
+                throw new Error(`It appears that ${player.name} is not on one of the teams in the challenge.  Please manually map their game name to a player.`);
+            }
+
+            playerTeam[player.name] = {member, team};
+        }
+
+        if (challengingTeamMembers !== this.details.teamSize || challengedTeamMembers !== this.details.teamSize) {
+            throw new Error(`Please ensure that both teams fielded ${this.details.teamSize} members.  If they have, please manually map all of the players in this match.`);
+        }
+
+        let challengingTeamStats = await this.getStatsForTeam(this.challengingTeam),
+            challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
+
+        if (challengingTeamStats.length === 0 && challengedTeamStats.length === 0) {
+            // Add all the stats to the database.
+            for (const player of game.players) {
+                try {
+                    await Db.addStat(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills, player.assists, player.deaths);
+                } catch (err) {
+                    throw new Exception("There was a database error adding a stat to a challenge.", err);
+                }
+            }
+
+            // If the score is different from the reported score, reset the score.
+            let scoreChanged = false;
+
+            if (this.details.challengingTeamScore !== (this.details.blueTeam.id === this.challengingTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE) || this.details.challengedTeamScore !== (this.details.blueTeam.id === this.challengedTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE)) {
+                scoreChanged = true;
+
+                this.details.challengingTeamScore = this.details.blueTeam.id === this.challengingTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE;
+                this.details.challengedTeamScore = this.details.blueTeam.id === this.challengedTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE;
+
+                try {
+                    await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+                } catch (err) {
+                    throw new Exception("There was a database error setting the score for a challenge.", err);
+                }
+            }
+
+            // Get the new stats and return them.
+            challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
+            challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
+
+            return {challengingTeamStats, challengedTeamStats, scoreChanged};
+        }
+
+        // Check that all the players exist.
+        for (const player of game.players) {
+            if (!challengingTeamStats.find((s) => s.pilot.id === map[player.name]) && !challengedTeamStats.find((s) => s.pilot.id === map[player.name])) {
+                throw new Error(`${player} does not appear to have played in this match previously.  Please check that the pilots from all games are the same between every game.`);
+            }
+        }
+
+        // Add new stats to existing stats.
+        for (const player of game.players) {
+            try {
+                await Db.removeStat(this, playerTeam[player.name].member);
+            } catch (err) {
+                throw new Exception("There was a database error removing a stat from a challenge.", err);
+            }
+
+            const playerStats = (playerTeam[player.name].team === this.challengingTeam ? challengingTeamStats : challengedTeamStats).find((s) => s.pilot.id === map[player.name]);
+
+            try {
+                await Db.addStat(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills + playerStats.kills, player.assists + playerStats.assists, player.deaths + playerStats.deaths);
+            } catch (err) {
+                throw new Exception("There was a database error adding a stat to a challenge.", err);
+            }
+        }
+
+        // Add new score to existing score.
+        this.details.challengingTeamScore = (this.details.blueTeam.id === this.challengingTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE) + this.details.challengingTeamScore;
+        this.details.challengedTeamScore = (this.details.blueTeam.id === this.challengedTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE) + this.details.challengedTeamScore;
+
+        try {
+            await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+        } catch (err) {
+            throw new Exception("There was a database error setting the score for a challenge.", err);
+        }
+
+        // Get the new stats and return them.
+        challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
+        challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
+
+        return {challengingTeamStats, challengedTeamStats, scoreChanged: true};
     }
 
     //          #     #   ##    #
@@ -699,7 +872,7 @@ class Challenge {
     /**
      * Closes a challenge.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @param {{challengingTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
+     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     async close(member, stats) {
@@ -737,7 +910,7 @@ class Challenge {
                                 if (!a.pilot || !b.pilot) {
                                     return 0;
                                 }
-                                return a.pilot.displayName.localeCompare(b.pilot.displayName);
+                                return a.name.localeCompare(b.name);
                             }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
@@ -751,7 +924,7 @@ class Challenge {
                                 if (a.deaths !== b.deaths) {
                                     return a.deaths - b.deaths;
                                 }
-                                return a.pilot.displayName.localeCompare(b.pilot.displayName);
+                                return a.name.localeCompare(b.name);
                             }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }
                     ] : []
@@ -1081,11 +1254,11 @@ class Challenge {
     /**
      * Gets the stats from a challenge for a team.
      * @param {Team} team The team to get stats for.
-     * @return {Promise<{pilot: DiscordJs.GuildMember, kills: number, assists: number, deaths: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with an array of pilot stats for a team.
      */
     async getStatsForTeam(team) {
         try {
-            return (await Db.getStatsForTeam(this, team)).map((s) => ({pilot: Discord.findGuildMemberById(s.discordId), kills: s.kills, assists: s.assists, deaths: s.deaths}));
+            return Promise.all((await Db.getStatsForTeam(this, team)).map(async (s) => ({pilot: Discord.findGuildMemberById(s.discordId) || await Discord.findUserById(s.discordId), name: s.name, kills: s.kills, assists: s.assists, deaths: s.deaths})));
         } catch (err) {
             throw new Exception("There was a database error loading team stats for a challenge.", err);
         }
@@ -1420,7 +1593,7 @@ class Challenge {
     // #      ##   #  #   ##    #     ##    ##     ##   # #    ##
     /**
      * Removes a stat from a challenge for a pilot.
-     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @param {DiscordJs.UserOrGuildMember} pilot The pilot.
      * @returns {Promise} A promise that resolves when the stat has been removed.
      */
     async removeStat(pilot) {
