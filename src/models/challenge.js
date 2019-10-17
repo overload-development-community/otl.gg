@@ -486,7 +486,7 @@ class Challenge {
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, kills: number, assists: number, deaths: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
      */
     async addStats(gameId, nameMap) {
         let game;

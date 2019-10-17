@@ -20,6 +20,8 @@ const tz = require("timezone-js"),
     Warning = require("./logging/warning"),
 
     adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
+    addStatsParse = /^(?<gameId>[0-9]+)(?<newMessage> [^@]+ <@!?[0-9]+>)*$/,
+    addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage> [^@]+ <@!?[0-9]+>)*$/,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
@@ -5005,7 +5007,7 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        if (!await Commands.checkHasParameters(message, member, "Use the `!addstat` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "Use the `!addstat` command followed by the pilot you are recording the stat for, along with the team tag, kills, assists, and deaths.", channel)) {
             return false;
         }
 
@@ -5014,7 +5016,7 @@ class Commands {
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
         if (!statParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the kills, assists, and deaths.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the team tag, kills, assists, and deaths.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
@@ -5031,6 +5033,130 @@ class Commands {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
+
+        return true;
+    }
+
+    //          #     #          #           #
+    //          #     #          #           #
+    //  ###   ###   ###   ###   ###    ###  ###    ###
+    // #  #  #  #  #  #  ##      #    #  #   #    ##
+    // # ##  #  #  #  #    ##    #    # ##   #      ##
+    //  # #   ###   ###  ###      ##   # #    ##  ###
+    /**
+     * Adds stats to a challenge from the tracker.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async addstats(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "Use the `!addstats` command followed by the tracker's game ID to add stats to the challenge.  If necessary, map the in-game pilot names to their Discord accounts by appending the in-game pilot name first and then mentioning the pilot.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        if (!addStatsParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use the \`!addstats\` command followed by the tracker's game ID to add stats to the challenge.  If necessary, map the in-game pilot names to their Discord accounts by appending the in-game pilot name first and then mentioning the pilot.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {groups: {gameId, newMessage}} = addStatsParse.exec(message);
+
+        /** @type {Object<string, string>} */
+        const mapping = {};
+
+        let mapMessage = newMessage;
+        while (mapMessage.length > 0) {
+            const {groups: {pilotName, id, newMapMessage}} = addStatsMapParse.exec(message);
+            mapping[pilotName] = id;
+            mapMessage = newMapMessage;
+        }
+
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]} */
+        let challengingTeamStats;
+
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]} */
+        let challengedTeamStats;
+
+        let scoreChanged = false;
+        try {
+            ({challengingTeamStats, challengedTeamStats, scoreChanged} = await challenge.addStats(+gameId, mapping));
+        } catch (err) {
+            if (err.constructor.name === "Error") {
+                throw new Warning(err.message);
+            } else {
+                throw err;
+            }
+        }
+
+        const msg = Discord.richEmbed({
+            title: "Stats Added",
+            fields: []
+        });
+
+        if (scoreChanged) {
+            const winningScore = Math.max(challenge.details.challengingTeamScore, challenge.details.challengedTeamScore),
+                losingScore = Math.min(challenge.details.challengingTeamScore, challenge.details.challengedTeamScore),
+                winningTeam = winningScore === challenge.details.challengingTeamScore ? challenge.challengingTeam : challenge.challengedTeam;
+
+            if (winningScore === losingScore) {
+            } else {
+                msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`});
+                msg.setColor(winningTeam.role.color);
+            }
+        }
+
+        msg.fields.push({
+            name: `${challenge.challengingTeam.name} Stats`,
+            value: `${challengingTeamStats.sort((a, b) => {
+                if (a.kills !== b.kills) {
+                    return b.kills - a.kills;
+                }
+                if (a.assists !== b.assists) {
+                    return b.assists - a.assists;
+                }
+                if (a.deaths !== b.deaths) {
+                    return a.deaths - b.deaths;
+                }
+                if (!a.pilot || !b.pilot) {
+                    return 0;
+                }
+                return a.name.localeCompare(b.name);
+            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+        });
+
+        msg.fields.push({
+            name: `${challenge.challengedTeam.name} Stats`,
+            value: `${challengedTeamStats.sort((a, b) => {
+                if (a.kills !== b.kills) {
+                    return b.kills - a.kills;
+                }
+                if (a.assists !== b.assists) {
+                    return b.assists - a.assists;
+                }
+                if (a.deaths !== b.deaths) {
+                    return a.deaths - b.deaths;
+                }
+                return a.name.localeCompare(b.name);
+            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+        });
+
+        await Discord.richQueue(msg, challenge.channel);
 
         return true;
     }
