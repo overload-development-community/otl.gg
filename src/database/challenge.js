@@ -702,6 +702,48 @@ class ChallengeDb {
         } || {data: void 0, challengingTeamRoster: void 0, challengedTeamRoster: void 0};
     }
 
+    //              #    ###
+    //              #    #  #
+    //  ###   ##   ###   #  #   ###  # #    ###   ###   ##
+    // #  #  # ##   #    #  #  #  #  ####  #  #  #  #  # ##
+    //  ##   ##     #    #  #  # ##  #  #  # ##   ##   ##
+    // #      ##     ##  ###    # #  #  #   # #  #      ##
+    //  ###                                       ###
+    /**
+     * Gets the damage done for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<{discordId: string, name: string, teamId: number, opponentDiscordId: string, opponentName: string, weapon: string, damage: number}[]>} A promise that resolves with the damage done for the challenge.
+     */
+    static async getDamage(challenge) {
+        /**
+         * @type {{recordsets: [{DiscordId: string, Name: string, TeamId: number, OpponentDiscordId: string, OpponentName: string, Weapon: string, Damage: number}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT
+                p.DiscordId,
+                p.Name,
+                d.TeamId,
+                op.DiscordId OpponentDiscordId,
+                op.Name OpponentName,
+                d.Weapon,
+                d.Damage
+            FROM
+                tblDamage d
+                INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
+                INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
+            WHERE d.ChallengeId = @id
+        `, {id: {type: Db.INT, value: challenge.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            discordId: row.DiscordId,
+            name: row.Name,
+            teamId: row.TeamId,
+            opponentDiscordId: row.OpponentDiscordId,
+            opponentName: row.OpponentName,
+            weapon: row.Weapon,
+            damage: row.Damage
+        })) || [];
+    }
+
     //              #    ###          #           #    ##
     //              #    #  #         #                 #
     //  ###   ##   ###   #  #   ##   ###    ###  ##     #     ###
@@ -1216,6 +1258,48 @@ class ChallengeDb {
             SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
+    }
+
+    //               #    ###
+    //               #    #  #
+    //  ###    ##   ###   #  #   ###  # #    ###   ###   ##
+    // ##     # ##   #    #  #  #  #  ####  #  #  #  #  # ##
+    //   ##   ##     #    #  #  # ##  #  #  # ##   ##   ##
+    // ###     ##     ##  ###    # #  #  #   # #  #      ##
+    //                                             ###
+    /**
+     * Sets the damage for a challenge.
+     * @param {Challenge} challenge The challenge to set damage for.
+     * @param {{team: Team, discordId: string, opponentDiscordId: string, weapon: string, damage: number}[]} damage The damage stats.
+     * @returns {Promise} A promise that resolves when the damage stats have been set.
+     */
+    static async setDamage(challenge, damage) {
+        let sql = /* sql */`
+            DELETE FROM tblDamage WHERE ChallengeId = @id
+        `;
+        const params = {
+            id: {type: Db.INT, value: challenge.id}
+        };
+
+        damage.forEach((stat, index) => {
+            sql = /* sql */`
+                ${sql}
+                INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentPlayerId, Weapon, Damage)
+                SELECT @id, @team${index}Id, p.PlayerId, op.PlayerId, @weapon${index}, @damage${index}
+                FROM tblPlayer p
+                CROSS JOIN tblPlayer op
+                WHERE p.DiscordId = @discord${index}Id
+                    AND op.DiscordId = @opponentDiscord${index}Id
+            `;
+
+            params[`team${index}Id`] = stat.team.id;
+            params[`discord${index}Id`] = stat.discordId;
+            params[`opponentDiscord${index}Id`] = stat.opponentDiscordId;
+            params[`weapon${index}`] = stat.weapon;
+            params[`damage${index}`] = stat.damage;
+        });
+
+        await db.query(sql, params);
     }
 
     //               #    #  #                    #  #              ###

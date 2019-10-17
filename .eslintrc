@@ -86,6 +86,7 @@
         "prefer-promise-reject-errors": [
             "error", {"allowEmptyReject": true}
         ],
+        "require-atomic-updates": "off",
         "require-jsdoc": ["error", {
             "require": {
                 "FunctionDeclaration": true,

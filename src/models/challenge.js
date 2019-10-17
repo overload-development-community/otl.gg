@@ -598,6 +598,15 @@ class Challenge {
                 }
             }
 
+            // Add damage stats.
+            await Db.setDamage(this, game.damage.map((stat) => ({
+                team: playerTeam[stat.attacker].team,
+                discordId: map[stat.attacker],
+                opponentDiscordId: map[stat.attacker],
+                weapon: stat.weapon,
+                damage: stat.damage
+            })));
+
             // Get the new stats and return them.
             challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
             challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
@@ -638,6 +647,33 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a database error setting the score for a challenge.", err);
         }
+
+        // Get damage stats and add to them.
+        const damageStats = await Db.getDamage(this);
+
+        damageStats.forEach((stat) => {
+            const damage = game.damage.find((d) => map[d.attacker] === stat.discordId && map[d.defender] === stat.opponentDiscordId && d.weapon === stat.weapon);
+
+            if (damage) {
+                damage.damage += stat.damage;
+            } else {
+                game.damage.push({
+                    attacker: Object.keys(map).find((k) => map[k] === stat.discordId),
+                    defender: Object.keys(map).find((k) => map[k] === stat.opponentDiscordId),
+                    weapon: stat.weapon,
+                    damage: stat.damage
+                });
+            }
+        });
+
+        await Db.setDamage(this, game.damage.map((stat) => ({
+            team: playerTeam[stat.attacker].team,
+            discordId: map[stat.attacker],
+            opponentDiscordId: map[stat.attacker],
+            weapon: stat.weapon,
+            damage: stat.damage
+        })));
+
 
         // Get the new stats and return them.
         challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
