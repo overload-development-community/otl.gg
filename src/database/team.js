@@ -1275,10 +1275,10 @@ class TeamDb {
      * Updates the ratins for the season based on the challenge supplied.
      * @param {Challenge} challenge The challenge in the season to update ratings for.
      * @param {Object<number, number>} ratings The ratings.
-     * @param {Object<number, number>} changes The changes in ratings for teams by challenge ID.
+     * @param {Object<number, {challengingTeamRating: number, challengedTeamRating: number, change: number}>} challengeRatings The ratings after a challenge.
      * @returns {Promise} A promise that resolves when the ratings are updated.
      */
-    static async updateRatingsForSeasonFromChallenge(challenge, ratings, changes) {
+    static async updateRatingsForSeasonFromChallenge(challenge, ratings, challengeRatings) {
         let sql = /* sql */`
             DECLARE @matchTime DATETIME
             DECLARE @season INT
@@ -1314,14 +1314,20 @@ class TeamDb {
             params[`rating${index}`] = {type: Db.FLOAT, value: rating};
         }
 
-        for (const {challengeId, ratingChange, index} of Object.keys(changes).map((r, i) => ({challengeId: r, ratingChange: ratings[r], index: i}))) {
+        for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: r, challengeRating: ratings[r], index: i}))) {
             sql = /* sql */`
                 ${sql}
 
-                UPDATE tblChallenge SET RatingChange = @ratingChange${index} WHERE ChallengeId = @challenge${index}Id
+                UPDATE tblChallenge SET
+                    ChallengingTeamRating = @challengingTeamRating${index}
+                    ChallengedTeamRating = @challengedTeamRating${index}
+                    RatingChange = @ratingChange${index}
+                WHERE ChallengeId = @challenge${index}Id
             `;
 
-            params[`ratingChange${index}`] = {type: Db.FLOAT, value: ratingChange};
+            params[`challengingTeamRating${index}`] = {type: Db.FLOAT, value: challengeRating.challengingTeamRating};
+            params[`challengedTeamRating${index}`] = {type: Db.FLOAT, value: challengeRating.challengedTeamRating};
+            params[`ratingChange${index}`] = {type: Db.FLOAT, value: challengeRating.change};
             params[`challenge${index}Id`] = {type: Db.INT, value: challengeId};
 
             if (Object.keys(params).length > 2000) {

@@ -1865,8 +1865,8 @@ class Team {
         /** @type {Object<number, number>} */
         const ratings = {};
 
-        /** @type {Object<number, number>} */
-        const changes = {};
+        /** @type {Object<number, {challengingTeamRating: number, challengedTeamRating: number, change: number}>} */
+        const challengeRatings = {};
 
         data.matches.forEach((match) => {
             if (!ratings[match.challengingTeamId]) {
@@ -1880,14 +1880,18 @@ class Team {
             const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), Elo.actual(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
                 challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), Elo.actual(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
 
-            changes[match.id] = challengingTeamNewRating - ratings[match.challengingTeamId];
+            challengeRatings[match.id] = {
+                challengingTeamRating: challengingTeamNewRating,
+                challengedTeamRating: challengedTeamNewRating,
+                change: challengingTeamNewRating - ratings[match.challengingTeamId]
+            };
 
             ratings[match.challengingTeamId] = challengingTeamNewRating;
             ratings[match.challengedTeamId] = challengedTeamNewRating;
         });
 
         try {
-            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings, changes);
+            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings, challengeRatings);
         } catch (err) {
             throw new Exception("There was a database error updating season ratings.", err);
         }
