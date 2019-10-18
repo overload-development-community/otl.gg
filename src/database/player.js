@@ -844,7 +844,7 @@ class PlayerDb {
             SELECT
                 p.PlayerId,
                 p.Name,
-                r.TeamId,
+                ls.TeamId,
                 t.Name TeamName,
                 t.Tag,
                 t.Disbanded,
@@ -856,14 +856,20 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            LEFT JOIN (
-                tblRoster r
-                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
-            ) ON p.PlayerId = r.PlayerId
+            INNER JOIN (
+                SELECT ls.PlayerId, ls.TeamId, RANK() OVER(PARTITION BY ls.PlayerId ORDER BY lc.MatchTime DESC) Row
+                FROM vwCompletedChallenge lc
+                INNER JOIN tblStat ls ON lc.ChallengeId = ls.ChallengeId
+                WHERE lc.MatchTime IS NOT NULL
+                    AND (@season = 0 OR lc.Season = @season)
+                    AND lc.Postseason = @postseason
+            ) ls ON p.PlayerId = ls.PlayerId
+            INNER JOIN tblTeam t ON ls.TeamId = t.TeamId
             WHERE c.MatchTime IS NOT NULL
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
-            GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+                AND ls.Row = 1
+            GROUP BY p.PlayerId, p.Name, ls.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
