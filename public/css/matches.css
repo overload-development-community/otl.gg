@@ -301,7 +301,6 @@
 
 #matches #completed .stats {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto;
     color: white;
     font-size: 14px;
     margin-top: 5px;

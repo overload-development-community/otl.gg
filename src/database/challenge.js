@@ -1270,7 +1270,7 @@ class ChallengeDb {
     /**
      * Sets the damage for a challenge.
      * @param {Challenge} challenge The challenge to set damage for.
-     * @param {{team: Team, discordId: string, opponentDiscordId: string, weapon: string, damage: number}[]} damage The damage stats.
+     * @param {{team: Team, discordId: string, opponentTeam: Team, opponentDiscordId: string, weapon: string, damage: number}[]} damage The damage stats.
      * @returns {Promise} A promise that resolves when the damage stats have been set.
      */
     static async setDamage(challenge, damage) {
@@ -1284,8 +1284,8 @@ class ChallengeDb {
         damage.forEach((stat, index) => {
             sql = /* sql */`
                 ${sql}
-                INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentPlayerId, Weapon, Damage)
-                SELECT @id, @team${index}Id, p.PlayerId, op.PlayerId, @weapon${index}, @damage${index}
+                INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentTeamId, OpponentPlayerId, Weapon, Damage)
+                SELECT @id, @team${index}Id, p.PlayerId, @opponentTeam${index}Id, op.PlayerId, @weapon${index}, @damage${index}
                 FROM tblPlayer p
                 CROSS JOIN tblPlayer op
                 WHERE p.DiscordId = @discord${index}Id
@@ -1294,6 +1294,7 @@ class ChallengeDb {
 
             params[`team${index}Id`] = stat.team.id;
             params[`discord${index}Id`] = stat.discordId;
+            params[`opponentTeam${index}Id`] = stat.opponentTeam.id;
             params[`opponentDiscord${index}Id`] = stat.opponentDiscordId;
             params[`weapon${index}`] = stat.weapon;
             params[`damage${index}`] = stat.damage;

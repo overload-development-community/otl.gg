@@ -22,7 +22,7 @@ class MatchesView {
     //  ###
     /**
      * Gets the matches template.
-     * @param {{seasonList: number[], season: number, pending: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], totalCompleted: number, completed: {match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}[], matchesPerPage: number}} data The matches data.
+     * @param {{seasonList: number[], season: number, pending: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], totalCompleted: number, completed: {match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[], matchesPerPage: number}} data The matches data.
      * @returns {string} An HTML string of the matches.
      */
     static get(data) {

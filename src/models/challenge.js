@@ -602,7 +602,8 @@ class Challenge {
             await Db.setDamage(this, game.damage.map((stat) => ({
                 team: playerTeam[stat.attacker].team,
                 discordId: map[stat.attacker],
-                opponentDiscordId: map[stat.attacker],
+                opponentTeam: playerTeam[stat.defender].team,
+                opponentDiscordId: map[stat.defender],
                 weapon: stat.weapon,
                 damage: stat.damage
             })));
@@ -669,7 +670,8 @@ class Challenge {
         await Db.setDamage(this, game.damage.map((stat) => ({
             team: playerTeam[stat.attacker].team,
             discordId: map[stat.attacker],
-            opponentDiscordId: map[stat.attacker],
+            opponentTeam: playerTeam[stat.defender].team,
+            opponentDiscordId: map[stat.defender],
             weapon: stat.weapon,
             damage: stat.damage
         })));

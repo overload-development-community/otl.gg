@@ -30,10 +30,17 @@ class Match {
      * Gets paginated matches for a season.
      * @param {number} [season] The season number.
      * @param {number} [page] The page to get.
-     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}[]>} A promise that resolves with the completed matches.
+     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[]>} A promise that resolves with the completed matches.
      */
     static async getBySeason(season, page) {
-        let completed, stats, standings;
+        /** @type {{challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}[]} */
+        let completed;
+
+        /** @type {{challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, damage: number}[]} */
+        let stats;
+
+        /** @type {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]} */
+        let standings;
         try {
             ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page, Match.matchesPerPage));
         } catch (err) {
@@ -92,7 +99,8 @@ class Match {
                     kda: (stat.kills + stat.assists) / Math.max(stat.deaths, 1),
                     kills: stat.kills,
                     assists: stat.assists,
-                    deaths: stat.deaths
+                    deaths: stat.deaths,
+                    damage: stat.damage
                 }))
             };
         });

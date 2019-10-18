@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, deaths: number, assists: number}[]}} data The match data.
+     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
@@ -72,7 +72,7 @@ class MatchView {
                         </div>
                     ` : ""}
                 </div>
-                <div class="stats">
+                <div class="stats" style="grid-template-columns: repeat(${6 + (stats[0].damage ? 1 : 0)}, auto)">
                     ${stats.length === 0 ? "" : /* html */`
                         <div class="header">Team</div>
                         <div class="header">Name</div>
@@ -80,6 +80,9 @@ class MatchView {
                         <div class="header">Kills</div>
                         <div class="header">Assists</div>
                         <div class="header">Deaths</div>
+                        ${stats[0].damage ? /* html */`
+                            <div class="header">Damage</div>
+                        ` : ""}
                         ${stats.sort((a, b) => a.kda === b.kda ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : b.kda - a.kda).map((s) => /* html */ `
                             <div class="tag">${(team = match.challengingTeam.teamId === s.teamId ? match.challengingTeam : match.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.color ? "" : "-empty"}" ${team.color ? `style="background-color: ${team.color};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
@@ -89,6 +92,9 @@ class MatchView {
                             <div class="numeric kills">${s.kills}</div>
                             <div class="numeric assists">${s.assists}</div>
                             <div class="numeric deaths">${s.deaths}</div>
+                            ${stats[0].damage ? /* html */`
+                                <div class="numeric damage">${s.damage}</div>
+                            ` : ""}
                         `).join("")}
                     `}
                 </div>
