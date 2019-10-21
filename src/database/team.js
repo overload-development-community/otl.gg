@@ -790,6 +790,12 @@ class TeamDb {
                 ORDER BY Season DESC
             END
 
+            DECLARE @maxSeason BIT = 0
+            IF @season = (SELECT MAX(Season) FROM tblSeason)
+            BEGIN
+                SET @maxSeason = 1
+            END
+
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
                 CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
@@ -845,6 +851,7 @@ class TeamDb {
                 FROM tblTeam t
                 LEFT OUTER JOIN tblTeamRating tr ON t.TeamId = tr.TeamId AND tr.Season = @season
             ) a
+            WHERE @maxSeason = 1 OR Wins + Losses + Ties > 0
             ORDER BY Rating DESC, Wins DESC, Losses ASC, Name ASC
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
