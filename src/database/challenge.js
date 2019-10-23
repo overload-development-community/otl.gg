@@ -639,7 +639,7 @@ class ChallengeDb {
             LEFT JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             LEFT JOIN (
                 tblStat s
-                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
@@ -652,7 +652,7 @@ class ChallengeDb {
             LEFT JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             LEFT JOIN (
                 tblStat s
-                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
