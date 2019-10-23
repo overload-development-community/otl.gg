@@ -103,8 +103,10 @@ class CastView {
                                     `}
                                     <div class="map">${castData.map}</div>
                                     <div class="date"><script>document.write(Common.formatDate(new Date("${castData.matchTime}")));</script></div>
-                                    <div class="best">Best Performer</div>
-                                    <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
+                                    ${castData.teamId ? /* html */`
+                                        <div class="best">Best Performer</div>
+                                        <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
+                                    ` : ""}
                                 </div>
                             </div>
                         ` : ""}

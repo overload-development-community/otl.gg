@@ -616,18 +616,20 @@ class ChallengeDb {
                         s.Assists,
                         s.Deaths
                     FROM vwCompletedChallenge c
-                    INNER JOIN (
-                        SELECT
-                            ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
-                            ChallengeId,
-                            PlayerId,
-                            TeamId,
-                            Kills,
-                            Assists,
-                            Deaths
-                        FROM tblStat
-                    ) s ON c.ChallengeId = s.ChallengeId AND s.Row = 1
-                    INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+                    LEFT JOIN (
+                        (
+                            SELECT
+                                ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
+                                ChallengeId,
+                                PlayerId,
+                                TeamId,
+                                Kills,
+                                Assists,
+                                Deaths
+                            FROM tblStat
+                        ) s
+                        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+                    ) ON c.ChallengeId = s.ChallengeId AND s.Row = 1
                 ) s ON ((c.ChallengingTeamId = s.ChallengingTeamId AND c.ChallengedTeamId = s.ChallengedTeamId) OR (c.ChallengingTeamId = s.ChallengedTeamId AND c.ChallengedTeamId = s.ChallengingTeamId)) AND s.Row = 1
                 WHERE c.ChallengeId = @challengeId
             ) a
