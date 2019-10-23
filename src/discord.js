@@ -523,7 +523,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.createChannel(name, type, overwrites, reason);
+        return otlGuild.createChannel(name, {type, permissionOverwrites: overwrites, reason});
     }
 
     //                          #          ###         ##
