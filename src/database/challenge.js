@@ -189,6 +189,8 @@ class ChallengeDb {
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
             await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
+        } else {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
     }
 
