@@ -49,7 +49,7 @@ class ChallengeDb {
 
             MERGE tblStat s
                 USING (VALUES (@challengeId, @teamId, @kills, @assists, @deaths, @playerId)) AS v (ChallengeId, TeamId, Kills, Assists, Deaths, PlayerId)
-                ON s.ChallengeId = v.ChallengeId AND s.TeamId = v.TeamId AND s.Kills = v.Kills AND s.Assists = v.Assists AND s.Deaths = v.Deaths AND s.PlayerId = v.PlayerId
+                ON s.ChallengeId = v.ChallengeId AND s.TeamId = v.TeamId AND s.PlayerId = v.PlayerId
             WHEN MATCHED THEN
                 UPDATE SET
                     TeamId = v.TeamId,
