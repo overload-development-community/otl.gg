@@ -1,4 +1,5 @@
-const Redis = require("./redis"),
+const Log = require("./logging/log"),
+    Redis = require("./redis"),
 
     dateMatch = /^(?:\d{4})-(?:\d{2})-(?:\d{2})T(?:\d{2}):(?:\d{2}):(?:\d{2}(?:\.\d*))(?:Z|(?:\+|-)(?:[\d|:]*))?$/;
 
@@ -28,22 +29,26 @@ class Cache {
      * @returns {Promise} A promise that resolves when the object has been added to the cache.
      */
     static async add(key, obj, expiration, invalidationLists) {
-        const client = await Redis.login();
+        try {
+            const client = await Redis.login();
 
-        if (expiration) {
-            const time = Math.max(expiration.getTime() - new Date().getTime(), 1);
-            await client.set(key, JSON.stringify(obj), "EX", time);
-        } else {
-            await client.set(key, JSON.stringify(obj));
-        }
-
-        if (invalidationLists) {
-            for (const list of invalidationLists) {
-                await client.sadd(list, key);
+            if (expiration) {
+                const time = Math.max(expiration.getTime() - new Date().getTime(), 1);
+                await client.set(key, JSON.stringify(obj), "EX", time);
+            } else {
+                await client.set(key, JSON.stringify(obj));
             }
-        }
 
-        client.disconnect();
+            if (invalidationLists) {
+                for (const list of invalidationLists) {
+                    await client.sadd(list, key);
+                }
+            }
+
+            client.disconnect();
+        } catch (err) {
+            Log.warning(`Redis error on add: ${err.message}`);
+        }
     }
 
     //              #
@@ -59,23 +64,28 @@ class Cache {
      * @returns {Promise<object>} A promise that resolves with the retrieved object.
      */
     static async get(key) {
-        const client = await Redis.login();
+        try {
+            const client = await Redis.login();
 
-        const value = await client.get(key);
+            const value = await client.get(key);
 
-        if (!value) {
-            return void 0;
-        }
-
-        client.disconnect();
-
-        return JSON.parse(value, (k, v) => {
-            if (typeof v === "string" && dateMatch.test(v)) {
-                return new Date(v);
+            if (!value) {
+                return void 0;
             }
 
-            return v;
-        });
+            client.disconnect();
+
+            return JSON.parse(value, (k, v) => {
+                if (typeof v === "string" && dateMatch.test(v)) {
+                    return new Date(v);
+                }
+
+                return v;
+            });
+        } catch (err) {
+            Log.warning(`Redis error on get: ${err.message}`);
+            return void 0;
+        }
     }
 
     //  #                      ##     #       #         #
@@ -90,22 +100,26 @@ class Cache {
      * @returns {Promise} A promise that resolves when the invalidation lists have been invalidated.
      */
     static async invalidate(invalidationLists) {
-        const client = await Redis.login(),
-            keys = [];
+        try {
+            const client = await Redis.login(),
+                keys = [];
 
-        for (const list of invalidationLists) {
-            keys.push(list);
+            for (const list of invalidationLists) {
+                keys.push(list);
 
-            const items = await client.smembers(list);
+                const items = await client.smembers(list);
 
-            if (items) {
-                keys.push(...items);
+                if (items) {
+                    keys.push(...items);
+                }
             }
+
+            await client.del(...keys);
+
+            client.disconnect();
+        } catch (err) {
+            Log.warning(`Redis error on invalidate: ${err.message}`);
         }
-
-        await client.del(...keys);
-
-        client.disconnect();
     }
 }
 
