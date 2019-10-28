@@ -71,6 +71,10 @@ class AboutView {
                     <div>Unsets your Twitch channel.</div>
                     <div class="example">!removetwitch</div>
 
+                    <div class="command">!homes [team]</div>
+                    <div>Gets the current list of home levels for either your team or the specified team.</div>
+                    <div class="example">!homes<br />!homes CF<br />!homes Cronus Frontier</div>
+
                     <div class="command">!next [time]</div>
                     <div>List the upcoming scheduled matches.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
                     <div class="example">!next<br />!next time</div>

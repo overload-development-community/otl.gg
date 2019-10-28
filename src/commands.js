@@ -1900,6 +1900,31 @@ class Commands {
         return true;
     }
 
+    // #
+    // #
+    // ###    ##   # #    ##    ###
+    // #  #  #  #  ####  # ##  ##
+    // #  #  #  #  #  #  ##      ##
+    // #  #   ##   #  #   ##   ###
+    /**
+     * Gets a team's home maps.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async homes(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
+            homes = await team.getHomeMaps();
+
+        await Discord.queue(`The home maps for **${team.name}** are:\n${homes.join("\n")}`, channel);
+        return true;
+    }
+
     //                                       #
     //                                       #
     // ###    ##    ###  #  #   ##    ###   ###
