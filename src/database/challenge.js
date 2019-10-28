@@ -1261,6 +1261,9 @@ class ChallengeDb {
 
             SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
     }
 
