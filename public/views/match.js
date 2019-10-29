@@ -124,14 +124,6 @@ class MatchView {
                             <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                         `}
                     </div>
-                    <div>Home server team:</div>
-                    <div class="tag">
-                        ${challenge.details.usingHomeServerTeam ? /* html */`
-                            ${(team = challenge.details.homeServerTeam) === null ? "" : /* html */`
-                                <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                            `}
-                        ` : "Neutral"}
-                    </div>
                     <div>VoD:</div>
                     <div>${challenge.details.vod ? /* html */`
                         <a href="${encodeURI(challenge.details.vod)}" target="_blank">${MatchView.Common.htmlEncode(challenge.details.vod)}</a>

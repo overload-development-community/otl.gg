@@ -221,14 +221,6 @@ class AboutView {
                     <div>Founder or Captain only.  Confirms a neutral map suggestion from the other team and locks in that map for the match.  Cannot be used once the map is locked in.</div>
                     <div class="example">!confirmmap</div>
 
-                    <div class="command">!suggestneutralserver</div>
-                    <div>Founder or Captain only.  Suggests a neutral server.</div>
-                    <div class="example">!suggestneutralserver</div>
-
-                    <div class="command">!confirmneutralserver</div>
-                    <div>Founder or Captain only.  Confirms a neutral server suggestion from the other team.</div>
-                    <div class="example">!confirmneutralserver</div>
-
                     <div class="command">!suggestteamsize (2|3|4|5|6|7|8)</div>
                     <div>Founder or Captain only.  Suggests the team size for the match.</div>
                     <div class="example">!suggestteamsize 3</div>
@@ -258,7 +250,7 @@ class AboutView {
                     <div class="example">!confirm</div>
 
                     <div class="command">!rematch</div>
-                    <div>Founder or Captain only.  Requests a rematch.  Both teams must enter this command.  Once that happens, this will create a new challenge room with normal parameters, except the home server team will be swapped (or remain neutral if it was neutral for this game), the team size will remain the same as the previous match, and the match time will be set to start immediately.</div>
+                    <div>Founder or Captain only.  Requests a rematch.  Both teams must enter this command.  Once that happens, this will create a new challenge room with normal parameters, except the team size will remain the same as the previous match and the match time will be set to start immediately.</div>
                     <div class="example">!rematch</div>
                 </div>
             </div>

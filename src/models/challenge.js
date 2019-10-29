@@ -83,16 +83,14 @@ class Challenge {
      * @param {Team} challengingTeam The challenging team.
      * @param {Team} challengedTeam The challenged team.
      * @param {boolean} [adminCreated] Whether the match is being created by an admin.
-     * @param {Team} [homeMapTeam] The home map team to set.  Leave undefined to let the server pick the home team.
-     * @param {Team} [homeServerTeam] The home server team to set.  Use null for a neutral server, or leave undefined to let the server pick the home team.
      * @param {number} [teamSize] The team size to set.
      * @param {boolean} [startNow] Whether to start the match now.
      * @returns {Promise<Challenge>} A promise that resolves with the newly created challenge.
      */
-    static async create(challengingTeam, challengedTeam, adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow) {
+    static async create(challengingTeam, challengedTeam, adminCreated, teamSize, startNow) {
         let data;
         try {
-            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, homeServerTeam, teamSize, startNow);
+            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, teamSize, startNow);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -145,29 +143,6 @@ class Challenge {
 
             if (mapMsg) {
                 await mapMsg.pin();
-            }
-
-            const serverEmbed = Discord.richEmbed({
-                title: "Challenge commands - Server",
-                description: `${homeServerTeam === null ? "The server home team has been set to be neutral." : `**${data.homeServerTeam.tag}** is the home server team, which means ${data.homeServerTeam.tag} chooses which two pilots start the match in an effort to select a specific server.`}`,
-                color: data.homeServerTeam ? data.homeServerTeam.role.color : void 0,
-                fields: []
-            });
-
-            if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
-                serverEmbed.fields.push({
-                    name: "!suggestneutralserver",
-                    value: "Suggests a neutral server be played.  This allows both teams to decide who starts the match."
-                }, {
-                    name: "!confirmneutralserver",
-                    value: "Confirms a neutral server suggested by the other team.  Locks the server selection for the match."
-                });
-            }
-
-            const serverMsg = await Discord.richQueue(serverEmbed, challenge.channel);
-
-            if (serverMsg) {
-                await serverMsg.pin();
             }
 
             const optionsEmbed = Discord.richEmbed({
@@ -270,11 +245,11 @@ class Challenge {
             }
 
             if (data.team1Penalized && data.team2Penalized) {
-                await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map and server selection is disabled.", challenge.channel);
+                await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map selection is disabled.", challenge.channel);
             } else if (data.team1Penalized) {
-                await Discord.queue(`A penalty has been applied to **${challengingTeam.tag}** for this match.  Neutral map and server selection is disabled.`, challenge.channel);
+                await Discord.queue(`A penalty has been applied to **${challengingTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
             } else if (data.team2Penalized) {
-                await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map and server selection is disabled.`, challenge.channel);
+                await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
             }
 
             await challenge.updateTopic();
@@ -801,7 +776,7 @@ class Challenge {
                         const team = await Team.getById(penalizedTeam.teamId);
 
                         if (penalizedTeam.first) {
-                            await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map and home server advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, team.teamChannel);
+                            await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, team.teamChannel);
 
                             await team.updateChannels();
                         } else {
@@ -1082,38 +1057,6 @@ class Challenge {
         }
     }
 
-    //                     #    #                #  #               #                ##     ##
-    //                    # #                    ## #               #                 #    #  #
-    //  ##    ##   ###    #    ##    ###   # #   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
-    // #     #  #  #  #  ###    #    #  #  ####  # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
-    // #     #  #  #  #   #     #    #     #  #  # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
-    //  ##    ##   #  #   #    ###   #     #  #  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
-    /**
-     * Confirms a neutral server suggestion.
-     * @returns {Promise} A promise that resolves when a neutral server has been confirmed.
-     */
-    async confirmNeutralServer() {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.setNeutralServer(this);
-        } catch (err) {
-            throw new Exception("There was a database error confirming a suggested neutral server for a challenge.", err);
-        }
-
-        this.details.usingHomeServerTeam = false;
-
-        try {
-            await Discord.queue("The server for this match has been set to be neutral.", this.channel);
-
-            await this.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
     //                     #    #                ###                      ##    #
     //                    # #                     #                      #  #
     //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##
@@ -1255,7 +1198,7 @@ class Challenge {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
 
-        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, void 0, this.details.usingHomeServerTeam ? this.details.homeServerTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam : null, this.details.teamSize, true);
+        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, void 0, this.details.teamSize, true);
 
         challenge.setNotifyMatchMissed(new Date(new Date().getTime() + 3600000));
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));
@@ -1355,16 +1298,13 @@ class Challenge {
             matchTime: details.matchTime,
             postseason: details.postseason,
             homeMapTeam: details.homeMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
-            homeServerTeam: details.homeServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             adminCreated: details.adminCreated,
             homesLocked: details.homesLocked,
             usingHomeMapTeam: details.usingHomeMapTeam,
-            usingHomeServerTeam: details.usingHomeServerTeam,
             challengingTeamPenalized: details.challengingTeamPenalized,
             challengedTeamPenalized: details.challengedTeamPenalized,
             suggestedMap: details.suggestedMap,
             suggestedMapTeam: details.suggestedMapTeamId ? details.suggestedMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
-            suggestedNeutralServerTeam: details.suggestedNeutralServerTeamId ? details.suggestedNeutralServerTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             suggestedTeamSize: details.suggestedTeamSize,
             suggestedTeamSizeTeam: details.suggestedTeamSizeTeamId ? details.suggestedTeamSizeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             suggestedTime: details.suggestedTime,
@@ -1820,41 +1760,6 @@ class Challenge {
         }
     }
 
-    //               #    #  #                     ##                                 ###
-    //               #    #  #                    #  #                                 #
-    //  ###    ##   ###   ####   ##   # #    ##    #     ##   ###   # #    ##   ###    #     ##    ###  # #
-    // ##     # ##   #    #  #  #  #  ####  # ##    #   # ##  #  #  # #   # ##  #  #   #    # ##  #  #  ####
-    //   ##   ##     #    #  #  #  #  #  #  ##    #  #  ##    #     # #   ##    #      #    ##    # ##  #  #
-    // ###     ##     ##  #  #   ##   #  #   ##    ##    ##   #      #     ##   #      #     ##    # #  #  #
-    /**
-     * Sets the home server team.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @param {Team} team The team to set as the home team.
-     * @returns {Promise} A promise that resolves when the home server team has been set.
-     */
-    async setHomeServerTeam(member, team) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.setHomeServerTeam(this, team);
-        } catch (err) {
-            throw new Exception("There was a database error setting a home server team for a challenge.", err);
-        }
-
-        this.details.homeServerTeam = team;
-        this.details.usingHomeServerTeam = true;
-
-        try {
-            await Discord.queue(`${member} has made **${team.tag}** the home server team.`, this.channel);
-
-            await this.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error setting a home server team for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
     //               #    #  #
     //               #    ####
     //  ###    ##   ###   ####   ###  ###
@@ -1888,39 +1793,6 @@ class Challenge {
             await this.updateTopic();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a map for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //               #    #  #               #                ##     ##
-    //               #    ## #               #                 #    #  #
-    //  ###    ##   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
-    // ##     # ##   #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
-    //   ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
-    // ###     ##     ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
-    /**
-     * Sets a neutral server for this match.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @returns {Promise} A promise that resolves when the neutral server has been set.
-     */
-    async setNeutralServer(member) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.setNeutralServer(this);
-        } catch (err) {
-            throw new Exception("There was a database error setting a neutral server for a challenge.", err);
-        }
-
-        this.details.usingHomeServerTeam = false;
-
-        try {
-            await Discord.queue(`${member} has set the server for this match to be neutral.`, this.channel);
-
-            await this.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error setting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -2326,40 +2198,6 @@ class Challenge {
         }
     }
 
-    //                                        #    #  #               #                ##     ##
-    //                                        #    ## #               #                 #    #  #
-    //  ###   #  #   ###   ###   ##    ###   ###   ## #   ##   #  #  ###   ###    ###   #     #     ##   ###   # #    ##   ###
-    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  # ##  #  #   #    #  #  #  #   #      #   # ##  #  #  # #   # ##  #  #
-    //   ##   #  #   ##    ##   ##      ##    #    # ##  ##    #  #   #    #     # ##   #    #  #  ##    #     # #   ##    #
-    // ###     ###  #     #      ##   ###      ##  #  #   ##    ###    ##  #      # #  ###    ##    ##   #      #     ##   #
-    //               ###   ###
-    /**
-     * Suggests a neutral server for the challenge.
-     * @param {Team} team The team suggesting the neutral server.
-     * @returns {Promise} A promise that resolves when the neutral server has been suggested.
-     */
-    async suggestNeutralServer(team) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.suggestNeutralServer(this, team);
-        } catch (err) {
-            throw new Exception("There was a database error suggesting a neutral server for a challenge.", err);
-        }
-
-        this.details.suggestedNeutralServerTeam = team;
-
-        try {
-            await Discord.queue(`**${team.name}** is suggesting to play a neutral server.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmneutralserver\` to agree to this suggestion.`, this.channel);
-
-            await this.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a neutral server for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
     //                                        #    ###                      ##    #
     //                                        #     #                      #  #
     //  ###   #  #   ###   ###   ##    ###   ###    #     ##    ###  # #    #    ##    ####   ##
@@ -2531,7 +2369,7 @@ class Challenge {
         this.details.adminCreated = false;
 
         try {
-            await Discord.queue(`This challenge has been unlocked by ${member}.  You may now use \`!suggestmap\` to suggest a neutral map, \`!suggestneutralserver\` to suggest the map be played on a neutral server, and \`!suggesttime\` to suggest the match time.`, this.channel);
+            await Discord.queue(`This challenge has been unlocked by ${member}.  You may now use \`!suggestmap\` to suggest a neutral map and \`!suggesttime\` to suggest the match time.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -2683,12 +2521,6 @@ class Challenge {
                 topic = `${topic}\nChosen Map: ${this.details.map}`;
             } else if (this.details.suggestedMap) {
                 topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
-            }
-
-            topic = `${topic}\n\nHome Server Team: ${this.details.usingHomeServerTeam ? this.details.homeServerTeam.tag : "Neutral"}`;
-
-            if (this.details.usingHomeServerTeam && this.details.suggestedNeutralServerTeam) {
-                topic = `${topic}\nNeutral Server Suggested by ${this.details.suggestedNeutralServerTeam.tag}`;
             }
 
             if (this.details.teamSize) {

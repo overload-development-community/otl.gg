@@ -41,12 +41,6 @@ class Standings {
         let recordsTitle, records1, records2, records3;
 
         switch (req.query.records) {
-            case "server":
-                recordsTitle = "Server Records";
-                records1 = "Home";
-                records2 = "Away";
-                records3 = "Neutral";
-                break;
             case "size":
                 recordsTitle = "Team Size Records";
                 records1 = "2v2";
