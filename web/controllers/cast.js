@@ -44,7 +44,7 @@ class Cast {
             await challenge.loadDetails();
         }
 
-        if (challenge && challenge.details.map /* && !challenge.details.dateClosed */) {
+        if (challenge) {
             const data = await challenge.getCastData();
 
             res.status(200).send(HtmlMinifier.minify(CastView.get({
