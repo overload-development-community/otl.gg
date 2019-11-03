@@ -20,8 +20,8 @@ const tz = require("timezone-js"),
     Warning = require("./logging/warning"),
 
     adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
-    addStatsParse = /^(?<gameId>[0-9]+)(?<newMessage> [^@]+ <@!?[0-9]+>)*$/,
-    addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage> [^@]+ <@!?[0-9]+>)*$/,
+    addStatsParse = /^(?<gameId>[0-9]+)(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
+    addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
@@ -4902,8 +4902,8 @@ class Commands {
         const mapping = {};
 
         let mapMessage = newMessage;
-        while (mapMessage.length > 0) {
-            const {groups: {pilotName, id, newMapMessage}} = addStatsMapParse.exec(message);
+        while (mapMessage && mapMessage.length > 0) {
+            const {groups: {pilotName, id, newMapMessage}} = addStatsMapParse.exec(mapMessage);
             mapping[pilotName] = id;
             mapMessage = newMapMessage;
         }
@@ -4919,8 +4919,10 @@ class Commands {
             ({challengingTeamStats, challengedTeamStats, scoreChanged} = await challenge.addStats(+gameId, mapping));
         } catch (err) {
             if (err.constructor.name === "Error") {
+                await Discord.queue(`Sorry, ${member}, but there was a problem adding stats: ${err.message}`, channel);
                 throw new Warning(err.message);
             } else {
+                await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
                 throw err;
             }
         }

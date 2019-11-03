@@ -1281,12 +1281,12 @@ class ChallengeDb {
                     AND op.DiscordId = @opponentDiscord${index}Id
             `;
 
-            params[`team${index}Id`] = stat.team.id;
-            params[`discord${index}Id`] = stat.discordId;
-            params[`opponentTeam${index}Id`] = stat.opponentTeam.id;
-            params[`opponentDiscord${index}Id`] = stat.opponentDiscordId;
-            params[`weapon${index}`] = stat.weapon;
-            params[`damage${index}`] = stat.damage;
+            params[`team${index}Id`] = {type: Db.INT, value: stat.team.id};
+            params[`discord${index}Id`] = {type: Db.VARCHAR(24), value: stat.discordId};
+            params[`opponentTeam${index}Id`] = {type: Db.INT, value: stat.opponentTeam.id};
+            params[`opponentDiscord${index}Id`] = {type: Db.VARCHAR(24), value: stat.opponentDiscordId};
+            params[`weapon${index}`] = {type: Db.VARCHAR(50), value: stat.weapon};
+            params[`damage${index}`] = {type: Db.FLOAT, value: stat.damage};
         });
 
         await db.query(sql, params);

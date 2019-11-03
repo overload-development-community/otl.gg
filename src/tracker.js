@@ -26,7 +26,7 @@ class Tracker {
      */
     static getMatch(id) {
         return request.get({
-            uri: `${config.baseUrl}/game/${id}`,
+            uri: `${config.baseUrl}/api/game/${id}`,
             json: true
         });
     }

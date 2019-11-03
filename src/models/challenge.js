@@ -475,7 +475,7 @@ class Challenge {
             throw new Error("That is not a valid game ID.");
         }
 
-        if (game.settings.gameMode !== "TEAM ANARCHY") {
+        if (game.settings.matchMode !== "TEAM ANARCHY") {
             throw new Error("Currently, only team anarchy games are supported.");
         }
 
@@ -493,7 +493,7 @@ class Challenge {
         });
 
         for (const player of game.players) {
-            if (!nameMap[player.name]) {
+            if (!map[player.name]) {
                 let found = false;
 
                 // We guess at the name.
