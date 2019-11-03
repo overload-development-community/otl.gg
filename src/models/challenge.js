@@ -2552,7 +2552,7 @@ class Challenge {
             }
 
             if (streamers.length > 0) {
-                topic = `${topic}\n\nStreamers:\n${streamers.map((s) => `${Discord.findGuildMemberById(s.discordId).displayName} - https://twitch.tv/${s.twitchName}`).join("\n")}`;
+                topic = `${topic}\n\nStreamers:\n${streamers.map((s) => `<@${s.discordId}> - https://twitch.tv/${s.twitchName}`).join("\n")}`;
             }
         }
 
