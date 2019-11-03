@@ -1293,13 +1293,13 @@ class TeamDb {
             params[`rating${index}`] = {type: Db.FLOAT, value: rating};
         }
 
-        for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: r, challengeRating: ratings[r], index: i}))) {
+        for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: +r, challengeRating: challengeRatings[+r], index: i}))) {
             sql = /* sql */`
                 ${sql}
 
                 UPDATE tblChallenge SET
-                    ChallengingTeamRating = @challengingTeamRating${index}
-                    ChallengedTeamRating = @challengedTeamRating${index}
+                    ChallengingTeamRating = @challengingTeamRating${index},
+                    ChallengedTeamRating = @challengedTeamRating${index},
                     RatingChange = @ratingChange${index}
                 WHERE ChallengeId = @challenge${index}Id
             `;
