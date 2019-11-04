@@ -84,7 +84,7 @@ class MatchDb {
                 s.Kills,
                 s.Assists,
                 s.Deaths,
-                SUM(d.Damage)
+                SUM(d.Damage) Damage
             FROM tblStat s
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
