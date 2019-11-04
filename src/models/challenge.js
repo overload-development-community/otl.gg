@@ -566,11 +566,14 @@ class Challenge {
                 this.details.challengingTeamScore = this.details.blueTeam.id === this.challengingTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE;
                 this.details.challengedTeamScore = this.details.blueTeam.id === this.challengedTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE;
 
+                let dateConfirmed;
                 try {
-                    await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+                    dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
                 } catch (err) {
                     throw new Exception("There was a database error setting the score for a challenge.", err);
                 }
+
+                this.details.dateConfirmed = dateConfirmed;
             }
 
             // Add damage stats.
@@ -618,11 +621,14 @@ class Challenge {
         this.details.challengingTeamScore = (this.details.blueTeam.id === this.challengingTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE) + this.details.challengingTeamScore;
         this.details.challengedTeamScore = (this.details.blueTeam.id === this.challengedTeam.id ? game.teamScore.BLUE : game.teamScore.ORANGE) + this.details.challengedTeamScore;
 
+        let dateConfirmed;
         try {
-            await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+            dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
         } catch (err) {
             throw new Exception("There was a database error setting the score for a challenge.", err);
         }
+
+        this.details.dateConfirmed = dateConfirmed;
 
         // Get damage stats and add to them.
         const damageStats = await Db.getDamage(this);
@@ -1954,14 +1960,16 @@ class Challenge {
             await this.loadDetails();
         }
 
+        let dateConfirmed;
         try {
-            await Db.setScore(this, challengingTeamScore, challengedTeamScore);
+            dateConfirmed = await Db.setScore(this, challengingTeamScore, challengedTeamScore);
         } catch (err) {
             throw new Exception("There was a database error setting the score for a challenge.", err);
         }
 
         this.details.challengingTeamScore = challengingTeamScore;
         this.details.challengedTeamScore = challengedTeamScore;
+        this.details.dateConfirmed = dateConfirmed;
 
         this.setNotifyClockExpired();
         this.setNotifyMatchMissed();

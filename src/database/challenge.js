@@ -1513,21 +1513,30 @@ class ChallengeDb {
      * @param {Challenge} challenge The challenge.
      * @param {number} challengingTeamScore The challenging team's score.
      * @param {number} challengedTeamScore The challenged team's score.
-     * @returns {Promise} A promise that resolves when the score is set.
+     * @returns {Promise<Date>} A promise that resolves when the score is set.
      */
     static async setScore(challenge, challengingTeamScore, challengedTeamScore) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{DateConfirmed: Date}[]]}}
+         */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
                 ChallengingTeamScore = @challengingTeamScore,
                 ChallengedTeamScore = @challengedTeamScore,
                 DateConfirmed = GETUTCDATE()
             WHERE ChallengeId = @challengeId
+
+            SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
             challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
             challengedTeamScore: {type: Db.INT, value: challengedTeamScore},
             challengeId: {type: Db.INT, value: challenge.id}
         });
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
     }
 
     //               #    ###                      ##    #
