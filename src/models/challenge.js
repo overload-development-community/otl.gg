@@ -90,7 +90,7 @@ class Challenge {
     static async create(challengingTeam, challengedTeam, adminCreated, teamSize, startNow) {
         let data;
         try {
-            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, homeMapTeam, teamSize, startNow);
+            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
