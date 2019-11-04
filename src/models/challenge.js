@@ -498,7 +498,7 @@ class Challenge {
 
                 // We guess at the name.
                 for (const [id, member] of this.channel.members) {
-                    if (member.displayName.toUpperCase().indexOf(player.name.toUpperCase()) !== -1) {
+                    if (member.displayName.toUpperCase().indexOf(player.name.toUpperCase()) !== -1 || player.name.toUpperCase().indexOf(member.displayName.toUpperCase()) !== -1) {
                         map[player.name] = id;
                         found = true;
                         break;
