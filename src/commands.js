@@ -4984,6 +4984,49 @@ class Commands {
         return true;
     }
 
+    //       ##                              #           #
+    //        #                              #           #
+    //  ##    #     ##    ###  ###    ###   ###    ###  ###    ###
+    // #      #    # ##  #  #  #  #  ##      #    #  #   #    ##
+    // #      #    ##    # ##  #       ##    #    # ##   #      ##
+    //  ##   ###    ##    # #  #     ###      ##   # #    ##  ###
+    /**
+     * Clears all pilot stats from a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async clearstats(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!clearstats` command by itself to clear all of the stats from a challenge.", channel)) {
+            return false;
+        }
+
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsConfirmed(challenge, member, channel);
+
+        try {
+            await challenge.clearStats(member);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
     //                                             #           #
     //                                             #           #
     // ###    ##   # #    ##   # #    ##    ###   ###    ###  ###

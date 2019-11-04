@@ -806,6 +806,27 @@ class Challenge {
         await this.updateTopic();
     }
 
+    //       ##                       ##    #           #
+    //        #                      #  #   #           #
+    //  ##    #     ##    ###  ###    #    ###    ###  ###    ###
+    // #      #    # ##  #  #  #  #    #    #    #  #   #    ##
+    // #      #    ##    # ##  #     #  #   #    # ##   #      ##
+    //  ##   ###    ##    # #  #      ##     ##   # #    ##  ###
+    /**
+     * Clears all stats from a challenge.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @returns {Promise} A promise that returns when the stats have been cleared.
+     */
+    async clearStats(member) {
+        try {
+            await Db.clearStats(this);
+        } catch (err) {
+            throw new Exception("There was a database error clearing the stats for a challenge.", err);
+        }
+
+        await Discord.queue(`${member}, all stats have been cleared for this match.`, this.channel);
+    }
+
     //       ##                      ###    #
     //        #                       #
     //  ##    #     ##    ###  ###    #    ##    # #    ##

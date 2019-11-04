@@ -97,6 +97,24 @@ class ChallengeDb {
         });
     }
 
+    //       ##                       ##    #           #
+    //        #                      #  #   #           #
+    //  ##    #     ##    ###  ###    #    ###    ###  ###    ###
+    // #      #    # ##  #  #  #  #    #    #    #  #   #    ##
+    // #      #    ##    # ##  #     #  #   #    # ##   #      ##
+    //  ##   ###    ##    # #  #      ##     ##   # #    ##  ###
+    /**
+     * Clears all stats from a challenge.
+     * @param {Challenge} challenge The challenge to clear stats for.
+     * @returns {Promise} A promise that resolves when the stats are clear.
+     */
+    static async clearStats(challenge) {
+        await db.query(/* sql */`
+            DELETE FROM tblStat WHERE ChallengeId = @id
+            DELETE FROM tblDamage WHERE ChallengeId = @id
+        `, {id: {type: Db.INT, value: challenge.id}});
+    }
+
     //       ##                #
     //        #                #
     //  ##    #     ##    ##   # #
