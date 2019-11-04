@@ -1198,7 +1198,7 @@ class Challenge {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
 
-        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, void 0, this.details.teamSize, true);
+        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, this.details.teamSize, true);
 
         challenge.setNotifyMatchMissed(new Date(new Date().getTime() + 3600000));
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));
