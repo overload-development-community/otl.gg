@@ -37,7 +37,7 @@ class Player {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const playerId = isNaN(req.params.id) ? 0 : Number.parseInt(req.params.id, 10),
+        const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
             career = await PlayerModel.getCareer(playerId, season, postseason);

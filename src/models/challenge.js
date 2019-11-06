@@ -1281,7 +1281,7 @@ class Challenge {
     //  ###
     /**
      * Gets the team details for a challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     async getTeamDetails() {
         let details;
@@ -1293,6 +1293,11 @@ class Challenge {
 
         details.stats.forEach((stat) => {
             stat.name = Common.normalizeName(stat.name, details.teams.find((team) => team.teamId === stat.teamId).tag);
+        });
+
+        details.damage.forEach((damage) => {
+            damage.name = Common.normalizeName(damage.name, details.teams.find((team) => team.teamId === damage.teamId).tag);
+            damage.opponentName = Common.normalizeName(damage.opponentName, details.teams.find((team) => team.teamId === damage.opponentTeamId).tag);
         });
 
         return details;

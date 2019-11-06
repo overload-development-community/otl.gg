@@ -22,11 +22,11 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], season: {season: number, postseason: boolean}}}} data The match data.
+     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
-        const {challenge, details} = data,
+        const {challenge, details, weapons} = data,
             challengingTeamRecord = details.teams.find((team) => team.teamId === challenge.challengingTeam.id),
             challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id);
         let team;
@@ -103,6 +103,35 @@ class MatchView {
                         `).join("")}
                     </div>
                 ` : ""}
+                ${details.damage && details.damage.length > 0 ? /* html */`
+                    <div id="weapons">
+                        Weapon: ${weapons.map((weapon) => /* html */`
+                            <a class="weapon" href="#" title="${weapon}"><img src="/images/weapons/${weapon.replace(/ /g, "").toLocaleLowerCase()}.png" width="28" height="41" alt="${weapon}" /></a>
+                        `).join("")}
+                    </div>
+                    <div id="damage">
+                        <div id="grid">
+                            <div class="table" style="grid-template-columns: repeat(${3 + details.stats.length}, max-content)">
+                                <div id="weapon-container">
+                                    <div id="weapon">Select a weapon</div>
+                                </div>
+                                ${details.stats.sort((a, b) => MatchView.Common.htmlEncode(a.name).localeCompare(MatchView.Common.htmlEncode(b.name))).map((player) => /* html */`
+                                    <div class="vertical header">${MatchView.Common.htmlEncode(player.name)}</div>
+                                `).join("")}
+                                <div class="vertical header">Total</div>
+                                <div class="vertical header">All Weapons</div>
+                                ${details.stats.map((player, index) => /* html */`
+                                    <div class="header">${MatchView.Common.htmlEncode(player.name)}</div>
+                                    ${details.stats.map((opponent, opponentIndex) => /* html */`
+                                        <div id="damage-${index}-${opponentIndex}" class="numeric right ${index === opponentIndex || player.teamId && player.teamId === opponent.teamId ? "friendly" : ""}"></div>
+                                    `).join("")}
+                                    <div id="damage-${index}-total" class="numeric right"></div>
+                                    <div class="numeric right">${details.damage.filter((d) => d.name === player.name && d.name !== d.opponentName && details.stats.find((p) => p.name === d.name).teamId !== details.stats.find((p) => p.name === d.opponentName).teamId).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
+                                `).join("")}
+                            </div>
+                        </div>
+                    </div>
+                ` : ""}
                 <div id="details">
                     <div>Blue team:</div>
                     <div class="tag">${(team = challenge.details.blueTeam) === null ? "" : /* html */`
@@ -132,6 +161,10 @@ class MatchView {
                     ` : "None"}</div>
                 </div>
             </div>
+            <script>
+                MatchJs.players = ${JSON.stringify(details.stats && details.stats.map((p) => p.name) || [])}
+                MatchJs.damage = ${JSON.stringify(details.damage || [])};
+            </script>
         `;
     }
 }

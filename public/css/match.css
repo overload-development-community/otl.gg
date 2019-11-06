@@ -234,6 +234,53 @@
     height: 14px;
 }
 
+#weapons,
+#weapons a,
+#weapons a img {
+    height: 41px;
+    vertical-align: middle;
+}
+    
+#damage {
+    padding: 10px;
+    grid-template-columns: max-content;
+    color: white;
+}
+
+#damage #grid .table {
+    display: grid;
+    justify-content: center;
+}
+
+#damage #grid .table #weapon-container {
+    display: flex;
+}
+
+#damage #grid .table #weapon-container #weapon {
+    align-self: flex-end;
+}
+
+#damage #grid .table > div {
+    border: solid 1px #999999;
+    margin-bottom: -1px;
+    margin-left: -1px;
+    padding: 3px 3px 0 3px;
+}
+
+#damage #grid .table .right {
+    text-align: right;
+}
+
+#damage #grid .table .vertical {
+    writing-mode: vertical-lr;
+    text-align: right;
+    padding-bottom: 3px;
+}
+
+#damage #grid .table .friendly {
+    color: red;
+}
+
 #details {
     display: grid;
     grid-template-columns: auto auto auto auto auto auto;

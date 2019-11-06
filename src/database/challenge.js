@@ -982,11 +982,11 @@ class ChallengeDb {
     /**
      * Gets the team details for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     static async getTeamDetails(challenge) {
         /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Season: number, Postseason: boolean}[]]}}
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {PlayerId: number, Name: string, TeamId: number, OpponentName: string, OpponentTeamId: number, Weapon: string, Damage: number}[], {Season: number, Postseason: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1042,9 +1042,15 @@ class ChallengeDb {
             LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
             WHERE s.ChallengeId = @challengeId
 
+            SELECT d.PlayerId, p.Name, d.TeamId, op.Name OpponentName, d.OpponentTeamId, d.Weapon, d.Damage
+            FROM tblDamage d
+            INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
+            INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
+            WHERE d.ChallengeId = @challengeId
+
             SELECT @Season Season, @Postseason Postseason
         `, {challengeId: {type: Db.INT, value: challenge.id}});
-        return data && data.recordsets && data.recordsets.length === 3 && {
+        return data && data.recordsets && data.recordsets.length === 4 && {
             teams: data.recordsets[0].map((row) => ({
                 teamId: row.TeamId,
                 name: row.Name,
@@ -1063,8 +1069,17 @@ class ChallengeDb {
                 deaths: row.Deaths,
                 twitchName: row.TwitchName
             })),
-            season: data.recordsets[2] && data.recordsets[2][0] && {season: data.recordsets[2][0].Season, postseason: data.recordsets[2][0].Postseason} || void 0
-        } || {teams: void 0, stats: void 0, season: void 0};
+            damage: data.recordsets[2].map((row) => ({
+                playerId: row.PlayerId,
+                name: row.Name,
+                teamId: row.TeamId,
+                opponentName: row.OpponentName,
+                opponentTeamId: row.OpponentTeamId,
+                weapon: row.Weapon,
+                damage: row.Damage
+            })),
+            season: data.recordsets[3] && data.recordsets[3][0] && {season: data.recordsets[3][0].Season, postseason: data.recordsets[3][0].Postseason} || void 0
+        } || {teams: void 0, stats: void 0, damage: void 0, season: void 0};
     }
 
     //        #          #     #  #
