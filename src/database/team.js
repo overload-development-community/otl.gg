@@ -443,7 +443,7 @@ class TeamDb {
             FROM vwCompletedChallenge c
             INNER JOIN tblTeam tc1 ON c.ChallengingTeamId = tc1.TeamId
             INNER JOIN tblTeam tc2 ON c.ChallengedTeamId = tc2.TeamId
-            INNER JOIN (
+            LEFT OUTER JOIN (
                 SELECT
                     ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
                     ChallengeId,
@@ -454,8 +454,8 @@ class TeamDb {
                     Deaths
                 FROM tblStat
             ) s ON c.ChallengeId = s.ChallengeId AND s.Row = 1
-            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            INNER JOIN tblTeam tc3 ON s.TeamId = tc3.TeamId
+            LEFT OUTER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN tblTeam tc3 ON s.TeamId = tc3.TeamId
             WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason

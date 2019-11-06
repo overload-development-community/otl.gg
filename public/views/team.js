@@ -117,9 +117,15 @@ class TeamView {
                         <div>${m.challengingTeamTag === tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} <span class="numeric">${m.challengingTeamTag === tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === tag ? m.challengedTeamScore : m.challengingTeamScore}</span></div>
                         <div>${m.map}</div>
                         <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
-                        <div class="tag player"><div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                        <div class="player"><a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, team.tag))}</a></div>
-                        <div class="best-stats"><span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)</div>
+                        <div class="tag player">${m.playerId ? /* html */`
+                            <div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                        ` : ""}</div>
+                        <div class="player">${m.playerId ? /* html */`
+                            <a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, team.tag))}</a>
+                        ` : ""}</div>
+                        <div class="best-stats">${m.playerId ? /* html */`
+                            <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)
+                        ` : ""}</div>
                     `).join("")}
                 </div>
                 <div class="section">Season Player Stats</div>
