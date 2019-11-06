@@ -542,6 +542,7 @@ class MatchDb {
                 FROM vwCompletedChallenge
                 WHERE Season = @season
                     AND Postseason = 0
+                    AND DateClosed IS NOT NULL
                 ORDER BY MatchTime, ChallengeId
 
                 SELECT @k K, @seasonAdded SeasonAdded
