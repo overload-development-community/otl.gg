@@ -966,8 +966,16 @@ class Challenge {
                                 }
                                 return a.name.localeCompare(b.name);
                             }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                        }, {
+                            name: "For match details, visit:",
+                            value: `https://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`
                         }
-                    ] : []
+                    ] : [
+                        {
+                            name: "For match details, visit:",
+                            value: `https://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`
+                        }
+                    ]
                 }), Discord.matchResultsChannel);
 
                 if (this.details.caster) {
