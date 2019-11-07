@@ -226,6 +226,12 @@
 }
 
 #matches #completed .match .record1 {
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#matches #completed .match .change1 {
     grid-column: 1;
     grid-row: 4;
     font-size: 12px;
@@ -256,6 +262,12 @@
 }
 
 #matches #completed .match .record2 {
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#matches #completed .match .change2 {
     grid-column: 1;
     grid-row: 7;
     font-size: 12px;

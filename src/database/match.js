@@ -31,7 +31,7 @@ class MatchDb {
      * @param {number} [season] The season number, or void for the latest season.
      * @param {number} [page] The page number, or void for the first page.
      * @param {number} matchesPerPage The number of matches per page.
-     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
+     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
         const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
@@ -42,7 +42,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number, VoD: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number, Damage: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number, Damage: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -61,7 +61,10 @@ class MatchDb {
                 Map,
                 DateClosed,
                 OvertimePeriods,
-                VoD
+                VoD,
+                RatingChange,
+                ChallengingTeamRating,
+                ChallengedTeamRating
             FROM (
                 SELECT *, ROW_NUMBER() OVER (ORDER BY MatchTime DESC) Row
                 FROM vwCompletedChallenge
@@ -148,7 +151,10 @@ class MatchDb {
                 map: row.Map,
                 dateClosed: row.DateClosed,
                 overtimePeriods: row.OvertimePeriods,
-                vod: row.VoD
+                vod: row.VoD,
+                ratingChange: row.RatingChange,
+                challengingTeamRating: row.ChallengingTeamRating,
+                challengedTeamRating: row.ChallengedTeamRating
             })),
             stats: data.recordsets[1].map((row) => ({
                 challengeId: row.ChallengeId,

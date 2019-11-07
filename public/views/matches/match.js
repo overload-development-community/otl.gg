@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}} data The match data.
+     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
@@ -41,10 +41,13 @@ class MatchView {
                     </div>
                     <div class="team1">
                         <a href="/team/${match.challengingTeam.tag}">${match.challengingTeam.name}</a>
+                        <span class="numeric record1">
+                            ${match.challengingTeam.rating ? `${Math.round(match.challengingTeam.rating)},` : ""} ${match.challengingTeam.wins}-${match.challengingTeam.losses}${match.challengingTeam.ties === 0 ? "" : `-${match.challengingTeam.ties}`}
+                        </span>
                     </div>
-                    <div class="numeric record1">
-                        ${match.challengingTeam.rating ? `${Math.round(match.challengingTeam.rating)},` : ""} ${match.challengingTeam.wins}-${match.challengingTeam.losses}${match.challengingTeam.ties === 0 ? "" : `-${match.challengingTeam.ties}`}
-                    </div>
+                    <div class="change1">${match.ratingChange ? /* html */`
+                        <span class="numeric">${Math.round(match.challengingTeamRating - match.ratingChange)}</span> &rarr; <span class="numeric">${Math.round(match.challengingTeamRating)}</span>
+                    ` : ""}</div>
                     <div class="numeric score1 ${match.dateClosed && match.challengingTeamScore > match.challengedTeamScore ? "winner" : ""}">
                         ${match.challengingTeamScore}
                     </div>
@@ -53,10 +56,13 @@ class MatchView {
                     </div>
                     <div class="team2">
                         <a href="/team/${match.challengedTeam.tag}">${match.challengedTeam.name}</a>
+                        <span class="numeric record2">
+                            ${match.challengedTeam.rating ? `${Math.round(match.challengedTeam.rating)},` : ""} ${match.challengedTeam.wins}-${match.challengedTeam.losses}${match.challengedTeam.ties === 0 ? "" : `-${match.challengedTeam.ties}`}
+                        </span>
                     </div>
-                    <div class="numeric record2">
-                        ${match.challengedTeam.rating ? `${Math.round(match.challengedTeam.rating)},` : ""} ${match.challengedTeam.wins}-${match.challengedTeam.losses}${match.challengedTeam.ties === 0 ? "" : `-${match.challengedTeam.ties}`}
-                    </div>
+                    <div class="change2">${match.ratingChange ? /* html */`
+                        <span class="numeric">${Math.round(match.challengedTeamRating + match.ratingChange)}</span> &rarr; <span class="numeric">${Math.round(match.challengedTeamRating)}</span>
+                    ` : ""}</div>
                     <div class="numeric score2 ${match.dateClosed && match.challengedTeamScore > match.challengingTeamScore ? "winner" : ""}">
                         ${match.challengedTeamScore}
                     </div>
