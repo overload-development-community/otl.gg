@@ -75,6 +75,12 @@
 }
 
 #match .record1 {
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#match .change1 {
     grid-column: 1;
     grid-row: 4;
     font-size: 12px;
@@ -82,7 +88,7 @@
     font-style: italic;
 }
 
-#match.unplayed .record1 {
+#match.unplayed .change1 {
     grid-column: 2;
     grid-row: 2 / span 3;
     font-size: 20px;
@@ -118,6 +124,12 @@
 }
 
 #match .record2 {
+    font-size: 12px;
+    color: #999999;
+    font-style: italic;
+}
+
+#match .change2 {
     grid-column: 1;
     grid-row: 7;
     font-size: 12px;
@@ -125,7 +137,7 @@
     font-style: italic;
 }
 
-#match.unplayed .record2 {
+#match.unplayed .change2 {
     grid-column: 2;
     grid-row: 5 / span 3;
     font-size: 20px;

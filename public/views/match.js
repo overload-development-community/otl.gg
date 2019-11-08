@@ -28,12 +28,13 @@ class MatchView {
     static get(data) {
         const {challenge, details, weapons} = data,
             challengingTeamRecord = details.teams.find((team) => team.teamId === challenge.challengingTeam.id),
-            challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id);
+            challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id),
+            unplayed = !challenge.details.challengingTeamScore && !challenge.details.challengedTeamScore;
         let team;
 
         return /* html */`
             <div id="data">
-                <div id="match" ${!challenge.details.challengingTeamScore && !challenge.details.challengedTeamScore ? "class=\"unplayed\"" : ""}>
+                <div id="match" ${unplayed ? "class=\"unplayed\"" : ""}>
                     ${challenge.details.title ? /* html */`
                         <div class="title">${challenge.details.title}</div>
                     ` : ""}
@@ -42,9 +43,22 @@ class MatchView {
                     </div>
                     <div class="team1">
                         <a href="/team/${challenge.challengingTeam.tag}">${challenge.challengingTeam.name}</a>
+                        ${unplayed ? "" : /* html */`
+                            <span class="numeric record1">
+                                ${challengingTeamRecord.rating ? `${Math.round(challengingTeamRecord.rating)},` : ""} ${challengingTeamRecord.wins}-${challengingTeamRecord.losses}${challengingTeamRecord.ties === 0 ? "" : `-${challengingTeamRecord.ties}`}
+                            </span>
+                        `}
                     </div>
-                    <div class="numeric record1">
-                        ${challengingTeamRecord.rating ? `${Math.round(challengingTeamRecord.rating)},` : ""} ${challengingTeamRecord.wins}-${challengingTeamRecord.losses}${challengingTeamRecord.ties === 0 ? "" : `-${challengingTeamRecord.ties}`}
+                    <div class="change1">
+                        ${unplayed ? /* html */ `
+                            <span class="numeric">
+                                ${challengingTeamRecord.rating ? `${Math.round(challengingTeamRecord.rating)},` : ""} ${challengingTeamRecord.wins}-${challengingTeamRecord.losses}${challengingTeamRecord.ties === 0 ? "" : `-${challengingTeamRecord.ties}`}
+                            </span>
+                        ` : /* html */ `
+                            ${challenge.details.ratingChange ? /* html */`
+                                <span class="numeric">${Math.round(challenge.details.challengingTeamRating - challenge.details.ratingChange)}</span> &rarr; <span class="numeric">${Math.round(challenge.details.challengingTeamRating)}</span>
+                            ` : ""}
+                        `}
                     </div>
                     ${challenge.details.challengingTeamScore ? /* html */`
                         <div class="numeric score1 ${challenge.details.dateClosed && challenge.details.challengingTeamScore > challenge.details.challengedTeamScore ? "winner" : ""}">
@@ -56,9 +70,22 @@ class MatchView {
                     </div>
                     <div class="team2">
                         <a href="/team/${challenge.challengedTeam.tag}">${challenge.challengedTeam.name}</a>
+                        ${unplayed ? "" : /* html */`
+                            <span class="numeric record2">
+                                ${challengedTeamRecord.rating ? `${Math.round(challengedTeamRecord.rating)},` : ""} ${challengedTeamRecord.wins}-${challengedTeamRecord.losses}${challengedTeamRecord.ties === 0 ? "" : `-${challengedTeamRecord.ties}`}
+                            </span>
+                        `}
                     </div>
-                    <div class="numeric record2">
-                        ${challengedTeamRecord.rating ? `${Math.round(challengedTeamRecord.rating)},` : ""} ${challengedTeamRecord.wins}-${challengedTeamRecord.losses}${challengedTeamRecord.ties === 0 ? "" : `-${challengedTeamRecord.ties}`}
+                    <div class="change2">
+                        ${unplayed ? /* html */ `
+                            <span class="numeric">
+                                ${challengedTeamRecord.rating ? `${Math.round(challengedTeamRecord.rating)},` : ""} ${challengedTeamRecord.wins}-${challengedTeamRecord.losses}${challengedTeamRecord.ties === 0 ? "" : `-${challengedTeamRecord.ties}`}
+                            </span>
+                        ` : /* html */ `
+                            ${challenge.details.ratingChange ? /* html */`
+                                <span class="numeric">${Math.round(challenge.details.challengedTeamRating + challenge.details.ratingChange)}</span> &rarr; <span class="numeric">${Math.round(challenge.details.challengedTeamRating)}</span>
+                            ` : ""}
+                        `}
                     </div>
                     ${challenge.details.challengedTeamScore ? /* html */`
                         <div class="numeric score2 ${challenge.details.dateClosed && challenge.details.challengedTeamScore > challenge.details.challengingTeamScore ? "winner" : ""}">

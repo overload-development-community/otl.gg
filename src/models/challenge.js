@@ -1367,7 +1367,10 @@ class Challenge {
             dateVoided: details.dateVoided,
             overtimePeriods: details.overtimePeriods,
             homeMaps: details.homeMaps,
-            vod: details.vod
+            vod: details.vod,
+            ratingChange: details.ratingChange,
+            challengingTeamRating: details.challengingTeamRating,
+            challengedTeamRating: details.challengedTeamRating
         };
     }
 
