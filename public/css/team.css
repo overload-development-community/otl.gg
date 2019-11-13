@@ -225,7 +225,7 @@ span.grey {
 
 #matches {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 10px;
     column-gap: 10px;
     padding: 10px;
@@ -237,13 +237,13 @@ span.grey {
     white-space: nowrap;
 }
 
-#matches .score {
-    color: #999999;
+#matches .result {
+    grid-column-end: span 2;
 }
 
-#matches .score.winner {
-    color: white;
-    font-weight: bold;
+#matches .plus {
+    font-size: 12px;
+    width: 6px;
 }
 
 #matches .header.team {
@@ -256,7 +256,7 @@ span.grey {
 
 @media (max-width: 1000px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto;
     }
 
     #matches .team-name {
@@ -270,7 +270,7 @@ span.grey {
 
 @media (max-width: 900px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto;
     }
 
     #matches .header.player {
@@ -284,7 +284,7 @@ span.grey {
 
 @media (max-width: 700px) {
     #matches {
-        grid-template-columns: auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto;
     }
 
     #matches .player {
@@ -294,7 +294,7 @@ span.grey {
 
 @media (max-width: 500px) {
     #matches {
-        grid-template-columns: auto auto auto;
+        grid-template-columns: auto auto auto auto;
     }
 
     #matches .date {

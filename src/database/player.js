@@ -284,7 +284,7 @@ class PlayerDb {
             GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Kills, sb.Assists, sb.Deaths
             ORDER BY c.Map
 
-            SELECT c.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, c.OvertimePeriods, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, CASE WHEN RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange, c.TeamSize, c.MatchTime, c.Map
+            SELECT c.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, c.OvertimePeriods, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange, c.TeamSize, c.MatchTime, c.Map
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END = t.TeamId
