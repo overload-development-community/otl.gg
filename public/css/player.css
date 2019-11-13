@@ -206,11 +206,20 @@
 #matches {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
     font-size: 14px;
+}
+
+#matches .result {
+    grid-column-end: span 2;
+}
+
+#matches .plus {
+    font-size: 12px;
+    width: 6px;
 }
 
 .team {
@@ -219,7 +228,7 @@
 
 @media (max-width: 1000px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
     }
 
     #matches .team-name {
@@ -261,7 +270,7 @@
     }
 
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
     }
 
     #matches .date {
@@ -287,7 +296,7 @@
     }
 
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto;
     }
 
     #matches .map {
