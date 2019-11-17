@@ -4,6 +4,39 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.1.0 - 11/16/2019
+
+### Bot:
+
+* Home team no longer takes postseason games into account when determining the home team.
+* New `!addstats` command to add stats from the tracker.
+* New `!homes (<team>)` command to list your team's homes or a specific team's homes.
+* `!addstat` will now allow players not on the server.
+* `!addstat` will no longer add a player twice to a game.
+* New `!clearstats` command 
+* Games reported to #match-results will now link to the match page on the website.
+* All references to home server have been removed.
+* A player leaving the server who was scheduled to stream a match no longer crashes the challenge's topic.
+
+### Website:
+
+* Damage stats are now displayed on the match page for Season 2.
+* Rating changes are now displayed on various pages throughout the site.
+* Cast page no longer 404s.
+* Cast page only shows a player's season stats.
+* Cast page correctly shows the previous match, regardless if it had stats or not.
+* Team page now includes games without player stats.
+* Players page now shows the most recent team they were on in the season selected.
+* Teams who did not play in a season do not show up in the standings for that season.
+* A player in the top 5 KDA but not on a team will not crash the home page.
+* URLs on the player page now respect name normalization.
+
+### General:
+
+* Redis is now more stable and won't error out the page if it's down.
+* Improved logging.
+* Improved caching.
+
 ## v2.0.3 - 8/10/2019
 
 ### Bot:
