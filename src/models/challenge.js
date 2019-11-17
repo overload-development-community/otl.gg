@@ -577,14 +577,18 @@ class Challenge {
             }
 
             // Add damage stats.
-            await Db.setDamage(this, game.damage.map((stat) => ({
-                team: playerTeam[stat.attacker].team,
-                discordId: map[stat.attacker],
-                opponentTeam: playerTeam[stat.defender].team,
-                opponentDiscordId: map[stat.defender],
-                weapon: stat.weapon,
-                damage: stat.damage
-            })));
+            await Db.setDamage(this, game.damage.map((stat) => {
+                stat.attacker = stat.attacker || stat.defender;
+
+                return {
+                    team: playerTeam[stat.attacker].team,
+                    discordId: map[stat.attacker],
+                    opponentTeam: playerTeam[stat.defender].team,
+                    opponentDiscordId: map[stat.defender],
+                    weapon: stat.weapon,
+                    damage: stat.damage
+                };
+            }));
 
             // Get the new stats and return them.
             challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
