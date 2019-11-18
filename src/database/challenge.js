@@ -1305,11 +1305,15 @@ class ChallengeDb {
         let sql = /* sql */`
             DELETE FROM tblDamage WHERE ChallengeId = @id
         `;
-        const params = {
+
+        /** @type {Object<string, {type: object, value: object}>} */
+        let params = {
             id: {type: Db.INT, value: challenge.id}
         };
 
-        damage.forEach((stat, index) => {
+        for (const stat of damage) {
+            const index = damage.indexOf(stat);
+
             sql = /* sql */`
                 ${sql}
                 INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentTeamId, OpponentPlayerId, Weapon, Damage)
@@ -1326,7 +1330,15 @@ class ChallengeDb {
             params[`opponentDiscord${index}Id`] = {type: Db.VARCHAR(24), value: stat.opponentDiscordId};
             params[`weapon${index}`] = {type: Db.VARCHAR(50), value: stat.weapon};
             params[`damage${index}`] = {type: Db.FLOAT, value: stat.damage};
-        });
+
+            if (Object.keys(params).length > 2000) {
+                await db.query(sql, params);
+                sql = "";
+                params = {
+                    id: {type: Db.INT, value: challenge.id}
+                };
+            }
+        }
 
         await db.query(sql, params);
     }
