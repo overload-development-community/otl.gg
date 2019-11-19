@@ -75,7 +75,7 @@ class Router {
             } else {
                 const classInfo = require(filename);
                 classes[filename] = classInfo.route;
-                if (!classInfo.route.includes) {
+                if (!classInfo.route.include) {
                     classes[filename].methods = Object.getOwnPropertyNames(classInfo).filter((p) => typeof classInfo[p] === "function");
                 }
                 classes[filename].file = filename;
