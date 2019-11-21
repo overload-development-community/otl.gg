@@ -132,7 +132,7 @@ class MatchView {
                 ` : ""}
                 ${details.damage && details.damage.length > 0 ? /* html */`
                     <div id="weapons">
-                        Weapon: ${weapons.map((weapon) => /* html */`
+                        ${weapons.map((weapon) => /* html */`
                             <a class="weapon" href="#" title="${weapon}"><img src="/images/weapons/${weapon.replace(/ /g, "").toLocaleLowerCase()}.png" width="28" height="41" alt="${weapon}" /></a>
                         `).join("")}
                     </div>
