@@ -652,7 +652,7 @@ class PlayerDb {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length >= 8 && {
+        cache = data && data.recordsets && data.recordsets.length === 9 && {
             teamKda: data.recordsets[0].map((row) => ({
                 teamSize: row.TeamSize,
                 teamId: row.TeamId,

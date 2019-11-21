@@ -2028,8 +2028,8 @@ class Commands {
             throw err;
         }
 
-        if (pilotCount >= 8) {
-            await Discord.queue(`Sorry, ${member}, but there is a maximum of 8 pilots per roster, and your team currently has ${pilotCount}, including invited pilots.`, channel);
+        if (pilotCount >= 10) {
+            await Discord.queue(`Sorry, ${member}, but there is a maximum of 10 pilots per roster, and your team currently has ${pilotCount}, including invited pilots.`, channel);
             throw new Warning("Roster is full.");
         }
 
