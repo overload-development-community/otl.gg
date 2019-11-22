@@ -1011,8 +1011,29 @@ class PlayerDb {
                 tblRoster r
                 INNER JOIN tblTeam t ON r.TeamId = t.TeamId
             ) ON p.PlayerId = r.PlayerId
+            INNER JOIN (
+                SELECT s2.PlayerId, CAST(COUNT(s2.StatId) AS FLOAT) / g2.Games PctPlayed
+                FROM tblStat s2
+                INNER JOIN vwCompletedChallenge c2 ON s2.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT ROW_NUMBER() OVER(PARTITION BY s3.PlayerId ORDER BY c3.MatchTime) Row, s3.PlayerId, s3.TeamId
+                    FROM tblStat s3
+                    INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
+                    WHERE c3.Season = @season
+                ) r2 ON s2.PlayerId = r2.PlayerId AND r2.Row = 1
+                INNER JOIN (
+                    SELECT COUNT(DISTINCT s3.ChallengeId) Games, s3.TeamId
+                    FROM tblStat s3
+                    INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
+                    WHERE c3.Season = @season
+                    GROUP BY s3.TeamId
+                ) g2 ON r2.TeamId = g2.TeamId
+                WHERE c2.Season = @season
+                GROUP BY s2.PlayerId, g2.Games                
+            ) g ON p.PlayerId = g.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND c.Season = @season
+                AND g.PctPlayed >= 0.1
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
             ORDER BY CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END DESC
 
