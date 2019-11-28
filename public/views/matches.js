@@ -31,7 +31,7 @@ class MatchesView {
         return /* html */`
             <div id="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                    ${season && season !== seasonNumber || !season && index + 1 !== seasonList.length ? /* html */`<a href="/matches?season=${seasonNumber}">${seasonNumber}</a>` : `<span id="season">${seasonNumber}</span>`}
+                    ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/matches?season=${seasonNumber}">${seasonNumber}</a>` : `<span id="season">${seasonNumber}</span>`}
                 `).join(" | ")}
             </div>
             <div id="matches">
