@@ -46,10 +46,10 @@ class PlayersView {
             ` : ""}
             <div id="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                    ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/players?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}${all ? "&all=true" : ""}">${seasonNumber}</a>` : seasonNumber}
-                `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/players?season=0${postseason ? "&postseason=yes" : ""}${all ? "&all=true" : ""}">All Time</a>`}<br />
-                <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/players?postseason=yes${isNaN(season) ? "" : `&season=${season}${all ? "&all=true" : ""}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/players${isNaN(season) ? "" : `?season=${season}${all ? "&all=true" : ""}`}">No</a>` : "No"}<br />
-                <span class="grey">Players:</span> ${all ? /* html */`<a href="/players?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Active</a>` : "Active"} | ${all ? "All" : `<a href="/players?postseason=yes${isNaN(season) ? "" : `&season=${season}&all=true`}">All</a>`}
+                    ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/players?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
+                `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/players?season=0${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">All Time</a>`}<br />
+                <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/players?postseason=yes${isNaN(season) ? "" : `&season=${season}`}${all ? "&all=yes" : ""}">Yes</a>`} | ${postseason ? /* html */`<a href="/players${isNaN(season) ? `${all ? "?all=yes" : ""}` : `?season=${season}${all ? "&all=yes" : ""}`}">No</a>` : "No"}<br />
+                <span class="grey">Players:</span> ${all ? /* html */`<a href="/players${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Active</a>` : "Active"} | ${all ? "All" : `<a href="/players?all=yes${isNaN(season) ? "" : `&season=${season}`}${postseason ? "&postseason=yes" : ""}">All</a>`}
             </div>
             <div class="section">Player Stats</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>

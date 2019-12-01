@@ -875,16 +875,16 @@ class PlayerDb {
                         SELECT ROW_NUMBER() OVER(PARTITION BY s3.PlayerId ORDER BY c3.MatchTime) Row, s3.PlayerId, s3.TeamId
                         FROM tblStat s3
                         INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
-                        WHERE c3.Season = @season
+                        WHERE (@season = 0 OR c3.Season = @season)
                     ) r2 ON s2.PlayerId = r2.PlayerId AND r2.Row = 1
                     INNER JOIN (
                         SELECT COUNT(DISTINCT s3.ChallengeId) Games, s3.TeamId
                         FROM tblStat s3
                         INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
-                        WHERE c3.Season = @season
+                        WHERE (@season = 0 OR c3.Season = @season)
                         GROUP BY s3.TeamId
                     ) g2 ON r2.TeamId = g2.TeamId
-                    WHERE c2.Season = @season
+                    WHERE (@season = 0 OR c2.Season = @season)
                     GROUP BY s2.PlayerId, g2.Games                
                 ) g on p.PlayerId = g.PlayerId
             `}

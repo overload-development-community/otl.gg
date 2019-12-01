@@ -63,6 +63,7 @@ class Players {
                 averages,
                 season,
                 postseason,
+                all,
                 teams
             }),
             req
