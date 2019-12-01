@@ -2379,7 +2379,13 @@ class Challenge {
             throw new Exception("There was a database error changing the title for a challenge.", err);
         }
 
-        [this.details.blueTeam, this.details.orangeTeam] = [this.details.orangeTeam, this.details.blueTeam];
+        try {
+            [this.details.blueTeam, this.details.orangeTeam] = [this.details.orangeTeam, this.details.blueTeam];
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error swapping colors for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //  #     #     #    ##
