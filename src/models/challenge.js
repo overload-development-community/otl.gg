@@ -2357,6 +2357,31 @@ class Challenge {
         }
     }
 
+    //                           ##         ##
+    //                          #  #         #
+    //  ###   #  #   ###  ###   #      ##    #     ##   ###    ###
+    // ##     #  #  #  #  #  #  #     #  #   #    #  #  #  #  ##
+    //   ##   ####  # ##  #  #  #  #  #  #   #    #  #  #       ##
+    // ###    ####   # #  ###    ##    ##   ###    ##   #     ###
+    //                    #
+    /**
+     * Swaps the colors of a challenge.
+     * @returns {Promise} A promise that resolves when the teams' colors have been swapped.
+     */
+    async swapColors() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.swapColors(this);
+        } catch (err) {
+            throw new Exception("There was a database error changing the title for a challenge.", err);
+        }
+
+        [this.details.blueTeam, this.details.orangeTeam] = [this.details.orangeTeam, this.details.blueTeam];
+    }
+
     //  #     #     #    ##
     //  #           #     #
     // ###   ##    ###    #     ##

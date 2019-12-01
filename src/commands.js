@@ -5274,6 +5274,50 @@ class Commands {
         return true;
     }
 
+    //                                      ##
+    //                                       #
+    //  ###   #  #   ###  ###    ##    ##    #     ##   ###    ###
+    // ##     #  #  #  #  #  #  #     #  #   #    #  #  #  #  ##
+    //   ##   ####  # ##  #  #  #     #  #   #    #  #  #       ##
+    // ###    ####   # #  ###    ##    ##   ###    ##   #     ###
+    //                    #
+    /**
+     * Swaps the colors played by both teams.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async swapcolors(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!swapcolors` command by itself to swap the colors of the two teams that played.", channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+
+        try {
+            await challenge.swapColors();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member} has swapped the colors for this match.  **${challenge.details.blueTeam}** is now the blue team, and **${challenge.details.orangeTeam}** is now the orange team.`, challenge.channel);
+
+        return true;
+    }
+
     //  #     #     #    ##
     //  #           #     #
     // ###   ##    ###    #     ##
