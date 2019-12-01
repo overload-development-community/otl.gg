@@ -29,7 +29,7 @@ class MatchView {
         const {challenge, details, weapons} = data,
             challengingTeamRecord = details.teams.find((team) => team.teamId === challenge.challengingTeam.id),
             challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id),
-            unplayed = challenge.details.challengingTeamScore !== null && challenge.details.challengedTeamScore !== null;
+            unplayed = challenge.details.challengingTeamScore === null || challenge.details.challengedTeamScore === null;
         let team;
 
         return /* html */`
