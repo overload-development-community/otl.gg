@@ -5304,6 +5304,7 @@ class Commands {
             return false;
         }
 
+        await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         try {
@@ -5313,7 +5314,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member} has swapped the colors for this match.  **${challenge.details.blueTeam}** is now the blue team, and **${challenge.details.orangeTeam}** is now the orange team.`, challenge.channel);
+        await Discord.queue(`${member} has swapped the colors for this match.  **${challenge.details.blueTeam.tag}** is now the blue team, and **${challenge.details.orangeTeam.tag}** is now the orange team.`, challenge.channel);
 
         return true;
     }
