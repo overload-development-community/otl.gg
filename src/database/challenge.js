@@ -1752,6 +1752,29 @@ class ChallengeDb {
         });
     }
 
+    //                           ##         ##
+    //                          #  #         #
+    //  ###   #  #   ###  ###   #      ##    #     ##   ###    ###
+    // ##     #  #  #  #  #  #  #     #  #   #    #  #  #  #  ##
+    //   ##   ####  # ##  #  #  #  #  #  #   #    #  #  #       ##
+    // ###    ####   # #  ###    ##    ##   ###    ##   #     ###
+    //                    #
+    /**
+     * Swaps the colors of a challenge.
+     * @param {Challenge} challenge The challenge to swap colors for.
+     * @returns {Promise} A promise that resolves when the teams' colors have been swapped.
+     */
+    static async swapColors(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET
+                BlueTeamId = OrangeTeamId,
+                OrangeTeamId = BlueTeamId
+            WHERE ChallengeId = @id
+        `, {id: {type: Db.INT, value: challenge.id}});
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+    }
+
     //                          #       #
     //                                  #
     // #  #  ###   # #    ##   ##     ###

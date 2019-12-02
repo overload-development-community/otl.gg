@@ -49,6 +49,9 @@ class NewTeamDb {
 
             INSERT INTO tblNewTeam (PlayerId) VALUES (@playerId)
 
+            DELETE FROM tblRequest WHERE PlayerId = @playerId
+            DELETE FROM tblInvite WHERE PlayerId = @playerId
+
             SELECT SCOPE_IDENTITY() NewTeamId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},

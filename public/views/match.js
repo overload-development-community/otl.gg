@@ -29,7 +29,7 @@ class MatchView {
         const {challenge, details, weapons} = data,
             challengingTeamRecord = details.teams.find((team) => team.teamId === challenge.challengingTeam.id),
             challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id),
-            unplayed = !challenge.details.challengingTeamScore && !challenge.details.challengedTeamScore;
+            unplayed = challenge.details.challengingTeamScore === null || challenge.details.challengedTeamScore === null;
         let team;
 
         return /* html */`
@@ -60,11 +60,11 @@ class MatchView {
                             ` : ""}
                         `}
                     </div>
-                    ${challenge.details.challengingTeamScore ? /* html */`
+                    ${challenge.details.challengingTeamScore === null ? "" : /* html */`
                         <div class="numeric score1 ${challenge.details.dateClosed && challenge.details.challengingTeamScore > challenge.details.challengedTeamScore ? "winner" : ""}">
                             ${challenge.details.challengingTeamScore}
                         </div>
-                    ` : ""}
+                    `}
                     <div class="tag2">
                         <div class="diamond${challenge.challengedTeam.role && challenge.challengedTeam.role.hexColor ? "" : "-empty"}" ${challenge.challengedTeam.role && challenge.challengedTeam.role.hexColor ? `style="background-color: ${challenge.challengedTeam.role.hexColor};"` : ""}></div> <a href="/team/${challenge.challengedTeam.tag}">${challenge.challengedTeam.tag}</a>
                     </div>
@@ -87,11 +87,11 @@ class MatchView {
                             ` : ""}
                         `}
                     </div>
-                    ${challenge.details.challengedTeamScore ? /* html */`
+                    ${challenge.details.challengedTeamScore === null ? "" : /* html */`
                         <div class="numeric score2 ${challenge.details.dateClosed && challenge.details.challengedTeamScore > challenge.details.challengingTeamScore ? "winner" : ""}">
                             ${challenge.details.challengedTeamScore}
                         </div>
-                    ` : ""}
+                    `}
                     ${challenge.details.map ? /* html */`
                         <div class="map">
                             ${challenge.details.map}${challenge.details.overtimePeriods > 0 ? `, ${challenge.details.overtimePeriods > 1 ? challenge.details.overtimePeriods : ""}OT` : ""}
@@ -132,7 +132,7 @@ class MatchView {
                 ` : ""}
                 ${details.damage && details.damage.length > 0 ? /* html */`
                     <div id="weapons">
-                        Weapon: ${weapons.map((weapon) => /* html */`
+                        ${weapons.map((weapon) => /* html */`
                             <a class="weapon" href="#" title="${weapon}"><img src="/images/weapons/${weapon.replace(/ /g, "").toLocaleLowerCase()}.png" width="28" height="41" alt="${weapon}" /></a>
                         `).join("")}
                     </div>

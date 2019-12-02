@@ -249,7 +249,6 @@
 #weapons,
 #weapons a,
 #weapons a img {
-    height: 41px;
     vertical-align: middle;
 }
     
@@ -257,6 +256,7 @@
     padding: 10px;
     grid-template-columns: max-content;
     color: white;
+    font-size: 14px;
 }
 
 #damage #grid .table {

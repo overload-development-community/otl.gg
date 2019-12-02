@@ -4,6 +4,26 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v2.1.1 - 12/1/2019
+
+### Bot:
+
+* Increased maximum team roster size to 10.
+* New `!swapcolors` admin command for cases where teams played the wrong color for a match.
+* `!stats` now works for players with URL entities in their name.
+* Fixed `!addstats` to not crash when there's no attacker on a damage stat.
+* When a team is founded, the team founder is removed from other teams' invites and requests.
+
+### Website:
+
+* Top KDA on the home page now requires players have played in 10% of their teams' games.
+* Players page now defaults to active players, which means players who have played in 10% of their teams' games.
+  * This 10% value will be monitored and adjusted as necessary.
+* Rating changes on team page now show the correct operator for all games.
+* Season selectors across the site have been fixed.
+* Match page no longer shows an empty area instead of a score when the score is 0.
+* Match page loads better on mobile.
+
 ## v2.1.0 - 11/16/2019
 
 ### Bot:

@@ -42,7 +42,8 @@ class Players {
             seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            stats = await Player.getSeasonStats(season, postseason),
+            all = !!req.query.all,
+            stats = await Player.getSeasonStats(season, postseason, all),
             averages = {
                 kda: stats.reduce((acc, cur) => acc + cur.kda, 0) / stats.length,
                 kills: stats.reduce((acc, cur) => acc + cur.avgKills, 0) / stats.length,
@@ -62,6 +63,7 @@ class Players {
                 averages,
                 season,
                 postseason,
+                all,
                 teams
             }),
             req

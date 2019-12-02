@@ -34,7 +34,7 @@ class StandingsView {
         return /* html */`
             <div id="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                    ${season && season !== seasonNumber || index + 1 !== seasonList.length ? /* html */`<a href="/standings?season=${seasonNumber}${records ? `&records=${records}` : ""}${map ? `&map=${map}` : ""}">${seasonNumber}</a>` : seasonNumber}
+                    ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/standings?season=${seasonNumber}${records ? `&records=${records}` : ""}${map ? `&map=${map}` : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")}<br />
                 <span class="grey">Record Splits:</span> ${recordsTitle === "Map Records" ? "Map Records" : /* html */`<a href="/standings?records=map${season ? `&season=${season}` : ""}${map ? `&map=${map}` : ""}">Map Records</a>`} | ${recordsTitle === "Team Size Records" ? "Team Size" : /* html */`<a href="/standings?records=size${season ? `&season=${season}` : ""}${map ? `&map=${map}` : ""}">Team Size</a>`}<br />
                 ${maps.length > 0 ? /* html */`

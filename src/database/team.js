@@ -430,7 +430,7 @@ class TeamDb {
                 tc2.Name ChallengedTeamName,
                 tc2.Tag ChallengedTeamTag,
                 c.ChallengedTeamScore,
-                CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange,
+                CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = @teamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange,
                 c.Map,
                 c.MatchTime,
                 s.TeamId StatTeamId,

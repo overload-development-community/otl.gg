@@ -87,11 +87,12 @@ class Player {
      * Gets player stats for the specified season.
      * @param {number} [season] The season number, or void for the latest season.
      * @param {boolean} postseason Whether to get stats for the postseason.
+     * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
-    static async getSeasonStats(season, postseason) {
+    static async getSeasonStats(season, postseason, all) {
         try {
-            return await Db.getSeasonStats(season, postseason);
+            return await Db.getSeasonStats(season, postseason, all);
         } catch (err) {
             throw new Exception("There was a database error getting season stats for a player.", err);
         }
