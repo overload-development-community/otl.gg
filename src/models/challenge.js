@@ -527,7 +527,7 @@ class Challenge {
 
         for (const player of game.players) {
             const member = Discord.findGuildMemberById(map[player.name]) || await Discord.findUserById(map[player.name]),
-                team = player.team === "BLUE" ? this.details.blueTeam : this.details.orangeTeam;
+                team = ["BLUE", "BLEU", "BLAU", "AZUL"].indexOf(player.team) === -1 ? this.details.orangeTeam : this.details.blueTeam;
 
             if (team.id === this.challengingTeam.id) {
                 challengingTeamMembers++;
@@ -546,6 +546,10 @@ class Challenge {
 
         let challengingTeamStats = await this.getStatsForTeam(this.challengingTeam),
             challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
+
+        // Fix colors for known localized team names.
+        game.teamScore.BLUE = game.teamScore.BLUE || game.teamScore.BLEU || game.teamScore.BLAU || game.teamScore.AZUL;
+        game.teamScore.ORANGE = game.teamScore.ORANGE || game.teamScore.NARANJA;
 
         if (challengingTeamStats.length === 0 && challengedTeamStats.length === 0) {
             // Add all the stats to the database.
