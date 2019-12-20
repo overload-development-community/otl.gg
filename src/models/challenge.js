@@ -1427,7 +1427,7 @@ class Challenge {
     //  ###
     /**
      * Gets the team details for a challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     async getTeamDetails() {
         let details;

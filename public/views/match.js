@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[], gameTypeName: string}} data The match data.
+     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[], gameTypeName: string}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
@@ -109,9 +109,15 @@ class MatchView {
                     </div>
                 </div>
                 ${details.stats && details.stats.length > 0 ? /* html */`
-                    <div id="stats">
+                    <div id="stats" class="stats-${challenge.details.gameType.toLowerCase()}">
                         <div class="header">Team</div>
                         <div class="header name">Name</div>
+                        ${challenge.details.gameType === "CTF" ? /* html */`
+                            <div class="header">Caps</div>
+                            <div class="header">Pickups</div>
+                            <div class="header">CKs</div>
+                            <div class="header">Returns</div>
+                        ` : ""}
                         <div class="header">KDA</div>
                         <div class="header">Kills</div>
                         <div class="header">Assists</div>
@@ -124,10 +130,16 @@ class MatchView {
                                 <a href="https://twitch.tv/${encodeURIComponent(s.twitchName)}"><div class="twitch-image"></div></a>
                             ` : ""}</div>
                             <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(s.name)}">${MatchView.Common.htmlEncode(s.name)}</a></div>
-                            <div class="numeric kda">${((s.kills + s.assists) / Math.max(s.deaths, 1)).toFixed(3)}</div>
-                            <div class="numeric kills">${s.kills}</div>
-                            <div class="numeric assists">${s.assists}</div>
-                            <div class="numeric deaths">${s.deaths}</div>
+                            ${challenge.details.gameType === "CTF" ? /* html */`
+                                <div class="numeric">${s.captures}</div>
+                                <div class="numeric">${s.pickups}</div>
+                                <div class="numeric">${s.carrierKills}</div>
+                                <div class="numeric">${s.returns}</div>
+                            ` : ""}
+                            <div class="numeric">${((s.kills + s.assists) / Math.max(s.deaths, 1)).toFixed(3)}</div>
+                            <div class="numeric">${s.kills}</div>
+                            <div class="numeric">${s.assists}</div>
+                            <div class="numeric">${s.deaths}</div>
                         `).join("")}
                     </div>
                 ` : ""}

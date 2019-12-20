@@ -792,7 +792,7 @@ class TeamDb {
         let cache = await Cache.get(key);
 
         if (cache) {
-//            return cache;
+            return cache;
         }
 
         /**

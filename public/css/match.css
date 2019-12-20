@@ -202,12 +202,16 @@
 
 #stats {
     display: grid;
-    grid-template-columns: auto 18px auto auto auto auto auto;
     color: white;
     font-size: 14px;
     margin-top: 5px;
     max-width: 500px;
     width: 100%;
+    grid-template-columns: auto 18px auto auto auto auto auto;
+}
+
+#stats.stats-ctf {
+    grid-template-columns: auto 18px auto auto auto auto auto auto auto auto auto;
 }
 
 #stats .header {
