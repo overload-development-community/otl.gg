@@ -96,7 +96,7 @@ class HomeView {
                         <div class="header">Pos</div>
                         <div class="header">Team</div>
                         <div class="header">Name</div>
-                        <div class="header">KDA</div>
+                        <div class="header">TA KDA</div>
                         ${stats.map((s, index) => /* html */`
                             <div class="numeric pos">${index + 1}</div>
                             <div class="tag">${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)) === void 0 ? "" : /* html */`

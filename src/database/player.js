@@ -1060,6 +1060,7 @@ class PlayerDb {
             ) g ON p.PlayerId = g.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND c.Season = @season
+                AND c.GameType = 'TA'
                 AND g.PctPlayed >= 0.1
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
             ORDER BY CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END DESC
