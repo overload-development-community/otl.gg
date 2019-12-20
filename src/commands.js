@@ -4661,7 +4661,7 @@ class Commands {
 
         const gameType = message.toUpperCase();
 
-        if (!gameType || ["TA", "CTF"].indexOf(gameType) === -1) {
+        if (!gameType || ["TA", "CTF", "MB"].indexOf(gameType) === -1) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To force a game type, use the \`!forcetype <type>\` command, for example, \`!forcetype CTF\`.`, channel);
             throw new Warning("Missing game type.");
         }

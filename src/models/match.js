@@ -30,10 +30,10 @@ class Match {
      * Gets paginated matches for a season.
      * @param {number} [season] The season number.
      * @param {number} [page] The page to get.
-     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[]>} A promise that resolves with the completed matches.
+     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[]>} A promise that resolves with the completed matches.
      */
     static async getBySeason(season, page) {
-        /** @type {{challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number}[]} */
+        /** @type {{challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}[]} */
         let completed;
 
         /** @type {{challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, damage: number}[]} */
@@ -92,7 +92,8 @@ class Match {
                     vod: match.vod,
                     ratingChange: match.ratingChange,
                     challengingTeamRating: match.challengingTeamRating,
-                    challengedTeamRating: match.challengedTeamRating
+                    challengedTeamRating: match.challengedTeamRating,
+                    gameType: match.gameType
                 },
                 stats: stats.filter((stat) => stat.challengeId === match.challengeId).map((stat) => ({
                     teamId: stat.teamId,
@@ -118,7 +119,7 @@ class Match {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
         let matches, standings, previousStandings;
@@ -137,7 +138,8 @@ class Match {
             matchTime: match.matchTime,
             map: match.map,
             dateClosed: match.dateClosed,
-            overtimePeriods: match.overtimePeriods
+            overtimePeriods: match.overtimePeriods,
+            gameType: match.gameType
         }));
     }
 
@@ -173,7 +175,7 @@ class Match {
     /**
      * Gets the pending matches, along with the number of completed matches for the season.
      * @param {number} [season] The season number.
-     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], completed: number}>} A promise that resolves with the season's matches.
+     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number, gameType: string}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getUpcomingAndCompletedCount(season) {
         let matches, standings, previousStandings, completed;
@@ -224,7 +226,8 @@ class Match {
                     matchTime: match.matchTime,
                     map: match.map,
                     twitchName: match.twitchName,
-                    timeRemaining: match.matchTime ? match.matchTime.getTime() - new Date().getTime() : void 0
+                    timeRemaining: match.matchTime ? match.matchTime.getTime() - new Date().getTime() : void 0,
+                    gameType: match.gameType
                 };
             }),
             completed

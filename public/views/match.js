@@ -22,11 +22,11 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[]}} data The match data.
+     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[], gameTypeName: string}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {
-        const {challenge, details, weapons} = data,
+        const {challenge, details, weapons, gameTypeName} = data,
             challengingTeamRecord = details.teams.find((team) => team.teamId === challenge.challengingTeam.id),
             challengedTeamRecord = details.teams.find((team) => team.teamId === challenge.challengedTeam.id),
             unplayed = challenge.details.challengingTeamScore === null || challenge.details.challengedTeamScore === null;
@@ -92,6 +92,7 @@ class MatchView {
                             ${challenge.details.challengedTeamScore}
                         </div>
                     `}
+                    <div class="game-type game-type-${challenge.details.gameType.toLowerCase()}"></div>
                     ${challenge.details.map ? /* html */`
                         <div class="map">
                             ${challenge.details.map}${challenge.details.overtimePeriods > 0 ? `, ${challenge.details.overtimePeriods > 1 ? challenge.details.overtimePeriods : ""}OT` : ""}
@@ -164,14 +165,8 @@ class MatchView {
                     <div class="tag">${(team = challenge.details.blueTeam) === null ? "" : /* html */`
                         <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                     `}</div>
-                    <div>Home map team:</div>
-                    <div class="tag">
-                        ${challenge.details.usingHomeMapTeam ? /* html */`
-                            ${(team = challenge.details.homeMapTeam) === null ? "" : /* html */`
-                                <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                            `}
-                        ` : "Neutral"}
-                    </div>
+                    <div>Game type:</div>
+                    <div>${gameTypeName}</div>
                     <div>Caster:</div>
                     <div>${challenge.details.caster ? MatchView.Common.htmlEncode(challenge.details.caster.displayName) : "None"}</div>
                     <div>Orange team:</div>
@@ -180,8 +175,14 @@ class MatchView {
                             <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                         `}
                     </div>
-                    <div></div>
-                    <div></div>
+                    <div>Home map team:</div>
+                    <div class="tag">
+                        ${challenge.details.usingHomeMapTeam ? /* html */`
+                            ${(team = challenge.details.homeMapTeam) === null ? "" : /* html */`
+                                <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                            `}
+                        ` : "Neutral"}
+                    </div>
                     <div>VoD:</div>
                     <div>${challenge.details.vod ? /* html */`
                         <a href="${encodeURI(challenge.details.vod)}" target="_blank">${MatchView.Common.htmlEncode(challenge.details.vod)}</a>
@@ -196,6 +197,9 @@ class MatchView {
     }
 }
 
+/**
+ * @type {typeof import("../../web/includes/common")}
+ */
 // @ts-ignore
 MatchView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

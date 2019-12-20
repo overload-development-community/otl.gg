@@ -46,6 +46,9 @@ class LinksView {
     }
 }
 
+/**
+ * @type {typeof import("../../web/includes/common")}
+ */
 // @ts-ignore
 LinksView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

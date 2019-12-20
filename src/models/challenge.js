@@ -422,7 +422,7 @@ class Challenge {
      * @returns {string} The game type name.
      */
     static getGameTypeName(gameType) {
-        return {"TA": "Team Anarchy", "CTF": "Capture the Flag"}[gameType];
+        return {"TA": "Team Anarchy", "CTF": "Capture the Flag", "MB": "Monsterball"}[gameType];
     }
 
     //       #                             ##

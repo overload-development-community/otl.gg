@@ -10,6 +10,7 @@
     color: white;
     grid-column-gap: 5px;
     column-gap: 5px;
+    grid-auto-columns: auto auto max-content;
 }
 
 #matches .diamond {
@@ -50,11 +51,13 @@
 #matches .team1 {
     grid-column: 1;
     grid-row: 1;
+    align-self: center;
 }
 
 #matches .team2 {
     grid-column: 1;
     grid-row: 2;
+    align-self: center;
 }
 
 #matches .score1, #matches .record1 {
@@ -62,6 +65,7 @@
     grid-row: 1;
     text-align: right;
     color: #999999;
+    align-self: center;
 }
 
 #matches .score2, #matches .record2 {
@@ -69,20 +73,41 @@
     grid-row: 2;
     text-align: right;
     color: #999999;
+    align-self: center;
 }
 
 #matches .record1, #matches .record2 {
     font-style: italic;
 }
 
+#matches .game-type {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    width: 32px;
+    height: 32px;
+    background-size: 32px 32px;
+}
+
+#matches .game-type-ta {
+    background-image: url('/images/ta.png');
+}
+
+#matches .game-type-ctf {
+    background-image: url('/images/ctf.png');
+}
+
+#matches .game-type-mb {
+    background-image: url('/images/mb.png');
+}
+
 #matches .date {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 3;
     text-align: center;
 }
 
 #matches .map {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 4;
     text-align: center;
 }

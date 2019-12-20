@@ -24,7 +24,7 @@ class HomeView {
     //  ###
     /**
      * Gets the rendered home template.
-     * @param {{standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[], stats: {playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[], matches: {id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}[], news: DiscordJs.Message[], teams: Teams}} data The home page data.
+     * @param {{standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[], stats: {playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[], matches: {id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], news: DiscordJs.Message[], teams: Teams}} data The home page data.
      * @returns {string} An HTML string of the home page.
      */
     static get(data) {
@@ -60,6 +60,7 @@ class HomeView {
                                 ${m.challengedTeam.rating ? `${Math.round(m.challengedTeam.rating)},` : ""} ${m.challengedTeam.wins}-${m.challengedTeam.losses}${m.challengedTeam.ties === 0 ? "" : `-${m.challengedTeam.ties}`}
                             </div>
                         `}
+                        <div class="game-type game-type-${m.gameType.toLowerCase()}"></div>
                         <div class="date">
                             ${m.matchTime ? /* html */`
                                 <a href="/match/${m.id}/${m.challengingTeam.tag}/${m.challengedTeam.tag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a>
@@ -120,6 +121,9 @@ class HomeView {
     }
 }
 
+/**
+ * @type {typeof import("../../web/includes/common")}
+ */
 // @ts-ignore
 HomeView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

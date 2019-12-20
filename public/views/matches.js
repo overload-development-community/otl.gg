@@ -22,7 +22,7 @@ class MatchesView {
     //  ###
     /**
      * Gets the matches template.
-     * @param {{seasonList: number[], season: number, pending: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number}[], totalCompleted: number, completed: {match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[], matchesPerPage: number}} data The matches data.
+     * @param {{seasonList: number[], season: number, pending: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number, gameType: string}[], totalCompleted: number, completed: {match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, kills: number, assists: number, deaths: number, damage: number}[]}[], matchesPerPage: number}} data The matches data.
      * @returns {string} An HTML string of the matches.
      */
     static get(data) {
@@ -61,6 +61,8 @@ class MatchesView {
                                     </div>
                                     <div class="numeric record2">
                                         ${m.challengedTeam.rating ? `${Math.round(m.challengedTeam.rating)},` : ""} ${m.challengedTeam.wins}-${m.challengedTeam.losses}${m.challengedTeam.ties === 0 ? "" : `-${m.challengedTeam.ties}`}
+                                    </div>
+                                    <div class="game-type game-type-${m.gameType.toLowerCase()}"></div>
                                     </div>
                                     ${m.map ? /* html */`
                                         <div class="map">
@@ -119,8 +121,15 @@ class MatchesView {
     }
 }
 
+/**
+ * @type {typeof import("../../web/includes/common")}
+ */
 // @ts-ignore
 MatchesView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
+
+/**
+ * @type {typeof import("./matches/match")}
+ */
 // @ts-ignore
 MatchesView.MatchView = typeof MatchView === "undefined" ? require("./matches/match") : MatchView; // eslint-disable-line no-undef
 
