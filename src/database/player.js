@@ -824,10 +824,11 @@ class PlayerDb {
      * Gets player stats for the specified season.
      * @param {number} [season] The season number, or void for the latest season.
      * @param {boolean} postseason Whether to get stats for the postseason.
+     * @param {string} gameType The game type to get season stats for.
      * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
-     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
      */
-    static async getSeasonStats(season, postseason, all) {
+    static async getSeasonStats(season, postseason, gameType, all) {
         const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}:${all ? "all" : "active"}`;
         let cache = await Cache.get(key);
 
@@ -836,7 +837,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -852,6 +853,10 @@ class PlayerDb {
                 t.Tag,
                 t.Disbanded,
                 t.Locked,
+                SUM(s.Captures) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgCaptures,
+                SUM(s.Pickups) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgPickups,
+                SUM(s.CarrierKills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgCarrierKills,
+                SUM(s.Retrurns) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgReturns,
                 SUM(s.Kills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgKills,
                 SUM(s.Assists) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgAssists,
                 SUM(s.Deaths) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDeaths,
@@ -877,6 +882,8 @@ class PlayerDb {
                         FROM tblStat s3
                         INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
                         WHERE (@season = 0 OR c3.Season = @season)
+                            AND c3.Postseason = @postseason
+                            AND c3.GameType = @gameType
                     ) r2 ON s2.PlayerId = r2.PlayerId AND r2.Row = 1
                     INNER JOIN (
                         SELECT COUNT(DISTINCT s3.ChallengeId) Games, s3.TeamId
@@ -886,6 +893,8 @@ class PlayerDb {
                         GROUP BY s3.TeamId
                     ) g2 ON r2.TeamId = g2.TeamId
                     WHERE (@season = 0 OR c2.Season = @season)
+                        AND c2.Postseason = @postseason
+                        AND c2.GameType = @gameType
                     GROUP BY s2.PlayerId, g2.Games                
                 ) g on p.PlayerId = g.PlayerId
             `}
@@ -893,6 +902,7 @@ class PlayerDb {
             WHERE c.MatchTime IS NOT NULL
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
+                AND c.GameType = @gameType
                 AND ls.Row = 1
                 ${all ? "" : /* sql */`
                     AND g.PctPlayed >= 0.1
@@ -902,7 +912,8 @@ class PlayerDb {
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
-            postseason: {type: Db.BIT, value: postseason}
+            postseason: {type: Db.BIT, value: postseason},
+            gameType: {type: Db.VARCHAR(3), value: gameType}
         });
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             playerId: row.PlayerId,
@@ -912,6 +923,10 @@ class PlayerDb {
             tag: row.Tag,
             disbanded: row.Disbanded,
             locked: row.Locked,
+            avgCaptures: row.AvgCaptures,
+            avgPickups: row.AvgPickups,
+            avgCarrierKills: row.AvgCarrierKills,
+            avgReturns: row.AvgReturns,
             avgKills: row.AvgKills,
             avgAssists: row.AvgAssists,
             avgDeaths: row.AvgDeaths,
