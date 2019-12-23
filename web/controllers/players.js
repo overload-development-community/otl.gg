@@ -1,6 +1,7 @@
 const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
+    Challenge = require("../../src/models/challenge"),
     Discord = require("../../src/discord"),
     Player = require("../../src/models/player"),
     PlayersView = require("../../public/views/players"),
@@ -46,10 +47,16 @@ class Players {
             all = !!req.query.all,
             stats = await Player.getSeasonStats(season, postseason, gameType, all),
             averages = {
+                captures: stats.reduce((acc, cur) => acc + cur.avgCaptures, 0) / stats.length,
+                pickups: stats.reduce((acc, cur) => acc + cur.avgPickups, 0) / stats.length,
+                carrierKills: stats.reduce((acc, cur) => acc + cur.avgCarrierKills, 0) / stats.length,
+                returns: stats.reduce((acc, cur) => acc + cur.avgReturns, 0) / stats.length,
                 kda: stats.reduce((acc, cur) => acc + cur.kda, 0) / stats.length,
                 kills: stats.reduce((acc, cur) => acc + cur.avgKills, 0) / stats.length,
                 assists: stats.reduce((acc, cur) => acc + cur.avgAssists, 0) / stats.length,
-                deaths: stats.reduce((acc, cur) => acc + cur.avgDeaths, 0) / stats.length
+                deaths: stats.reduce((acc, cur) => acc + cur.avgDeaths, 0) / stats.length,
+                damagePerGame: stats.reduce((acc, cur) => acc + cur.avgDamagePerGame, 0) / stats.length,
+                damagePerDeath: stats.reduce((acc, cur) => acc + cur.avgDamagePerDeath, 0) / stats.length
             },
             teams = new Teams();
 
@@ -65,6 +72,7 @@ class Players {
                 season,
                 postseason,
                 gameType,
+                gameTypeName: Challenge.getGameTypeName(gameType),
                 all,
                 teams
             }),

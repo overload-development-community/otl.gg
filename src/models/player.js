@@ -89,7 +89,7 @@ class Player {
      * @param {boolean} postseason Whether to get stats for the postseason.
      * @param {string} gameType The game type to get season stats for.
      * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
-     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason, gameType, all) {
         try {

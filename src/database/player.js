@@ -826,10 +826,13 @@ class PlayerDb {
      * @param {boolean} postseason Whether to get stats for the postseason.
      * @param {string} gameType The game type to get season stats for.
      * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
-     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason, gameType, all) {
         const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}:${all ? "all" : "active"}`;
+        /**
+         * @type {{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]}
+         */
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -837,7 +840,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, KDA: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, AvgDamagePerGame: number, AvgDamagePerDeath: number, KDA: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -856,14 +859,21 @@ class PlayerDb {
                 SUM(s.Captures) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgCaptures,
                 SUM(s.Pickups) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgPickups,
                 SUM(s.CarrierKills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgCarrierKills,
-                SUM(s.Retrurns) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgReturns,
+                SUM(s.Returns) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgReturns,
                 SUM(s.Kills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgKills,
                 SUM(s.Assists) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgAssists,
                 SUM(s.Deaths) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDeaths,
+                SUM(d.Damage) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDamagePerGame,
+                SUM(d.Damage) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END AvgDamagePerDeath,
                 CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END KDA
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            INNER JOIN (
+                SELECT ChallengeId, PlayerId, SUM(Damage) Damage
+                FROM tblDamage
+                GROUP BY ChallengeId, PlayerId                
+            ) d ON c.ChallengeId = d.ChallengeId AND p.PlayerId = d.PlayerId
             INNER JOIN (
                 SELECT ls.PlayerId, ls.TeamId, RANK() OVER(PARTITION BY ls.PlayerId ORDER BY lc.MatchTime DESC) Row
                 FROM vwCompletedChallenge lc
@@ -930,8 +940,10 @@ class PlayerDb {
             avgKills: row.AvgKills,
             avgAssists: row.AvgAssists,
             avgDeaths: row.AvgDeaths,
+            avgDamagePerGame: row.AvgDamagePerGame,
+            avgDamagePerDeath: row.AvgDamagePerDeath,
             kda: row.KDA
-        })) || [];
+        }));
 
         Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
 
