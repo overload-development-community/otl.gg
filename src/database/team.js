@@ -599,16 +599,49 @@ class TeamDb {
     /**
      * Gets all of the team's home maps.
      * @param {Team} team The team to get maps for.
+     * @param {string} [gameType] The game type to get home maps for.
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
-    static async getHomeMaps(team) {
+    static async getHomeMaps(team, gameType) {
         /**
          * @type {{recordsets: [{Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
-        `, {teamId: {type: Db.INT, value: team.id}});
+            SELECT Map
+            FROM tblTeamHome
+            WHERE TeamId = @teamId
+                AND (@gameType IS NULL OR GameType = @gameType)
+            ORDER BY Number, GameType
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            gameType: {type: Db.VARCHAR(3), value: gameType}
+        });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
+    }
+
+    //              #    #  #                    #  #                     ###         ###
+    //              #    #  #                    ####                     #  #         #
+    //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###   ###   #  #   #    #  #  ###    ##
+    // #  #  # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #  ##     #  #  #  #   #    #  #  #  #  # ##
+    //  ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #    ##   #  #   # #   #     # #  #  #  ##
+    // #      ##     ##  #  #   ##   #  #   ##   #  #   # #  ###   ###    ###     #    #      #   ###    ##
+    //  ###                                                  #                   #           #    #
+    /**
+     * Gets the list of home maps for the team, divided by type.
+     * @param {Team} team The team to get maps for.
+     * @returns {Promise<{map: string, gameType: string}[]>} A promise that resolves with a list of the team's home maps, divided by type.
+     */
+    static async getHomeMapsByType(team) {
+        /**
+         * @type {{recordsets: [{Map: string, GameType: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number, GameType
+        `, {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            map: row.Map,
+            gameType: row.GameType
+        }));
     }
 
     //              #    ###           #
@@ -1225,23 +1258,25 @@ class TeamDb {
     /**
      * Applies a home map for a team.
      * @param {Team} team The team applying the home map.
+     * @param {string} gameType The game type.
      * @param {number} number The map number.
      * @param {string} map The name of the map.
      * @returns {Promise} A promise that resolves when the home map has been applied.
      */
-    static async updateHomeMap(team, number, map) {
+    static async updateHomeMap(team, gameType, number, map) {
         await db.query(/* sql */`
             MERGE tblTeamHome th
-                USING (VALUES (@teamId, @number, @map)) AS v (TeamId, Number, Map)
-                ON th.TeamId = v.TeamId AND th.Number = v.Number
+                USING (VALUES (@teamId, @number, @map, @gameType)) AS v (TeamId, Number, Map, GameType)
+                ON th.TeamId = v.TeamId AND th.Number = v.Number AND th.GameType = v.GameType
             WHEN MATCHED THEN
                 UPDATE SET Map = v.Map
             WHEN NOT MATCHED THEN
-                INSERT (TeamId, Number, Map) VALUES (v.TeamId, v.Number, v.Map);
+                INSERT (TeamId, Number, Map, GameType) VALUES (v.TeamId, v.Number, v.Map, v.GameType);
         `, {
             teamId: {type: Db.INT, value: team.id},
             number: {type: Db.INT, value: number},
-            map: {type: Db.VARCHAR(100), value: map}
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(3), value: gameType}
         });
     }
 

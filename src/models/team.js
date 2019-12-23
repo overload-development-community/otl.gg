@@ -5,6 +5,7 @@
  * @typedef {import("discord.js").Role} DiscordJs.Role
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
+ * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
@@ -578,13 +579,14 @@ class Team {
     /**
      * Applies a home map for a team.
      * @param {DiscordJs.GuildMember} member The pilot updating the home map.
+     * @param {string} gameType The game type.
      * @param {number} number The number of the home map.
      * @param {string} map The new home map.
      * @returns {Promise} A promise that resolves when the home map has been updated.
      */
-    async applyHomeMap(member, number, map) {
+    async applyHomeMap(member, gameType, number, map) {
         try {
-            await Db.updateHomeMap(this, number, map);
+            await Db.updateHomeMap(this, gameType, number, map);
         } catch (err) {
             throw new Exception("There was a database error setting a home map.", err);
         }
@@ -597,7 +599,7 @@ class Team {
 
             await this.updateChannels();
 
-            await Discord.queue(`${member} has changed home map number ${number} to ${map}.`, teamChannel);
+            await Discord.queue(`${member} has changed home ${gameType} map number ${number} to ${map}.`, teamChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err);
         }
@@ -772,14 +774,45 @@ class Team {
     //  ###                                                  #
     /**
      * Gets the list of home maps for the team.
+     * @param {string} [gameType] The game type to get home maps for.
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
-    async getHomeMaps() {
+    async getHomeMaps(gameType) {
         try {
-            return await Db.getHomeMaps(this);
+            return await Db.getHomeMaps(this, gameType);
         } catch (err) {
             throw new Exception("There was a database error getting the home maps for the team the pilot is on.", err);
         }
+    }
+
+    //              #    #  #                    #  #                     ###         ###
+    //              #    #  #                    ####                     #  #         #
+    //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###   ###   #  #   #    #  #  ###    ##
+    // #  #  # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #  ##     #  #  #  #   #    #  #  #  #  # ##
+    //  ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #    ##   #  #   # #   #     # #  #  #  ##
+    // #      ##     ##  #  #   ##   #  #   ##   #  #   # #  ###   ###    ###     #    #      #   ###    ##
+    //  ###                                                  #                   #           #    #
+    /**
+     * Gets the list of home maps for the team, divided by type.
+     * @returns {Promise<Object<string, string[]>>} A promise that resolves with a list of the team's home maps, divided by type.
+     */
+    async getHomeMapsByType() {
+        let maps;
+        try {
+            maps = await Db.getHomeMapsByType(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the home maps by type for the team the pilot is on.", err);
+        }
+
+        return maps.reduce((prev, cur) => {
+            if (!prev[cur.gameType]) {
+                prev[cur.gameType] = [];
+            }
+
+            prev[cur.gameType].push(cur.map);
+
+            return prev;
+        }, {});
     }
 
     //              #    ###           #
@@ -1869,6 +1902,8 @@ class Team {
         const challengeRatings = {};
 
         data.matches.forEach((match) => {
+            const fx = match.gameType === "CTF" ? Elo.actualCTF : Elo.actualTA;
+
             if (!ratings[match.challengingTeamId]) {
                 ratings[match.challengingTeamId] = 1500;
             }
@@ -1877,8 +1912,8 @@ class Team {
                 ratings[match.challengedTeamId] = 1500;
             }
 
-            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), Elo.actual(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
-                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), Elo.actual(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
+            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), fx(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
+                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), fx(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
 
             challengeRatings[match.id] = {
                 challengingTeamRating: challengingTeamNewRating,

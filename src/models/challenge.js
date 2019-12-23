@@ -82,15 +82,20 @@ class Challenge {
      * Creates a challenge between two teams.
      * @param {Team} challengingTeam The challenging team.
      * @param {Team} challengedTeam The challenged team.
+     * @param {string} [gameType] The game type.
      * @param {boolean} [adminCreated] Whether the match is being created by an admin.
      * @param {number} [teamSize] The team size to set.
      * @param {boolean} [startNow] Whether to start the match now.
      * @returns {Promise<Challenge>} A promise that resolves with the newly created challenge.
      */
-    static async create(challengingTeam, challengedTeam, adminCreated, teamSize, startNow) {
+    static async create(challengingTeam, challengedTeam, gameType, adminCreated, teamSize, startNow) {
+        if (!gameType) {
+            gameType = "TA";
+        }
+
         let data;
         try {
-            data = await Db.create(challengingTeam, challengedTeam, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow);
+            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -119,7 +124,7 @@ class Challenge {
 
             const mapEmbed = Discord.richEmbed({
                 title: "Challenge commands - Map",
-                description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps()).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
+                description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
                 color: data.homeMapTeam.role.color,
                 fields: [
                     {
@@ -159,8 +164,14 @@ class Challenge {
                 optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
             }
 
+            if (gameType) {
+                optionsEmbed.addField("Game type", `The game type has been set to **${Challenge.getGameTypeName(gameType)}**.`);
+            }
+
             optionsEmbed.addField("!suggestteamsize <2|3|4|5|6|7|8>", "Suggests a team size for the match.");
             optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
+            optionsEmbed.addField("!suggesttype <TA|CTF>", "Suggests a game type for the match.");
+            optionsEmbed.addField("!confirmtype", "Confirms a game type suggested by the other team.");
 
             if (!adminCreated) {
                 optionsEmbed.fields.push({
@@ -398,6 +409,22 @@ class Challenge {
         return data ? new Challenge({id: data.id, challengingTeam: await Team.getById(data.challengingTeamId), challengedTeam: await Team.getById(data.challengedTeamId)}) : void 0;
     }
 
+    //              #     ##                     ###                     #  #
+    //              #    #  #                     #                      ## #
+    //  ###   ##   ###   #      ###  # #    ##    #    #  #  ###    ##   ## #   ###  # #    ##
+    // #  #  # ##   #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##  # ##  #  #  ####  # ##
+    //  ##   ##     #    #  #  # ##  #  #  ##     #     # #  #  #  ##    # ##  # ##  #  #  ##
+    // #      ##     ##   ###   # #  #  #   ##    #      #   ###    ##   #  #   # #  #  #   ##
+    //  ###                                             #    #
+    /**
+     * Gets the full game type name by game type.
+     * @param {string} gameType The game type.
+     * @returns {string} The game type name.
+     */
+    static getGameTypeName(gameType) {
+        return {"TA": "Team Anarchy", "CTF": "Capture the Flag"}[gameType];
+    }
+
     //       #                             ##
     //       #                              #
     //  ##   ###    ###  ###   ###    ##    #
@@ -426,14 +453,43 @@ class Challenge {
         return `${this.challengingTeam.tag.toLocaleLowerCase()}-${this.challengedTeam.tag.toLocaleLowerCase()}-${this.id}`;
     }
 
-    //          #     #   ##    #           #
-    //          #     #  #  #   #           #
-    //  ###   ###   ###   #    ###    ###  ###
-    // #  #  #  #  #  #    #    #    #  #   #
-    // # ##  #  #  #  #  #  #   #    # ##   #
-    //  # #   ###   ###   ##     ##   # #    ##
+    //          #     #   ##    #           #     ##   ###   ####
+    //          #     #  #  #   #           #    #  #   #    #
+    //  ###   ###   ###   #    ###    ###  ###   #      #    ###
+    // #  #  #  #  #  #    #    #    #  #   #    #      #    #
+    // # ##  #  #  #  #  #  #   #    # ##   #    #  #   #    #
+    //  # #   ###   ###   ##     ##   # #    ##   ##    #    #
     /**
-     * Adds a stat to the challenge.
+     * Adds a stat to the challenge for capture the flag.
+     * @param {Team} team The team to add the stat for.
+     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to add the stat for.
+     * @param {number} captures The number of flag captures the pilot had.
+     * @param {number} pickups The number of flag pickups the pilot had.
+     * @param {number} carrierKills The number of flag carrier kills the pilot had.
+     * @param {number} returns The number of flag returns the pilot had.
+     * @param {number} kills The number of kills the pilot had.
+     * @param {number} assists The number of assists the pilot had.
+     * @param {number} deaths The number of deaths the pilot had.
+     * @returns {Promise} A promise that resolves when the stat has been added.
+     */
+    async addStatCTF(team, pilot, captures, pickups, carrierKills, returns, kills, assists, deaths) {
+        try {
+            await Db.addStatCTF(this, team, pilot, captures, pickups, carrierKills, returns, kills, assists, deaths);
+        } catch (err) {
+            throw new Exception("There was a database error adding a stat to a CTF challenge.", err);
+        }
+
+        await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+    }
+
+    //          #     #   ##    #           #    ###    ##
+    //          #     #  #  #   #           #     #    #  #
+    //  ###   ###   ###   #    ###    ###  ###    #    #  #
+    // #  #  #  #  #  #    #    #    #  #   #     #    ####
+    // # ##  #  #  #  #  #  #   #    # ##   #     #    #  #
+    //  # #   ###   ###   ##     ##   # #    ##   #    #  #
+    /**
+     * Adds a stat to the challenge for team anarchy.
      * @param {Team} team The team to add the stat for.
      * @param {DiscordJs.UserOrGuildMember} pilot The pilot to add the stat for.
      * @param {number} kills The number of kills the pilot had.
@@ -441,11 +497,11 @@ class Challenge {
      * @param {number} deaths The number of deaths the pilot had.
      * @returns {Promise} A promise that resolves when the stat has been added.
      */
-    async addStat(team, pilot, kills, assists, deaths) {
+    async addStatTA(team, pilot, kills, assists, deaths) {
         try {
-            await Db.addStat(this, team, pilot, kills, assists, deaths);
+            await Db.addStatTA(this, team, pilot, kills, assists, deaths);
         } catch (err) {
-            throw new Exception("There was a database error adding a stat to a challenge.", err);
+            throw new Exception("There was a database error adding a stat to a TA challenge.", err);
         }
 
         await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
@@ -475,8 +531,14 @@ class Challenge {
             throw new Error("That is not a valid game ID.");
         }
 
-        if (game.settings.matchMode !== "TEAM ANARCHY") {
-            throw new Error("Currently, only team anarchy games are supported.");
+        await this.loadDetails();
+
+        if (this.details.gameType === "TA" && game.settings.matchMode !== "TEAM ANARCHY") {
+            throw new Error("The specified match on the tracker is not a team anarchy match.");
+        }
+
+        if (this.details.gameType === "CTF" && game.settings.matchMode !== "CTF") {
+            throw new Error("The specified match on the tracker is not a capture the flag match.");
         }
 
         /** @type {Object<string, string>} */
@@ -523,8 +585,6 @@ class Challenge {
         /** @type {Object<string, {member: DiscordJs.UserOrGuildMember, team: Team}>} */
         const playerTeam = {};
 
-        await this.loadDetails();
-
         for (const player of game.players) {
             const member = Discord.findGuildMemberById(map[player.name]) || await Discord.findUserById(map[player.name]),
                 team = player.team === "BLUE" ? this.details.blueTeam : this.details.orangeTeam;
@@ -551,7 +611,14 @@ class Challenge {
             // Add all the stats to the database.
             for (const player of game.players) {
                 try {
-                    await Db.addStat(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills, player.assists, player.deaths);
+                    switch (this.details.gameType) {
+                        case "TA":
+                            await Db.addStatTA(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills, player.assists, player.deaths);
+                            break;
+                        case "CTF":
+                            await Db.addStatCTF(this, playerTeam[player.name].team, playerTeam[player.name].member, player.captures, player.pickups, player.carrierKills, player.returns, player.kills, player.assists, player.deaths);
+                            break;
+                    }
                 } catch (err) {
                     throw new Exception("There was a database error adding a stat to a challenge.", err);
                 }
@@ -615,7 +682,14 @@ class Challenge {
             const playerStats = (playerTeam[player.name].team === this.challengingTeam ? challengingTeamStats : challengedTeamStats).find((s) => s.pilot.id === map[player.name]);
 
             try {
-                await Db.addStat(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills + playerStats.kills, player.assists + playerStats.assists, player.deaths + playerStats.deaths);
+                switch (this.details.gameType) {
+                    case "TA":
+                        await Db.addStatTA(this, playerTeam[player.name].team, playerTeam[player.name].member, player.kills + playerStats.kills, player.assists + playerStats.assists, player.deaths + playerStats.deaths);
+                        break;
+                    case "CTF":
+                        await Db.addStatCTF(this, playerTeam[player.name].team, playerTeam[player.name].member, player.captures + playerStats.captures, player.pickups + playerStats.pickups, player.carrierKills + playerStats.carrierKills, player.returns + playerStats.returns, player.kills + playerStats.kills, player.assists + playerStats.assists, player.deaths + playerStats.deaths);
+                        break;
+                }
             } catch (err) {
                 throw new Exception("There was a database error adding a stat to a challenge.", err);
             }
@@ -916,7 +990,7 @@ class Challenge {
     /**
      * Closes a challenge.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
+     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}} stats The stats for the game.
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     async close(member, stats) {
@@ -936,12 +1010,15 @@ class Challenge {
             if (this.details.dateConfirmed && !this.details.dateVoided) {
                 await Discord.richQueue(Discord.richEmbed({
                     title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? `${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
-                    description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})} in ${this.details.map}`,
+                    description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}\n${Challenge.getGameTypeName(this.details.gameType)} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
                     fields: stats.challengingTeamStats.length > 0 && stats.challengedTeamStats.length > 0 ? [
                         {
                             name: `${this.challengingTeam.name} Stats`,
-                            value: `${stats.challengingTeamStats.sort((a, b) => {
+                            value: this.details.gameType === "TA" ? `${stats.challengingTeamStats.sort((a, b) => {
+                                if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                                    return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                                }
                                 if (a.kills !== b.kills) {
                                     return b.kills - a.kills;
                                 }
@@ -955,7 +1032,27 @@ class Challenge {
                                     return 0;
                                 }
                                 return a.name.localeCompare(b.name);
-                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}` : `${stats.challengingTeamStats.sort((a, b) => {
+                                if (a.captures !== b.captures) {
+                                    return b.captures - a.captures;
+                                }
+                                if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                                    return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                                }
+                                if (a.kills !== b.kills) {
+                                    return b.kills - a.kills;
+                                }
+                                if (a.assists !== b.assists) {
+                                    return b.assists - a.assists;
+                                }
+                                if (a.deaths !== b.deaths) {
+                                    return a.deaths - b.deaths;
+                                }
+                                if (!a.pilot || !b.pilot) {
+                                    return 0;
+                                }
+                                return a.name.localeCompare(b.name);
+                            }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
                             value: `${stats.challengedTeamStats.sort((a, b) => {
@@ -1001,6 +1098,41 @@ class Challenge {
         await Team.updateRatingsForSeasonFromChallenge(this);
     }
 
+    //                     #    #                 ##                     ###
+    //                    # #                    #  #                     #
+    //  ##    ##   ###    #    ##    ###   # #   #      ###  # #    ##    #    #  #  ###    ##
+    // #     #  #  #  #  ###    #    #  #  ####  # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #  ##     #     # #  #  #  ##
+    //  ##    ##   #  #   #    ###   #     #  #   ###   # #  #  #   ##    #      #   ###    ##
+    //                                                                          #    #
+    /**
+     * Confirms a game type suggestion.
+     * @returns {Promise} A promise that resolves when a game type has been confirmed.
+     */
+    async confirmGameType() {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.confirmGameType(this);
+        } catch (err) {
+            throw new Exception("There was a database error confirming a suggested game type for a challenge.", err);
+        }
+
+        this.details.gameType = this.details.suggestedGameType;
+        this.details.suggestedGameType = void 0;
+        this.details.suggestedGameTypeTeam = void 0;
+
+        try {
+            await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error confirming a suggested game type for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //                     #    #                #  #
     //                    # #                    ####
     //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
@@ -1025,6 +1157,8 @@ class Challenge {
 
         this.details.map = this.details.suggestedMap;
         this.details.usingHomeMapTeam = false;
+        this.details.suggestedMap = void 0;
+        this.details.suggestedMapTeam = void 0;
 
         try {
             await Discord.queue(`The map for this match has been set to the neutral map of **${this.details.map}**.`, this.channel);
@@ -1237,7 +1371,7 @@ class Challenge {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
 
-        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, false, this.details.teamSize, true);
+        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, this.details.gameType, false, this.details.teamSize, true);
 
         challenge.setNotifyMatchMissed(new Date(new Date().getTime() + 3600000));
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));
@@ -1274,11 +1408,11 @@ class Challenge {
     /**
      * Gets the stats from a challenge for a team.
      * @param {Team} team The team to get stats for.
-     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
      */
     async getStatsForTeam(team) {
         try {
-            return Promise.all((await Db.getStatsForTeam(this, team)).map(async (s) => ({pilot: Discord.findGuildMemberById(s.discordId) || await Discord.findUserById(s.discordId), name: s.name, kills: s.kills, assists: s.assists, deaths: s.deaths})));
+            return Promise.all((await Db.getStatsForTeam(this, team)).map(async (s) => ({pilot: Discord.findGuildMemberById(s.discordId) || await Discord.findUserById(s.discordId), name: s.name, kills: s.kills, assists: s.assists, deaths: s.deaths, captures: s.captures, pickups: s.pickups, carrierKills: s.carrierKills, returns: s.returns})));
         } catch (err) {
             throw new Exception("There was a database error loading team stats for a challenge.", err);
         }
@@ -1374,7 +1508,10 @@ class Challenge {
             vod: details.vod,
             ratingChange: details.ratingChange,
             challengingTeamRating: details.challengingTeamRating,
-            challengedTeamRating: details.challengedTeamRating
+            challengedTeamRating: details.challengedTeamRating,
+            gameType: details.gameType,
+            suggestedGameType: details.suggestedGameType,
+            suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0
         };
     }
 
@@ -1769,6 +1906,43 @@ class Challenge {
         }
     }
 
+    //               #     ##                     ###
+    //               #    #  #                     #
+    //  ###    ##   ###   #      ###  # #    ##    #    #  #  ###    ##
+    // ##     # ##   #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    //   ##   ##     #    #  #  # ##  #  #  ##     #     # #  #  #  ##
+    // ###     ##     ##   ###   # #  #  #   ##    #      #   ###    ##
+    //                                                   #    #
+    /**
+     * Sets the game type.
+     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @param {string} gameType The game type.
+     * @returns {Promise} A promise that resolves when the game type has been set.
+     */
+    async setGameType(member, gameType) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.setGameType(this, gameType);
+        } catch (err) {
+            throw new Exception("There was a database error setting a game type for a challenge.", err);
+        }
+
+        this.details.gameType = gameType;
+        this.details.suggestedGameType = void 0;
+        this.details.suggestedGameTypeTeam = void 0;
+
+        try {
+            await Discord.queue(`${member} has set the game type for this match to **${Challenge.getGameTypeName(this.details.gameType)}**.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //               #    #  #                    #  #              ###
     //               #    #  #                    ####               #
     //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #
@@ -1833,6 +2007,8 @@ class Challenge {
 
         this.details.map = map;
         this.details.usingHomeMapTeam = false;
+        this.details.suggestedMap = void 0;
+        this.details.suggestedMapTeam = void 0;
 
         try {
             await Discord.queue(`${member} has set the map for this match to **${this.details.map}**.`, this.channel);
@@ -2211,6 +2387,42 @@ class Challenge {
         }
     }
 
+    //                                        #     ##                     ###
+    //                                        #    #  #                     #
+    //  ###   #  #   ###   ###   ##    ###   ###   #      ###  # #    ##    #    #  #  ###    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #  ##     #     # #  #  #  ##
+    // ###     ###  #     #      ##   ###      ##   ###   # #  #  #   ##    #      #   ###    ##
+    //               ###   ###                                                    #    #
+    /**
+     * Suggests a game type for the challenge.
+     * @param {Team} team The team suggesting the game type.
+     * @param {string} gameType The game type.
+     * @returns {Promise} A promise that resolves when the game type has been suggested.
+     */
+    async suggestGameType(team, gameType) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestGameType(this, team, gameType);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a game type for a challenge.", err);
+        }
+
+        this.details.suggestedGameType = gameType;
+        this.details.suggestedGameTypeTeam = team;
+
+        try {
+            await Discord.queue(`**${team.name}** is suggesting to play **${Challenge.getGameTypeName(gameType)}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtype\` to agree to this suggestion.`, this.channel);
+
+            await this.updateTopic();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error suggesting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //                                        #    #  #
     //                                        #    ####
     //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###
@@ -2584,7 +2796,7 @@ class Challenge {
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
             challengedTeamTimezone = await this.challengedTeam.getTimezone();
 
-        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`;
+        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}\n\nGame Type:${Challenge.getGameTypeName(this.details.gameType)}`;
 
         if (this.details.dateVoided) {
             topic = `${topic}\n\nThis match has been voided.`;
@@ -2593,22 +2805,27 @@ class Challenge {
                 topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam.tag}`;
             }
 
+            if (this.details.suggestedGameType) {
+                topic = `${topic}\nSuggested Game Type: ${Challenge.getGameTypeName(this.details.suggestedGameType)} by ${this.details.suggestedGameTypeTeam.tag}`;
+            }
+
             topic = `${topic}\n\nBlue Team: ${this.details.blueTeam.tag}\nOrange Team: ${this.details.orangeTeam.tag}`;
 
             topic = `${topic}\n\nHome Map Team: ${this.details.usingHomeMapTeam ? this.details.homeMapTeam.tag : "Neutral"}`;
 
             if (this.details.map) {
                 topic = `${topic}\nChosen Map: ${this.details.map}`;
-            } else if (this.details.suggestedMap) {
+            }
+
+            if (this.details.suggestedMap) {
                 topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
             }
 
             if (this.details.teamSize) {
                 topic = `${topic}\n\nTeam Size: ${this.details.teamSize}v${this.details.teamSize}`;
-                if (this.details.suggestedTeamSize) {
-                    topic = `${topic}\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
-                }
-            } else if (this.details.suggestedTeamSize) {
+            }
+
+            if (this.details.suggestedTeamSize) {
                 topic = `${topic}\n\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
             }
 

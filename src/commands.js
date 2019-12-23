@@ -22,19 +22,22 @@ const tz = require("timezone-js"),
     adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
     addStatsParse = /^(?<gameId>[0-9]+)(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
+    challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    createMatchParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})(?: (?<gameType>(?:CTF|TA)))?$/i,
     eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
-    mapParse = /^(?<number>[1-5]) (?<mapToCheck>.+)$/,
+    mapParse = /^(?<gameType>(?:CTF|TA)) (?<number>[1-5]) (?<mapToCheck>.+)$/i,
     nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
-    numberParse = /^(?:[1-9][0-9]*)$/,
+    numberParse = /^[1-9][0-9]*$/,
     numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
     scoreParse = /^(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))$/,
-    statParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<kills>0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
+    statCTFParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<captures>0|[1-9][0-9]*) (?<pickups>0|[1-9][0-9]*) (?<carrierKills>0|[1-9][0-9]*) (?<returns>0|[1-9][0-9]*) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
+    statTAParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
     teamNameParse = /^[0-9a-zA-Z' -]{6,25}$/,
-    teamPilotParse = /^(?<teamName>.+) (?<id><@!?[0-9]+>)$/,
+    teamPilotParse = /^(?<teamName>.{1,25}) (?<id><@!?[0-9]+>)$/,
     teamTagParse = /^[0-9A-Za-z]{1,5}$/,
     teamTagteamNameParse = /^(?<teamTag>[^ ]{1,5}) (?<teamName>.{6,25})$/,
     twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
@@ -273,7 +276,7 @@ class Commands {
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}>} A promise that resolves with the stats for the game.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}>} A promise that resolves with the stats for the game.
      */
     static async checkChallengeStatsComplete(challenge, member, channel) {
         const stats = {};
@@ -1861,17 +1864,18 @@ class Commands {
         }
 
         if (!mapParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must include the home number you wish to set, followed by the name of the map, such as \`!home 2 Vault\`.`, channel);
-            throw new Warning("Pilot is not a founder or captain.");
+            await Discord.queue(`Sorry, ${member}, but you must include the game type, the home number you wish to set, and the name of the map, such as \`!home TA 2 Vault\`, or \`!home CTF 4 Halcyon\`.`, channel);
+            return false;
         }
 
-        const {groups: {number, mapToCheck}} = mapParse.exec(message),
+        const {groups: {gameType, number, mapToCheck}} = mapParse.exec(message),
             map = await Commands.checkMapIsValid(mapToCheck, member, channel),
-            team = await Commands.checkMemberOnTeam(member, channel);
+            team = await Commands.checkMemberOnTeam(member, channel),
+            gameTypeUpper = gameType.toUpperCase();
 
         let homes;
         try {
-            homes = await team.getHomeMaps();
+            homes = await team.getHomeMaps(gameTypeUpper);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1882,7 +1886,7 @@ class Commands {
             throw new Warning("Team already has this home map set.");
         }
 
-        if (!map.stock) {
+        if (gameTypeUpper === "TA" && !map.stock) {
             if (!await team.hasStockHomeMap(+number)) {
                 await Discord.queue(`Sorry, ${member}, but your team must have at least one stock map in your home list.`, channel);
                 throw new Warning("Team does not have a stock map.");
@@ -1890,7 +1894,7 @@ class Commands {
         }
 
         try {
-            await team.applyHomeMap(member, +number, map.map);
+            await team.applyHomeMap(member, gameTypeUpper, +number, map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1919,9 +1923,21 @@ class Commands {
         }
 
         const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
-            homes = await team.getHomeMaps();
+            homes = await team.getHomeMapsByType();
 
-        await Discord.queue(`The home maps for **${team.name}** are:\n${homes.join("\n")}`, channel);
+        const msg = Discord.richEmbed({
+            title: `Home maps for **${team.name}**`,
+            fields: []
+        });
+
+        Object.keys(homes).forEach((gameType) => {
+            msg.fields.push({
+                name: gameType,
+                value: homes[gameType].join("\n")
+            });
+        });
+
+        await Discord.richQueue(msg, channel);
         return true;
     }
 
@@ -2373,7 +2389,12 @@ class Commands {
             throw new Warning("Pilot is not a founder or captain.");
         }
 
-        if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to challenge with this command.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You must use `!challenge` along with the name or tag of the team that you wish to challenge, and optionally the game type you wish to challenge them to.  For example `!challenge JOA`, or `!challenge JOA CTF`.", channel)) {
+            return false;
+        }
+
+        if (!challengeParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must use \`!challenge\` along with the name or tag of the team that you wish to challenge, and optionally the game type you wish to challenge them to.  For example \`!challenge JOA\`, or \`!challenge JOA CTF\`.`, channel);
             return false;
         }
 
@@ -2400,12 +2421,15 @@ class Commands {
             throw err;
         }
 
-        if (homeMaps.length !== 5) {
-            await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
-            throw new Warning("Team does not have 5 home maps set.");
+        if (homeMaps.length !== 10) {
+            await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set for each game type before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
+            throw new Warning("Team does not have 5 home maps set for each game type.");
         }
 
-        const opponent = await Commands.checkTeamExists(message, member, channel);
+        const {groups: {teamName, gameType}} = challengeParse.exec(message),
+            gameTypeUpper = gameType.toUpperCase();
+
+        const opponent = await Commands.checkTeamExists(teamName, member, channel);
 
         if (opponent.disbanded) {
             await Discord.queue(`Sorry, ${member}, but that team is disbanded.`, channel);
@@ -2433,9 +2457,9 @@ class Commands {
             throw err;
         }
 
-        if (opponentHomeMaps.length !== 5) {
-            await Discord.queue(`Sorry, ${member}, but your opponents must have 5 home maps set before you can challenge them.`, channel);
-            throw new Warning("Opponent does not have 5 home maps set.");
+        if (opponentHomeMaps.length !== 10) {
+            await Discord.queue(`Sorry, ${member}, but your opponents must have 5 home maps set for each game type before you can challenge them.`, channel);
+            throw new Warning("Opponent does not have 5 home maps set for each game type.");
         }
 
         let existingChallenge;
@@ -2453,7 +2477,7 @@ class Commands {
 
         let challenge;
         try {
-            challenge = await Challenge.create(team, opponent);
+            challenge = await Challenge.create(team, opponent, gameTypeUpper);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -2735,6 +2759,117 @@ class Commands {
         return true;
     }
 
+    //                                        #     #
+    //                                        #     #
+    //  ###   #  #   ###   ###   ##    ###   ###   ###   #  #  ###    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #    #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     # #  #  #  ##
+    // ###     ###  #     #      ##   ###      ##    ##    #   ###    ##
+    //               ###   ###                            #    #
+    /**
+     * Suggests the game type for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async suggesttype(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To suggest a game type, use `!suggesttype` along with either `TA` for Team Anarchy or `CTF` for Capture the Flag.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+
+        const gameType = message.toUpperCase();
+
+        if (["TA", "CTF"].indexOf(gameType) === -1) {
+            await Discord.queue(`Sorry, ${member}, but to suggest a game type, use \`!suggesttype\` along with either \`TA\` for Team Anarchy or \`CTF\` for Capture the Flag.`, channel);
+            throw new Warning("Invalid game type.");
+        }
+
+        try {
+            await challenge.suggestGameType(team, gameType);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                     #    #                 #
+    //                    # #                     #
+    //  ##    ##   ###    #    ##    ###   # #   ###   #  #  ###    ##
+    // #     #  #  #  #  ###    #    #  #  ####   #    #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #   #     # #  #  #  ##
+    //  ##    ##   #  #   #    ###   #     #  #    ##    #   ###    ##
+    //                                                  #    #
+    /**
+     * Confirms a suggested game type for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async confirmtype(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkNoParameters(message, member, "Use `!confirmtype` by itself to confirm a suggested game type.", channel)) {
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+
+        if (!challenge.details.suggestedGameType) {
+            await Discord.queue(`Sorry, ${member}, but no one has suggested a game type for this match yet!  Use the \`!suggesttype\` command to do so.`, channel);
+            throw new Warning("Game type not yet suggested.");
+        }
+
+        if (challenge.details.suggestedGameTypeTeam.id === team.id) {
+            await Discord.queue(`Sorry, ${member}, but your team suggested this game type, the other team must confirm.`, channel);
+            throw new Warning("Can't confirm own game type suggestion.");
+        }
+
+        try {
+            await challenge.confirmGameType();
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
     //                                        #     #     #
     //                                        #     #
     //  ###   #  #   ###   ###   ##    ###   ###   ###   ##    # #    ##
@@ -2766,11 +2901,6 @@ class Commands {
         }
 
         const team = await Commands.checkMemberOnTeam(member, channel);
-
-        if (challenge.challengingTeam.id !== team.id && challenge.challengedTeam.id !== team.id) {
-            await Discord.queue(`Sorry, ${member}, but you are not on one of the teams in this challenge.`, channel);
-            throw new Warning("Pilot not on a team in the challenge.");
-        }
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
         await Commands.checkChallengeDetails(challenge, member, channel);
@@ -3032,7 +3162,7 @@ class Commands {
         if (message === "time") {
             if (matches.length !== 0) {
                 for (const [index, match] of matches.entries()) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                 }
             }
 
@@ -3057,9 +3187,9 @@ class Commands {
                         seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                     if (difference > 0) {
-                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `${match.map ? `in **${match.map}**\n` : ""}Began ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                     }
                 });
             }
@@ -4184,16 +4314,17 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        if (!await Commands.checkHasParameters(message, member, "You must specify the two teams to create a match for.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You must specify the two teams to create a match for, along with the optional game type.", channel)) {
             return false;
         }
 
-        if (!twoTeamTagParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must specify the two teams to create a match for.`, channel);
+        if (!createMatchParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the two teams to create a match for, along with the optional game type.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
-        const {groups: {teamTag1, teamTag2}} = twoTeamTagParse.exec(message);
+        const {groups: {teamTag1, teamTag2, gameType}} = createMatchParse.exec(message),
+            gameTypeUpper = gameType.toUpperCase();
 
         const team1 = await Commands.checkTeamExists(teamTag1, member, channel);
 
@@ -4223,9 +4354,9 @@ class Commands {
             throw err;
         }
 
-        if (team1HomeMaps.length !== 5) {
-            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set to be in a match.`, channel);
-            throw new Warning("Team does not have 5 home maps set.");
+        if (team1HomeMaps.length !== 10) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set for each game type to be in a match.`, channel);
+            throw new Warning("Team does not have 5 home maps set for each game type.");
         }
 
         const team2 = await Commands.checkTeamExists(teamTag2, member, channel);
@@ -4256,13 +4387,13 @@ class Commands {
             throw err;
         }
 
-        if (team2HomeMaps.length !== 5) {
-            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set to be in a match.`, channel);
+        if (team2HomeMaps.length !== 10) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set for each game type to be in a match.`, channel);
             throw new Warning("Team does not have 5 home maps set.");
         }
 
         try {
-            await Challenge.create(team1, team2, true);
+            await Challenge.create(team1, team2, gameTypeUpper, true);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4494,6 +4625,49 @@ class Commands {
 
         try {
             await challenge.setTeamSize(+message.charAt(0));
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //   #                            #
+    //  # #                           #
+    //  #     ##   ###    ##    ##   ###   #  #  ###    ##
+    // ###   #  #  #  #  #     # ##   #    #  #  #  #  # ##
+    //  #    #  #  #     #     ##     #     # #  #  #  ##
+    //  #     ##   #      ##    ##     ##    #   ###    ##
+    //                                      #    #
+    /**
+     * Forces a game type for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async forcetype(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        const gameType = message.toUpperCase();
+
+        if (!gameType || ["TA", "CTF"].indexOf(gameType) === -1) {
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To force a game type, use the \`!forcetype <type>\` command, for example, \`!forcetype CTF\`.`, channel);
+            throw new Warning("Missing game type.");
+        }
+
+        try {
+            await challenge.setGameType(member, message);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4836,23 +5010,51 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsConfirmed(challenge, member, channel);
 
-        if (!statParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the team tag, kills, assists, and deaths.`, channel);
-            throw new Warning("Invalid parameters.");
-        }
+        switch (challenge.details.gameType) {
+            case "TA": {
+                if (!statTAParse.test(message)) {
+                    await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the team tag, kills, assists, and deaths.`, channel);
+                    throw new Warning("Invalid parameters.");
+                }
 
-        const {groups: {pilotName, teamName, kills, assists, deaths}} = statParse.exec(message),
-            pilot = await Commands.checkUserExists(pilotName, member, channel),
-            team = await Commands.checkTeamExists(teamName, member, channel);
+                const {groups: {pilotName, teamName, kills, assists, deaths}} = statTAParse.exec(message),
+                    pilot = await Commands.checkUserExists(pilotName, member, channel),
+                    team = await Commands.checkTeamExists(teamName, member, channel);
 
-        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
-        await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
+                await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+                await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
 
-        try {
-            await challenge.addStat(team, pilot, +kills, +assists, +deaths);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
+                try {
+                    await challenge.addStatTA(team, pilot, +kills, +assists, +deaths);
+                } catch (err) {
+                    await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                    throw err;
+                }
+
+                break;
+            }
+            case "CTF": {
+                if (!statCTFParse.test(message)) {
+                    await Discord.queue(`Sorry, ${member}, but you must use the \`!addstat\` command followed by the pilot you are recording the stat for, along with the team tag, flag captures, flag pickups, flag carrier kills, flag returns, kills, assists, and deaths.`, channel);
+                    throw new Warning("Invalid parameters.");
+                }
+
+                const {groups: {pilotName, teamName, captures, pickups, carrierKills, returns, kills, assists, deaths}} = statCTFParse.exec(message),
+                    pilot = await Commands.checkUserExists(pilotName, member, channel),
+                    team = await Commands.checkTeamExists(teamName, member, channel);
+
+                await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+                await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
+
+                try {
+                    await challenge.addStatCTF(team, pilot, +captures, +pickups, +carrierKills, +returns, +kills, +assists, +deaths);
+                } catch (err) {
+                    await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                    throw err;
+                }
+
+                break;
+            }
         }
 
         return true;
@@ -5257,7 +5459,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
-        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]}} */
+        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}} */
         let stats;
         if (!challenge.details.dateVoided) {
             await Commands.checkChallengeIsConfirmed(challenge, member, channel);

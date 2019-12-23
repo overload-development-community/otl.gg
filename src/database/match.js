@@ -504,11 +504,11 @@ class MatchDb {
     /**
      * Gets the season data from a challenge that is in the desired season.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
+     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, gameType: string}[], k: number}>} A promise that resolves with the season data.
      */
     static async getSeasonDataFromChallenge(challenge) {
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number, SeasonAdded: boolean}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, GameType: string}[], {K: number, SeasonAdded: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @matchTime DATETIME
@@ -544,7 +544,8 @@ class MatchDb {
                     ChallengingTeamId,
                     ChallengedTeamId,
                     ChallengingTeamScore,
-                    ChallengedTeamScore
+                    ChallengedTeamScore,
+                    GameType
                 FROM vwCompletedChallenge
                 WHERE Season = @season
                     AND Postseason = 0
@@ -565,7 +566,8 @@ class MatchDb {
                 challengingTeamId: row.ChallengingTeamId,
                 challengedTeamId: row.ChallengedTeamId,
                 challengingTeamScore: row.ChallengingTeamScore,
-                challengedTeamScore: row.ChallengedTeamScore
+                challengedTeamScore: row.ChallengedTeamScore,
+                gameType: row.GameType
             })) || [],
             k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
         } || void 0;
@@ -580,11 +582,11 @@ class MatchDb {
     //  ###                    #                                    ###
     /**
      * Gets the upcoming scheduled matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string, gameType: string}[]>} A promise that resolves with the upcoming matches.
      */
     static async getUpcoming() {
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string, GameType: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId,
@@ -594,7 +596,8 @@ class MatchDb {
                 t2.Name ChallengedTeamName,
                 c.MatchTime,
                 c.Map,
-                p.TwitchName
+                p.TwitchName,
+                c.GameType
             FROM tblChallenge c
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
@@ -613,7 +616,8 @@ class MatchDb {
             challengedTeamName: row.ChallengedTeamName,
             matchTime: row.MatchTime,
             map: row.Map,
-            twitchName: row.TwitchName
+            twitchName: row.TwitchName,
+            gameType: row.GameType
         })) || [];
     }
 }

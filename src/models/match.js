@@ -150,7 +150,7 @@ class Match {
     //  ###                    #                                    ###
     /**
      * Gets the list of pending matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the list of upcoming matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string, gameType: string}[]>} A promise that resolves with the list of upcoming matches.
      */
     static async getUpcoming() {
         let matches;
