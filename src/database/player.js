@@ -829,7 +829,7 @@ class PlayerDb {
      * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason, gameType, all) {
-        const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${!!postseason}:${all ? "all" : "active"}`;
+        const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${gameType}:${!!postseason}:${all ? "all" : "active"}`;
         /**
          * @type {{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]}
          */
