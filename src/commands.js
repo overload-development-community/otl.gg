@@ -5904,13 +5904,18 @@ class Commands {
             throw err;
         }
 
-        if (map) {
+        if (!map) {
             await Discord.queue(`Sorry, ${member}, but ${map.map} is not currently allowed.`, channel);
             throw new Warning("Map not currently allowed.");
         }
 
+        if (map.stock) {
+            await Discord.queue(`Sorry, ${member}, but you can't remove a stock map.`, channel);
+            throw new Warning("Map is a stock map.");
+        }
+
         try {
-            await Map.remove(message);
+            await Map.remove(map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
