@@ -1,3 +1,5 @@
+/** @typedef {import("../..").GameRecord} GameRecord */
+
 const Db = require("../database/player"),
     Exception = require("../logging/exception");
 
@@ -66,11 +68,31 @@ class Player {
      * Gets the league records.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{teamKda: {teamSize: number, teamKda: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamScore: {teamSize: number, score: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamAssists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], teamDeaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kda: {teamSize: number, kda: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], kills: {teamSize: number, kills: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], assists: {teamSize: number, assists: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[], deaths: {teamSize: number, deaths: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, opponentTeamId: number, opponentTag: string, opponentTeamName: string, challengeId: number, matchTime: Date, map: string, overtimePeriods: number}[]}>} A promise that resolves with the league records.
+     * @param {string} gameType The game type to get records for.
+     * @param {string} recordType The record type to get records for.
+     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecords(season, postseason) {
+    static async getRecords(season, postseason, gameType, recordType) {
         try {
-            return await Db.getRecords(season, postseason);
+            switch (gameType) {
+                case "CTF":
+                    switch (recordType) {
+                        case "player":
+                            return await Db.getRecordsCTFPlayer(season, postseason);
+                        case "team":
+                        default:
+                            return await Db.getRecordsCTFTeam(season, postseason);
+                    }
+                case "TA":
+                default:
+                    switch (recordType) {
+                        case "player":
+                            return await Db.getRecordsTAPlayer(season, postseason);
+                        case "team":
+                        default:
+                            return await Db.getRecordsTATeam(season, postseason);
+                    }
+            }
         } catch (err) {
             throw new Exception("There was a database error getting league records.", err);
         }

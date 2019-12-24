@@ -1,6 +1,7 @@
 const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
+    Challenge = require("../../src/models/challenge"),
     Player = require("../../src/models/player"),
     RecordsView = require("../../public/views/records"),
     Season = require("../../src/models/season");
@@ -38,14 +39,25 @@ class Records {
         const seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            records = await Player.getRecords(season, postseason),
+            gameType = ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            recordType = ["team", "player"].indexOf(req.query.recordType.toLowerCase()) === -1 ? "team" : req.query.recordType.toLowerCase(),
+            records = await Player.getRecords(season, postseason, gameType, recordType),
             teams = new Teams();
 
         res.status(200).send(Common.page(
             /* html */`
                 <link rel="stylesheet" href="/css/records.css" />
             `,
-            RecordsView.get({seasonList, records, season, postseason, teams}),
+            RecordsView.get({
+                seasonList,
+                records,
+                season,
+                postseason,
+                gameType,
+                gameTypeName: Challenge.getGameTypeName(gameType),
+                recordType,
+                teams
+            }),
             req
         ));
     }

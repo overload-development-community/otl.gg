@@ -1,6 +1,23 @@
 import NewTeam from "./src/models/newTeam";
 import Team from "./src/models/team";
 
+type GameRecord = {
+    teamSize: number,
+    record: number,
+    playerId?: number,
+    name?: string,
+    teamId: number,
+    tag: string,
+    teamName: string,
+    opponentTeamId: number,
+    opponentTag: string,
+    opponentTeamName: string,
+    challengeId: number,
+    matchTime: Date,
+    map: string,
+    overtimePeriods: number
+};
+
 declare module "discord.js" {
     /**
      * TypeScript definitions for discordJs.GuildMember.extensions.js.
