@@ -173,7 +173,7 @@ class PlayerDb {
      * @param {number} playerId The player ID to get data for.
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[]}>} A promise that resolves with a player's career data.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
@@ -184,7 +184,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, RatingChange: number, TeamSize: number, MatchTime: Date, Map: string, GameType: string}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -285,25 +285,13 @@ class PlayerDb {
             GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Kills, sb.Assists, sb.Deaths
             ORDER BY c.Map
 
-            SELECT c.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, c.OvertimePeriods, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange, c.TeamSize, c.MatchTime, c.Map, c.GameType
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END = t.TeamId
-            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-            INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
-            INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
-            WHERE PlayerId = @playerId
-                AND (@season = 0 OR c.Season = @season)
-                AND c.Postseason = @postseason
-            ORDER BY c.MatchTime
-
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             playerId: {type: Db.INT, value: playerId},
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length >= 6 && data.recordsets[0].length > 0 && {
+        cache = data && data.recordsets && data.recordsets.length === 6 && data.recordsets[0].length > 0 && {
             player: {
                 name: data.recordsets[0][0].Name,
                 twitchName: data.recordsets[0][0].TwitchName,
@@ -369,32 +357,10 @@ class PlayerDb {
                 bestKills: row.BestKills,
                 bestAssists: row.BestAssists,
                 bestDeaths: row.BestDeaths
-            })),
-            matches: data.recordsets[5].map((row) => ({
-                challengeId: row.ChallengeId,
-                challengingTeamTag: row.ChallengingTeamTag,
-                challengedTeamTag: row.ChallengedTeamTag,
-                teamId: row.TeamId,
-                tag: row.Tag,
-                name: row.Name,
-                kills: row.Kills,
-                assists: row.Assists,
-                deaths: row.Deaths,
-                overtimePeriods: row.OvertimePeriods,
-                opponentTeamId: row.OpponentTeamId,
-                opponentTag: row.OpponentTag,
-                opponentName: row.OpponentName,
-                teamScore: row.TeamScore,
-                opponentScore: row.OpponentScore,
-                ratingChange: row.RatingChange,
-                teamSize: row.TeamSize,
-                matchTime: row.MatchTime,
-                map: row.Map,
-                gameType: row.GameType
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[5] && data.recordsets[5][0] && data.recordsets[5][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
 
         return cache;
     }
@@ -458,6 +424,110 @@ class PlayerDb {
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
 
         Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:player:freeagents`]);
+
+        return cache;
+    }
+
+    //              #     ##                     #
+    //              #    #  #                    #
+    //  ###   ##   ###   #      ###  # #    ##   #      ##    ###
+    // #  #  # ##   #    # ##  #  #  ####  # ##  #     #  #  #  #
+    //  ##   ##     #    #  #  # ##  #  #  ##    #     #  #   ##
+    // #      ##     ##   ###   # #  #  #   ##   ####   ##   #
+    //  ###                                                   ###
+    /**
+     * Gets a player's game log.
+     * @param {number} playerId The player ID to get the game log for.
+     * @param {number} season The season to get the player's game log for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<{player: {name: string, teamId: number, tag: string, teamName: string}, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], seasons: number[]}>} A promise that resolves with a player's game log.
+     */
+    static async getGameLog(playerId, season, postseason) {
+        const key = `${settings.redisPrefix}:db:player:getGameLog:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
+        let cache = await Cache.get(key);
+
+        if (cache) {
+            return cache;
+        }
+
+        /**
+         * @type {{recordsets: [{Name: string, TeamId: number, Tag: string, TeamName: string}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, RatingChange: number, TeamSize: number, MatchTime: Date, Map: string, GameType: string}[], {Season: number}[], {DateEnd: Date}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            IF @season IS NULL
+            BEGIN
+                SELECT @season = MAX(c.Season)
+                FROM vwCompletedChallenge c
+                INNER JOIN tblStat s ON c.ChallengeId = s.ChallengeId
+                WHERE s.PlayerId = @playerId
+            END
+
+            SELECT p.Name, t.TeamId, t.Tag, t.Name TeamName
+            FROM tblPlayer p
+            LEFT OUTER JOIN (
+                tblRoster r
+                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
+            ) ON r.PlayerId = p.PlayerId
+            WHERE p.PlayerId = @playerId
+
+            SELECT c.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, t.TeamId, t.Tag, t.Name, s.Kills, s.Assists, s.Deaths, c.OvertimePeriods, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentName, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END TeamScore, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END OpponentScore, CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange, c.TeamSize, c.MatchTime, c.Map, c.GameType
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
+            INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+            WHERE PlayerId = @playerId
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+            ORDER BY c.MatchTime
+
+            SELECT DISTINCT c.Season
+            FROM vwCompletedChallenge c
+            INNER JOIN tblStat s ON c.ChallengeId = s.ChallengeId
+            WHERE PlayerId = @playerId
+            ORDER BY c.Season
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
+        `, {
+            playerId: {type: Db.INT, value: playerId},
+            season: {type: Db.INT, value: season},
+            postseason: {type: Db.BIT, value: postseason}
+        });
+
+        cache = data && data.recordsets && data.recordsets.length === 4 && data.recordsets[0].length > 0 && {
+            player: {
+                name: data.recordsets[0][0].Name,
+                teamId: data.recordsets[0][0].TeamId,
+                tag: data.recordsets[0][0].Tag,
+                teamName: data.recordsets[0][0].TeamName
+            },
+            matches: data.recordsets[1].map((row) => ({
+                challengeId: row.ChallengeId,
+                challengingTeamTag: row.ChallengingTeamTag,
+                challengedTeamTag: row.ChallengedTeamTag,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                name: row.Name,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                overtimePeriods: row.OvertimePeriods,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentName: row.OpponentName,
+                teamScore: row.TeamScore,
+                opponentScore: row.OpponentScore,
+                ratingChange: row.RatingChange,
+                teamSize: row.TeamSize,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                gameType: row.GameType
+            })),
+            seasons: data.recordsets[2].map((row) => row.Season)
+        };
+
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
 
         return cache;
     }

@@ -64,11 +64,6 @@ class Player {
                 teams.getTeam(map.bestOpponentTeamId, map.bestOpponentTeamName, map.bestOpponentTag);
             });
 
-            career.matches.forEach((match) => {
-                teams.getTeam(match.teamId, match.name, match.tag);
-                teams.getTeam(match.opponentTeamId, match.opponentName, match.opponentTag);
-            });
-
             const totals = {
                 games: career.career.reduce((sum, stat) => sum + stat.games, 0),
                 kills: career.career.reduce((sum, stat) => sum + stat.kills, 0),
@@ -92,7 +87,6 @@ class Player {
                     postseason,
                     opponents: career.opponents,
                     maps: career.maps,
-                    matches: career.matches,
                     teams
                 }),
                 req

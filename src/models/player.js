@@ -28,7 +28,7 @@ class Player {
      * @param {number} playerId The player ID to get data for.
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[]}>} A promise that resolves with a player's career data.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
         try {
@@ -54,6 +54,28 @@ class Player {
             return await Db.getFreeAgents();
         } catch (err) {
             throw new Exception("There was a database error getting free agents.", err);
+        }
+    }
+
+    //              #     ##                     #
+    //              #    #  #                    #
+    //  ###   ##   ###   #      ###  # #    ##   #      ##    ###
+    // #  #  # ##   #    # ##  #  #  ####  # ##  #     #  #  #  #
+    //  ##   ##     #    #  #  # ##  #  #  ##    #     #  #   ##
+    // #      ##     ##   ###   # #  #  #   ##   ####   ##   #
+    //  ###                                                   ###
+    /**
+     * Gets a player's game log.
+     * @param {number} playerId The player ID to get the game log for.
+     * @param {number} season The season to get the player's gamelog for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<{player: {name: string, teamId: number, tag: string, teamName: string}, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], seasons: number[]}>} A promise that resolves with a player's game log.
+     */
+    static async getGameLog(playerId, season, postseason) {
+        try {
+            return await Db.getGameLog(playerId, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting a player's game log.", err);
         }
     }
 

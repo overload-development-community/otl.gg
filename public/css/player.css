@@ -112,6 +112,12 @@
     color: #999999;
 }
 
+#gamelog {
+    padding: 10px;
+    font-size: 18px;
+    color: white;
+}
+
 #opponents {
     display: grid;
     color: white;
