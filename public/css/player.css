@@ -248,7 +248,7 @@
 
 @media (max-width: 900px) {
     #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
     }
 
     #stats .team-name {

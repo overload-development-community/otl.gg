@@ -70,7 +70,7 @@ class PlayerView {
                     <div class="header">DmgPG</div>
                     <div class="header">DmgPD</div>
                     ${career.map((s) => /* html */`
-                        <div class="season">${s.season} ${s.postseason ? "Postseason" : ""}</div>
+                        <div class="season">${s.season}${s.postseason ? "P" : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div class="numeric">${s.games}</div>
