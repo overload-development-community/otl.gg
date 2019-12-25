@@ -92,7 +92,7 @@ class MatchDb {
                 s.Pickups,
                 s.CarrierKills,
                 s.Returns,
-                SUM(d.Damage) Damage
+                ISNULL(SUM(d.Damage), 0) Damage
             FROM tblStat s
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId

@@ -39,10 +39,11 @@ class Players {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
+        console.log(req.query.gameType);
         const freeAgents = (await Player.getFreeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
             seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
-            gameType = ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
             postseason = !!req.query.postseason,
             all = !!req.query.all,
             stats = await Player.getSeasonStats(season, postseason, gameType, all),

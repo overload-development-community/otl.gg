@@ -24,7 +24,7 @@ class PlayerGameLogView {
     //  ###
     /**
      * Gets the player template.
-     * @param {{playerId: number, player: {name: string, teamId: number, tag: string, teamName: string}, seasonList: number[], season: number, postseason: boolean, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, kills: number, assists: number, deaths: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], teams: Teams}} data The player data.
+     * @param {{playerId: number, player: {name: string, teamId: number, tag: string, teamName: string}, seasonList: number[], season: number, postseason: boolean, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], teams: Teams}} data The player data.
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
@@ -50,10 +50,7 @@ class PlayerGameLogView {
                 <div class="header result">Result</div>
                 <div class="header date">Date</div>
                 <div class="header map">Map</div>
-                <div class="header">KDA</div>
-                <div class="header">K</div>
-                <div class="header">A</div>
-                <div class="header">D</div>
+                <div class="header">Stats</div>
                 ${matches.map((m) => /* html */`
                     <div class="tag"><div class="diamond${(team = teams.getTeam(m.teamId, m.name, m.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -66,10 +63,14 @@ class PlayerGameLogView {
                     ` : ""}</div>
                     <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
                     <div class="map">${m.gameType} ${m.map}</div>
-                    <div class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</div>
-                    <div class="numeric">${m.kills}</div>
-                    <div class="numeric">${m.assists}</div>
-                    <div class="numeric">${m.deaths}</div>
+                    <div>
+                        ${m.gameType === "TA" ? /* html */`
+                            <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)${m.damage > 0 ? /* html */`, <span class="numeric">${m.damage.toFixed(0)}</span> Dmg (<span class="numeric">${(m.damage / m.deaths).toFixed(2)}</span> DmgPD)` : ""}
+                        ` : ""}
+                        ${m.gameType === "CTF" ? /* html */`
+                            <span class="numeric">${m.captures}</span> C/<span class="numeric">${m.pickups}</span> P, <span class="numeric">${m.carrierKills}</span> CK, <span class="numeric">${m.returns}</span> R, <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)${m.damage > 0 ? /* html */`<span class="numeric">${m.damage.toFixed(0)}</span> Dmg` : ""}
+                        ` : ""}
+                    </div>
                 `).join("")}
             </div>
         `;
