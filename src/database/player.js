@@ -173,13 +173,13 @@ class PlayerDb {
      * @param {number} playerId The player ID to get data for.
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} A promise that resolves with a player's career data.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /**
-         * @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}}
+         * @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}}
          */
         let cache = await Cache.get(key);
 
@@ -188,7 +188,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -229,7 +229,7 @@ class PlayerDb {
             GROUP BY s.TeamId, t.Tag, t.Name
             ORDER BY t.Name
 
-            SELECT o.TeamId, o.Tag, o.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime BestMatchTime, sb.Map BestMap, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
+            SELECT o.TeamId, o.Tag, o.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime BestMatchTime, sb.Map BestMap, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
@@ -245,6 +245,7 @@ class PlayerDb {
                     s.Deaths,
                     c.Map,
                     c.MatchTime,
+                    ISNULL(SUM(d.Damage), 0) Damage,
                     CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END OpponentTeamId,
                     t1.Tag ChallengingTeamTag,
                     t2.Tag ChallengedTeamTag
@@ -252,16 +253,30 @@ class PlayerDb {
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
                 INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+                LEFT OUTER JOIN tblDamage d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
+                    AND (d.TeamId IS NULL OR d.TeamId <> d.OpponentTeamId)
+                GROUP BY s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    c.Map,
+                    c.MatchTime,
+                    c.ChallengingTeamId,
+                    c.ChallengedTeamId,
+                    t1.Tag,
+                    t2.Tag
             ) sb ON s.PlayerId = sb.PlayerId AND o.TeamId = sb.OpponentTeamId AND sb.Row = 1
             WHERE s.PlayerId = @playerId
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
-            GROUP BY o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Map, sb.Kills, sb.Assists, sb.Deaths
+            GROUP BY o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Map, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
             ORDER BY o.Name
 
-            SELECT c.Map, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, o.TeamId BestOpponentTeamId, o.Tag BestOpponentTag, o.Name BestOpponentTeamName, sb.MatchTime BestMatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths
+            SELECT c.Map, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(c.OvertimePeriods) OvertimePeriods, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, o.TeamId BestOpponentTeamId, o.Tag BestOpponentTag, o.Name BestOpponentTeamName, sb.MatchTime BestMatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -276,6 +291,7 @@ class PlayerDb {
                     s.Deaths,
                     c.Map,
                     c.MatchTime,
+                    ISNULL(SUM(d.Damage), 0) Damage,
                     CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END OpponentTeamId,
                     t1.Tag ChallengingTeamTag,
                     t2.Tag ChallengedTeamTag
@@ -283,14 +299,28 @@ class PlayerDb {
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
                 INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
+                LEFT OUTER JOIN tblDamage d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
+                    AND (d.TeamId IS NULL OR d.TeamId <> d.OpponentTeamId)
+                GROUP BY s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    c.Map,
+                    c.MatchTime,
+                    c.ChallengingTeamId,
+                    c.ChallengedTeamId,
+                    t1.Tag,
+                    t2.Tag
             ) sb ON s.PlayerId = sb.PlayerId AND c.Map = sb.Map AND sb.Row = 1
             INNER JOIN tblTeam o ON sb.OpponentTeamId = o.TeamId
             WHERE s.PlayerId = @playerId
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
-            GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Kills, sb.Assists, sb.Deaths
+            GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
             ORDER BY c.Map
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
@@ -348,7 +378,8 @@ class PlayerDb {
                 bestMap: row.BestMap,
                 bestKills: row.BestKills,
                 bestAssists: row.BestAssists,
-                bestDeaths: row.BestDeaths
+                bestDeaths: row.BestDeaths,
+                bestDamage: row.BestDamage
             })),
             maps: data.recordsets[4].map((row) => ({
                 map: row.Map,
@@ -366,7 +397,8 @@ class PlayerDb {
                 bestOpponentTeamName: row.BestOpponentTeamName,
                 bestKills: row.BestKills,
                 bestAssists: row.BestAssists,
-                bestDeaths: row.BestDeaths
+                bestDeaths: row.BestDeaths,
+                bestDamage: row.BestDamage
             }))
         } || void 0;
 
