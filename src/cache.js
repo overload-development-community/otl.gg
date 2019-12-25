@@ -1,6 +1,8 @@
 const Log = require("./logging/log"),
     Redis = require("./redis"),
 
+    disableRedis = require("../settings").disableRedis,
+
     dateMatch = /^(?:\d{4})-(?:\d{2})-(?:\d{2})T(?:\d{2}):(?:\d{2}):(?:\d{2}(?:\.\d*))(?:Z|(?:\+|-)(?:[\d|:]*))?$/;
 
 //   ###                 #
@@ -64,6 +66,10 @@ class Cache {
      * @returns {Promise<object>} A promise that resolves with the retrieved object.
      */
     static async get(key) {
+        if (disableRedis) {
+            return void 0;
+        }
+
         try {
             const client = await Redis.login();
 
