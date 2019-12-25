@@ -116,7 +116,11 @@ class MatchDb {
                 p.Name,
                 s.Kills,
                 s.Assists,
-                s.Deaths
+                s.Deaths,
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,

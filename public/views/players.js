@@ -49,7 +49,7 @@ class PlayersView {
                     ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/players?gameType=${gameType}&season=${seasonNumber}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/players?gameType=${gameType}&season=0${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/players?gameType=${gameType}&postseason=yes${isNaN(season) ? "" : `&season=${season}`}${all ? "&all=yes" : ""}">Yes</a>`} | ${postseason ? /* html */`<a href="/players?gameType=${gameType}${isNaN(season) ? "" : `&season=${season}`}${all ? "&all=yes" : ""}">No</a>` : "No"}<br />
-                <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="/players?gameType=TA${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}`}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="/players?gameType=CTF${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}`}">Capture the Flag</a>`}
+                <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="/players?gameType=TA${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}`}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="/players?gameType=CTF${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}`}">Capture the Flag</a>`}<br />
                 <span class="grey">Players:</span> ${all ? /* html */`<a href="/players?gameType=${gameType}${isNaN(season) ? "" : `&season=${season}`}${postseason ? "&postseason=yes" : ""}">Active</a>` : "Active"} | ${all ? "All" : `<a href="/players?gameType=${gameType}${isNaN(season) ? "" : `&season=${season}`}${postseason ? "&postseason=yes" : ""}&all=yes">All</a>`}
             </div>
             <div class="section">Player Stats</div>
@@ -143,48 +143,50 @@ class PlayersView {
                                 `).join("")}
                             </div>
                         </div>
-                        <div id="damage-per-game">
-                            <div class="section">Most Damage Per Game</div>
-                            <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.damagePerGame.toFixed(0)}</span></div>
-                                <div class="header">Pos</div>
-                                <div class="header">Team</div>
-                                <div class="header">Name</div>
-                                <div class="header">DmPG</div>
-                                ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
-                                    <div class="numeric pos">${index + 1}</div>
-                                    <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
-                                        <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                                    `}</div>
-                                    <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgDamagePerGame.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame > averages.damagePerGame && sortedStats[index].avgDamagePerGame <= averages.damagePerGame ? /* html */`
-                                        <div class="separator"></div>
-                                    ` : ""}
-                                `).join("")}
+                        ${season >= 3 ? /* html */`
+                            <div id="damage-per-game">
+                                <div class="section">Most Damage Per Game</div>
+                                <div class="stats">
+                                    <div class="average">League Average: <span class="numeric">${averages.damagePerGame.toFixed(0)}</span></div>
+                                    <div class="header">Pos</div>
+                                    <div class="header">Team</div>
+                                    <div class="header">Name</div>
+                                    <div class="header">DmPG</div>
+                                    ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
+                                        <div class="numeric pos">${index + 1}</div>
+                                        <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                            <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                                        `}</div>
+                                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
+                                        <div class="numeric value">${s.avgDamagePerGame.toFixed(0)}</div>
+                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame > averages.damagePerGame && sortedStats[index].avgDamagePerGame <= averages.damagePerGame ? /* html */`
+                                            <div class="separator"></div>
+                                        ` : ""}
+                                    `).join("")}
+                                </div>
                             </div>
-                        </div>
-                        <div id="damage-per-death">
-                            <div class="section">Most Damage Per Death</div>
-                            <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.damagePerDeath.toFixed(0)}</span></div>
-                                <div class="header">Pos</div>
-                                <div class="header">Team</div>
-                                <div class="header">Name</div>
-                                <div class="header">DmPD</div>
-                                ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerDeath - a.avgDamagePerDeath).map((s, index, sortedStats) => /* html */`
-                                    <div class="numeric pos">${index + 1}</div>
-                                    <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
-                                        <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                                    `}</div>
-                                    <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgDamagePerDeath.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerDeath > averages.damagePerDeath && sortedStats[index].avgDamagePerDeath <= averages.damagePerDeath ? /* html */`
-                                        <div class="separator"></div>
-                                    ` : ""}
-                                `).join("")}
+                            <div id="damage-per-death">
+                                <div class="section">Most Damage Per Death</div>
+                                <div class="stats">
+                                    <div class="average">League Average: <span class="numeric">${averages.damagePerDeath.toFixed(0)}</span></div>
+                                    <div class="header">Pos</div>
+                                    <div class="header">Team</div>
+                                    <div class="header">Name</div>
+                                    <div class="header">DmPD</div>
+                                    ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerDeath - a.avgDamagePerDeath).map((s, index, sortedStats) => /* html */`
+                                        <div class="numeric pos">${index + 1}</div>
+                                        <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
+                                            <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
+                                        `}</div>
+                                        <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
+                                        <div class="numeric value">${s.avgDamagePerDeath.toFixed(0)}</div>
+                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerDeath > averages.damagePerDeath && sortedStats[index].avgDamagePerDeath <= averages.damagePerDeath ? /* html */`
+                                            <div class="separator"></div>
+                                        ` : ""}
+                                    `).join("")}
+                                </div>
                             </div>
-                        </div>
+                        ` : ""}
                     </div>
                 `}
             ` : ""}

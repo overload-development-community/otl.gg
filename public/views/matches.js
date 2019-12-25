@@ -63,7 +63,6 @@ class MatchesView {
                                         ${m.challengedTeam.rating ? `${Math.round(m.challengedTeam.rating)},` : ""} ${m.challengedTeam.wins}-${m.challengedTeam.losses}${m.challengedTeam.ties === 0 ? "" : `-${m.challengedTeam.ties}`}
                                     </div>
                                     <div class="game-type game-type-${m.gameType.toLowerCase()}"></div>
-                                    </div>
                                     ${m.map ? /* html */`
                                         <div class="map">
                                             ${m.map}

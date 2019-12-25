@@ -1147,7 +1147,7 @@ class ChallengeDb {
             INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
             INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
             WHERE d.ChallengeId = @challengeId
-                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponetTeamId)
+                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponentTeamId)
 
             SELECT @Season Season, @Postseason Postseason
         `, {challengeId: {type: Db.INT, value: challenge.id}});
