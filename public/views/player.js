@@ -24,7 +24,7 @@ class PlayerView {
     //  ###
     /**
      * Gets the player template.
-     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], totals: {games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], teams: Teams}} data The player data.
+     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[], teams: Teams}} data The player data.
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
@@ -63,9 +63,12 @@ class PlayerView {
                     <div class="header totals">K</div>
                     <div class="header totals">A</div>
                     <div class="header totals">D</div>
+                    <div class="header totals">Dmg</div>
                     <div class="header">KPG</div>
                     <div class="header">APG</div>
                     <div class="header">DPG</div>
+                    <div class="header">DmgPG</div>
+                    <div class="header">DmgPD</div>
                     ${career.map((s) => /* html */`
                         <div class="season">${s.season} ${s.postseason ? "Postseason" : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
@@ -75,9 +78,12 @@ class PlayerView {
                         <div class="numeric totals">${s.kills}</div>
                         <div class="numeric totals">${s.assists}</div>
                         <div class="numeric totals">${s.deaths}</div>
+                        <div class="numeric totals">${s.season >= 3 ? `${s.damage}` : ""}</div>
                         <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${s.season >= 3 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                        <div class="numeric">${s.season >= 3 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
                     `).join("")}
                     <div class="lifetime">Lifetime</div>
                     <div class="numeric">${totals.games}</div>
@@ -85,9 +91,12 @@ class PlayerView {
                     <div class="numeric totals">${totals.kills}</div>
                     <div class="numeric totals">${totals.assists}</div>
                     <div class="numeric totals">${totals.deaths}</div>
+                    <div class="numeric totals">${totals.damage > 0 ? `${totals.damage}` : ""}</div>
                     <div class="numeric">${(totals.kills / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     <div class="numeric">${(totals.assists / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     <div class="numeric">${(totals.deaths / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                    <div class="numeric">${totals.damage > 0 ? `${(totals.damage / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}` : ""}</div>
+                    <div class="numeric">${totals.damage > 0 ? `${(totals.damage / totals.deaths).toFixed(2)}` : ""}</div>
                 </div>
                 <div class="section">Career Stats by Team</div>
                 <div id="team-stats">
@@ -97,9 +106,12 @@ class PlayerView {
                     <div class="header totals">K</div>
                     <div class="header totals">A</div>
                     <div class="header totals">D</div>
+                    <div class="header totals">Dmg</div>
                     <div class="header">KPG</div>
                     <div class="header">APG</div>
                     <div class="header">DPG</div>
+                    <div class="header">DmgPG</div>
+                    <div class="header">DmgPD</div>
                     ${careerTeams.map((s) => /* html */`
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -108,9 +120,12 @@ class PlayerView {
                         <div class="numeric totals">${s.kills}</div>
                         <div class="numeric totals">${s.assists}</div>
                         <div class="numeric totals">${s.deaths}</div>
+                        <div class="numeric totals">${s.damage > 0 ? `${s.damage}` : ""}</div>
                         <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                        <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
                     `).join("")}
                 </div>
                 <div id="options">

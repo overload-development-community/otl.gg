@@ -82,7 +82,7 @@
 #stats {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -96,7 +96,7 @@
 #team-stats {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -246,9 +246,9 @@
     }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
     #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
     }
 
     #stats .team-name {
@@ -264,7 +264,7 @@
     }
     
     #team-stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
     }
 
     #team-stats .team-name {
@@ -273,6 +273,24 @@
 
     #team-stats .team {
         grid-column-end: span 1;
+    }
+}
+
+@media (max-width: 700px) {
+    #stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    }
+
+    #stats .totals {
+        display: none;
+    }
+
+    #team-stats {
+        grid-template-columns: auto auto auto auto auto auto auto auto;
+    }
+
+    #team-stats .totals {
+        display: none;
     }
 
     #matches {
@@ -285,22 +303,6 @@
 }
 
 @media (max-width: 600px) {
-    #stats {
-        grid-template-columns: auto auto auto auto auto auto auto;
-    }
-
-    #stats .totals {
-        display: none;
-    }
-
-    #team-stats {
-        grid-template-columns: auto auto auto auto auto auto;
-    }
-
-    #team-stats .totals {
-        display: none;
-    }
-
     #matches {
         grid-template-columns: auto auto auto auto auto;
     }

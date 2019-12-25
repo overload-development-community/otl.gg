@@ -69,6 +69,7 @@ class Player {
                 kills: career.career.reduce((sum, stat) => sum + stat.kills, 0),
                 assists: career.career.reduce((sum, stat) => sum + stat.assists, 0),
                 deaths: career.career.reduce((sum, stat) => sum + stat.deaths, 0),
+                damage: career.career.reduce((sum, stat) => sum + stat.damage, 0),
                 overtimePeriods: career.career.reduce((sum, stat) => sum + stat.overtimePeriods, 0)
             };
 
