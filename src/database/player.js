@@ -857,7 +857,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -949,12 +949,70 @@ class PlayerDb {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
+            SELECT s.TeamSize, s.Damage, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) DESC) Rank,
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId,
+                    SUM(d.Damage) Damage
+                FROM tblDamage d
+                INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 3
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'TA'
+                    AND d.TeamId <> d.OpponentTeamId
+                GROUP BY
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
+
+            SELECT s.TeamSize, s.DamagePerDeath, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / s.Deaths DESC) Rank,
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId,
+                    SUM(d.Damage) / s.Deaths DamagePerDeath
+                FROM tblDamage d
+                INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+                INNER JOIN tblStat s ON c.ChallengeId = s.ChallengeId AND d.PlayerId = s.PlayerId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 3
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'TA'
+                    AND d.TeamId <> d.OpponentTeamId
+                GROUP BY
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId,
+                    s.Deaths
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
+
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length === 5 && {
+        cache = data && data.recordsets && data.recordsets.length === 7 && {
             kda: data.recordsets[0].map((row) => ({
                 teamSize: row.TeamSize,
                 record: row.KDA,
@@ -1018,10 +1076,42 @@ class PlayerDb {
                 matchTime: row.MatchTime,
                 map: row.Map,
                 overtimePeriods: row.OvertimePeriods
+            })),
+            damage: data.recordsets[4].map((row) => ({
+                teamSize: row.TeamSize,
+                record: row.Damage,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                playerId: row.PlayerId,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
+            })),
+            damagePerDeath: data.recordsets[5].map((row) => ({
+                teamSize: row.TeamSize,
+                record: row.DamagePerDeath,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                playerId: row.PlayerId,
+                name: row.Name,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
 
         return cache;
     }
@@ -1050,7 +1140,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -1139,12 +1229,61 @@ class PlayerDb {
             WHERE Rank = 1
             ORDER BY c.TeamSize, c.MatchTime
 
+            SELECT s.TeamSize, s.Damage, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) DESC) Rank,
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    SUM(d.Damage) Damage
+                FROM tblDamage d
+                INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 3
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'TA'
+                    AND d.TeamId <> d.OpponentTeamId
+                GROUP BY d.ChallengeId, c.TeamSize, d.TeamId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
+
+            SELECT s.TeamSize, s.DamagePerDeath, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / s.Deaths DESC) Rank,
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    SUM(d.Damage) / s.Deaths DamagePerDeath
+                FROM tblDamage d
+                INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+                INNER JOIN (
+                    SELECT ChallengeId, TeamId, SUM(Deaths) Deaths
+                    FROM tblStat s
+                    GROUP BY ChallengeId, TeamId
+                ) s ON c.ChallengeId = s.ChallengeId AND s.TeamId = d.TeamId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 3
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'TA'
+                    AND d.TeamId <> d.OpponentTeamId
+                GROUP BY d.ChallengeId, c.TeamSize, d.TeamId, s.Deaths
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
+
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length === 5 && {
+        cache = data && data.recordsets && data.recordsets.length === 7 && {
             teamKda: data.recordsets[0].map((row) => ({
                 teamSize: row.TeamSize,
                 teamId: row.TeamId,
@@ -1200,10 +1339,38 @@ class PlayerDb {
                 matchTime: row.MatchTime,
                 map: row.Map,
                 overtimePeriods: row.OvertimePeriods
+            })),
+            teamDamage: data.recordsets[4].map((row) => ({
+                teamSize: row.TeamSize,
+                record: row.Damage,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
+            })),
+            teamDamagePerDeath: data.recordsets[5].map((row) => ({
+                teamSize: row.TeamSize,
+                record: row.DamagePerDeath,
+                teamId: row.TeamId,
+                tag: row.Tag,
+                teamName: row.TeamName,
+                opponentTeamId: row.OpponentTeamId,
+                opponentTag: row.OpponentTag,
+                opponentTeamName: row.OpponentTeamName,
+                challengeId: row.ChallengeId,
+                matchTime: row.MatchTime,
+                map: row.Map,
+                overtimePeriods: row.OvertimePeriods
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
 
         return cache;
     }

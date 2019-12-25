@@ -821,6 +821,7 @@ class ChallengeDb {
                 INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
                 INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
             WHERE d.ChallengeId = @id
+                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponentTeamId)
         `, {id: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             discordId: row.DiscordId,
@@ -1146,6 +1147,7 @@ class ChallengeDb {
             INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
             INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
             WHERE d.ChallengeId = @challengeId
+                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponetTeamId)
 
             SELECT @Season Season, @Postseason Postseason
         `, {challengeId: {type: Db.INT, value: challenge.id}});

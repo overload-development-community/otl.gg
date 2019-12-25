@@ -112,6 +112,36 @@ class RecordsView {
                                 `).join("")}
                             `).join("")}
                         `}
+                        ${records.teamDamage.length === 0 ? "" : /* html */`
+                            <div class="record-header" style="grid-row-end: span ${records.teamDamage.length};">Team Anarchy:<br />Team Total Damage</div>
+                            ${records.teamDamage.map((r) => r.teamSize).filter((r, index, a) => a.indexOf(r) === index).sort((a, b) => a - b).map((teamSize) => /* html */`
+                                <div style="grid-row-end: span ${records.teamDamage.filter((r) => r.teamSize === teamSize).length}">${teamSize}v${teamSize}</div>
+                                ${records.teamDamage.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
+                                    <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div><span class="numeric">${r.record}</span> &nbsp;Damage</div>
+                                    <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
+                                    <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
+                                `).join("")}
+                            `).join("")}
+                        `}
+                        ${records.teamDamagePerDeath.length === 0 ? "" : /* html */`
+                            <div class="record-header" style="grid-row-end: span ${records.teamDamagePerDeath.length};">Team Anarchy:<br />Team Damage Per Death</div>
+                            ${records.teamDamagePerDeath.map((r) => r.teamSize).filter((r, index, a) => a.indexOf(r) === index).sort((a, b) => a - b).map((teamSize) => /* html */`
+                                <div style="grid-row-end: span ${records.teamDamagePerDeath.filter((r) => r.teamSize === teamSize).length}">${teamSize}v${teamSize}</div>
+                                ${records.teamDamagePerDeath.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
+                                    <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div><span class="numeric">${r.record.toFixed(2)}</span> &nbsp;Damage Per Death</div>
+                                    <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
+                                    <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
+                                `).join("")}
+                            `).join("")}
+                        `}
                     ` : ""}
                     ${recordType === "player" ? /* html */ `
                         ${records.kda.length === 0 ? "" : /* html */`
@@ -171,6 +201,38 @@ class RecordsView {
                                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div><a href="/player/${r.playerId}/${encodeURIComponent(RecordsView.Common.normalizeName(r.name, r.tag))}">${RecordsView.Common.htmlEncode(RecordsView.Common.normalizeName(r.name, r.tag))}</a></div>
                                     <div><span class="numeric">${r.record}</span> &nbsp;Deaths</div>
+                                    <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
+                                    <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
+                                `).join("")}
+                            `).join("")}
+                        `}
+                        ${records.damage.length === 0 ? "" : /* html */`
+                            <div class="record-header" style="grid-row-end: span ${records.damage.length};">Team Anarchy:<br />Total Damage</div>
+                            ${records.damage.map((r) => r.teamSize).filter((r, index, a) => a.indexOf(r) === index).sort((a, b) => a - b).map((teamSize) => /* html */`
+                                <div style="grid-row-end: span ${records.damage.filter((r) => r.teamSize === teamSize).length}">${teamSize}v${teamSize}</div>
+                                ${records.damage.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
+                                    <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div><a href="/player/${r.playerId}/${encodeURIComponent(RecordsView.Common.normalizeName(r.name, r.tag))}">${RecordsView.Common.htmlEncode(RecordsView.Common.normalizeName(r.name, r.tag))}</a></div>
+                                    <div><span class="numeric">${r.record}</span> &nbsp;Damage</div>
+                                    <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
+                                    <div class="map">${r.map}${r.overtimePeriods > 0 ? `, ${r.overtimePeriods > 1 ? r.overtimePeriods : ""}OT` : ""}</div>
+                                `).join("")}
+                            `).join("")}
+                        `}
+                        ${records.damagePerDeath.length === 0 ? "" : /* html */`
+                            <div class="record-header" style="grid-row-end: span ${records.damagePerDeath.length};">Team Anarchy:<br />Damage Per Death</div>
+                            ${records.damagePerDeath.map((r) => r.teamSize).filter((r, index, a) => a.indexOf(r) === index).sort((a, b) => a - b).map((teamSize) => /* html */`
+                                <div style="grid-row-end: span ${records.damagePerDeath.filter((r) => r.teamSize === teamSize).length}">${teamSize}v${teamSize}</div>
+                                ${records.damagePerDeath.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
+                                    <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                    <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
+                                    <div><a href="/player/${r.playerId}/${encodeURIComponent(RecordsView.Common.normalizeName(r.name, r.tag))}">${RecordsView.Common.htmlEncode(RecordsView.Common.normalizeName(r.name, r.tag))}</a></div>
+                                    <div><span class="numeric">${r.record.toFixed(2)}</span> &nbsp;Damage Per Death</div>
                                     <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
