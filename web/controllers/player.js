@@ -89,9 +89,9 @@ class Player {
                     seasonList,
                     season,
                     postseason,
-                    damage: career.damage,
                     opponents: career.opponents,
                     maps: career.maps,
+                    damage: career.damage,
                     teams
                 }),
                 req
