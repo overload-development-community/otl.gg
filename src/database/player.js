@@ -173,13 +173,13 @@ class PlayerDb {
      * @param {number} playerId The player ID to get data for.
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}>} A promise that resolves with a player's career data.
+     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], damage: Object<string, number>, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /**
-         * @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}}
+         * @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], damage: Object<string, number>, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}}
          */
         let cache = await Cache.get(key);
 
@@ -188,7 +188,7 @@ class PlayerDb {
         }
 
         /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {Weapon: string, Damage: string}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -217,6 +217,14 @@ class PlayerDb {
                 AND (d.TeamId IS NULL OR d.TeamId <> d.OpponentTeamId)
             GROUP BY c.Season, c.Postseason, s.TeamId, t.Tag, t.Name
             ORDER BY c.Season, c.Postseason, MIN(c.MatchTime)
+
+            SELECT d.Weapon, SUM(Damage) Damage
+            FROM tblDamage d
+            INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+            WHERE (@season IS NULL OR c.Season = @season)
+                AND d.TeamId <> d.OpponentTeamId
+                AND d.PlayerId = @playerId
+            GROUP BY d.Weapon
 
             SELECT s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, ISNULL(SUM(d.Damage), 0) Damage, SUM(c.OvertimePeriods) OvertimePeriods
             FROM tblStat s
@@ -329,7 +337,7 @@ class PlayerDb {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length === 6 && data.recordsets[0].length > 0 && {
+        cache = data && data.recordsets && data.recordsets.length === 7 && data.recordsets[0].length > 0 && {
             player: {
                 name: data.recordsets[0][0].Name,
                 twitchName: data.recordsets[0][0].TwitchName,
@@ -351,7 +359,11 @@ class PlayerDb {
                 damage: row.Damage,
                 overtimePeriods: row.OvertimePeriods
             })),
-            careerTeams: data.recordsets[2].map((row) => ({
+            damage: data.recordsets[2].reduce((prev, cur) => {
+                prev[cur.Weapon] = cur.Damage;
+                return prev;
+            }, {}),
+            careerTeams: data.recordsets[3].map((row) => ({
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
@@ -362,7 +374,7 @@ class PlayerDb {
                 damage: row.Damage,
                 overtimePeriods: row.OvertimePeriods
             })),
-            opponents: data.recordsets[3].map((row) => ({
+            opponents: data.recordsets[4].map((row) => ({
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
@@ -381,7 +393,7 @@ class PlayerDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             })),
-            maps: data.recordsets[4].map((row) => ({
+            maps: data.recordsets[5].map((row) => ({
                 map: row.Map,
                 games: row.Games,
                 kills: row.Kills,
@@ -402,7 +414,7 @@ class PlayerDb {
             }))
         } || void 0;
 
-        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[5] && data.recordsets[5][0] && data.recordsets[5][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
 
         return cache;
     }

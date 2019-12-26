@@ -350,3 +350,39 @@
     -o-transform-origin: 0 100%;
     transform-origin: 0 100%;
 }
+
+#damage .damage-grid {
+    margin: 0 0 10px 10px;
+    color: white;
+    display: grid;
+    grid-template-columns: repeat(8, min-content);
+}
+
+#damage .damage-grid-small {
+    margin: 0 0 10px 10px;
+    color: white;
+    display: grid;
+    grid-template-columns: repeat(3, min-content);
+}
+
+#damage .damage-grid div,
+#damage .damage-grid-small div {
+    align-self: end;
+    min-width: 60px;
+    border: solid 1px #999;
+    text-align: center;
+    white-space: nowrap;
+    padding: 2px 5px;
+    margin-bottom: -1px;
+    margin-left: -1px;
+}
+
+#damage .damage-grid > .numeric,
+#damage .damage-grid-small > .numeric {
+    margin-top: 0px;
+}
+
+#damage .percent {
+    font-size: 12px;
+    width: 6px;
+}

@@ -24,11 +24,11 @@ class PlayerView {
     //  ###
     /**
      * Gets the player template.
-     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], teams: Teams}} data The player data.
+     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, primaries: number, secondaries: number, totalDamage: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, damage: Object<string, number>, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], teams: Teams}} data The player data.
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
-        const {playerId, player, career, totals, careerTeams, seasonList, season, postseason, opponents, maps, teams} = data;
+        const {playerId, player, career, totals, careerTeams, seasonList, season, postseason, damage, opponents, maps, teams} = data;
         let team;
 
         return /* html */`
@@ -181,6 +181,82 @@ class PlayerView {
                         `).join("")}
                     </div>
                 </div>
+                ${totals.totalDamage > 0 ? /* html */`
+                    <div id="damage">
+                        <div class="section">Damage Breakdown</div>
+                        <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
+                        <div class="damage-grid">
+                            <div><img src="/images/weapons/impulse.png" width="28" height="41" title="Impulse" /></div>
+                            <div><img src="/images/weapons/cyclone.png" width="28" height="41" title="Cyclone" /></div>
+                            <div><img src="/images/weapons/reflex.png" width="28" height="41" title="Reflex" /></div>
+                            <div><img src="/images/weapons/crusher.png" width="28" height="41" title="Crusher" /></div>
+                            <div><img src="/images/weapons/driller.png" width="28" height="41" title="Driller" /></div>
+                            <div><img src="/images/weapons/flak.png" width="28" height="41" title="Flak" /></div>
+                            <div><img src="/images/weapons/thunderbolt.png" width="28" height="41" title="Thunderbolt" /></div>
+                            <div><img src="/images/weapons/lancer.png" width="28" height="41" title="Lancer" /></div>
+                            <div class="numeric">${damage.Impulse ? damage.Impulse.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Cyclone ? damage.Cyclone.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Reflex ? damage.Reflex.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Crusher ? damage.Crusher.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Driller ? damage.Driller.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Flak ? damage.Flak.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Thunderbolt ? damage.Thunderbolt.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Lancer ? damage.Lancer.toFixed(0) : "0"}</div>
+                            <div class="mixed"><span class="numeric">${damage.Impulse ? (100 * damage.Impulse / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Cyclone ? (100 * damage.Cyclone / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Reflex ? (100 * damage.Reflex / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Crusher ? (100 * damage.Crusher / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Driller ? (100 * damage.Driller / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Flak ? (100 * damage.Flak / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Thunderbolt ? (100 * damage.Thunderbolt / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Lancer ? (100 * damage.Lancer / totals.primaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                        </div>
+                        <div class="damage-grid">
+                            <div><img src="/images/weapons/falcon.png" width="28" height="41" title="Falcon" /></div>
+                            <div><img src="/images/weapons/missilepod.png" width="28" height="41" title="Missile Pod" /></div>
+                            <div><img src="/images/weapons/hunter.png" width="28" height="41" title="Hunter" /></div>
+                            <div><img src="/images/weapons/creeper.png" width="28" height="41" title="Creeper" /></div>
+                            <div><img src="/images/weapons/nova.png" width="28" height="41" title="Nova" /></div>
+                            <div><img src="/images/weapons/devastator.png" width="28" height="41" title="Devastator" /></div>
+                            <div><img src="/images/weapons/timebomb.png" width="28" height="41" title="Time Bomb" /></div>
+                            <div><img src="/images/weapons/vortex.png" width="28" height="41" title="Vortex" /></div>
+                            <div class="numeric">${damage.Falcon ? damage.Falcon.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage["Missile Pod"] ? damage["Missile Pod"].toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Hunter ? damage.Hunter.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Creeper ? damage.Creeper.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Nova ? damage.Nova.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Devastator ? damage.Devastator.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage["Time Bomb"] ? damage["Time Bomb"].toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Vortex ? damage.Vortex.toFixed(0) : "0"}</div>
+                            <div class="mixed"><span class="numeric">${damage.Falcon ? (100 * damage.Falcon / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage["Missile Pod"] ? (100 * damage["Missile Pod"] / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Hunter ? (100 * damage.Hunter / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Creeper ? (100 * damage.Creeper / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Nova ? (100 * damage.Nova / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Devastator ? (100 * damage.Devastator / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage["Time Bomb"] ? (100 * damage["Time Bomb"] / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${damage.Vortex ? (100 * damage.Vortex / totals.secondaries).toFixed(1) : "0.0"}</span><span class="percent">%</span></div>
+                        </div>
+                        <div class="damage-grid-small">
+                            <div><img src="/images/weapons/flare.png" width="28" height="41" title="Flare" /></div>
+                            <div><img src="/images/weapons/miscellaneous.png" width="28" height="41" title="Miscellaneous" /></div>
+                            <div><img src="/images/weapons/unknown.png" width="28" height="41" title="Unknown" /></div>
+                            <div class="numeric">${damage.Flare ? damage.Flare.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Miscellaneous ? damage.Miscellaneous.toFixed(0) : "0"}</div>
+                            <div class="numeric">${damage.Unknown ? damage.Unknown.toFixed(0) : "0"}</div>
+                        </div>
+                        <div class="damage-grid-small">
+                            <div id="total-primaries">Primaries</div>
+                            <div id="total-secondaries">Secondaries</div>
+                            <div id="total-damage">Total Damage</div>
+                            <div class="numeric">${totals.primaries.toFixed(0)}</div>
+                            <div class="numeric">${totals.secondaries.toFixed(0)}</div>
+                            <div class="numeric">${totals.totalDamage.toFixed(0)}</div>
+                            <div class="mixed"><span class="numeric">${(100 * totals.primaries / totals.totalDamage).toFixed(1)}</span><span class="percent">%</span></div>
+                            <div class="mixed"><span class="numeric">${(100 * totals.secondaries / totals.totalDamage).toFixed(1)}</span><span class="percent">%</span></div>
+                        </div>
+                    </div>
+                ` : ""}
             `}
         `;
     }
