@@ -39,7 +39,7 @@
 
 #player {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     color: white;
     padding: 10px;
 }
@@ -79,14 +79,27 @@
     margin-left: 10px;
 }
 
+#no-stats {
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+}
+
 #stats {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
     font-size: 14px;
+}
+
+#stats.stats-TA {
+    grid-template-columns: repeat(14, auto);
+}
+
+#stats.stats-CTF {
+    grid-template-columns: repeat(20, auto);
 }
 
 #stats .lifetime {
@@ -96,19 +109,26 @@
 #team-stats {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
     font-size: 14px;
 }
 
-#options {
+#team-stats.team-stats-TA {
+    grid-template-columns: repeat(13, auto);
+}
+
+#team-stats.team-stats-CTF {
+    grid-template-columns: repeat(19, auto);
+}
+
+.options {
     padding: 10px;
     color: white;
 }
 
-#options .grey {
+.options .grey {
     color: #999999;
 }
 
@@ -121,7 +141,7 @@
 #opponents {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(10, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -135,7 +155,7 @@
 #maps {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(10, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -148,7 +168,7 @@
 
 @media (max-width: 1100px) {
     #opponents {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(9, auto);
     }
 
     #opponents .team {
@@ -156,7 +176,7 @@
     }
 
     #maps {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(9, auto);
     }
 
     #maps .best {
@@ -171,7 +191,7 @@
 
 @media (max-width: 900px) {
     #opponents {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(8, auto);
     }
 
     #opponents .best {
@@ -179,7 +199,7 @@
     }
 
     #maps {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(8, auto);
     }
 
     #maps .best {
@@ -194,11 +214,11 @@
 
 @media (max-width: 600px) {
     #opponents {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: repeat(6, auto);
     }
 
     #maps {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: repeat(6, auto);
     }
 
     #opponents .best,
@@ -212,7 +232,7 @@
 #matches {
     display: grid;
     color: white;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(9, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -234,7 +254,7 @@
 
 @media (max-width: 1000px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(7, auto);
     }
 
     #matches .team-name {
@@ -247,8 +267,12 @@
 }
 
 @media (max-width: 900px) {
-    #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    #stats.stats-TA {
+        grid-template-columns: repeat(13, auto);
+    }
+
+    #stats.stats-CTF {
+        grid-template-columns: repeat(19, auto);
     }
 
     #stats .team-name {
@@ -263,8 +287,12 @@
         grid-column-end: span 2;
     }
     
-    #team-stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto;
+    #team-stats-TA {
+        grid-template-columns: repeat(11, auto);
+    }
+
+    #team-stats-CTF {
+        grid-template-columns: repeat(17, auto);
     }
 
     #team-stats .team-name {
@@ -277,16 +305,24 @@
 }
 
 @media (max-width: 700px) {
-    #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    #stats.stats-TA {
+        grid-template-columns: repeat(9, auto);
+    }
+
+    #stats.stats-CTF {
+        grid-template-columns: repeat(15, auto);
     }
 
     #stats .totals {
         display: none;
     }
 
-    #team-stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+    #team-stats.team-stats-TA {
+        grid-template-columns: repeat(8, auto);
+    }
+
+    #team-stats.team-stats-CTF {
+        grid-template-columns: repeat(14, auto);
     }
 
     #team-stats .totals {
@@ -294,7 +330,7 @@
     }
 
     #matches {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: repeat(6, auto);
     }
 
     #matches .date {
@@ -304,7 +340,7 @@
 
 @media (max-width: 600px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto;
+        grid-template-columns: repeat(5, auto);
     }
 
     #matches .map {

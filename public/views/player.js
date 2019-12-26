@@ -24,11 +24,11 @@ class PlayerView {
     //  ###
     /**
      * Gets the player template.
-     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, primaries: number, secondaries: number, totalDamage: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>, teams: Teams}} data The player data.
+     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, primaries: number, secondaries: number, totalDamage: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, gameType: string, opponents: {teamId: number, tag: string, teamName: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>, teams: Teams}} data The player data.
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
-        const {playerId, player, career, totals, careerTeams, seasonList, season, postseason, opponents, maps, damage, teams} = data;
+        const {playerId, player, career, totals, careerTeams, seasonList, season, postseason, gameType, opponents, maps, damage, teams} = data;
         let team;
 
         return /* html */`
@@ -53,86 +53,161 @@ class PlayerView {
                     </div>
                 ` : ""}
             </div>
-            ${career.length === 0 ? "" : /* html */`
+            <div class="options">
+                <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=TA${postseason ? "&postseason=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=CTF${postseason ? "&postseason=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">Capture the Flag</a>`}
+            </div>
+            ${career.length === 0 ? /* html */`
+                <div id="no-stats">There are no player stats available for this game type.</div>
+            ` : /* html */`
                 <div class="section">Career Stats by Season</div>
-                <div id="stats">
+                <div id="stats" class="stats-${gameType}">
                     <div class="header">Season</div>
                     <div class="header team">Team</div>
                     <div class="header">G</div>
+                    ${gameType === "CTF" ? /* html */`}
+                        <div class="header">C</div>
+                        <div class="header">P</div>
+                        <div class="header">CK</div>
+                        <div class="header">R</div>
+                    ` : ""}
                     <div class="header">KDA</div>
                     <div class="header totals">K</div>
                     <div class="header totals">A</div>
                     <div class="header totals">D</div>
                     <div class="header totals">Dmg</div>
+                    ${gameType === "CTF" ? /* html */`}
+                        <div class="header">CPG</div>
+                        <div class="header">PPG</div>
+                        <div class="header">CKPG</div>
+                        <div class="header">RPG</div>
+                    ` : ""}
                     <div class="header">KPG</div>
                     <div class="header">APG</div>
                     <div class="header">DPG</div>
-                    <div class="header">DmgPG</div>
-                    <div class="header">DmgPD</div>
+                    ${gameType === "TA" ? /* html */`
+                        <div class="header">DmgPG</div>
+                        <div class="header">DmgPD</div>
+                    ` : ""}
                     ${career.map((s) => /* html */`
                         <div class="season">${s.season}${s.postseason ? "P" : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div class="numeric">${s.games}</div>
+                        ${gameType === "CTF" ? /* html */`}
+                            <div class="numeric totals">${s.captures}</div>
+                            <div class="numeric totals">${s.pickups}</div>
+                            <div class="numeric totals">${s.carrierKills}</div>
+                            <div class="numeric totals">${s.returns}</div>
+                        ` : ""}
                         <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                         <div class="numeric totals">${s.kills}</div>
                         <div class="numeric totals">${s.assists}</div>
                         <div class="numeric totals">${s.deaths}</div>
                         <div class="numeric totals">${s.damage > 0 ? `${s.damage.toFixed(0)}` : ""}</div>
+                        ${gameType === "CTF" ? /* html */`
+                            <div class="numeric">${(s.captures / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.pickups / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.carrierKills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.returns / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                        ` : ""}
                         <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
-                        <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
-                        <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                        ${gameType === "TA" ? /* html */`
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                        ` : ""}
                     `).join("")}
                     <div class="lifetime">Lifetime</div>
                     <div class="numeric">${totals.games}</div>
+                    ${gameType === "CTF" ? /* html */`
+                        <div class="numeric totals">${totals.captures}</div>
+                        <div class="numeric totals">${totals.pickups}</div>
+                        <div class="numeric totals">${totals.carrierKills}</div>
+                        <div class="numeric totals">${totals.returns}</div>
+                    ` : ""}
                     <div class="numeric">${((totals.kills + totals.assists) / Math.max(1, totals.deaths)).toFixed(3)}</div>
                     <div class="numeric totals">${totals.kills}</div>
                     <div class="numeric totals">${totals.assists}</div>
                     <div class="numeric totals">${totals.deaths}</div>
                     <div class="numeric totals">${totals.damage > 0 ? `${totals.damage.toFixed(0)}` : ""}</div>
+                    ${gameType === "CTF" ? /* html */`
+                        <div class="numeric">${(totals.captures / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${(totals.pickups / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${(totals.carrierKills / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                        <div class="numeric">${(totals.returns / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
+                    ` : ""}
                     <div class="numeric">${(totals.kills / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     <div class="numeric">${(totals.assists / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     <div class="numeric">${(totals.deaths / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
-                    <div class="numeric">${totals.damage > 0 ? `${(totals.damage / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}` : ""}</div>
-                    <div class="numeric">${totals.damage > 0 ? `${(totals.damage / totals.deaths).toFixed(2)}` : ""}</div>
+                    ${gameType === "TA" ? /* html */`
+                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}` : ""}</div>
+                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / totals.deaths).toFixed(2)}` : ""}</div>
+                    ` : ""}
                 </div>
                 <div class="section">Career Stats by Team</div>
-                <div id="team-stats">
+                <div id="team-stats" class="team-stats-${gameType}">
                     <div class="header team">Team</div>
                     <div class="header">G</div>
+                    ${gameType === "CTF" ? /* html */`
+                        <div class="header">C</div>
+                        <div class="header">P</div>
+                        <div class="header">CK</div>
+                        <div class="header">R</div>
+                    ` : ""}
                     <div class="header">KDA</div>
                     <div class="header totals">K</div>
                     <div class="header totals">A</div>
                     <div class="header totals">D</div>
                     <div class="header totals">Dmg</div>
+                    ${gameType === "CTF" ? /* html */`
+                        <div class="header">CPG</div>
+                        <div class="header">PPG</div>
+                        <div class="header">CKPG</div>
+                        <div class="header">RPG</div>
+                    ` : ""}
                     <div class="header">KPG</div>
                     <div class="header">APG</div>
                     <div class="header">DPG</div>
-                    <div class="header">DmgPG</div>
-                    <div class="header">DmgPD</div>
+                    ${gameType === "TA" ? /* html */`
+                        <div class="header">DmgPG</div>
+                        <div class="header">DmgPD</div>
+                    ` : ""}
                     ${careerTeams.map((s) => /* html */`
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div class="numeric">${s.games}</div>
+                        ${gameType === "CTF" ? /* html */`
+                            <div class="numeric totals">${s.captures}</div>
+                            <div class="numeric totals">${s.pickups}</div>
+                            <div class="numeric totals">${s.carrierKills}</div>
+                            <div class="numeric totals">${s.returns}</div>
+                        ` : ""}
                         <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                         <div class="numeric totals">${s.kills}</div>
                         <div class="numeric totals">${s.assists}</div>
                         <div class="numeric totals">${s.deaths}</div>
                         <div class="numeric totals">${s.damage > 0 ? `${s.damage.toFixed(0)}` : ""}</div>
+                        ${gameType === "CTF" ? /* html */`
+                            <div class="numeric">${(s.captures / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.pickups / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.carrierKills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                            <div class="numeric">${(s.returns / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                        ` : ""}
                         <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
-                        <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
-                        <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                        ${gameType === "TA" ? /* html */`
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                        ` : ""}
                     `).join("")}
                 </div>
-                <div id="options">
+                <div class="options">
                     <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                        ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
-                    `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
-                    <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
+                        ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
+                    `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
+                    <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}${isNaN(season) ? "" : `&season=${season}`}">No</a>` : "No"}
                 </div>
                 <div class="section">Performance</div>
                 <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>

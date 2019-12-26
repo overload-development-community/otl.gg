@@ -36,7 +36,7 @@ class PlayerGameLogView {
                 <div id="name">Game Log for ${PlayerGameLogView.Common.htmlEncode(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}</div>
             </div>
             <div id="gamelog">View the <a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Career Stats</a></div>
-            <div id="options">
+            <div class="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />

@@ -40,7 +40,8 @@ class Player {
         const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            career = await PlayerModel.getCareer(playerId, season, postseason);
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            career = await PlayerModel.getCareer(playerId, season, postseason, gameType);
 
         if (career) {
             const seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort(),
@@ -66,6 +67,10 @@ class Player {
 
             const totals = {
                 games: career.career.reduce((sum, stat) => sum + stat.games, 0),
+                captures: career.career.reduce((sum, stat) => sum + stat.captures, 0),
+                pickups: career.career.reduce((sum, stat) => sum + stat.pickups, 0),
+                carrierKills: career.career.reduce((sum, stat) => sum + stat.carrierKills, 0),
+                returns: career.career.reduce((sum, stat) => sum + stat.returns, 0),
                 kills: career.career.reduce((sum, stat) => sum + stat.kills, 0),
                 assists: career.career.reduce((sum, stat) => sum + stat.assists, 0),
                 deaths: career.career.reduce((sum, stat) => sum + stat.deaths, 0),
@@ -89,6 +94,7 @@ class Player {
                     seasonList,
                     season,
                     postseason,
+                    gameType,
                     opponents: career.opponents,
                     maps: career.maps,
                     damage: career.damage,
