@@ -141,11 +141,18 @@
 #opponents {
     display: grid;
     color: white;
-    grid-template-columns: repeat(10, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
     font-size: 14px;
+}
+
+#opponents.opponents-TA {
+    grid-template-columns: repeat(10, auto);
+}
+
+#opponents.opponents-CTF {
+    grid-template-columns: repeat(11, auto);
 }
 
 #opponents .best {
@@ -155,11 +162,18 @@
 #maps {
     display: grid;
     color: white;
-    grid-template-columns: repeat(10, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
     font-size: 14px;
+}
+
+#maps.maps-TA {
+    grid-template-columns: repeat(10, auto);
+}
+
+#maps.maps-CTF {
+    grid-template-columns: repeat(11, auto);
 }
 
 #maps .best {
@@ -167,18 +181,26 @@
 }
 
 @media (max-width: 1100px) {
-    #opponents {
+    #opponents.opponents-TA {
         grid-template-columns: repeat(9, auto);
+    }
+
+    #opponents.opponents-CTF {
+        grid-template-columns: repeat(10, auto);
     }
 
     #opponents .team {
         grid-column-end: span 1;
     }
 
-    #maps {
+    #maps.maps-TA {
         grid-template-columns: repeat(9, auto);
     }
-
+    
+    #maps.maps-CTF {
+        grid-template-columns: repeat(10, auto);
+    }
+    
     #maps .best {
         grid-column-end: span 3;
     }
@@ -190,18 +212,27 @@
 }
 
 @media (max-width: 900px) {
-    #opponents {
+    #opponents.opponents-TA {
         grid-template-columns: repeat(8, auto);
     }
+
+    #opponents.opponents-CTF {
+        grid-template-columns: repeat(9, auto);
+    }
+
 
     #opponents .best {
         grid-column-end: span 2;
     }
 
-    #maps {
+    #maps.maps-TA {
         grid-template-columns: repeat(8, auto);
     }
-
+    
+    #maps.maps-CTF {
+        grid-template-columns: repeat(9, auto);
+    }
+    
     #maps .best {
         grid-column-end: span 2;
     }
@@ -213,14 +244,22 @@
 }
 
 @media (max-width: 600px) {
-    #opponents {
+    #opponents.opponents-TA {
         grid-template-columns: repeat(6, auto);
     }
 
-    #maps {
-        grid-template-columns: repeat(6, auto);
+    #opponents.opponents-CTF {
+        grid-template-columns: repeat(7, auto);
     }
 
+    #maps.maps-TA {
+        grid-template-columns: repeat(6, auto);
+    }
+    
+    #maps.maps-CTF {
+        grid-template-columns: repeat(7, auto);
+    }
+    
     #opponents .best,
     #opponents .best-stats,
     #maps .best,
