@@ -718,8 +718,8 @@ class Challenge {
                 damage.damage += stat.damage;
             } else {
                 game.damage.push({
-                    attacker: Object.keys(map).find((k) => map[k] === stat.discordId),
-                    defender: Object.keys(map).find((k) => map[k] === stat.opponentDiscordId),
+                    attacker: Object.keys(map).find((k) => map[k] === stat.discordId && game.players.find((p) => p.name === k)),
+                    defender: Object.keys(map).find((k) => map[k] === stat.opponentDiscordId && game.players.find((p) => p.name === k)),
                     weapon: stat.weapon,
                     damage: stat.damage
                 });
