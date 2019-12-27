@@ -249,7 +249,7 @@ class PlayerDb {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             INNER JOIN (
                 SELECT
-                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END ORDER BY CASE @gameType WHEN 'CTF' THEN s.Captures ELSE 0 END DESC, CASE @gameType WHEN 'CTF' THEN s.CarrierKills ELSE 0 END, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END ORDER BY CASE @gameType WHEN 'CTF' THEN s.Captures ELSE 0 END DESC, CASE @gameType WHEN 'CTF' THEN s.CarrierKills ELSE 0 END DESC, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
                     s.ChallengeId,
                     s.PlayerId,
                     s.TeamId,
@@ -270,13 +270,13 @@ class PlayerDb {
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
                 INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
-                    LEFT OUTER JOIN (
-                        SELECT PlayerId, ChallengeId, SUM(Damage) Damage
-                        FROM tblDamage
-                        WHERE PlayerId = @playerId
-                            AND TeamId <> OpponentTeamId
-                        GROUP BY PlayerId, ChallengeId
-                    ) d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE PlayerId = @playerId
+                        AND TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = @gameType
@@ -310,7 +310,7 @@ class PlayerDb {
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             INNER JOIN (
                 SELECT
-                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, c.Map ORDER BY CASE @gameType WHEN 'CTF' THEN s.Captures ELSE 0 END DESC, CASE @gameType WHEN 'CTF' THEN s.CarrierKills ELSE 0 END, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, c.Map ORDER BY CASE @gameType WHEN 'CTF' THEN s.Captures ELSE 0 END DESC, CASE @gameType WHEN 'CTF' THEN s.CarrierKills ELSE 0 END DESC, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
                     s.ChallengeId,
                     s.PlayerId,
                     s.TeamId,

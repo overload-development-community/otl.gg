@@ -541,13 +541,13 @@ class TeamDb {
      * @param {Team} team The team to get the game log for.
      * @param {number} season The season to get the team's game log for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]>} The team's game log.
+     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]>} The team's game log.
      */
     static async getGameLog(team, season, postseason) {
         const key = `${settings.redisPrefix}:db:team:getGameLog:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /**
-         * @type {{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]}
+         * @type {{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}
          */
         let cache = await Cache.get(key);
 
@@ -556,7 +556,7 @@ class TeamDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, RatingChange: number, Map: string, MatchTime: Date, GameType: string, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, RatingChange: number, Map: string, MatchTime: Date, GameType: string, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -588,22 +588,39 @@ class TeamDb {
                 tc3.Tag StatTeamTag,
                 s.PlayerId,
                 p.Name,
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns,
                 s.Kills,
                 s.Assists,
-                s.Deaths
+                s.Deaths,
+                s.Damage
             FROM vwCompletedChallenge c
             INNER JOIN tblTeam tc1 ON c.ChallengingTeamId = tc1.TeamId
             INNER JOIN tblTeam tc2 ON c.ChallengedTeamId = tc2.TeamId
             LEFT OUTER JOIN (
                 SELECT
-                    ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
-                    ChallengeId,
-                    PlayerId,
-                    TeamId,
-                    Kills,
-                    Assists,
-                    Deaths
-                FROM tblStat
+                    ROW_NUMBER() OVER (PARTITION BY s.ChallengeId ORDER BY CASE c2.GameType WHEN 'CTF' THEN s.Captures ELSE 0 END DESC, CASE c2.GameType WHEN 'CTF' THEN s.CarrierKills ELSE 0 END DESC, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    d.Damage
+                FROM tblStat s
+                INNER JOIN tblChallenge c2 ON s.ChallengeId = c2.ChallengeId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c2.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
             ) s ON c.ChallengeId = s.ChallengeId AND s.Row = 1
             LEFT OUTER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN tblTeam tc3 ON s.TeamId = tc3.TeamId
@@ -637,9 +654,14 @@ class TeamDb {
             statTeamTag: row.StatTeamTag,
             playerId: row.PlayerId,
             name: row.Name,
+            captures: row.Captures,
+            pickups: row.Pickups,
+            carrierKills: row.Pickups,
+            returns: row.Returns,
             kills: row.Kills,
+            assists: row.Assists,
             deaths: row.Deaths,
-            assists: row.Assists
+            damage: row.Damage
         })) || [];
 
         Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);

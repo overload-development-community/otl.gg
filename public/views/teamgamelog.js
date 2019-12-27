@@ -27,7 +27,7 @@ class TeamGameLogView {
     //  ###
     /**
      * Gets the team game log template.
-     * @param {{pageTeam: Team, seasonList: number[], matches: {challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], season: number, postseason: boolean, teams: Teams}} data The team data.
+     * @param {{pageTeam: Team, seasonList: number[], matches: {challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], season: number, postseason: boolean, teams: Teams}} data The team data.
      * @returns {string} An HTML string of the team game log.
      */
     static get(data) {
@@ -73,7 +73,12 @@ class TeamGameLogView {
                         <a href="/player/${m.playerId}/${encodeURIComponent(TeamGameLogView.Common.normalizeName(m.name, team.tag))}">${TeamGameLogView.Common.htmlEncode(TeamGameLogView.Common.normalizeName(m.name, team.tag))}</a>
                     ` : ""}</div>
                     <div class="best-stats">${m.playerId ? /* html */`
-                        <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)
+                        ${m.gameType === "TA" ? /* html */`
+                            <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)${m.damage > 0 ? /* html */`, <span class="numeric">${m.damage.toFixed(0)}</span> Dmg (<span class="numeric">${(m.damage / m.deaths).toFixed(2)}</span> DmgPD)` : ""}
+                        ` : ""}
+                        ${m.gameType === "CTF" ? /* html */`
+                            <span class="numeric">${m.captures}</span> C/<span class="numeric">${m.pickups}</span> P, <span class="numeric">${m.carrierKills}</span> CK, <span class="numeric">${m.returns}</span> R, <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)${m.damage > 0 ? /* html */`<span class="numeric">${m.damage.toFixed(0)}</span> Dmg` : ""}
+                        ` : ""}
                     ` : ""}</div>
                 `).join("")}
             </div>
