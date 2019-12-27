@@ -4,26 +4,26 @@ const Common = require("../includes/common"),
     NotFoundView = require("../../public/views/404"),
     Season = require("../../src/models/season"),
     Team = require("../../src/models/team"),
-    TeamView = require("../../public/views/team");
+    TeamGameLogView = require("../../public/views/teamgamelog");
 
 /**
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
  */
 
-//  #####                       ####
-//    #                         #   #
-//    #     ###    ###   ## #   #   #   ###    ## #   ###
-//    #    #   #      #  # # #  ####       #  #  #   #   #
-//    #    #####   ####  # # #  #       ####   ##    #####
-//    #    #      #   #  # # #  #      #   #  #      #
-//    #     ###    ####  #   #  #       ####   ###    ###
-//                                            #   #
-//                                             ###
+//  #####                        ###                        #                    ####
+//    #                         #   #                       #                    #   #
+//    #     ###    ###   ## #   #       ###   ## #    ###   #       ###    ## #  #   #   ###    ## #   ###
+//    #    #   #      #  # # #  #          #  # # #  #   #  #      #   #  #  #   ####       #  #  #   #   #
+//    #    #####   ####  # # #  #  ##   ####  # # #  #####  #      #   #   ##    #       ####   ##    #####
+//    #    #      #   #  # # #  #   #  #   #  # # #  #      #      #   #  #      #      #   #  #      #
+//    #     ###    ####  #   #   ###    ####  #   #   ###   #####   ###    ###   #       ####   ###    ###
+//                                                                        #   #                #   #
+//                                                                         ###                  ###
 /**
  * A class that represents the team page.
  */
-class TeamPage {
+class TeamGameLogPage {
     //              #
     //              #
     //  ###   ##   ###
@@ -42,29 +42,17 @@ class TeamPage {
             pageTeam = await Team.getByNameOrTag(tag);
 
         if (pageTeam) {
-            const teamInfo = await pageTeam.getInfo(),
-                seasonList = await Season.getSeasonNumbers(),
+            const seasonList = await Season.getSeasonNumbers(),
                 season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
                 postseason = !!req.query.postseason,
-                teamData = await Team.getData(pageTeam, season, postseason),
+                matches = await Team.getMatches(pageTeam, season, postseason),
                 teams = new Teams();
-
-            teamInfo.members.sort((a, b) => {
-                if (a.role !== b.role) {
-                    return ["Founder", "Captain", void 0].indexOf(a.role) - ["Founder", "Captain", void 0].indexOf(b.role);
-                }
-                return Common.normalizeName(a.name, pageTeam.tag).localeCompare(Common.normalizeName(b.name, pageTeam.tag));
-            });
-
-            teamData.stats.sort((a, b) => Common.normalizeName(a.name, pageTeam.tag).localeCompare(Common.normalizeName(b.name, pageTeam.tag)));
-
-            const timezone = await pageTeam.getTimezone();
 
             res.status(200).send(Common.page(
                 /* html */`
                     <link rel="stylesheet" href="/css/team.css" />
                 `,
-                TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
+                TeamGameLogView.get({pageTeam, seasonList, matches, season, postseason, teams}),
                 req
             ));
         } else {
@@ -79,8 +67,8 @@ class TeamPage {
     }
 }
 
-TeamPage.route = {
-    path: "/team/:tag"
+TeamGameLogPage.route = {
+    path: "/team/:tag/gamelog"
 };
 
-module.exports = TeamPage;
+module.exports = TeamGameLogPage;

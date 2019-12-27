@@ -24,11 +24,11 @@ class TeamView {
     //  ###
     /**
      * Gets the team template.
-     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}, tag: string, season: number, postseason: boolean, teams: Teams}} data The team data.
+     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}, season: number, postseason: boolean, teams: Teams}} data The team data.
      * @returns {string} An HTML string of the team.
      */
     static get(data) {
-        const {pageTeam, teamInfo, timezone, seasonList, teamData, tag, season, postseason, teams} = data;
+        const {pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams} = data;
         let team;
 
         return /* html */`
@@ -54,7 +54,7 @@ class TeamView {
                     <div>${timezone}</div>
                 </div>
             </div>
-            <div id="options">
+            <div class="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
@@ -62,6 +62,7 @@ class TeamView {
             </div>
             <div class="section">Season Records</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
+            <div id="gamelog">View the <a href="/team/${encodeURIComponent(pageTeam.tag)}/gamelog${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Game Log</a></div>
             ${teamData.records && (teamData.records.wins > 0 || teamData.records.losses > 0 || teamData.records.ties > 0) ? /* html */`
                 <div id="records">
                     <div class="overall">
@@ -102,35 +103,6 @@ class TeamView {
                             `).join("")}
                         </div>
                     </div>
-                </div>
-                <div class="section">Season Matches</div>
-                <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
-                <div id="matches">
-                    <div class="header team">Oppenent</div>
-                    <div class="header result">Result</div>
-                    <div class="header">Map</div>
-                    <div class="header date">Date</div>
-                    <div class="header player">Top Performer</div>
-                    ${teamData.matches.map((m) => /* html */`
-                        <div class="tag"><div class="diamond${(team = m.challengingTeamTag === tag ? teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag) : teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                        <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                        <div>${m.challengingTeamTag === tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} <span class="numeric">${m.challengingTeamTag === tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === tag ? m.challengedTeamScore : m.challengingTeamScore}</span></div>
-                        <div>${typeof m.ratingChange === "number" ? /* html */`
-                            ${Math.round(m.ratingChange) > 0 ? /* html */`
-                                <span class="plus">+</span>` : ""}<span class="numeric">${Math.round(m.ratingChange)}</span>
-                        ` : ""}</div>
-                        <div>${m.gameType} ${m.map}</div>
-                        <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
-                        <div class="tag player">${m.playerId ? /* html */`
-                            <div class="diamond${(team = teams.getTeam(m.statTeamId, m.statTeamName, m.statTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
-                        ` : ""}</div>
-                        <div class="player">${m.playerId ? /* html */`
-                            <a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, team.tag))}</a>
-                        ` : ""}</div>
-                        <div class="best-stats">${m.playerId ? /* html */`
-                            <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)
-                        ` : ""}</div>
-                    `).join("")}
                 </div>
                 <div class="section">Season Player Stats</div>
                 <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>

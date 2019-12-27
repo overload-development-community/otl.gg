@@ -130,10 +130,20 @@ span.grey {
     }
 }
 
-#options {
+.options {
     font-size: 14px;
+    padding: 10px;
     color: white;
-    padding: 0 10px;
+}
+
+.options .grey {
+    color: #999999;
+}
+
+#gamelog {
+    padding: 10px;
+    font-size: 18px;
+    color: white;
 }
 
 #records {

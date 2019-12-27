@@ -23,9 +23,9 @@ class PlayerGameLogView {
     // #      ##     ##
     //  ###
     /**
-     * Gets the player template.
+     * Gets the player game log template.
      * @param {{playerId: number, player: {name: string, teamId: number, tag: string, teamName: string}, seasonList: number[], season: number, postseason: boolean, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], teams: Teams}} data The player data.
-     * @returns {string} An HTML string of the player.
+     * @returns {string} An HTML string of the player game log.
      */
     static get(data) {
         const {playerId, player, seasonList, season, postseason, matches, teams} = data;
@@ -33,16 +33,16 @@ class PlayerGameLogView {
 
         return /* html */`
             <div id="player">
-                <div id="name">Game Log for ${PlayerGameLogView.Common.htmlEncode(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}</div>
+                <div id="name">${PlayerGameLogView.Common.htmlEncode(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}</div>
             </div>
-            <div id="gamelog">View the <a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Career Stats</a></div>
+            <div id="gamelog">View the <a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Career Stats</a></div>
             <div class="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog?season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerGameLogView.Common.normalizeName(player.name, player.tag))}/gamelog${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
             </div>
-            <div class="section">Matches</div>
+            <div class="section">Game Log</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
             <div id="matches">
                 <div class="header team">Team</div>
