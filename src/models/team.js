@@ -193,23 +193,23 @@ class Team {
         }
     }
 
-    //              #    #  #         #          #
-    //              #    ####         #          #
-    //  ###   ##   ###   ####   ###  ###    ##   ###    ##    ###
-    // #  #  # ##   #    #  #  #  #   #    #     #  #  # ##  ##
-    //  ##   ##     #    #  #  # ##   #    #     #  #  ##      ##
-    // #      ##     ##  #  #   # #    ##   ##   #  #   ##   ###
-    //  ###
+    //              #     ##                     #
+    //              #    #  #                    #
+    //  ###   ##   ###   #      ###  # #    ##   #      ##    ###
+    // #  #  # ##   #    # ##  #  #  ####  # ##  #     #  #  #  #
+    //  ##   ##     #    #  #  # ##  #  #  ##    #     #  #   ##
+    // #      ##     ##   ###   # #  #  #   ##   ####   ##   #
+    //  ###                                                   ###
     /**
-     * Gets matches for the team.
-     * @param {Team} team The team to get the matches for.
-     * @param {number} season The season to get the team's matches for, 0 for all time.
+     * Gets the game log for the team.
+     * @param {Team} team The team to get the game log for.
+     * @param {number} season The season to get the team's game log for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]>} The team's matches.
+     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[]>} The team's game log.
      */
-    static async getMatches(team, season, postseason) {
+    static async getGameLog(team, season, postseason) {
         try {
-            return await Db.getMatches(team, season, postseason);
+            return await Db.getGameLog(team, season, postseason);
         } catch (err) {
             throw new Exception("There was a database error getting team matches.", err);
         }

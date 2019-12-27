@@ -48,7 +48,7 @@ class TeamGameLogView {
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}/gamelog?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}/gamelog?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/team/${encodeURI(pageTeam.tag)}/gamelog${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
             </div>
-            <div class="section">Season Matches</div>
+            <div class="section">Game Log</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
             <div id="matches">
                 <div class="header team">Opponent</div>

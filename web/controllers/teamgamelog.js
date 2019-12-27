@@ -45,7 +45,7 @@ class TeamGameLogPage {
             const seasonList = await Season.getSeasonNumbers(),
                 season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
                 postseason = !!req.query.postseason,
-                matches = await Team.getMatches(pageTeam, season, postseason),
+                matches = await Team.getGameLog(pageTeam, season, postseason),
                 teams = new Teams();
 
             res.status(200).send(Common.page(
