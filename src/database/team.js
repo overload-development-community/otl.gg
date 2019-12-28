@@ -4,7 +4,7 @@
  * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {import("../models/team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: {map: string, gameType: string}[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
 const Db = require("node-database"),
@@ -738,10 +738,10 @@ class TeamDb {
      */
     static async getInfo(team) {
         /**
-         * @type {{recordsets: [{Map: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
+         * @type {{recordsets: [{Map: string, GameType: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
 
             SELECT p.PlayerId, p.Name, r.Captain, r.Founder
             FROM tblRoster r
@@ -765,7 +765,10 @@ class TeamDb {
             SELECT PenaltiesRemaining FROM tblTeamPenalty WHERE TeamId = @teamId
         `, {teamId: {type: Db.INT, value: team.id}});
         return {
-            homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [],
+            homes: data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+                map: row.Map,
+                gameType: row.GameType
+            })) || [],
             members: data && data.recordsets && data.recordsets[1] && data.recordsets[1].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,

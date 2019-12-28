@@ -43,7 +43,7 @@ span.grey {
 
 #team {
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: repeat(4, auto);
     padding: 10px;
 }
 
@@ -88,7 +88,7 @@ span.grey {
 }
 
 #team #teamname {
-    grid-column-end: span 3;
+    grid-column-end: span 4;
     font-size: 20px;
     color: #ff6600
 }
@@ -110,7 +110,8 @@ span.grey {
     color: white;
 }
 
-#team #homes {
+#team #homes-ta,
+#team #homes-ctf {
     font-size: 16px;
     color: white;
 }
@@ -171,7 +172,7 @@ span.grey {
 
 #records .splits {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     justify-items: center;
     padding: 10px;
 }
@@ -182,7 +183,7 @@ span.grey {
 
 #records .breakdown {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     padding: 10px;
     justify-items: center;
     font-size: 18px;
@@ -191,14 +192,14 @@ span.grey {
 
 #records .breakdown .opponents {
     display: grid;
-    grid-template-columns: auto auto auto;
+    grid-template-columns: repeat(3, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
 }
 
 #records .breakdown .maps {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
 }
@@ -235,7 +236,7 @@ span.grey {
 
 #matches {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(9, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
     padding: 10px;
@@ -266,7 +267,7 @@ span.grey {
 
 @media (max-width: 1000px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(8, auto);
     }
 
     #matches .team-name {
@@ -280,7 +281,7 @@ span.grey {
 
 @media (max-width: 900px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(7, auto);
     }
 
     #matches .header.player {
@@ -294,7 +295,7 @@ span.grey {
 
 @media (max-width: 700px) {
     #matches {
-        grid-template-columns: auto auto auto auto auto;
+        grid-template-columns: repeat(5, auto);
     }
 
     #matches .player {
@@ -304,7 +305,7 @@ span.grey {
 
 @media (max-width: 500px) {
     #matches {
-        grid-template-columns: auto auto auto auto;
+        grid-template-columns: repeat(4, auto);
     }
 
     #matches .date {
@@ -314,7 +315,7 @@ span.grey {
 
 #stats {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(13, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -369,7 +370,7 @@ span.grey {
 
 @media (max-width: 900px) {
     #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(12, auto);
     }
 
     #stats .header.best {
@@ -383,7 +384,7 @@ span.grey {
 
 @media (max-width: 800px) {
     #stats {
-        grid-template-columns: auto auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(9, auto);
     }
 
     #stats .best {
@@ -393,7 +394,7 @@ span.grey {
 
 @media (max-width: 500px) {
     #stats {
-        grid-template-columns: auto auto auto auto auto auto;
+        grid-template-columns: repeat(6, auto);
     }
 
     #stats .totals {

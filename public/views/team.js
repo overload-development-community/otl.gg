@@ -1,6 +1,6 @@
 /**
  * @typedef {import("../../src/models/team")} Team
- * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: {map: string, gameType: string}[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  * @typedef {import("../../web/includes/teams")} Teams
  */
 
@@ -43,10 +43,16 @@ class TeamView {
                         <div class="member"><a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, pageTeam.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, pageTeam.tag))}</a><span class="grey">${m.role ? ` - ${m.role}` : ""}</span></div>
                     `).join("")}
                 </div>
-                <div id="homes">
-                    <div class="section">Home Maps</div>
-                    ${teamInfo.homes.map((h) => /* html */`
-                        <div>${h}</div>
+                <div id="homes-ta">
+                    <div class="section">Team Anarchy<br />Home Maps</div>
+                    ${teamInfo.homes.filter((h) => h.gameType === "TA").map((h) => /* html */`
+                        <div>${h.map}</div>
+                    `).join("")}
+                </div>
+                <div id="homes-ctf">
+                    <div class="section">Capture the Flag<br />Home Maps</div>
+                    ${teamInfo.homes.filter((h) => h.gameType === "CTF").map((h) => /* html */`
+                        <div>${h.map}</div>
                     `).join("")}
                 </div>
                 <div id="timezone">
