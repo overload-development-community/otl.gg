@@ -32,14 +32,12 @@ class RecordsView {
 
         return /* html */`
             <div id="options">
-            <div id="options">
                 <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
                     ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/records?gameType=${gameType}&recordType=${recordType}&season=${seasonNumber}${postseason ? "&postseason=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/records?gameType=${gameType}&recordType=${recordType}&season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/records?gameType=${gameType}&recordType=${recordType}&postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/records?gameType=${gameType}&recordType=${recordType}${isNaN(season) ? "" : `&season=${season}`}">No</a>` : "No"}<br />
                 <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="/records?gameType=TA&recordType=${recordType}${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="/records?gameType=CTF&recordType=${recordType}${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Capture the Flag</a>`}<br />
-                <span class="grey">Records:</span> ${recordType === "team" ? "Team" : /* html */`<a href="/records?gameType=${gameType}&recordType=team${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Team Anarchy</a>`} | ${recordType === "player" ? "Player" : /* html */`<a href="/records?gameType=${gameType}&recordType=player${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Team Anarchy</a>`}
-            </div>
+                <span class="grey">Records:</span> ${recordType === "team" ? "Team" : /* html */`<a href="/records?gameType=${gameType}&recordType=team${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Team</a>`} | ${recordType === "player" ? "Player" : /* html */`<a href="/records?gameType=${gameType}&recordType=player${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">Player</a>`}
             </div>
             <div class="section">Records</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"} for ${gameTypeName}</div>

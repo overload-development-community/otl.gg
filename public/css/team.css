@@ -313,9 +313,8 @@ span.grey {
     }
 }
 
-#stats {
+.stats {
     display: grid;
-    grid-template-columns: repeat(13, auto);
     grid-column-gap: 5px;
     column-gap: 5px;
     padding: 10px;
@@ -323,8 +322,16 @@ span.grey {
     font-size: 14px;
 }
 
+.stats-ta {
+    grid-template-columns: repeat(16, auto);
+}
+
+.stats-ctf {
+    grid-template-columns: repeat(13, auto);
+}
+
 #matches .diamond,
-#stats .diamond {
+.stats .diamond {
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -342,7 +349,7 @@ span.grey {
 }
 
 #matches .diamond-empty,
-#stats .diamond-empty {
+.stats .diamond-empty {
     display: inline-block;
     width: 6px;
     height: 6px;
@@ -360,44 +367,56 @@ span.grey {
     transform-origin: 0 100%;
 }
 
-#stats .tag {
+.stats .tag {
     white-space: nowrap;
 }
 
-#stats .header.best {
+.stats .header.best {
     grid-column-end: span 4;
 }
 
 @media (max-width: 900px) {
-    #stats {
+    .stats-ta {
+        grid-template-columns: repeat(15, auto);
+    }
+    
+    .stats-ctf {
         grid-template-columns: repeat(12, auto);
     }
-
-    #stats .header.best {
+    
+    .stats .header.best {
         grid-column-end: span 3;
     }
     
-    #stats .best-stats {
+    .stats .best-stats {
         display: none;
     }
 }
 
 @media (max-width: 800px) {
-    #stats {
+    .stats-ta {
+        grid-template-columns: repeat(12, auto);
+    }
+    
+    .stats-ctf {
         grid-template-columns: repeat(9, auto);
     }
-
-    #stats .best {
+    
+    .stats .best {
         display: none;
     }
 }
 
 @media (max-width: 500px) {
-    #stats {
+    .stats-ta {
+        grid-template-columns: repeat(8, auto);
+    }
+    
+    .stats-ctf {
         grid-template-columns: repeat(6, auto);
     }
-
-    #stats .totals {
+    
+    .stats .totals {
         display: none;
     }
 }
