@@ -65,10 +65,10 @@ class PlayerView {
                     <div class="header team">Team</div>
                     <div class="header">G</div>
                     ${gameType === "CTF" ? /* html */`}
-                        <div class="header">C</div>
-                        <div class="header">P</div>
-                        <div class="header">CK</div>
-                        <div class="header">R</div>
+                        <div class="header totals">C</div>
+                        <div class="header totals">P</div>
+                        <div class="header totals">CK</div>
+                        <div class="header totals">R</div>
                     ` : ""}
                     <div class="header">KDA</div>
                     <div class="header totals">K</div>

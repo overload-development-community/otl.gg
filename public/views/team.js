@@ -24,7 +24,7 @@ class TeamView {
     //  ###
     /**
      * Gets the team template.
-     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}, season: number, postseason: boolean, teams: Teams}} data The team data.
+     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}, season: number, postseason: boolean, teams: Teams}} data The team data.
      * @returns {string} An HTML string of the team.
      */
     static get(data) {
@@ -102,11 +102,11 @@ class TeamView {
                     <div class="opponents">
                         ${teamData.opponents.filter((o) => o.gameType === "TA").length === 0 ? "" : /* html */`
                             <div class="header">Tag</div>
-                            <div class="header">Opponent</div>
+                            <div class="header opponent">Opponent</div>
                             <div class="header">Record</div>
                             ${teamData.opponents.filter((o) => o.gameType === "TA").map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                                <div><a href="/team/${team.tag}">${team.name}</a></div>
+                                <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
                                 <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
                             `).join("")}
                         `}
@@ -114,11 +114,11 @@ class TeamView {
                     <div class="opponents">
                         ${teamData.opponents.filter((o) => o.gameType === "CTF").length === 0 ? "" : /* html */`
                             <div class="header">Tag</div>
-                            <div class="header">Opponent</div>
+                            <div class="header opponent">Opponent</div>
                             <div class="header">Record</div>
                             ${teamData.opponents.filter((o) => o.gameType === "CTF").map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                                <div><a href="/team/${team.tag}">${team.name}</a></div>
+                                <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
                                 <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
                             `).join("")}
                         `}
@@ -188,10 +188,19 @@ class TeamView {
                         <div class="stats stats-ctf">
                             <div class="header">Player</div>
                             <div class="header">G</div>
+                            <div class="header totals">C</div>
+                            <div class="header totals">P</div>
+                            <div class="header totals">CK</div>
+                            <div class="header totals">R</div>
                             <div class="header">KDA</div>
                             <div class="header totals">K</div>
                             <div class="header totals">A</div>
                             <div class="header totals">D</div>
+                            <div class="header totals">Dmg</div>
+                            <div class="header">CPG</div>
+                            <div class="header">PPG</div>
+                            <div class="header">CKPG</div>
+                            <div class="header">RPG</div>
                             <div class="header">KPG</div>
                             <div class="header">APG</div>
                             <div class="header">DPG</div>
@@ -199,17 +208,26 @@ class TeamView {
                             ${teamData.statsCTF.map((s) => /* html */`
                                 <div><a href="/player/${s.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(s.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(s.name, team.tag))}</a></div>
                                 <div class="numeric">${s.games}</div>
+                                <div class="numeric totals">${s.captures}</div>
+                                <div class="numeric totals">${s.pickups}</div>
+                                <div class="numeric totals">${s.carrierKills}</div>
+                                <div class="numeric totals">${s.returns}</div>
                                 <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                                 <div class="numeric totals">${s.kills}</div>
                                 <div class="numeric totals">${s.assists}</div>
                                 <div class="numeric totals">${s.deaths}</div>
+                                <div class="numeric totals">${s.damage ? s.damage.toFixed(0) : ""}</div>
+                                <div class="numeric">${(s.captures / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.pickups / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.carrierKills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
+                                <div class="numeric">${(s.returns / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="numeric">${(s.kills / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="best">${s.map}</div>
                                 <div class="best"><a href="/match/${s.challengeId}/${s.challengingTeamTag}/${s.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${s.matchTime}")));</script></a></div>
-                                <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)${s.bestDamage > 0 ? /* html */` <span class="numeric">${s.bestDamage.toFixed(0)}</span> Dmg (<span class="numeric">${(s.bestDamage / s.bestDeaths).toFixed(2)}</span> DmgPD)` : ""}</div>
+                                <div class="best-stats"><span class="numeric">${s.bestCaptures}</span> C/<span class="numeric">${s.bestPickups}</span> P, <span class="numeric">${s.bestCarrierKills}</span> CK, <span class="numeric">${s.bestReturns}</span> R, <span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)${s.bestDamage > 0 ? /* html */`<span class="numeric">${s.bestDamage.toFixed(0)}</span> Dmg` : ""}</div>
                             `).join("")}
                         </div>
                     `}

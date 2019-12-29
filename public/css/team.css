@@ -121,7 +121,7 @@ span.grey {
     color: white;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
     #team {
         grid-template-columns: auto;
     }
@@ -198,12 +198,12 @@ span.grey {
         font-size: 18px;
     }
 
-    #records .overall {
-        font-size: 24px;
+    #records .section {
+        font-size: 18px;
     }
 
-    #records .breakdown {
-        font-size: 14px;
+    #records .overall {
+        font-size: 24px;
     }
 }
 
@@ -212,6 +212,14 @@ span.grey {
         grid-template-columns: auto;
         grid-row-gap: 10px;
         row-gap: 10px;
+    }
+
+    #records .opponents {
+        grid-template-columns: repeat(2, auto);
+    }
+
+    #records .opponents .opponent {
+        display: none;
     }
 }
 
