@@ -151,6 +151,10 @@ span.grey {
     font-size: 20px;
     color: white;
     padding: 10px;
+    display: grid;
+    grid-template-columns: 50% 50%;
+    justify-items: center;
+    align-items: start;
 }
 
 #records .tag {
@@ -163,45 +167,30 @@ span.grey {
 }
 
 #records .overall {
-    display: grid;
-    grid-template-columns: 50% 50%;
-    justify-items: center;
     font-size: 36px;
     padding: 10px;
 }
 
 #records .splits {
-    display: grid;
-    grid-template-columns: repeat(2, auto);
-    justify-items: center;
     padding: 10px;
 }
 
-#records .splits div {
-    text-align: center;
-}
-
-#records .breakdown {
-    display: grid;
-    grid-template-columns: repeat(2, auto);
-    padding: 10px;
-    justify-items: center;
-    font-size: 18px;
-    align-items: start;
-}
-
-#records .breakdown .opponents {
+#records .opponents {
     display: grid;
     grid-template-columns: repeat(3, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
+    padding: 10px;
+    font-size: 14px;
 }
 
-#records .breakdown .maps {
+#records .maps {
     display: grid;
     grid-template-columns: repeat(2, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
+    padding: 10px;
+    font-size: 14px;
 }
 
 @media (max-width: 900px) {

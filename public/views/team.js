@@ -24,7 +24,7 @@ class TeamView {
     //  ###
     /**
      * Gets the team template.
-     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}, season: number, postseason: boolean, teams: Teams}} data The team data.
+     * @param {{pageTeam: Team, teamInfo: TeamInfo, timezone: string, seasonList: number[], teamData: {records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}, season: number, postseason: boolean, teams: Teams}} data The team data.
      * @returns {string} An HTML string of the team.
      */
     static get(data) {
@@ -71,43 +71,77 @@ class TeamView {
             <div id="gamelog">View the <a href="/team/${encodeURIComponent(pageTeam.tag)}/gamelog${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Game Log</a></div>
             ${teamData.records && (teamData.records.wins > 0 || teamData.records.losses > 0 || teamData.records.ties > 0) ? /* html */`
                 <div id="records">
+                    <div class="overall">Overall: <span class="numeric">${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</span></div>
                     <div class="overall">
-                        <div>Overall: <span class="numeric">${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</span></div>
                         ${postseason ? "" : /* html */`
-                            <div>Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span></div>
+                            Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span>
                         `}
                     </div>
+                    <div class="section">Team Anarchy</div>
+                    <div class="section">Capture the Flag</div>
                     <div class="splits">
-                        <div>
-                            Home Map Record: <span class="numeric">${teamData.records.winsMap1}-${teamData.records.lossesMap1}${teamData.records.tiesMap1 ? `-${teamData.records.tiesMap1}` : ""}</span><br />
-                            Away Map Record: <span class="numeric">${teamData.records.winsMap2}-${teamData.records.lossesMap2}${teamData.records.tiesMap2 ? `-${teamData.records.tiesMap2}` : ""}</span><br />
-                            Neutral Map Record: <span class="numeric">${teamData.records.winsMap3}-${teamData.records.lossesMap3}${teamData.records.tiesMap3 ? `-${teamData.records.tiesMap3}` : ""}</span>
-                        </div>
-                        <div>
-                            2v2 Record: <span class="numeric">${teamData.records.wins2v2}-${teamData.records.losses2v2}${teamData.records.ties2v2 ? `-${teamData.records.ties2v2}` : ""}</span><br />
-                            3v3 Record: <span class="numeric">${teamData.records.wins3v3}-${teamData.records.losses3v3}${teamData.records.ties3v3 ? `-${teamData.records.ties3v3}` : ""}</span><br />
-                            4v4+ Record: <span class="numeric">${teamData.records.wins4v4}-${teamData.records.losses4v4}${teamData.records.ties4v4 ? `-${teamData.records.ties4v4}` : ""}</span>
-                        </div>
+                        Home Record: <span class="numeric">${teamData.records.winsHomeTA}-${teamData.records.lossesHomeTA}${teamData.records.tiesHomeTA ? `-${teamData.records.tiesHomeTA}` : ""}</span><br />
+                        Away Record: <span class="numeric">${teamData.records.winsAwayTA}-${teamData.records.lossesAwayTA}${teamData.records.tiesAwayTA ? `-${teamData.records.tiesAwayTA}` : ""}</span><br />
+                        Neutral Record: <span class="numeric">${teamData.records.winsNeutralTA}-${teamData.records.lossesNeutralTA}${teamData.records.tiesNeutralTA ? `-${teamData.records.tiesNeutralTA}` : ""}</span>
                     </div>
-                    <div class="breakdown">
-                        <div class="opponents">
+                    <div class="splits">
+                        Home Record: <span class="numeric">${teamData.records.winsHomeCTF}-${teamData.records.lossesHomeCTF}${teamData.records.tiesHomeCTF ? `-${teamData.records.tiesHomeCTF}` : ""}</span><br />
+                        Away Record: <span class="numeric">${teamData.records.winsAwayCTF}-${teamData.records.lossesAwayCTF}${teamData.records.tiesAwayCTF ? `-${teamData.records.tiesAwayCTF}` : ""}</span><br />
+                        Neutral Record: <span class="numeric">${teamData.records.winsNeutralCTF}-${teamData.records.lossesNeutralCTF}${teamData.records.tiesNeutralCTF ? `-${teamData.records.tiesNeutralCTF}` : ""}</span>
+                    </div>
+                    <div class="splits">
+                        2v2 Record: <span class="numeric">${teamData.records.wins2v2TA}-${teamData.records.losses2v2TA}${teamData.records.ties2v2TA ? `-${teamData.records.ties2v2TA}` : ""}</span><br />
+                        3v3 Record: <span class="numeric">${teamData.records.wins3v3TA}-${teamData.records.losses3v3TA}${teamData.records.ties3v3TA ? `-${teamData.records.ties3v3TA}` : ""}</span><br />
+                        4v4+ Record: <span class="numeric">${teamData.records.wins4v4TA}-${teamData.records.losses4v4TA}${teamData.records.ties4v4TA ? `-${teamData.records.ties4v4TA}` : ""}</span>
+                    </div>
+                    <div class="splits">
+                        2v2 Record: <span class="numeric">${teamData.records.wins2v2CTF}-${teamData.records.losses2v2CTF}${teamData.records.ties2v2CTF ? `-${teamData.records.ties2v2CTF}` : ""}</span><br />
+                        3v3 Record: <span class="numeric">${teamData.records.wins3v3CTF}-${teamData.records.losses3v3CTF}${teamData.records.ties3v3CTF ? `-${teamData.records.ties3v3CTF}` : ""}</span><br />
+                        4v4+ Record: <span class="numeric">${teamData.records.wins4v4CTF}-${teamData.records.losses4v4CTF}${teamData.records.ties4v4CTF ? `-${teamData.records.ties4v4CTF}` : ""}</span>
+                    </div>
+                    <div class="opponents">
+                        ${teamData.opponents.filter((o) => o.gameType === "TA").length === 0 ? "" : /* html */`
                             <div class="header">Tag</div>
                             <div class="header">Opponent</div>
                             <div class="header">Record</div>
-                            ${teamData.opponents.map((opponent) => /* html */`
+                            ${teamData.opponents.filter((o) => o.gameType === "TA").map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div><a href="/team/${team.tag}">${team.name}</a></div>
                                 <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
                             `).join("")}
-                        </div>
-                        <div class="maps">
+                        `}
+                    </div>
+                    <div class="opponents">
+                        ${teamData.opponents.filter((o) => o.gameType === "CTF").length === 0 ? "" : /* html */`
+                            <div class="header">Tag</div>
+                            <div class="header">Opponent</div>
+                            <div class="header">Record</div>
+                            ${teamData.opponents.filter((o) => o.gameType === "CTF").map((opponent) => /* html */`
+                                <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                <div><a href="/team/${team.tag}">${team.name}</a></div>
+                                <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
+                            `).join("")}
+                        `}
+                    </div>
+                    <div class="maps">
+                        ${teamData.maps.filter((o) => o.gameType === "TA").length === 0 ? "" : /* html */`
                             <div class="header">Map</div>
                             <div class="header">Record</div>
-                            ${teamData.maps.map((map) => /* html */`
+                            ${teamData.maps.filter((o) => o.gameType === "TA").map((map) => /* html */`
                                 <div class="map">${map.map}</div>
                                 <div class="numeric">${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
                             `).join("")}
-                        </div>
+                        `}
+                    </div>
+                    <div class="maps">
+                        ${teamData.maps.filter((o) => o.gameType === "CTF").length === 0 ? "" : /* html */`
+                            <div class="header">Map</div>
+                            <div class="header">Record</div>
+                            ${teamData.maps.filter((o) => o.gameType === "CTF").map((map) => /* html */`
+                                <div class="map">${map.map}</div>
+                                <div class="numeric">${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
+                            `).join("")}
+                        `}
                     </div>
                 </div>
                 ${teamData.statsTA.length === 0 && teamData.statsCTF.length === 0 ? "" : /* html */ `
