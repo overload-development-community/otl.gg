@@ -12,7 +12,7 @@ const DiscordJs = require("discord.js"),
 //  ###
 /**
  * Gets the current season stats for the pilot.
- * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number, season: number}>} A promise that resolves with the pilot's stats.
+ * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the pilot's stats.
  */
 DiscordJs.User.prototype.getStats = async function() {
     try {

@@ -4030,20 +4030,31 @@ class Commands {
 
         const stats = await pilot.getStats();
 
-        if (stats) {
+        if (stats && (stats.ta ? stats.ta.games : 0) + (stats.ctf ? stats.ctf.games : 0) > 0) {
+            const fields = [];
+
+            if (stats.ta && stats.ta.games > 0) {
+                fields.push({
+                    name: "Team Anarchy",
+                    value: `${stats.ta.games} Games, ${((stats.ta.kills + stats.ta.assists) / (stats.ta.deaths < 1 ? 1 : stats.ta.deaths)).toFixed(3)} KDA, ${stats.ta.kills} Kills, ${stats.ta.assists} Assists, ${stats.ta.deaths} Deaths${stats.ta.damage ? `, ${stats.ta.damage.toFixed(0)} Damage, ${(stats.ta.damage / Math.max(stats.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
+                });
+            }
+
+            if (stats.ctf && stats.ctf.games > 0) {
+                fields.push({
+                    name: "Capture the Flag",
+                    value: `${stats.ctf.games} Games, ${stats.ctf.captures} Captures, ${stats.ctf.pickups} Pickups, ${stats.ctf.carrierKills} Carrier Kills, ${stats.ctf.returns} Returns, ${((stats.ctf.kills + stats.ctf.assists) / (stats.ctf.deaths < 1 ? 1 : stats.ctf.deaths)).toFixed(3)} KDA${stats.ctf.damage ? `, ${stats.ctf.damage.toFixed(0)} Damage` : ""}`
+                });
+            }
+
+            fields.push({
+                name: "For more details, visit:",
+                value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`
+            });
+
             Discord.richQueue(Discord.richEmbed({
                 title: `Season ${stats.season} Stats for ${Common.normalizeName(Discord.getName(pilot), stats.tag)}`,
-                fields: [
-                    {
-                        name: "Team Anarchy",
-                        value: `${((stats.kills + stats.assists) / (stats.deaths < 1 ? 1 : stats.deaths)).toFixed(3)} KDA, ${stats.games} Games, ${stats.kills} Kills, ${stats.assists} Assists, ${stats.deaths} Deaths${stats.damage ? `, ${stats.damage.toFixed(0)} Damage, ${(stats.damage / Math.max(stats.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
-
-                    },
-                    {
-                        name: "For more details, visit:",
-                        value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`
-                    }
-                ]
+                fields
             }), channel);
         } else {
             Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but ${pilot} has not played any games on the OTL this season.`, channel);

@@ -1920,11 +1920,11 @@ class PlayerDb {
     /**
      * Gets the season stats for the specified pilot.
      * @param {DiscordJs.GuildMember | DiscordJs.User} pilot The pilot to get stats for.
-     * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number, season: number}>} A promise that resolves with the player's stats.
+     * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the player's stats.
      */
     static async getStats(pilot) {
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, Tag: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number, Season: number}[]]}}
+         * @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1934,14 +1934,10 @@ class PlayerDb {
             FROM tblSeason
             ORDER BY Season DESC
 
-            SELECT p.PlayerId, p.Name, t.Tag, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Deaths DeathsInGamesWithDamage, @season Season
+            SELECT COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Deaths DeathsInGamesWithDamage, @season Season
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            LEFT OUTER JOIN (
-                tblRoster r
-                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
-            ) ON p.PlayerId = r.PlayerId
             LEFT OUTER JOIN (
                 SELECT s2.PlayerId, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
@@ -1958,23 +1954,68 @@ class PlayerDb {
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.Season = @season
                     AND c2.Postseason = 0
+                    AND c2.GameType = 'TA'
                 GROUP BY s2.PlayerId
             ) d ON p.PlayerId = d.PlayerId
             WHERE p.DiscordId = @discordId
                 AND c.Season = @season
-            GROUP BY p.PlayerId, p.Name, t.Tag, d.Damage, d.Deaths
+                AND c.GameType = 'TA'
+            GROUP BY d.Damage, d.Deaths
+
+            SELECT COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, @season Season
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN (
+                SELECT d.PlayerId, SUM(d.Damage) Damage
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                    AND c2.Postseason = 0
+                    AND c2.GameType = 'CTF'
+                GROUP BY d.PlayerId
+            ) d ON p.PlayerId = d.PlayerId
+            WHERE p.DiscordId = @discordId
+                AND c.Season = @season
+                AND c.GameType = 'CTF'
+            GROUP BY d.Damage
+
+            SELECT p.PlayerId, p.Name, t.Tag, @season Season
+            FROM tblPlayer p
+            LEFT OUTER JOIN (
+                tblRoster r
+                INNER JOIN tblTeam t ON r.TeamId = t.TeamId
+            ) ON p.PlayerId = r.PlayerId
         `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
-            playerId: data.recordsets[0][0].PlayerId,
-            name: data.recordsets[0][0].Name,
-            tag: data.recordsets[0][0].Tag,
-            games: data.recordsets[0][0].Games,
-            kills: data.recordsets[0][0].Kills,
-            assists: data.recordsets[0][0].Assists,
-            deaths: data.recordsets[0][0].Deaths,
-            damage: data.recordsets[0][0].Damage,
-            deathsInGamesWithDamage: data.recordsets[0][0].DeathsInGamesWithDamage,
-            season: data.recordsets[0][0].Season
+        return data && data.recordsets && data.recordsets.length === 3 && {
+            ta: data.recordsets[0].length === 0 ? void 0 : {
+                games: data.recordsets[0][0].Games,
+                kills: data.recordsets[0][0].Kills,
+                assists: data.recordsets[0][0].Assists,
+                deaths: data.recordsets[0][0].Deaths,
+                damage: data.recordsets[0][0].Damage,
+                deathsInGamesWithDamage: data.recordsets[0][0].DeathsInGamesWithDamage
+            },
+            ctf: data.recordsets[1].length === 0 ? void 0 : {
+                games: data.recordsets[1][0].Games,
+                captures: data.recordsets[1][0].Captures,
+                pickups: data.recordsets[1][0].Pickups,
+                carrierKills: data.recordsets[1][0].CarrierKills,
+                returns: data.recordsets[1][0].Returns,
+                kills: data.recordsets[1][0].Kills,
+                assists: data.recordsets[1][0].Assists,
+                deaths: data.recordsets[1][0].Deaths,
+                damage: data.recordsets[1][0].Damage
+            },
+            playerId: data.recordsets[2][0].PlayerId,
+            name: data.recordsets[2][0].Name,
+            tag: data.recordsets[2][0].Tag,
+            season: data.recordsets[2][0].Season
         } || void 0;
     }
 
