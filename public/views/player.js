@@ -24,7 +24,7 @@ class PlayerView {
     //  ###
     /**
      * Gets the player template.
-     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], totals: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, primaries: number, secondaries: number, totalDamage: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, gameType: string, opponents: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>, teams: Teams}} data The player data.
+     * @param {{playerId: number, player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], totals: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number, primaries: number, secondaries: number, totalDamage: number}, careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], seasonList: number[], season: number, postseason: boolean, gameType: string, opponents: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>, teams: Teams}} data The player data.
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
@@ -114,8 +114,8 @@ class PlayerView {
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         ${gameType === "TA" ? /* html */`
-                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
-                            <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.gamesWithDamage + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / Math.max(s.deathsInGamesWithDamage, 1)).toFixed(2)}` : ""}</div>
                         ` : ""}
                     `).join("")}
                     <div class="lifetime">Lifetime</div>
@@ -141,8 +141,8 @@ class PlayerView {
                     <div class="numeric">${(totals.assists / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     <div class="numeric">${(totals.deaths / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}</div>
                     ${gameType === "TA" ? /* html */`
-                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / (totals.games + 0.15 * totals.overtimePeriods)).toFixed(2)}` : ""}</div>
-                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / totals.deaths).toFixed(2)}` : ""}</div>
+                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / (totals.gamesWithDamage + 0.15 * totals.overtimePeriods)).toFixed(2)}` : ""}</div>
+                        <div class="numeric">${totals.damage > 0 ? `${(totals.damage / Math.max(totals.deathsInGamesWithDamage, 1)).toFixed(2)}` : ""}</div>
                     ` : ""}
                 </div>
                 <div class="section">Career Stats by Team</div>
@@ -198,8 +198,8 @@ class PlayerView {
                         <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                         ${gameType === "TA" ? /* html */`
-                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
-                            <div class="numeric">${s.damage > 0 ? `${(s.damage / s.deaths).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / (s.gamesWithDamage + 0.15 * s.overtimePeriods)).toFixed(2)}` : ""}</div>
+                            <div class="numeric">${s.damage > 0 ? `${(s.damage / Math.max(s.deathsInGamesWithDamage, 1)).toFixed(2)}` : ""}</div>
                         ` : ""}
                     `).join("")}
                 </div>

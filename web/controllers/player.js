@@ -75,6 +75,8 @@ class Player {
                 assists: career.career.reduce((sum, stat) => sum + stat.assists, 0),
                 deaths: career.career.reduce((sum, stat) => sum + stat.deaths, 0),
                 damage: career.career.reduce((sum, stat) => sum + stat.damage, 0),
+                gamesWithDamage: career.career.reduce((sum, stat) => sum + stat.gamesWithDamage, 0),
+                deathsInGamesWithDamage: career.career.reduce((sum, stat) => sum + stat.deathsInGamesWithDamage, 0),
                 overtimePeriods: career.career.reduce((sum, stat) => sum + stat.overtimePeriods, 0),
                 primaries: (career.damage.Impulse || 0) + (career.damage.Cyclone || 0) + (career.damage.Reflex || 0) + (career.damage.Crusher || 0) + (career.damage.Driller || 0) + (career.damage.Flak || 0) + (career.damage.Thunderbolt || 0) + (career.damage.Lancer || 0),
                 secondaries: (career.damage.Falcon || 0) + (career.damage["Missile Pod"] || 0) + (career.damage.Hunter || 0) + (career.damage.Creeper || 0) + (career.damage.Nova || 0) + (career.damage.Devastator || 0) + (career.damage["Time Bomb"] || 0) + (career.damage.Vortex || 0),
