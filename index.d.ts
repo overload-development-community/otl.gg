@@ -31,7 +31,7 @@ declare module "discord.js" {
         createNewTeam(): Promise<NewTeam>;
         getNewTeam(): Promise<NewTeam>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
-        getStats(): Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, season: number}>;
+        getStats(): Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number, season: number}>;
         getTeam(): Promise<Team>;
         getTimezone(): Promise<string>;
         getTwitchName(): Promise<string>;
@@ -46,6 +46,13 @@ declare module "discord.js" {
         setTimezone(timezone: string): Promise<void>;
         updateName(oldMember: GuildMember): Promise<void>;
         wasPreviousCaptainOrFounderOfTeam(team: Team): Promise<boolean>;
+    }
+
+    /**
+     * TypeScript definitions for discordJs.User.extensions.js.
+     */
+    interface User {
+        getStats(): Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number, season: number}>;
     }
 
     /**

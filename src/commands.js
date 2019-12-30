@@ -4019,7 +4019,7 @@ class Commands {
     async stats(member, channel, message) {
         let pilot;
         if (message) {
-            pilot = await Commands.checkPilotExists(message, member, channel);
+            pilot = await Commands.checkUserExists(message, member, channel);
         } else {
             if (!member) {
                 Discord.queue("Sorry, but you have not played any games on the OTL this season.", channel);
@@ -4032,12 +4032,16 @@ class Commands {
 
         if (stats) {
             Discord.richQueue(Discord.richEmbed({
-                title: `Season ${stats.season} stats for ${Common.normalizeName(pilot.displayName, stats.tag)}`,
-                description: `${((stats.kills + stats.assists) / (stats.deaths < 1 ? 1 : stats.deaths)).toFixed(3)} KDA, ${stats.games} Games, ${stats.kills} Kills, ${stats.assists} Assists, ${stats.deaths} Deaths`,
+                title: `Season ${stats.season} Stats for ${Common.normalizeName(Discord.getName(pilot), stats.tag)}`,
                 fields: [
                     {
+                        name: "Team Anarchy",
+                        value: `${((stats.kills + stats.assists) / (stats.deaths < 1 ? 1 : stats.deaths)).toFixed(3)} KDA, ${stats.games} Games, ${stats.kills} Kills, ${stats.assists} Assists, ${stats.deaths} Deaths${stats.damage ? `, ${stats.damage.toFixed(0)} Damage, ${(stats.damage / Math.max(stats.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
+
+                    },
+                    {
                         name: "For more details, visit:",
-                        value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(pilot.displayName, stats.tag))}`
+                        value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`
                     }
                 ]
             }), channel);
