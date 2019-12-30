@@ -4047,6 +4047,20 @@ class Commands {
                 });
             }
 
+            if (stats.damage) {
+                const primaries = (stats.damage.Impulse || 0) + (stats.damage.Cyclone || 0) + (stats.damage.Reflex || 0) + (stats.damage.Crusher || 0) + (stats.damage.Driller || 0) + (stats.damage.Flak || 0) + (stats.damage.Thunderbolt || 0) + (stats.damage.Lancer || 0),
+                    secondaries = (stats.damage.Falcon || 0) + (stats.damage["Missile Pod"] || 0) + (stats.damage.Hunter || 0) + (stats.damage.Creeper || 0) + (stats.damage.Nova || 0) + (stats.damage.Devastator || 0) + (stats.damage["Time Bomb"] || 0) + (stats.damage.Vortex || 0),
+                    bestPrimary = Object.keys(stats.damage).filter((d) => ["Impulse", "Cyclone", "Reflex", "Crusher", "Driller", "Flak", "Thunderbolt", "Lancer"].indexOf(d) !== -1).sort((a, b) => stats.damage[b] - stats.damage[a])[0],
+                    bestSecondary = Object.keys(stats.damage).filter((d) => ["Falcon", "Missile Pod", "Hunter", "Creeper", "Nova", "Devastator", "Time Bomb", "Vortex"].indexOf(d) !== -1).sort((a, b) => stats.damage[b] - stats.damage[a])[0];
+
+                if (primaries + secondaries > 0) {
+                    fields.push({
+                        name: "Weapon Stats",
+                        value: `${bestPrimary && bestPrimary !== "" ? `Most Used Primary: ${bestPrimary}, ` : ""}${bestSecondary && bestSecondary !== "" ? `Most Used Secondary: ${bestSecondary}, ` : ""}Primary/Secondary balance: ${(100 * primaries / (primaries + secondaries)).toFixed(1)}%/${(100 * secondaries / (primaries + secondaries)).toFixed(1)}%`
+                    });
+                }
+            }
+
             fields.push({
                 name: "For more details, visit:",
                 value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`

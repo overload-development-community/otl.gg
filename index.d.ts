@@ -31,7 +31,7 @@ declare module "discord.js" {
         createNewTeam(): Promise<NewTeam>;
         getNewTeam(): Promise<NewTeam>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
-        getStats(): Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, playerId: number, name: string, tag: string, season: number}>;
+        getStats(): Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: {[x: string]: number}, playerId: number, name: string, tag: string, season: number}>;
         getTeam(): Promise<Team>;
         getTimezone(): Promise<string>;
         getTwitchName(): Promise<string>;
@@ -52,7 +52,7 @@ declare module "discord.js" {
      * TypeScript definitions for discordJs.User.extensions.js.
      */
     interface User {
-        getStats(): Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, playerId: number, name: string, tag: string, season: number}>;
+        getStats(): Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: {[x: string]: number}, playerId: number, name: string, tag: string, season: number}>;
     }
 
     /**

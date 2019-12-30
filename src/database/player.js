@@ -1920,11 +1920,11 @@ class PlayerDb {
     /**
      * Gets the season stats for the specified pilot.
      * @param {DiscordJs.GuildMember | DiscordJs.User} pilot The pilot to get stats for.
-     * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the player's stats.
+     * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: Object<string, number>, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the player's stats.
      */
     static async getStats(pilot) {
         /**
-         * @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}}
+         * @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Weapon: string, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1985,14 +1985,24 @@ class PlayerDb {
                 AND c.GameType = 'CTF'
             GROUP BY d.Damage
 
+            SELECT d.Weapon, SUM(Damage) Damage
+            FROM tblDamage d
+            INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+            INNER JOIN tblPlayer p on d.PlayerId = p.PlayerId
+            WHERE (@season IS NULL OR c.Season = @season)
+                AND d.TeamId <> d.OpponentTeamId
+                AND p.DiscordId = @discordId
+            GROUP BY d.Weapon
+
             SELECT p.PlayerId, p.Name, t.Tag, @season Season
             FROM tblPlayer p
             LEFT OUTER JOIN (
                 tblRoster r
                 INNER JOIN tblTeam t ON r.TeamId = t.TeamId
             ) ON p.PlayerId = r.PlayerId
+            WHERE p.DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
-        return data && data.recordsets && data.recordsets.length === 3 && {
+        return data && data.recordsets && data.recordsets.length === 4 && {
             ta: data.recordsets[0].length === 0 ? void 0 : {
                 games: data.recordsets[0][0].Games,
                 kills: data.recordsets[0][0].Kills,
@@ -2012,10 +2022,14 @@ class PlayerDb {
                 deaths: data.recordsets[1][0].Deaths,
                 damage: data.recordsets[1][0].Damage
             },
-            playerId: data.recordsets[2][0].PlayerId,
-            name: data.recordsets[2][0].Name,
-            tag: data.recordsets[2][0].Tag,
-            season: data.recordsets[2][0].Season
+            damage: data.recordsets[2].reduce((prev, cur) => {
+                prev[cur.Weapon] = cur.Damage;
+                return prev;
+            }, {}),
+            playerId: data.recordsets[3][0].PlayerId,
+            name: data.recordsets[3][0].Name,
+            tag: data.recordsets[3][0].Tag,
+            season: data.recordsets[3][0].Season
         } || void 0;
     }
 
