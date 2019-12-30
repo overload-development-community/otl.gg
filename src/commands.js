@@ -4032,7 +4032,7 @@ class Commands {
 
         if (stats) {
             Discord.richQueue(Discord.richEmbed({
-                title: `Season Stats for ${Common.normalizeName(pilot.displayName, stats.tag)}`,
+                title: `Season ${stats.season} stats for ${Common.normalizeName(pilot.displayName, stats.tag)}`,
                 description: `${((stats.kills + stats.assists) / (stats.deaths < 1 ? 1 : stats.deaths)).toFixed(3)} KDA, ${stats.games} Games, ${stats.kills} Kills, ${stats.assists} Assists, ${stats.deaths} Deaths`,
                 fields: [
                     {

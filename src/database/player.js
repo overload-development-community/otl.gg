@@ -1919,11 +1919,11 @@ class PlayerDb {
     /**
      * Gets the season stats for the specified pilot.
      * @param {DiscordJs.GuildMember} pilot The pilot to get stats for.
-     * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number}>} A promise that resolves with the player's stats.
+     * @returns {Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, season: number}>} A promise that resolves with the player's stats.
      */
     static async getStats(pilot) {
         /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, Tag: string, Games: number, Kills: number, Assists: number, Deaths: number}[]]}}
+         * @type {{recordsets: [{PlayerId: number, Name: string, Tag: string, Games: number, Kills: number, Assists: number, Deaths: number, Season: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1933,7 +1933,7 @@ class PlayerDb {
             FROM tblSeason
             ORDER BY Season DESC
 
-            SELECT p.PlayerId, p.Name, t.Tag, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths
+            SELECT p.PlayerId, p.Name, t.Tag, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, @season Season
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -1952,7 +1952,8 @@ class PlayerDb {
             games: data.recordsets[0][0].Games,
             kills: data.recordsets[0][0].Kills,
             assists: data.recordsets[0][0].Assists,
-            deaths: data.recordsets[0][0].Deaths
+            deaths: data.recordsets[0][0].Deaths,
+            season: data.recordsets[0][0].Season
         } || void 0;
     }
 

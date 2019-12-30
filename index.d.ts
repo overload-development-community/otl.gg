@@ -31,7 +31,7 @@ declare module "discord.js" {
         createNewTeam(): Promise<NewTeam>;
         getNewTeam(): Promise<NewTeam>;
         getRequestedOrInvitedTeams(): Promise<Team[]>;
-        getStats(): Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number}>;
+        getStats(): Promise<{playerId: number, name: string, tag: string, games: number, kills: number, assists: number, deaths: number, season: number}>;
         getTeam(): Promise<Team>;
         getTimezone(): Promise<string>;
         getTwitchName(): Promise<string>;
