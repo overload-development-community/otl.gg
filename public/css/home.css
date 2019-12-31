@@ -119,25 +119,25 @@
 
 #body {
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     grid-column-gap: 80px;
 }
 
 #body #standings {
     display: grid;
-    grid-template-columns: auto auto auto auto auto;
+    grid-template-columns: repeat(5, auto);
     padding: 10px;
 }
 
 #body #players {
     display: grid;
-    grid-template-columns: auto auto auto auto;
+    grid-template-columns: repeat(4, auto);
     padding: 10px;
 }
 
 @media (max-width: 1000px) {
     #body {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
     }
 
     #body #standings {
@@ -215,7 +215,7 @@
 
 @media (max-width: 500px) {
     #body #standings {
-        grid-template-columns: auto auto auto auto;
+        grid-template-columns: repeat(4, auto);
     }
 
     #body #standings .team-name {

@@ -123,7 +123,7 @@ span.grey {
 
 @media (max-width: 800px) {
     #team {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
     }
 
     #team #teamname {
@@ -209,7 +209,7 @@ span.grey {
 
 @media (max-width: 700px) {
     #records .splits {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
         grid-row-gap: 10px;
         row-gap: 10px;
     }
@@ -225,7 +225,7 @@ span.grey {
 
 @media (max-width: 600px) {
     #records .breakdown {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
         grid-row-gap: 10px;
         row-gap: 10px;
     }

@@ -321,7 +321,7 @@
 
 #details {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto;
+    grid-template-columns: repeat(6, auto);
     color: white;
     font-size: 14px;
     margin-top: 5px;

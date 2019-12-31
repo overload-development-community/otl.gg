@@ -101,7 +101,7 @@ a:hover {
 
 @media only screen and (max-width: 800px) {
     #discord {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
     }
 
     #discord .title {

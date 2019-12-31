@@ -22,7 +22,7 @@
 
 #standings {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(9, auto);
     padding: 10px;
 }
 
@@ -98,7 +98,7 @@
 
 @media (max-width: 700px) {
     #standings {
-        grid-template-columns: auto auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(8, auto);
     }
 
     #standings .team-name {
@@ -112,7 +112,7 @@
 
 @media (max-width: 500px) {
     #standings {
-        grid-template-columns: auto auto auto auto auto auto auto;
+        grid-template-columns: repeat(7, auto);
     }
 
     #standings .pos {
@@ -135,6 +135,6 @@
 
 #disbanded {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto;
+    grid-template-columns: repeat(8, auto);
     padding: 10px;
 }

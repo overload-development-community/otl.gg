@@ -85,7 +85,7 @@ body {
     width: 777px;
     height: 48px;
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
 }
 
 #right-team {
@@ -98,7 +98,7 @@ body {
     width: 777px;
     height: 48px;
     display: grid;
-    grid-template-columns: auto auto;
+    grid-template-columns: repeat(2, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
 }
@@ -229,7 +229,7 @@ body {
 
 #left-roster {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto;
+    grid-template-columns: repeat(6, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
     position: absolute;
@@ -245,7 +245,7 @@ body {
 
 #right-roster {
     display: grid;
-    grid-template-columns: auto auto auto auto auto auto;
+    grid-template-columns: repeat(6, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
     position: absolute;
