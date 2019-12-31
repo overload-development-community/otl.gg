@@ -633,14 +633,15 @@ class ChallengeDb {
     /**
      * Gets challenge data for use in casting.
      * @param {Challenge} challenge The challenge being cast.
-     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
+     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}, challengingTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
      */
     static async getCastData(challenge) {
         /**
-         * @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, MatchTime: Date, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number}[], {Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[]]}}
+         * @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, GameType: string, MatchTime: Date, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
+            DECLARE @gameType VARCHAR(3)
 
             SELECT TOP 1
                 @season = Season
@@ -654,12 +655,14 @@ class ChallengeDb {
                 SET @season = @season - 1
             END
 
+            SELECT @gameType = GameType FROM tblChallenge WHERE ChallengeId = @challengeId
+
             SELECT
                 ChallengingTeamWins, ChallengingTeamLosses, ChallengingTeamTies,
                 CASE WHEN ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies < 10 THEN (ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies) * ChallengingTeamRating / 10 ELSE ChallengingTeamRating END ChallengingTeamRating,
                 ChallengedTeamWins, ChallengedTeamLosses, ChallengedTeamTies,
                 CASE WHEN ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies < 10 THEN (ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies) * ChallengedTeamRating / 10 ELSE ChallengedTeamRating END ChallengedTeamRating,
-                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, MatchTime, Name, TeamId, Kills, Assists, Deaths
+                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, GameType, MatchTime, Name, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, Damage
             FROM (
                 SELECT
                     (SELECT COUNT(*) FROM vwCompletedChallenge cc WHERE Season = @season AND ((cc.ChallengingTeamId = c.ChallengingTeamId AND cc.ChallengingTeamScore > cc.ChallengedTeamScore) OR (cc.ChallengedTeamId = c.ChallengingTeamId AND cc.ChallengedTeamScore > cc.ChallengingTeamScore))) ChallengingTeamWins,
@@ -678,12 +681,18 @@ class ChallengeDb {
                     s.ChallengedTeamId,
                     s.ChallengedTeamScore,
                     s.Map,
+                    s.GameType,
                     s.MatchTime,
                     s.Name,
                     s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
                     s.Kills,
                     s.Assists,
-                    s.Deaths
+                    s.Deaths,
+                    s.Damage
                 FROM tblChallenge c
                 LEFT OUTER JOIN tblTeamRating tr1 ON c.ChallengingTeamId = tr1.TeamId AND tr1.Season = @season
                 LEFT OUTER JOIN tblTeamRating tr2 ON c.ChallengedTeamId = tr2.TeamId AND tr2.Season = @season
@@ -696,24 +705,50 @@ class ChallengeDb {
                         c.ChallengedTeamId,
                         c.ChallengedTeamScore,
                         c.Map,
+                        c.GameType,
                         c.MatchTime,
                         p.Name,
                         s.TeamId,
+                        s.Captures,
+                        s.Pickups,
+                        s.CarrierKills,
+                        s.Returns,
                         s.Kills,
                         s.Assists,
-                        s.Deaths
+                        s.Deaths,
+                        s.Damage
                     FROM vwCompletedChallenge c
                     LEFT JOIN (
                         (
                             SELECT
-                                ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
-                                ChallengeId,
-                                PlayerId,
-                                TeamId,
-                                Kills,
-                                Assists,
-                                Deaths
-                            FROM tblStat
+                                ROW_NUMBER() OVER (PARTITION BY s2.ChallengeId ORDER BY CASE c2.GameType WHEN 'CTF' THEN s2.Captures ELSE 0 END DESC, CASE c2.GameType WHEN 'CTF' THEN s2.CarrierKills ELSE 0 END DESC, CAST(s2.Kills + s2.Assists AS FLOAT) / CASE WHEN s2.Deaths < 1 THEN 1 ELSE s2.Deaths END DESC) Row,
+                                s2.ChallengeId,
+                                s2.PlayerId,
+                                s2.TeamId,
+                                s2.Captures,
+                                s2.Pickups,
+                                s2.CarrierKills,
+                                s2.Returns,
+                                s2.Kills,
+                                s2.Assists,
+                                s2.Deaths,
+                                SUM(d.Damage) Damage
+                            FROM tblStat s2
+                            INNER JOIN tblChallenge c2 ON s2.ChallengeId = c2.ChallengeId
+                            LEFT OUTER JOIN tblDamage d ON c2.ChallengeId = d.ChallengeId AND s2.PlayerId = d.PlayerId
+                            WHERE d.TeamId <> d.OpponentTeamId
+                            GROUP BY
+                                s2.ChallengeId,
+                                s2.PlayerId,
+                                s2.TeamId,
+                                s2.Captures,
+                                s2.Pickups,
+                                s2.CarrierKills,
+                                s2.Returns,
+                                s2.Kills,
+                                s2.Assists,
+                                s2.Deaths,
+                                c2.GameType
                         ) s
                         INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
                     ) ON c.ChallengeId = s.ChallengeId AND s.Row = 1
@@ -721,7 +756,7 @@ class ChallengeDb {
                 WHERE c.ChallengeId = @challengeId
             ) a
 
-            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblRoster r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengingTeamId = r.TeamId
@@ -730,11 +765,28 @@ class ChallengeDb {
                 tblStat s
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
+            LEFT OUTER JOIN (
+                SELECT c2.GameType, c2.Season, c2.PostSeason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                GROUP BY c2.GameType, c2.Season, c2.Postseason, s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
             WHERE c.ChallengeId = @challengeId
-            GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
+            GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
 
-            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblRoster r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengedTeamId = r.TeamId
@@ -743,8 +795,25 @@ class ChallengeDb {
                 tblStat s
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
+            LEFT OUTER JOIN (
+                SELECT c2.GameType, c2.Season, c2.PostSeason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                GROUP BY c2.GameType, c2.Season, c2.Postseason, s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
             WHERE c.ChallengeId = @challengeId
-            GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
+            GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets.length === 3 && {
@@ -765,27 +834,47 @@ class ChallengeDb {
                 challengedTeamId: data.recordsets[0][0].ChallengedTeamId,
                 challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
                 map: data.recordsets[0][0].Map,
+                gameType: data.recordsets[0][0].GameType,
                 matchTime: data.recordsets[0][0].MatchTime,
                 name: data.recordsets[0][0].Name,
                 teamId: data.recordsets[0][0].TeamId,
+                captures: data.recordsets[0][0].Captures,
+                pickups: data.recordsets[0][0].Pickups,
+                carrierKills: data.recordsets[0][0].CarrierKills,
+                returns: data.recordsets[0][0].Returns,
                 kills: data.recordsets[0][0].Kills,
                 assists: data.recordsets[0][0].Assists,
-                deaths: data.recordsets[0][0].Deaths
+                deaths: data.recordsets[0][0].Deaths,
+                damage: data.recordsets[0][0].Damage
             } || void 0,
             challengingTeamRoster: data.recordsets[1].map((row) => ({
                 name: row.Name,
                 games: row.Games,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                damage: row.Damage,
+                gamesWithDamage: row.GamesWithDamage,
+                deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 twitchName: row.TwitchName
             })),
             challengedTeamRoster: data.recordsets[2].map((row) => ({
                 name: row.Name,
                 games: row.Games,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                damage: row.Damage,
+                gamesWithDamage: row.GamesWithDamage,
+                deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 twitchName: row.TwitchName
             }))
         } || {data: void 0, challengingTeamRoster: void 0, challengedTeamRoster: void 0};

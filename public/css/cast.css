@@ -79,7 +79,7 @@ body {
     position: absolute;
     border: 2px solid;
     left: 5px;
-    top: 255px;
+    top: 175px;
     font-size: 48px;
     color: white;
     width: 777px;
@@ -92,7 +92,7 @@ body {
     position: absolute;
     border: 2px solid;
     right: 5px;
-    top: 255px;
+    top: 175px;
     font-size: 48px;
     color: white;
     width: 777px;
@@ -112,7 +112,7 @@ body {
     position: absolute;
     border: 1px solid;
     left: 5px;
-    top: 312px;
+    top: 232px;
     font-size: 24px;
     color: white;
     height: 24px;
@@ -127,7 +127,7 @@ body {
     position: absolute;
     border: 1px solid;
     right: 5px;
-    top: 312px;
+    top: 232px;
     font-size: 24px;
     color: white;
     height: 24px;
@@ -229,12 +229,11 @@ body {
 
 #left-roster {
     display: grid;
-    grid-template-columns: repeat(6, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
     position: absolute;
     left: 5px;
-    top: 350px;
+    top: 270px;
     color: white;
     font-size: 20px;
 }
@@ -245,18 +244,25 @@ body {
 
 #right-roster {
     display: grid;
-    grid-template-columns: repeat(6, auto);
     grid-column-gap: 10px;
     column-gap: 10px;
     position: absolute;
     right: 5px;
-    top: 350px;
+    top: 270px;
     color: white;
     font-size: 20px;
 }
 
 #right-roster .header {
     color: #ff6600;
+}
+
+.roster-ta {
+    grid-template-columns: repeat(8, auto);
+}
+
+.roster-ctf {
+    grid-template-columns: repeat(8, auto);
 }
 
 #left-viewing {

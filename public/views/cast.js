@@ -1,6 +1,6 @@
 /**
  * @typedef {import("../../src/models/challenge")} Challenge
- * @typedef {{name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}} Roster
+ * @typedef {{name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}} Roster
  */
 
 //   ###                  #     #   #    #
@@ -23,7 +23,7 @@ class CastView {
     //  ###
     /**
      * Gets the rendered cast template.
-     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}}} data The cast data.
+     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}}} data The cast data.
      * @returns {string} An HTML string of the cast.
      */
     static get(data) {
@@ -105,45 +105,109 @@ class CastView {
                                     <div class="date"><script>document.write(Common.formatDate(new Date("${castData.matchTime}")));</script></div>
                                     ${castData.teamId ? /* html */`
                                         <div class="best">Best Performer</div>
-                                        <div class="best-stats">${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br /><span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)</div>
+                                        <div class="best-stats">
+                                            ${castData.gameType === "TA" ? /* html */`
+                                                ${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br />
+                                                <span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)<br />
+                                                ${castData.damage ? /* html */`
+                                                    <span class="numeric">${castData.damage.toFixed(0)}</span> Dmg (<span class="numeric">${(castData.damage / Math.max(castData.deaths, 1)).toFixed(2)}</span> DmgPD)
+                                                ` : ""}
+                                            ` : ""}
+                                            ${castData.gameType === "CTF" ? /* html */`
+                                                ${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br />
+                                                <span class="numeric">${castData.captures}</span> C (<span class="numeric">${castData.pickups}</span> P, <span class="numeric">${castData.carrierKills}</span> CK, <span class="numeric">${castData.returns}</span> R)<br />
+                                                <span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)<br />
+                                                ${castData.damage ? /* html */`
+                                                    <span class="numeric">${castData.damage.toFixed(0)}</span> Dmg
+                                                ` : ""}
+                                            ` : ""}
+                                        </div>
                                     ` : ""}
                                 </div>
                             </div>
                         ` : ""}
-                        <div id="left-roster">
+                        <div id="left-roster" class="roster-${challenge.details.gameType.toLowerCase()}">
                             <div class="header">Pilot</div>
                             <div class="header">G</div>
+                            ${challenge.details.gameType === "CTF" ? /* html */`
+                                <div class="header">CPG</div>
+                                <div class="header">PPG</div>
+                                <div class="header">CKPG</div>
+                                <div class="header">RPG</div>
+                            ` : ""}
                             <div class="header">KDA</div>
-                            <div class="header">KPG</div>
-                            <div class="header">APG</div>
-                            <div class="header">DPG</div>
+                            ${challenge.details.gameType === "TA" ? /* html */`
+                                <div class="header">KPG</div>
+                                <div class="header">APG</div>
+                                <div class="header">DPG</div>
+                            ` : ""}
+                            <div class="header">DmgPG</div>
+                            ${challenge.details.gameType === "TA" ? /* html */`
+                                <div class="header">DmgPD</div>
+                            ` : ""}
                             ${data.challengingTeamRoster.map((p) => /* html */`
                                 <div>${p.twitchName ? /* html */`
                                     <div class="twitch-image"></div>&nbsp;
                                 ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
+                                ${challenge.details.gameType === "CTF" ? /* html */`
+                                    <div class="header">CPG</div>
+                                    <div class="header">PPG</div>
+                                    <div class="header">CKPG</div>
+                                    <div class="header">RPG</div>
+                                ` : ""}
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
-                                <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
-                                <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
-                                <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                ${challenge.details.gameType === "TA" ? /* html */`
+                                    <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                ` : ""}
+                                <div class="numeric">${p.damage ? (p.damage / p.gamesWithDamage).toFixed(0) : ""}</div>
+                                ${challenge.details.gameType === "TA" ? /* html */`
+                                    <div class="numeric">${p.damage ? (p.damage / Math.max(p.deathsInGamesWithDamage, 1)).toFixed(2) : ""}</div>
+                                ` : ""}
                             `).join("")}
                         </div>
-                        <div id="right-roster">
+                        <div id="right-roster" class="roster-${challenge.details.gameType.toLowerCase()}">
                             <div class="header">Pilot</div>
                             <div class="header">G</div>
+                            ${challenge.details.gameType === "CTF" ? /* html */`
+                                <div class="header">CPG</div>
+                                <div class="header">PPG</div>
+                                <div class="header">CKPG</div>
+                                <div class="header">RPG</div>
+                            ` : ""}
                             <div class="header">KDA</div>
-                            <div class="header">KPG</div>
-                            <div class="header">APG</div>
-                            <div class="header">DPG</div>
+                            ${challenge.details.gameType === "TA" ? /* html */`
+                                <div class="header">KPG</div>
+                                <div class="header">APG</div>
+                                <div class="header">DPG</div>
+                            ` : ""}
+                            <div class="header">DmgPG</div>
+                            ${challenge.details.gameType === "TA" ? /* html */`
+                                <div class="header">DmgPD</div>
+                            ` : ""}
                             ${data.challengedTeamRoster.map((p) => /* html */`
                                 <div>${p.twitchName ? /* html */`
-                                <div class="twitch-image"></div>&nbsp;
-                            ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengedTeam.tag))}</div>
+                                    <div class="twitch-image"></div>&nbsp;
+                                ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
+                                ${challenge.details.gameType === "CTF" ? /* html */`
+                                    <div class="header">CPG</div>
+                                    <div class="header">PPG</div>
+                                    <div class="header">CKPG</div>
+                                    <div class="header">RPG</div>
+                                ` : ""}
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
-                                <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
-                                <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
-                                <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                ${challenge.details.gameType === "TA" ? /* html */`
+                                    <div class="numeric">${p.games ? (p.kills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.assists / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.deaths / p.games).toFixed(2) : ""}</div>
+                                ` : ""}
+                                <div class="numeric">${p.damage ? (p.damage / p.gamesWithDamage).toFixed(0) : ""}</div>
+                                ${challenge.details.gameType === "TA" ? /* html */`
+                                    <div class="numeric">${p.damage ? (p.damage / Math.max(p.deathsInGamesWithDamage, 1)).toFixed(2) : ""}</div>
+                                ` : ""}
                             `).join("")}
                         </div>
                         <div id="left-viewing" style="border-color: ${challengingTeamColor};">
