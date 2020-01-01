@@ -1932,7 +1932,7 @@ class Commands {
 
         Object.keys(homes).forEach((gameType) => {
             msg.fields.push({
-                name: gameType,
+                name: Challenge.getGameTypeName(gameType),
                 value: homes[gameType].join("\n")
             });
         });
@@ -2422,12 +2422,12 @@ class Commands {
         }
 
         if (homeMaps.length !== 10) {
-            await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set for each game type before you challenge another team.  Use the \`!home <number> <map>\` command to set your team's home maps.`, channel);
+            await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set for each game type before you challenge another team.  Use the \`!home <gameType> <number> <map>\` command to set your team's home maps.`, channel);
             throw new Warning("Team does not have 5 home maps set for each game type.");
         }
 
         const {groups: {teamName, gameType}} = challengeParse.exec(message),
-            gameTypeUpper = gameType.toUpperCase();
+            gameTypeUpper = gameType && gameType.toUpperCase() || void 0;
 
         const opponent = await Commands.checkTeamExists(teamName, member, channel);
 
@@ -4696,7 +4696,7 @@ class Commands {
         }
 
         try {
-            await challenge.setGameType(member, message);
+            await challenge.setGameType(member, gameType);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -5139,10 +5139,10 @@ class Commands {
             mapMessage = newMapMessage;
         }
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]} */
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]} */
         let challengingTeamStats;
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[]} */
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]} */
         let challengedTeamStats;
 
         let scoreChanged = false;
@@ -5175,40 +5175,77 @@ class Commands {
             }
         }
 
-        msg.fields.push({
-            name: `${challenge.challengingTeam.name} Stats`,
-            value: `${challengingTeamStats.sort((a, b) => {
-                if (a.kills !== b.kills) {
-                    return b.kills - a.kills;
-                }
-                if (a.assists !== b.assists) {
-                    return b.assists - a.assists;
-                }
-                if (a.deaths !== b.deaths) {
-                    return a.deaths - b.deaths;
-                }
-                if (!a.pilot || !b.pilot) {
-                    return 0;
-                }
-                return a.name.localeCompare(b.name);
-            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
-        });
+        switch (challenge.details.gameType) {
+            case "TA":
+                msg.fields.push({
+                    name: `${challenge.challengingTeam.name} Stats`,
+                    value: `${challengingTeamStats.sort((a, b) => {
+                        if (a.kills !== b.kills) {
+                            return b.kills - a.kills;
+                        }
+                        if (a.assists !== b.assists) {
+                            return b.assists - a.assists;
+                        }
+                        if (a.deaths !== b.deaths) {
+                            return a.deaths - b.deaths;
+                        }
+                        if (!a.pilot || !b.pilot) {
+                            return 0;
+                        }
+                        return a.name.localeCompare(b.name);
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                });
 
-        msg.fields.push({
-            name: `${challenge.challengedTeam.name} Stats`,
-            value: `${challengedTeamStats.sort((a, b) => {
-                if (a.kills !== b.kills) {
-                    return b.kills - a.kills;
-                }
-                if (a.assists !== b.assists) {
-                    return b.assists - a.assists;
-                }
-                if (a.deaths !== b.deaths) {
-                    return a.deaths - b.deaths;
-                }
-                return a.name.localeCompare(b.name);
-            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
-        });
+                msg.fields.push({
+                    name: `${challenge.challengedTeam.name} Stats`,
+                    value: `${challengedTeamStats.sort((a, b) => {
+                        if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                            return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                        }
+                        return a.name.localeCompare(b.name);
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                });
+                break;
+            case "CTF":
+                msg.fields.push({
+                    name: `${challenge.challengingTeam.name} Stats`,
+                    value: `${challengingTeamStats.sort((a, b) => {
+                        if (a.captures !== b.captures) {
+                            return b.captures - a.captures;
+                        }
+                        if (a.carrierKills !== b.carrierKills) {
+                            return b.carrierKills - a.carrierKills;
+                        }
+                        if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                            return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                        }
+                        if (!a.pilot || !b.pilot) {
+                            return 0;
+                        }
+                        return a.name.localeCompare(b.name);
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA`).join("\n")}`
+                });
+
+                msg.fields.push({
+                    name: `${challenge.challengedTeam.name} Stats`,
+                    value: `${challengedTeamStats.sort((a, b) => {
+                        if (a.captures !== b.captures) {
+                            return b.captures - a.captures;
+                        }
+                        if (a.carrierKills !== b.carrierKills) {
+                            return b.carrierKills - a.carrierKills;
+                        }
+                        if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                            return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                        }
+                        if (!a.pilot || !b.pilot) {
+                            return 0;
+                        }
+                        return a.name.localeCompare(b.name);
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA`).join("\n")}`
+                });
+                break;
+        }
 
         await Discord.richQueue(msg, challenge.channel);
 

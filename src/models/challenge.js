@@ -517,7 +517,7 @@ class Challenge {
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
      */
     async addStats(gameId, nameMap) {
         let game;
@@ -1055,7 +1055,10 @@ class Challenge {
                             }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
-                            value: `${stats.challengedTeamStats.sort((a, b) => {
+                            value: this.details.gameType === "TA" ? `${stats.challengingTeamStats.sort((a, b) => {
+                                if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                                    return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                                }
                                 if (a.kills !== b.kills) {
                                     return b.kills - a.kills;
                                 }
@@ -1065,8 +1068,31 @@ class Challenge {
                                 if (a.deaths !== b.deaths) {
                                     return a.deaths - b.deaths;
                                 }
+                                if (!a.pilot || !b.pilot) {
+                                    return 0;
+                                }
                                 return a.name.localeCompare(b.name);
-                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}` : `${stats.challengedTeamStats.sort((a, b) => {
+                                if (a.captures !== b.captures) {
+                                    return b.captures - a.captures;
+                                }
+                                if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
+                                    return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
+                                }
+                                if (a.kills !== b.kills) {
+                                    return b.kills - a.kills;
+                                }
+                                if (a.assists !== b.assists) {
+                                    return b.assists - a.assists;
+                                }
+                                if (a.deaths !== b.deaths) {
+                                    return a.deaths - b.deaths;
+                                }
+                                if (!a.pilot || !b.pilot) {
+                                    return 0;
+                                }
+                                return a.name.localeCompare(b.name);
+                            }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: "For match details, visit:",
                             value: `https://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`
@@ -1114,8 +1140,9 @@ class Challenge {
             await this.loadDetails();
         }
 
+        let homes;
         try {
-            await Db.confirmGameType(this);
+            homes = await Db.confirmGameType(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested game type for a challenge.", err);
         }
@@ -1125,7 +1152,7 @@ class Challenge {
         this.details.suggestedGameTypeTeam = void 0;
 
         try {
-            await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**.`, this.channel);
+            await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
@@ -1408,7 +1435,7 @@ class Challenge {
     /**
      * Gets the stats from a challenge for a team.
      * @param {Team} team The team to get stats for.
-     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
      */
     async getStatsForTeam(team) {
         try {

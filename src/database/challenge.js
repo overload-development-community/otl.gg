@@ -277,14 +277,25 @@ class ChallengeDb {
     /**
      * Confirms a suggested game type for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the suggested game type has been confirmed.
+     * @returns {Promise<string[]>} A promise that resolves with the home map team's home maps for the new game type.
      */
     static async confirmGameType(challenge) {
-        await db.query(/* sql */`
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET GameType = SuggestedGameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
+
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //                     #    #                #  #

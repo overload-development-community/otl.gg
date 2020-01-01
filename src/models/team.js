@@ -1924,7 +1924,7 @@ class Team {
         const challengeRatings = {};
 
         data.matches.forEach((match) => {
-            const fx = match.gameType === "CTF" ? Elo.actualCTF : Elo.actualTA;
+            const fx = match.gameType === "CTF" && match.season >= 3 ? Elo.actualCTF : Elo.actualTA;
 
             if (!ratings[match.challengingTeamId]) {
                 ratings[match.challengingTeamId] = 1500;

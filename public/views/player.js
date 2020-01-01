@@ -64,7 +64,7 @@ class PlayerView {
                     <div class="header">Season</div>
                     <div class="header team">Team</div>
                     <div class="header">G</div>
-                    ${gameType === "CTF" ? /* html */`}
+                    ${gameType === "CTF" ? /* html */`
                         <div class="header totals">C</div>
                         <div class="header totals">P</div>
                         <div class="header totals">CK</div>
@@ -75,7 +75,7 @@ class PlayerView {
                     <div class="header totals">A</div>
                     <div class="header totals">D</div>
                     <div class="header totals">Dmg</div>
-                    ${gameType === "CTF" ? /* html */`}
+                    ${gameType === "CTF" ? /* html */`
                         <div class="header">CPG</div>
                         <div class="header">PPG</div>
                         <div class="header">CKPG</div>
@@ -93,7 +93,7 @@ class PlayerView {
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                         <div class="numeric">${s.games}</div>
-                        ${gameType === "CTF" ? /* html */`}
+                        ${gameType === "CTF" ? /* html */`
                             <div class="numeric totals">${s.captures}</div>
                             <div class="numeric totals">${s.pickups}</div>
                             <div class="numeric totals">${s.carrierKills}</div>

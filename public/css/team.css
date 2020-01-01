@@ -324,7 +324,7 @@ span.grey {
 }
 
 .stats-ctf {
-    grid-template-columns: repeat(13, auto);
+    grid-template-columns: repeat(22, auto);
 }
 
 #matches .diamond,
@@ -378,7 +378,7 @@ span.grey {
     }
     
     .stats-ctf {
-        grid-template-columns: repeat(12, auto);
+        grid-template-columns: repeat(21, auto);
     }
     
     .stats .header.best {
@@ -396,7 +396,7 @@ span.grey {
     }
     
     .stats-ctf {
-        grid-template-columns: repeat(9, auto);
+        grid-template-columns: repeat(18, auto);
     }
     
     .stats .best {
@@ -410,7 +410,7 @@ span.grey {
     }
     
     .stats-ctf {
-        grid-template-columns: repeat(6, auto);
+        grid-template-columns: repeat(16, auto);
     }
     
     .stats .totals {

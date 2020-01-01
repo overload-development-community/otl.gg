@@ -505,7 +505,7 @@ class TeamDb {
             GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
             ORDER BY p.Name
 
-            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(d.Damage) Damage, SUM(c.OvertimePeriods) OvertimePeriods, t.TeamId, t.Name TeamName, t.Tag TeamTag, bc.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, bc.Map, bc.MatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
+            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, SUM(d.Damage) Damage, SUM(c.OvertimePeriods) OvertimePeriods, t.TeamId, t.Name TeamName, t.Tag TeamTag, bc.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, bc.Map, bc.MatchTime, sb.Captures BestCaptures, sb.Pickups BestPickups, sb.CarrierKills BestCarrierKills, sb.Returns BestReturns, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
@@ -549,8 +549,7 @@ class TeamDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
-            GROUP BY s.PlayerId, p.Name, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
-            ORDER BY p.Name
+                GROUP BY s.PlayerId, p.Name, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Captures, sb.Pickups, sb.CarrierKills, sb.Returns, sb.Kills, sb.Assists, sb.Deaths, sb.Damage            ORDER BY p.Name
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {

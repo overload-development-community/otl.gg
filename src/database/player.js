@@ -823,7 +823,7 @@ class PlayerDb {
             WHERE (@season = 0 OR c.Season = @season)
                 AND c.Season >= 3
                 AND c.Postseason = @postseason
-                AND c.GameType = 'TA'
+                AND c.GameType = 'CTF'
                 AND d.TeamId <> d.OpponentTeamId
             GROUP BY
                 c.TeamSize,
