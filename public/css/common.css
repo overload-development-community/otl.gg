@@ -101,7 +101,7 @@ a:hover {
 
 @media only screen and (max-width: 800px) {
     #discord {
-        grid-template-columns: auto;
+        grid-template-columns: repeat(1, auto);
     }
 
     #discord .title {
@@ -154,6 +154,10 @@ div > .section:first-child {
     font-family: "Overdigit" !important;
     line-height: 0.95;
     margin-top: -1px;
+}
+
+.mixed .numeric {
+    margin-top: 0;
 }
 
 .loading {

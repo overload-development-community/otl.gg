@@ -25,14 +25,69 @@ const Db = require("node-database"),
  * A class that handles calls to the database for challenges.
  */
 class ChallengeDb {
-    //          #     #   ##    #           #
-    //          #     #  #  #   #           #
-    //  ###   ###   ###   #    ###    ###  ###
-    // #  #  #  #  #  #    #    #    #  #   #
-    // # ##  #  #  #  #  #  #   #    # ##   #
-    //  # #   ###   ###   ##     ##   # #    ##
+    //          #     #   ##    #           #     ##   ###   ####
+    //          #     #  #  #   #           #    #  #   #    #
+    //  ###   ###   ###   #    ###    ###  ###   #      #    ###
+    // #  #  #  #  #  #    #    #    #  #   #    #      #    #
+    // # ##  #  #  #  #  #  #   #    # ##   #    #  #   #    #
+    //  # #   ###   ###   ##     ##   # #    ##   ##    #    #
     /**
-     * Adds a stat to a challenge.
+     * Adds a stat to a challenge for capture the flag.
+     * @param {Challenge} challenge The challenge to add the stat to.
+     * @param {Team} team The team to add the stat to.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to add a stat for.
+     * @param {number} captures The number of flag captures the pilot had.
+     * @param {number} pickups The number of flag pickups the pilot had.
+     * @param {number} carrierKills The number of flag carrier kills the pilot had.
+     * @param {number} returns The number of flag returns the pilot had.
+     * @param {number} kills The number of kills the pilot had.
+     * @param {number} assists The number of assists the pilot had.
+     * @param {number} deaths The number of deaths the pilot had.
+     * @returns {Promise} A promise that resolves when the stat is added to the database.
+     */
+    static async addStatCTF(challenge, team, pilot, captures, pickups, carrierKills, returns, kills, assists, deaths) {
+        await db.query(/* sql */`
+            DECLARE @playerId INT
+
+            SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+
+            MERGE tblStat s
+                USING (VALUES (@challengeId, @teamId, @captures, @pickups, @carrierKills, @returns, @kills, @assists, @deaths, @playerId)) AS v (ChallengeId, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, PlayerId)
+                ON s.ChallengeId = v.ChallengeId AND s.TeamId = v.TeamId AND s.PlayerId = v.PlayerId
+            WHEN MATCHED THEN
+                UPDATE SET
+                    TeamId = v.TeamId,
+                    Captures = v.Captures,
+                    Pickups = v.Pickups,
+                    CarrierKills = v.CarrierKills,
+                    Returns = v.Returns,
+                    Kills = v.Kills,
+                    Assists = v.Assists,
+                    Deaths = v.Deaths
+            WHEN NOT MATCHED THEN
+                INSERT (ChallengeId, TeamId, PlayerId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths) VALUES (v.ChallengeId, v.TeamId, v.PlayerId, v.Captures, v.Pickups, v.CarrierKills, v.Returns, v.Kills, v.Assists, v.Deaths);
+        `, {
+            discordId: {type: Db.VARCHAR(24), value: pilot.id},
+            challengeId: {type: Db.INT, value: challenge.id},
+            teamId: {type: Db.INT, value: team.id},
+            captures: {type: Db.INT, value: captures},
+            pickups: {type: Db.INT, value: pickups},
+            carrierKills: {type: Db.INT, value: carrierKills},
+            returns: {type: Db.INT, value: returns},
+            kills: {type: Db.INT, value: kills},
+            assists: {type: Db.INT, value: assists},
+            deaths: {type: Db.INT, value: deaths}
+        });
+    }
+
+    //          #     #   ##    #           #    ###    ##
+    //          #     #  #  #   #           #     #    #  #
+    //  ###   ###   ###   #    ###    ###  ###    #    #  #
+    // #  #  #  #  #  #    #    #    #  #   #     #    ####
+    // # ##  #  #  #  #  #  #   #    # ##   #     #    #  #
+    //  # #   ###   ###   ##     ##   # #    ##   #    #  #
+    /**
+     * Adds a stat to a challenge for team anarchy.
      * @param {Challenge} challenge The challenge to add the stat to.
      * @param {Team} team The team to add the stat to.
      * @param {DiscordJs.GuildMember|DiscordJs.User} pilot The pilot to add a stat for.
@@ -41,7 +96,7 @@ class ChallengeDb {
      * @param {number} deaths The number of deaths the pilot had.
      * @returns {Promise} A promise that resolves when the stat is added to the database.
      */
-    static async addStat(challenge, team, pilot, kills, assists, deaths) {
+    static async addStatTA(challenge, team, pilot, kills, assists, deaths) {
         await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -212,6 +267,37 @@ class ChallengeDb {
         }
     }
 
+    //                     #    #                 ##                     ###
+    //                    # #                    #  #                     #
+    //  ##    ##   ###    #    ##    ###   # #   #      ###  # #    ##    #    #  #  ###    ##
+    // #     #  #  #  #  ###    #    #  #  ####  # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #  ##     #     # #  #  #  ##
+    //  ##    ##   #  #   #    ###   #     #  #   ###   # #  #  #   ##    #      #   ###    ##
+    //                                                                          #    #
+    /**
+     * Confirms a suggested game type for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<string[]>} A promise that resolves with the home map team's home maps for the new game type.
+     */
+    static async confirmGameType(challenge) {
+        /**
+         * @type {{recordsets: [{Map: string}[]]}}
+         */
+        const data = await db.query(/* sql */`
+            UPDATE tblChallenge SET GameType = SuggestedGameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
+
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
+        `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
+    }
+
     //                     #    #                #  #
     //                    # #                    ####
     //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
@@ -226,7 +312,7 @@ class ChallengeDb {
      */
     static async confirmMap(challenge) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET Map = SuggestedMap, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET Map = SuggestedMap, SuggestedMap = NULL, SuggestedMapTeamId = NULL, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
@@ -278,13 +364,14 @@ class ChallengeDb {
      * Creates a challenge between two teams.
      * @param {Team} team1 The first team.
      * @param {Team} team2 The second team.
+     * @param {string} gameType The game type.
      * @param {boolean} adminCreated Whether the challenge is admin-created.
      * @param {Team} [homeMapTeam] The home map team.
      * @param {number} [teamSize] The team size.
      * @param {boolean} [startNow] Whether to start the match now.
      * @returns {Promise<{id: number, orangeTeam: Team, blueTeam: Team, homeMapTeam: Team, team1Penalized: boolean, team2Penalized: boolean}>} A promise that resolves with the challenge ID.
      */
-    static async create(team1, team2, adminCreated, homeMapTeam, teamSize, startNow) {
+    static async create(team1, team2, gameType, adminCreated, homeMapTeam, teamSize, startNow) {
         let date;
 
         /**
@@ -329,7 +416,8 @@ class ChallengeDb {
                 HomeMapTeamId,
                 ChallengingTeamPenalized,
                 ChallengedTeamPenalized,
-                AdminCreated
+                AdminCreated,
+                GameType
             ) VALUES (
                 @challengeId,
                 @team1Id,
@@ -339,7 +427,8 @@ class ChallengeDb {
                 @homeMapTeamId,
                 @team1Penalized,
                 @team2Penalized,
-                @adminCreated
+                @adminCreated,
+                @gameType
             )
 
             EXEC sp_releaseapplock @Resource = 'tblChallenge', @LockOwner = 'Session'
@@ -362,8 +451,8 @@ class ChallengeDb {
                 UPDATE tblChallenge SET MatchTime = @matchTime WHERE ChallengeId = @challengeId
             END
 
-            INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
-            SELECT @challengeId, Number, Map
+            INSERT INTO tblChallengeHome (ChallengeId, Number, Map, GameType)
+            SELECT @challengeId, Number, Map, GameType
             FROM tblTeamHome
             WHERE TeamId = @homeMapTeamId
 
@@ -377,6 +466,7 @@ class ChallengeDb {
         `, {
             team1Id: {type: Db.INT, value: team1.id},
             team2Id: {type: Db.INT, value: team2.id},
+            gameType: {type: Db.VARCHAR(3), value: gameType},
             colorSeed: {type: Db.FLOAT, value: Math.random()},
             mapSeed: {type: Db.FLOAT, value: Math.random()},
             adminCreated: {type: Db.BIT, value: adminCreated},
@@ -554,14 +644,15 @@ class ChallengeDb {
     /**
      * Gets challenge data for use in casting.
      * @param {Challenge} challenge The challenge being cast.
-     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, matchTime: Date, name: string, teamId: number, kills: number, assists: number, deaths: number}, challengingTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, kills: number, assists: number, deaths: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
+     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}, challengingTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
      */
     static async getCastData(challenge) {
         /**
-         * @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, MatchTime: Date, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number}[], {Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {Name: string, Games: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[]]}}
+         * @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, GameType: string, MatchTime: Date, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
+            DECLARE @gameType VARCHAR(3)
 
             SELECT TOP 1
                 @season = Season
@@ -575,12 +666,14 @@ class ChallengeDb {
                 SET @season = @season - 1
             END
 
+            SELECT @gameType = GameType FROM tblChallenge WHERE ChallengeId = @challengeId
+
             SELECT
                 ChallengingTeamWins, ChallengingTeamLosses, ChallengingTeamTies,
                 CASE WHEN ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies < 10 THEN (ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies) * ChallengingTeamRating / 10 ELSE ChallengingTeamRating END ChallengingTeamRating,
                 ChallengedTeamWins, ChallengedTeamLosses, ChallengedTeamTies,
                 CASE WHEN ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies < 10 THEN (ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies) * ChallengedTeamRating / 10 ELSE ChallengedTeamRating END ChallengedTeamRating,
-                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, MatchTime, Name, TeamId, Kills, Assists, Deaths
+                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, GameType, MatchTime, Name, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, Damage
             FROM (
                 SELECT
                     (SELECT COUNT(*) FROM vwCompletedChallenge cc WHERE Season = @season AND ((cc.ChallengingTeamId = c.ChallengingTeamId AND cc.ChallengingTeamScore > cc.ChallengedTeamScore) OR (cc.ChallengedTeamId = c.ChallengingTeamId AND cc.ChallengedTeamScore > cc.ChallengingTeamScore))) ChallengingTeamWins,
@@ -599,12 +692,18 @@ class ChallengeDb {
                     s.ChallengedTeamId,
                     s.ChallengedTeamScore,
                     s.Map,
+                    s.GameType,
                     s.MatchTime,
                     s.Name,
                     s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
                     s.Kills,
                     s.Assists,
-                    s.Deaths
+                    s.Deaths,
+                    s.Damage
                 FROM tblChallenge c
                 LEFT OUTER JOIN tblTeamRating tr1 ON c.ChallengingTeamId = tr1.TeamId AND tr1.Season = @season
                 LEFT OUTER JOIN tblTeamRating tr2 ON c.ChallengedTeamId = tr2.TeamId AND tr2.Season = @season
@@ -617,24 +716,50 @@ class ChallengeDb {
                         c.ChallengedTeamId,
                         c.ChallengedTeamScore,
                         c.Map,
+                        c.GameType,
                         c.MatchTime,
                         p.Name,
                         s.TeamId,
+                        s.Captures,
+                        s.Pickups,
+                        s.CarrierKills,
+                        s.Returns,
                         s.Kills,
                         s.Assists,
-                        s.Deaths
+                        s.Deaths,
+                        s.Damage
                     FROM vwCompletedChallenge c
                     LEFT JOIN (
                         (
                             SELECT
-                                ROW_NUMBER() OVER (PARTITION BY ChallengeId ORDER BY CAST(Kills + Assists AS FLOAT) / CASE WHEN Deaths < 1 THEN 1 ELSE Deaths END DESC) Row,
-                                ChallengeId,
-                                PlayerId,
-                                TeamId,
-                                Kills,
-                                Assists,
-                                Deaths
-                            FROM tblStat
+                                ROW_NUMBER() OVER (PARTITION BY s2.ChallengeId ORDER BY CASE c2.GameType WHEN 'CTF' THEN s2.Captures ELSE 0 END DESC, CASE c2.GameType WHEN 'CTF' THEN s2.CarrierKills ELSE 0 END DESC, CAST(s2.Kills + s2.Assists AS FLOAT) / CASE WHEN s2.Deaths < 1 THEN 1 ELSE s2.Deaths END DESC) Row,
+                                s2.ChallengeId,
+                                s2.PlayerId,
+                                s2.TeamId,
+                                s2.Captures,
+                                s2.Pickups,
+                                s2.CarrierKills,
+                                s2.Returns,
+                                s2.Kills,
+                                s2.Assists,
+                                s2.Deaths,
+                                SUM(d.Damage) Damage
+                            FROM tblStat s2
+                            INNER JOIN tblChallenge c2 ON s2.ChallengeId = c2.ChallengeId
+                            LEFT OUTER JOIN tblDamage d ON c2.ChallengeId = d.ChallengeId AND s2.PlayerId = d.PlayerId
+                            WHERE d.TeamId <> d.OpponentTeamId
+                            GROUP BY
+                                s2.ChallengeId,
+                                s2.PlayerId,
+                                s2.TeamId,
+                                s2.Captures,
+                                s2.Pickups,
+                                s2.CarrierKills,
+                                s2.Returns,
+                                s2.Kills,
+                                s2.Assists,
+                                s2.Deaths,
+                                c2.GameType
                         ) s
                         INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
                     ) ON c.ChallengeId = s.ChallengeId AND s.Row = 1
@@ -642,7 +767,7 @@ class ChallengeDb {
                 WHERE c.ChallengeId = @challengeId
             ) a
 
-            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblRoster r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengingTeamId = r.TeamId
@@ -651,11 +776,28 @@ class ChallengeDb {
                 tblStat s
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
+            LEFT OUTER JOIN (
+                SELECT c2.GameType, c2.Season, c2.PostSeason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                GROUP BY c2.GameType, c2.Season, c2.Postseason, s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
             WHERE c.ChallengeId = @challengeId
-            GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
+            GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
 
-            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblRoster r
             INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
             INNER JOIN tblChallenge c ON c.ChallengedTeamId = r.TeamId
@@ -664,8 +806,25 @@ class ChallengeDb {
                 tblStat s
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
             ) ON r.PlayerId = s.PlayerId
+            LEFT OUTER JOIN (
+                SELECT c2.GameType, c2.Season, c2.PostSeason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                GROUP BY c2.GameType, c2.Season, c2.Postseason, s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
             WHERE c.ChallengeId = @challengeId
-            GROUP BY s.PlayerId, p.Name, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END
+            GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets.length === 3 && {
@@ -686,27 +845,47 @@ class ChallengeDb {
                 challengedTeamId: data.recordsets[0][0].ChallengedTeamId,
                 challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
                 map: data.recordsets[0][0].Map,
+                gameType: data.recordsets[0][0].GameType,
                 matchTime: data.recordsets[0][0].MatchTime,
                 name: data.recordsets[0][0].Name,
                 teamId: data.recordsets[0][0].TeamId,
+                captures: data.recordsets[0][0].Captures,
+                pickups: data.recordsets[0][0].Pickups,
+                carrierKills: data.recordsets[0][0].CarrierKills,
+                returns: data.recordsets[0][0].Returns,
                 kills: data.recordsets[0][0].Kills,
                 assists: data.recordsets[0][0].Assists,
-                deaths: data.recordsets[0][0].Deaths
+                deaths: data.recordsets[0][0].Deaths,
+                damage: data.recordsets[0][0].Damage
             } || void 0,
             challengingTeamRoster: data.recordsets[1].map((row) => ({
                 name: row.Name,
                 games: row.Games,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                damage: row.Damage,
+                gamesWithDamage: row.GamesWithDamage,
+                deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 twitchName: row.TwitchName
             })),
             challengedTeamRoster: data.recordsets[2].map((row) => ({
                 name: row.Name,
                 games: row.Games,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                damage: row.Damage,
+                gamesWithDamage: row.GamesWithDamage,
+                deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 twitchName: row.TwitchName
             }))
         } || {data: void 0, challengingTeamRoster: void 0, challengedTeamRoster: void 0};
@@ -742,6 +921,7 @@ class ChallengeDb {
                 INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
                 INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
             WHERE d.ChallengeId = @id
+                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponentTeamId)
         `, {id: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             discordId: row.DiscordId,
@@ -764,11 +944,11 @@ class ChallengeDb {
     /**
      * Gets the details of a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, homeMaps: string[]}>} A promise that resolves with the challenge details.
+     * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string, suggestedGameType: string, suggestedGameTypeTeamId: number, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getDetails(challenge) {
         /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number}[], {Map: string}[]]}}
+         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number, GameType: string, SuggestedGameType: string, SuggestedGameTypeTeamId: number}[], {Map: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT
@@ -811,12 +991,19 @@ class ChallengeDb {
                 c.VoD,
                 c.RatingChange,
                 c.ChallengingTeamRating,
-                c.ChallengedTeamRating
+                c.ChallengedTeamRating,
+                c.GameType,
+                c.SuggestedGameType,
+                c.SuggestedGameTypeTeamId
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
 
-            SELECT Map FROM tblChallengeHome WHERE ChallengeId = @challengeId ORDER BY Number
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             title: data.recordsets[0][0].Title,
@@ -859,6 +1046,9 @@ class ChallengeDb {
             ratingChange: data.recordsets[0][0].RatingChange,
             challengingTeamRating: data.recordsets[0][0].ChallengingTeamRating,
             challengedTeamRating: data.recordsets[0][0].ChallengedTeamRating,
+            gameType: data.recordsets[0][0].GameType,
+            suggestedGameType: data.recordsets[0][0].SuggestedGameType,
+            suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -928,14 +1118,14 @@ class ChallengeDb {
      * Gets the team stats for a challenge.
      * @param {Challenge} challenge The challenge to get stats for.
      * @param {Team} team The team to get stats for.
-     * @returns {Promise<{discordId: string, name: string, kills: number, assists: number, deaths: number}[]>} A promise that resolves with the team's stats for the challenge.
+     * @returns {Promise<{discordId: string, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with the team's stats for the challenge.
      */
     static async getStatsForTeam(challenge, team) {
         /**
-         * @type {{recordsets: [{DiscordId: string, Name: string, Kills: number, Assists: number, Deaths: number}[]]}}
+         * @type {{recordsets: [{DiscordId: string, Name: string, Kills: number, Assists: number, Deaths: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number}[]]}}
          */
         const data = await db.query(/* sql */`
-            SELECT p.DiscordId, p.Name, s.Kills, s.Assists, s.Deaths
+            SELECT p.DiscordId, p.Name, s.Kills, s.Assists, s.Deaths, s.Captures, s.Pickups, s.CarrierKills, s.Returns
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             WHERE s.ChallengeId = @challengeId
@@ -949,7 +1139,11 @@ class ChallengeDb {
             name: row.Name,
             kills: row.Kills,
             assists: row.Assists,
-            deaths: row.Deaths
+            deaths: row.Deaths,
+            captures: row.Captures,
+            pickups: row.Pickups,
+            carrierKills: row.CarrierKills,
+            returns: row.Returns
         })) || [];
     }
 
@@ -988,11 +1182,11 @@ class ChallengeDb {
     /**
      * Gets the team details for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     static async getTeamDetails(challenge) {
         /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {PlayerId: number, Name: string, TeamId: number, OpponentName: string, OpponentTeamId: number, Weapon: string, Damage: number}[], {Season: number, Postseason: boolean}[]]}}
+         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Kills: number, Assists: number, Deaths: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, TwitchName: string}[], {PlayerId: number, Name: string, TeamId: number, OpponentName: string, OpponentTeamId: number, Weapon: string, Damage: number}[], {Season: number, Postseason: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @season INT
@@ -1042,7 +1236,7 @@ class ChallengeDb {
                 WHERE t.TeamId IN (@challengingTeamId, @challengedTeamId)
             ) a
 
-            SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT s.PlayerId, p.Name, s.TeamId, s.Kills, s.Assists, s.Deaths, s.Captures, s.Pickups, s.CarrierKills, s.Returns, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
@@ -1053,6 +1247,7 @@ class ChallengeDb {
             INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
             INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
             WHERE d.ChallengeId = @challengeId
+                AND (d.PlayerId = d.OpponentPlayerId OR d.TeamId <> d.OpponentTeamId)
 
             SELECT @Season Season, @Postseason Postseason
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -1073,6 +1268,10 @@ class ChallengeDb {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
                 twitchName: row.TwitchName
             })),
             damage: data.recordsets[2].map((row) => ({
@@ -1110,7 +1309,7 @@ class ChallengeDb {
             SET Map = ch.Map,
                 UsingHomeMapTeam = 1
             FROM tblChallenge c
-            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId
+            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND c.GameType = ch.GameType
             WHERE c.ChallengeId = @challengeId
                 AND ch.Number = @number
 
@@ -1343,6 +1542,30 @@ class ChallengeDb {
         await db.query(sql, params);
     }
 
+    //               #     ##                     ###
+    //               #    #  #                     #
+    //  ###    ##   ###   #      ###  # #    ##    #    #  #  ###    ##
+    // ##     # ##   #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    //   ##   ##     #    #  #  # ##  #  #  ##     #     # #  #  #  ##
+    // ###     ##     ##   ###   # #  #  #   ##    #      #   ###    ##
+    //                                                   #    #
+    /**
+     * Sets the game type for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {string} gameType The game type.
+     * @returns {Promise} A promise that resolves when the game type has been set.
+     */
+    static async setGameType(challenge, gameType) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET GameType = @gameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            gameType: {type: Db.VARCHAR(3), value: gameType}
+        });
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+    }
+
     //               #    #  #                    #  #              ###
     //               #    #  #                    ####               #
     //  ###    ##   ###   ####   ##   # #    ##   ####   ###  ###    #     ##    ###  # #
@@ -1365,12 +1588,16 @@ class ChallengeDb {
 
             DELETE FROM tblChallengeHome WHERE ChallengeId = @challengeId
 
-            INSERT INTO tblChallengeHome (ChallengeId, Number, Map)
-            SELECT @challengeId, Number, Map
+            INSERT INTO tblChallengeHome (ChallengeId, Number, Map, GameType)
+            SELECT @challengeId, Number, Map, GameType
             FROM tblTeamHome
             WHERE TeamId = @teamId
 
-            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
         `, {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -1417,7 +1644,7 @@ class ChallengeDb {
      */
     static async setMap(challenge, map) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0 FROM tblChallenge WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0, SuggestedMap = NULL, SuggestedMapTeamId = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: map}
@@ -1678,6 +1905,30 @@ class ChallengeDb {
         });
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+    }
+
+    //                                        #     ##                     ###
+    //                                        #    #  #                     #
+    //  ###   #  #   ###   ###   ##    ###   ###   #      ###  # #    ##    #    #  #  ###    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
+    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #  ##     #     # #  #  #  ##
+    // ###     ###  #     #      ##   ###      ##   ###   # #  #  #   ##    #      #   ###    ##
+    //               ###   ###                                                    #    #
+    /**
+     * Suggests a game type for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @param {string} gameType The suggested game type.
+     * @returns {Promise} A promise that resolves when the game type has been suggested.
+     */
+    static async suggestGameType(challenge, team, gameType) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedGameType = @gameType, SuggestedGameTypeTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
+            gameType: {type: Db.VARCHAR(3), value: gameType},
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
     }
 
     //                                        #    #  #

@@ -31,7 +31,7 @@ class MatchDb {
      * @param {number} [season] The season number, or void for the latest season.
      * @param {number} [page] The page number, or void for the first page.
      * @param {number} matchesPerPage The number of matches per page.
-     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
+     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
         const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
@@ -42,7 +42,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number, Damage: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number, GameType: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Kills: number, Assists: number, Deaths: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Damage: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -64,7 +64,8 @@ class MatchDb {
                 VoD,
                 RatingChange,
                 ChallengingTeamRating,
-                ChallengedTeamRating
+                ChallengedTeamRating,
+                GameType
             FROM (
                 SELECT *, ROW_NUMBER() OVER (ORDER BY MatchTime DESC) Row
                 FROM vwCompletedChallenge
@@ -87,7 +88,11 @@ class MatchDb {
                 s.Kills,
                 s.Assists,
                 s.Deaths,
-                SUM(d.Damage) Damage
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns,
+                ISNULL(SUM(d.Damage), 0) Damage
             FROM tblStat s
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -111,7 +116,11 @@ class MatchDb {
                 p.Name,
                 s.Kills,
                 s.Assists,
-                s.Deaths
+                s.Deaths,
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
@@ -154,7 +163,8 @@ class MatchDb {
                 vod: row.VoD,
                 ratingChange: row.RatingChange,
                 challengingTeamRating: row.ChallengingTeamRating,
-                challengedTeamRating: row.ChallengedTeamRating
+                challengedTeamRating: row.ChallengedTeamRating,
+                gameType: row.GameType
             })),
             stats: data.recordsets[1].map((row) => ({
                 challengeId: row.ChallengeId,
@@ -166,7 +176,11 @@ class MatchDb {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
-                damage: row.Damage
+                damage: row.Damage,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns
             })),
             standings: data.recordsets[2].map((row) => ({
                 teamId: row.TeamId,
@@ -195,7 +209,7 @@ class MatchDb {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
         const key = `${settings.redisPrefix}:db:match:getCurrent`;
@@ -206,7 +220,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Postseason: boolean, Map: string, DateClosed: Date, OvertimePeriods: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Postseason: boolean, Map: string, DateClosed: Date, OvertimePeriods: number, GameType: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @currentSeason INT
@@ -227,7 +241,8 @@ class MatchDb {
                 Postseason,
                 Map,
                 DateClosed,
-                OvertimePeriods
+                OvertimePeriods,
+                GameType
             FROM
             (
                 SELECT TOP 5
@@ -240,7 +255,8 @@ class MatchDb {
                     Postseason,
                     Map,
                     DateClosed,
-                    OvertimePeriods
+                    OvertimePeriods,
+                    GameType
                 FROM tblChallenge
                 WHERE MatchTime IS NOT NULL
                     AND MatchTime <= GETUTCDATE()
@@ -257,7 +273,8 @@ class MatchDb {
                 Postseason,
                 Map,
                 DateClosed,
-                OvertimePeriods
+                OvertimePeriods,
+                GameType
             FROM tblChallenge
             WHERE MatchTime IS NOT NULL
                 AND MatchTime > GETUTCDATE()
@@ -315,7 +332,8 @@ class MatchDb {
                 postseason: row.Postseason,
                 map: row.Map,
                 dateClosed: row.DateClosed,
-                overtimePeriods: row.OvertimePeriods
+                overtimePeriods: row.OvertimePeriods,
+                gameType: row.GameType
             })) || [],
             standings: data.recordsets[1].map((row) => ({
                 teamId: row.TeamId,
@@ -356,7 +374,7 @@ class MatchDb {
     /**
      * Gets the pending matches.  Includes the number of completed matches for the season.
      * @param {number} [season] The season number, or void for the latest season.
-     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
+     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
         const key = `${settings.redisPrefix}:db:match:getPending:${season || "null"}`;
@@ -367,7 +385,7 @@ class MatchDb {
         }
 
         /**
-         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, Postseason: boolean, TwitchName: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, Postseason: boolean, TwitchName: string, GameType: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
             IF @season IS NULL
@@ -396,7 +414,8 @@ class MatchDb {
                 c.MatchTime,
                 c.Map,
                 c.Postseason,
-                p.TwitchName
+                p.TwitchName,
+                c.GameType
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE MatchTime IS NOT NULL
@@ -462,7 +481,8 @@ class MatchDb {
                 matchTime: row.MatchTime,
                 map: row.Map,
                 postseason: row.Postseason,
-                twitchName: row.TwitchName
+                twitchName: row.TwitchName,
+                gameType: row.GameType
             })),
             standings: data.recordsets[1].map((row) => ({
                 teamId: row.TeamId,
@@ -504,11 +524,11 @@ class MatchDb {
     /**
      * Gets the season data from a challenge that is in the desired season.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number}[], k: number}>} A promise that resolves with the season data.
+     * @returns {Promise<{matches: {id: number, season: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, gameType: string}[], k: number}>} A promise that resolves with the season data.
      */
     static async getSeasonDataFromChallenge(challenge) {
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number}[], {K: number, SeasonAdded: boolean}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, Season: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, GameType: string}[], {K: number, SeasonAdded: boolean}[]]}}
          */
         const data = await db.query(/* sql */`
             DECLARE @matchTime DATETIME
@@ -541,10 +561,12 @@ class MatchDb {
 
                 SELECT
                     ChallengeId,
+                    Season,
                     ChallengingTeamId,
                     ChallengedTeamId,
                     ChallengingTeamScore,
-                    ChallengedTeamScore
+                    ChallengedTeamScore,
+                    GameType
                 FROM vwCompletedChallenge
                 WHERE Season = @season
                     AND Postseason = 0
@@ -562,10 +584,12 @@ class MatchDb {
         return data && data.recordsets && data.recordsets.length === 2 && {
             matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
                 id: row.ChallengeId,
+                season: row.Season,
                 challengingTeamId: row.ChallengingTeamId,
                 challengedTeamId: row.ChallengedTeamId,
                 challengingTeamScore: row.ChallengingTeamScore,
-                challengedTeamScore: row.ChallengedTeamScore
+                challengedTeamScore: row.ChallengedTeamScore,
+                gameType: row.GameType
             })) || [],
             k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
         } || void 0;
@@ -580,11 +604,11 @@ class MatchDb {
     //  ###                    #                                    ###
     /**
      * Gets the upcoming scheduled matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string, gameType: string}[]>} A promise that resolves with the upcoming matches.
      */
     static async getUpcoming() {
         /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string}[]]}}
+         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string, GameType: string}[]]}}
          */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId,
@@ -594,7 +618,8 @@ class MatchDb {
                 t2.Name ChallengedTeamName,
                 c.MatchTime,
                 c.Map,
-                p.TwitchName
+                p.TwitchName,
+                c.GameType
             FROM tblChallenge c
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
@@ -613,7 +638,8 @@ class MatchDb {
             challengedTeamName: row.ChallengedTeamName,
             matchTime: row.MatchTime,
             map: row.Map,
-            twitchName: row.TwitchName
+            twitchName: row.TwitchName,
+            gameType: row.GameType
         })) || [];
     }
 }

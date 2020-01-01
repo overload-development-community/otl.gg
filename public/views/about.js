@@ -147,9 +147,9 @@ class AboutView {
                     <div>Changes your team's time zone.  See #timezone-faq on the Discord server for details.</div>
                     <div class="example">!teamtimezone America/Los_Angeles<br />!teamtimezone Europe/Berlin</div>
 
-                    <div class="command">!home (1|2|3|4|5) &lt;map></div>
-                    <div>Founder only.  Sets a map for your team.  You must have 5 maps set before you can issue a challenge.</div>
-                    <div class="example">!home 1 Vault<br />!home 3 Wraith<br />!home 5 Terminal</div>
+                    <div class="command">!home (CTF|TA) (1|2|3|4|5) &lt;map></div>
+                    <div>Founder only.  Sets a home map for your team.  You must have 5 home maps set for each game type before you can issue a challenge.</div>
+                    <div class="example">!home TA 1 Vault<br />!home CTF 3 Halcyon<br />!home TA 5 Terminal</div>
 
                     <div class="command">!invite &lt;pilot></div>
                     <div>Founder or Captain only.  Invites a pilot to your team.  You must have 2 pilots on your team before you can issue a challenge.</div>
@@ -179,9 +179,9 @@ class AboutView {
                     <div>Reinstates a disbanded team.  You must have previously been a founder or captain of the team you are trying to reinstate.</div>
                     <div class="example">!reinstate CF<br />!reinstate Cronus Frontier</div>
 
-                    <div class="command">!challenge &lt;team></div>
-                    <div>Founder or Captain only.  Challenges another team to a match.  Creates a challenge channel where you can negotiate the match parameters with the other team.</div>
-                    <div class="example">!challenge CF<br />!challenge Cronus Frontier</div>
+                    <div class="command">!challenge &lt;team> (TA|CTF)</div>
+                    <div>Founder or Captain only.  Challenges another team to a match.  Creates a challenge channel where you can negotiate the match parameters with the other team.  You can optionally include the game type.</div>
+                    <div class="example">!challenge CF<br />!challenge Cronus Frontier TA</div>
 
                     <div class="section">Challenges (Only allowed in challenge channels)</div>
 
@@ -228,6 +228,14 @@ class AboutView {
                     <div class="command">!confirmteamsize</div>
                     <div>Founder or Captain only.  Confirms a team size suggestion from the other team.</div>
                     <div class="example">!confirmteamsize</div>
+
+                    <div class="command">!suggesttype (TA|CTF)</div>
+                    <div>Founder or Captain only.  Suggests the game type for the match.</div>
+                    <div class="example">!suggesttype CTF</div>
+
+                    <div class="command">!confirmtype</div>
+                    <div>Founder or Captain only.  Confirms a game type suggestion from the other team.</div>
+                    <div class="example">!confirmtype</div>
 
                     <div class="command">!suggesttime (&lt;date and time&gt;|now)</div>
                     <div>Founder or Captain only.  Suggests a date and time for the challenge.  Uses your personal time zone.</div>

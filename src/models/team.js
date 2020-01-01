@@ -5,9 +5,10 @@
  * @typedef {import("discord.js").Role} DiscordJs.Role
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
+ * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {{homes: {map: string, gameType: string}[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  */
 
 const Db = require("../database/team"),
@@ -182,13 +183,35 @@ class Team {
      * @param {Team} team The team to get the data for.
      * @param {number} season The season to get the team's data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsMap1: number, lossesMap1: number, tiesMap1: number, winsMap2: number, lossesMap2: number, tiesMap2: number, winsMap3: number, lossesMap3: number, tiesMap3: number, wins2v2: number, losses2v2: number, ties2v2: number, wins3v3: number, losses3v3: number, ties3v3: number, wins4v4: number, losses4v4: number, ties4v4: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number}[], maps: {map: string, wins: number, losses: number, ties: number}[], matches: {challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, kills: number, assists: number, deaths: number}[], stats: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number}[]}>} The team data.
+     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, gamesWithDamage: number, deathsInGamesWithDamage: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}>} The team data.
      */
     static async getData(team, season, postseason) {
         try {
             return await Db.getData(team, season, postseason);
         } catch (err) {
             throw new Exception("There was a database error getting team data.", err);
+        }
+    }
+
+    //              #     ##                     #
+    //              #    #  #                    #
+    //  ###   ##   ###   #      ###  # #    ##   #      ##    ###
+    // #  #  # ##   #    # ##  #  #  ####  # ##  #     #  #  #  #
+    //  ##   ##     #    #  #  # ##  #  #  ##    #     #  #   ##
+    // #      ##     ##   ###   # #  #  #   ##   ####   ##   #
+    //  ###                                                   ###
+    /**
+     * Gets the game log for the team.
+     * @param {Team} team The team to get the game log for.
+     * @param {number} season The season to get the team's game log for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]>} The team's game log.
+     */
+    static async getGameLog(team, season, postseason) {
+        try {
+            return await Db.getGameLog(team, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting team matches.", err);
         }
     }
 
@@ -578,13 +601,14 @@ class Team {
     /**
      * Applies a home map for a team.
      * @param {DiscordJs.GuildMember} member The pilot updating the home map.
+     * @param {string} gameType The game type.
      * @param {number} number The number of the home map.
      * @param {string} map The new home map.
      * @returns {Promise} A promise that resolves when the home map has been updated.
      */
-    async applyHomeMap(member, number, map) {
+    async applyHomeMap(member, gameType, number, map) {
         try {
-            await Db.updateHomeMap(this, number, map);
+            await Db.updateHomeMap(this, gameType, number, map);
         } catch (err) {
             throw new Exception("There was a database error setting a home map.", err);
         }
@@ -597,7 +621,7 @@ class Team {
 
             await this.updateChannels();
 
-            await Discord.queue(`${member} has changed home map number ${number} to ${map}.`, teamChannel);
+            await Discord.queue(`${member} has changed home ${gameType} map number ${number} to ${map}.`, teamChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err);
         }
@@ -772,14 +796,45 @@ class Team {
     //  ###                                                  #
     /**
      * Gets the list of home maps for the team.
+     * @param {string} [gameType] The game type to get home maps for.
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
-    async getHomeMaps() {
+    async getHomeMaps(gameType) {
         try {
-            return await Db.getHomeMaps(this);
+            return await Db.getHomeMaps(this, gameType);
         } catch (err) {
             throw new Exception("There was a database error getting the home maps for the team the pilot is on.", err);
         }
+    }
+
+    //              #    #  #                    #  #                     ###         ###
+    //              #    #  #                    ####                     #  #         #
+    //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###   ###   #  #   #    #  #  ###    ##
+    // #  #  # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #  ##     #  #  #  #   #    #  #  #  #  # ##
+    //  ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #    ##   #  #   # #   #     # #  #  #  ##
+    // #      ##     ##  #  #   ##   #  #   ##   #  #   # #  ###   ###    ###     #    #      #   ###    ##
+    //  ###                                                  #                   #           #    #
+    /**
+     * Gets the list of home maps for the team, divided by type.
+     * @returns {Promise<Object<string, string[]>>} A promise that resolves with a list of the team's home maps, divided by type.
+     */
+    async getHomeMapsByType() {
+        let maps;
+        try {
+            maps = await Db.getHomeMapsByType(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the home maps by type for the team the pilot is on.", err);
+        }
+
+        return maps.reduce((prev, cur) => {
+            if (!prev[cur.gameType]) {
+                prev[cur.gameType] = [];
+            }
+
+            prev[cur.gameType].push(cur.map);
+
+            return prev;
+        }, {});
     }
 
     //              #    ###           #
@@ -1869,6 +1924,8 @@ class Team {
         const challengeRatings = {};
 
         data.matches.forEach((match) => {
+            const fx = match.gameType === "CTF" && match.season >= 3 ? Elo.actualCTF : Elo.actualTA;
+
             if (!ratings[match.challengingTeamId]) {
                 ratings[match.challengingTeamId] = 1500;
             }
@@ -1877,8 +1934,8 @@ class Team {
                 ratings[match.challengedTeamId] = 1500;
             }
 
-            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), Elo.actual(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
-                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), Elo.actual(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
+            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), fx(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
+                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), fx(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
 
             challengeRatings[match.id] = {
                 challengingTeamRating: challengingTeamNewRating,

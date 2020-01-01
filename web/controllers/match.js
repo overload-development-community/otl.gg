@@ -55,7 +55,12 @@ class Match {
                         <link rel="stylesheet" href="/css/match.css" />
                         <script src="/js/match.js"></script>
                     `,
-                    MatchView.get({challenge, details, weapons}),
+                    MatchView.get({
+                        challenge,
+                        details,
+                        weapons,
+                        gameTypeName: Challenge.getGameTypeName(challenge.details.gameType)
+                    }),
                     req
                 ));
 

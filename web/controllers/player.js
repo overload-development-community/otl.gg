@@ -40,7 +40,8 @@ class Player {
         const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
-            career = await PlayerModel.getCareer(playerId, season, postseason);
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            career = await PlayerModel.getCareer(playerId, season, postseason, gameType);
 
         if (career) {
             const seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort(),
@@ -64,17 +65,22 @@ class Player {
                 teams.getTeam(map.bestOpponentTeamId, map.bestOpponentTeamName, map.bestOpponentTag);
             });
 
-            career.matches.forEach((match) => {
-                teams.getTeam(match.teamId, match.name, match.tag);
-                teams.getTeam(match.opponentTeamId, match.opponentName, match.opponentTag);
-            });
-
             const totals = {
                 games: career.career.reduce((sum, stat) => sum + stat.games, 0),
+                captures: career.career.reduce((sum, stat) => sum + stat.captures, 0),
+                pickups: career.career.reduce((sum, stat) => sum + stat.pickups, 0),
+                carrierKills: career.career.reduce((sum, stat) => sum + stat.carrierKills, 0),
+                returns: career.career.reduce((sum, stat) => sum + stat.returns, 0),
                 kills: career.career.reduce((sum, stat) => sum + stat.kills, 0),
                 assists: career.career.reduce((sum, stat) => sum + stat.assists, 0),
                 deaths: career.career.reduce((sum, stat) => sum + stat.deaths, 0),
-                overtimePeriods: career.career.reduce((sum, stat) => sum + stat.overtimePeriods, 0)
+                damage: career.career.reduce((sum, stat) => sum + stat.damage, 0),
+                gamesWithDamage: career.career.reduce((sum, stat) => sum + stat.gamesWithDamage, 0),
+                deathsInGamesWithDamage: career.career.reduce((sum, stat) => sum + stat.deathsInGamesWithDamage, 0),
+                overtimePeriods: career.career.reduce((sum, stat) => sum + stat.overtimePeriods, 0),
+                primaries: (career.damage.Impulse || 0) + (career.damage.Cyclone || 0) + (career.damage.Reflex || 0) + (career.damage.Crusher || 0) + (career.damage.Driller || 0) + (career.damage.Flak || 0) + (career.damage.Thunderbolt || 0) + (career.damage.Lancer || 0),
+                secondaries: (career.damage.Falcon || 0) + (career.damage["Missile Pod"] || 0) + (career.damage.Hunter || 0) + (career.damage.Creeper || 0) + (career.damage.Nova || 0) + (career.damage.Devastator || 0) + (career.damage["Time Bomb"] || 0) + (career.damage.Vortex || 0),
+                totalDamage: Object.keys(career.damage).reduce((sum, weapon) => sum + career.damage[weapon], 0)
             };
 
             res.status(200).send(Common.page(
@@ -90,9 +96,10 @@ class Player {
                     seasonList,
                     season,
                     postseason,
+                    gameType,
                     opponents: career.opponents,
                     maps: career.maps,
-                    matches: career.matches,
+                    damage: career.damage,
                     teams
                 }),
                 req

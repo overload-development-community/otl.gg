@@ -47,6 +47,12 @@ class Standings {
                 records2 = "3v3";
                 records3 = "4v4+";
                 break;
+            case "type":
+                recordsTitle = "Game Type Records";
+                records1 = "Team Anarchy";
+                records2 = "Capture the Flag";
+                records3 = "Monsterball";
+                break;
             default:
                 recordsTitle = "Map Records";
                 records1 = "Home";

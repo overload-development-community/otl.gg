@@ -64,6 +64,7 @@ let scheduledMatchesChannel;
 let vodsChannel;
 
 require("./extensions/discordJs.GuildMember.extensions");
+require("./extensions/discordJs.User.extensions");
 
 //  ####     #                                    #
 //   #  #                                         #
@@ -673,6 +674,22 @@ class Discord {
      */
     static findUserById(id) {
         return discord.fetchUser(id, false);
+    }
+
+    //              #    #  #
+    //              #    ## #
+    //  ###   ##   ###   ## #   ###  # #    ##
+    // #  #  # ##   #    # ##  #  #  ####  # ##
+    //  ##   ##     #    # ##  # ##  #  #  ##
+    // #      ##     ##  #  #   # #  #  #   ##
+    //  ###
+    /**
+     * Returns the user's display name if they are a guild member, or a username if they are a user.
+     * @param {DiscordJs.GuildMember|DiscordJs.User} user The user to get the name for.
+     * @returns {string} The name of the user.
+     */
+    static getName(user) {
+        return user instanceof DiscordJs.GuildMember ? user.displayName : user.username;
     }
 
     //  #            ##
