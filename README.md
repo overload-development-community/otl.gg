@@ -4,6 +4,24 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v3.0.0 - 12/31/2019
+
+Support for Season 3 of the OTL.
+
+### Bot:
+
+* New and updated commands for CTF support.  See https://otl.gg/about.
+* Allow bot to read from the tracker for all supported languages except Russian.
+* Fixed `!removemap` command, it actually works now.
+* Fixed `!addstats` command to correctly do reverse pilot lookups when the match was split across multiple games.
+
+### Website:
+
+* New CTF stats across the entire website.
+* New damage stats across the website.  Players listing and records will only list damage stats for season 3 and later.
+* There are some known formatting and mobile layout issues that will be addressed in a future version.
+* Caching can now be disabled from the settings file.
+
 ## v2.1.1 - 12/1/2019
 
 ### Bot:
