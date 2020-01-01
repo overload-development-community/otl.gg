@@ -1059,7 +1059,7 @@ class Challenge {
                             }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
-                            value: this.details.gameType === "TA" ? `${stats.challengingTeamStats.sort((a, b) => {
+                            value: this.details.gameType === "TA" ? `${stats.challengedTeamStats.sort((a, b) => {
                                 if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
                                     return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
                                 }
