@@ -733,7 +733,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
         ) s
@@ -755,7 +755,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
         ) s
@@ -777,7 +777,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
         ) s
@@ -799,7 +799,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
         ) s
@@ -821,7 +821,7 @@ class PlayerDb {
             FROM tblDamage d
             INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
                 AND d.TeamId <> d.OpponentTeamId
@@ -849,7 +849,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 3
+                AND c.Season >= 2
                 AND c.Postseason = @postseason
                 AND c.GameType = 'CTF'
         ) s
@@ -1010,7 +1010,7 @@ class PlayerDb {
                     CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END Score
                 FROM vwCompletedChallenge c
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                 GROUP BY c.TeamSize, c.ChallengeId,
@@ -1033,7 +1033,7 @@ class PlayerDb {
                 FROM tblStat s
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
@@ -1054,7 +1054,7 @@ class PlayerDb {
                 FROM tblStat s
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
@@ -1075,7 +1075,7 @@ class PlayerDb {
                 FROM tblStat s
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
@@ -1096,7 +1096,7 @@ class PlayerDb {
                 FROM tblDamage d
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                     AND d.TeamId <> d.OpponentTeamId
@@ -1118,7 +1118,7 @@ class PlayerDb {
                 FROM tblStat s
                 INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                 GROUP BY c.ChallengeId, c.TeamSize, s.TeamId
@@ -1351,7 +1351,7 @@ class PlayerDb {
                 FROM tblDamage d
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
@@ -1380,7 +1380,7 @@ class PlayerDb {
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 INNER JOIN tblStat s ON c.ChallengeId = s.ChallengeId AND d.PlayerId = s.PlayerId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
@@ -1630,7 +1630,7 @@ class PlayerDb {
                 FROM tblDamage d
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
@@ -1657,7 +1657,7 @@ class PlayerDb {
                     GROUP BY ChallengeId, TeamId
                 ) s ON c.ChallengeId = s.ChallengeId AND s.TeamId = d.TeamId
                 WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
+                    AND c.Season >= 2
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId

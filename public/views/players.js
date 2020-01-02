@@ -151,7 +151,7 @@ class PlayersView {
                                     <div class="header">Pos</div>
                                     <div class="header">Team</div>
                                     <div class="header">Name</div>
-                                    <div class="header">DmPG</div>
+                                    <div class="header">DmgPG</div>
                                     ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
                                         <div class="numeric pos">${index + 1}</div>
                                         <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
@@ -172,7 +172,7 @@ class PlayersView {
                                     <div class="header">Pos</div>
                                     <div class="header">Team</div>
                                     <div class="header">Name</div>
-                                    <div class="header">DmPD</div>
+                                    <div class="header">DmgPD</div>
                                     ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerDeath - a.avgDamagePerDeath).map((s, index, sortedStats) => /* html */`
                                         <div class="numeric pos">${index + 1}</div>
                                         <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
@@ -198,7 +198,7 @@ class PlayersView {
                         <div id="captures">
                             <div class="section">Most Captures Per Game</div>
                             <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.captures.toFixed(0)}</span></div>
+                                <div class="average">League Average: <span class="numeric">${averages.captures.toFixed(2)}</span></div>
                                 <div class="header">Pos</div>
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
@@ -209,8 +209,8 @@ class PlayersView {
                                         <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     `}</div>
                                     <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgCaptures.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgCaptures > averages.captures && sortedStats[index].avgCaptures <= averages.captures ? /* html */`
+                                    <div class="numeric value">${s.avgCaptures.toFixed(2)}</div>
+                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgCaptures < averages.captures && sortedStats[index].avgCaptures >= averages.captures ? /* html */`
                                         <div class="separator"></div>
                                     ` : ""}
                                 `).join("")}
@@ -219,19 +219,19 @@ class PlayersView {
                         <div id="pickups">
                             <div class="section">Most Pickups Per Game</div>
                             <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.pickups.toFixed(0)}</span></div>
+                                <div class="average">League Average: <span class="numeric">${averages.pickups.toFixed(2)}</span></div>
                                 <div class="header">Pos</div>
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
-                                <div class="header">DmPD</div>
+                                <div class="header">PPG</div>
                                 ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgPickups - a.avgPickups).map((s, index, sortedStats) => /* html */`
                                     <div class="numeric pos">${index + 1}</div>
                                     <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                         <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     `}</div>
                                     <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgPickups.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgPickups > averages.pickups && sortedStats[index].avgPickups <= averages.pickups ? /* html */`
+                                    <div class="numeric value">${s.avgPickups.toFixed(2)}</div>
+                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgPickups < averages.pickups && sortedStats[index].avgPickups >= averages.pickups ? /* html */`
                                         <div class="separator"></div>
                                     ` : ""}
                                 `).join("")}
@@ -240,19 +240,19 @@ class PlayersView {
                         <div id="carrier-kills">
                             <div class="section">Most Carrier Kills Per Game</div>
                             <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.carrierKills.toFixed(0)}</span></div>
+                                <div class="average">League Average: <span class="numeric">${averages.carrierKills.toFixed(2)}</span></div>
                                 <div class="header">Pos</div>
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
-                                <div class="header">DmPD</div>
+                                <div class="header">CKPG</div>
                                 ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgCarrierKills - a.avgCarrierKills).map((s, index, sortedStats) => /* html */`
                                     <div class="numeric pos">${index + 1}</div>
                                     <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                         <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     `}</div>
                                     <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgCarrierKills.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgCarrierKills > averages.carrierKills && sortedStats[index].avgCarrierKills <= averages.carrierKills ? /* html */`
+                                    <div class="numeric value">${s.avgCarrierKills.toFixed(2)}</div>
+                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgCarrierKills < averages.carrierKills && sortedStats[index].avgCarrierKills >= averages.carrierKills ? /* html */`
                                         <div class="separator"></div>
                                     ` : ""}
                                 `).join("")}
@@ -261,19 +261,19 @@ class PlayersView {
                         <div id="returns">
                             <div class="section">Most Returns Per Game</div>
                             <div class="stats">
-                                <div class="average">League Average: <span class="numeric">${averages.returns.toFixed(0)}</span></div>
+                                <div class="average">League Average: <span class="numeric">${averages.returns.toFixed(2)}</span></div>
                                 <div class="header">Pos</div>
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
-                                <div class="header">DmPD</div>
+                                <div class="header">RPG</div>
                                 ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgReturns - a.avgReturns).map((s, index, sortedStats) => /* html */`
                                     <div class="numeric pos">${index + 1}</div>
                                     <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                         <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                     `}</div>
                                     <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                    <div class="numeric value">${s.avgReturns.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgReturns > averages.returns && sortedStats[index].avgReturns <= averages.returns ? /* html */`
+                                    <div class="numeric value">${s.avgReturns.toFixed(2)}</div>
+                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgReturns < averages.returns && sortedStats[index].avgReturns >= averages.returns ? /* html */`
                                         <div class="separator"></div>
                                     ` : ""}
                                 `).join("")}
@@ -286,7 +286,7 @@ class PlayersView {
                                 <div class="header">Pos</div>
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
-                                <div class="header">DmPG</div>
+                                <div class="header">DmgPG</div>
                                 ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
                                     <div class="numeric pos">${index + 1}</div>
                                     <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
@@ -294,7 +294,7 @@ class PlayersView {
                                     `}</div>
                                     <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
                                     <div class="numeric value">${s.avgDamagePerGame.toFixed(0)}</div>
-                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame > averages.damagePerGame && sortedStats[index].avgDamagePerGame <= averages.damagePerGame ? /* html */`
+                                    ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame < averages.damagePerGame && sortedStats[index].avgDamagePerGame >= averages.damagePerGame ? /* html */`
                                         <div class="separator"></div>
                                     ` : ""}
                                 `).join("")}

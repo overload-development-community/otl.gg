@@ -39,7 +39,6 @@ class Players {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        console.log(req.query.gameType);
         const freeAgents = (await Player.getFreeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
             seasonList = await Season.getSeasonNumbers(),
             season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
