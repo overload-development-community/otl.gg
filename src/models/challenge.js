@@ -2827,7 +2827,7 @@ class Challenge {
         const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
             challengedTeamTimezone = await this.challengedTeam.getTimezone();
 
-        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}\n\nGame Type:${Challenge.getGameTypeName(this.details.gameType)}`;
+        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}\n\nGame Type: ${Challenge.getGameTypeName(this.details.gameType)}`;
 
         if (this.details.dateVoided) {
             topic = `${topic}\n\nThis match has been voided.`;
