@@ -479,7 +479,7 @@ class Challenge {
             throw new Exception("There was a database error adding a stat to a CTF challenge.", err);
         }
 
-        await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+        await Discord.queue(`Added stats for ${pilot}: ${captures} C/${pickups} P, ${carrierKills} CK, ${returns} R, ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
     }
 
     //          #     #   ##    #           #    ###    ##
@@ -517,7 +517,7 @@ class Challenge {
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
      */
     async addStats(gameId, nameMap) {
         let game;
@@ -994,7 +994,7 @@ class Challenge {
     /**
      * Closes a challenge.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}} stats The stats for the game.
+     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     async close(member, stats) {
@@ -1056,7 +1056,7 @@ class Challenge {
                                     return 0;
                                 }
                                 return a.name.localeCompare(b.name);
-                            }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: `${this.challengedTeam.name} Stats`,
                             value: this.details.gameType === "TA" ? `${stats.challengedTeamStats.sort((a, b) => {
@@ -1096,7 +1096,7 @@ class Challenge {
                                     return 0;
                                 }
                                 return a.name.localeCompare(b.name);
-                            }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                            }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
                         }, {
                             name: "For match details, visit:",
                             value: `https://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}`
@@ -1439,11 +1439,11 @@ class Challenge {
     /**
      * Gets the stats from a challenge for a team.
      * @param {Team} team The team to get stats for.
-     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
      */
     async getStatsForTeam(team) {
         try {
-            return Promise.all((await Db.getStatsForTeam(this, team)).map(async (s) => ({pilot: Discord.findGuildMemberById(s.discordId) || await Discord.findUserById(s.discordId), name: s.name, kills: s.kills, assists: s.assists, deaths: s.deaths, captures: s.captures, pickups: s.pickups, carrierKills: s.carrierKills, returns: s.returns})));
+            return Promise.all((await Db.getStatsForTeam(this, team)).map(async (s) => ({pilot: Discord.findGuildMemberById(s.discordId) || await Discord.findUserById(s.discordId), name: s.name, kills: s.kills, assists: s.assists, deaths: s.deaths, damage: s.damage, captures: s.captures, pickups: s.pickups, carrierKills: s.carrierKills, returns: s.returns})));
         } catch (err) {
             throw new Exception("There was a database error loading team stats for a challenge.", err);
         }
@@ -1458,7 +1458,7 @@ class Challenge {
     //  ###
     /**
      * Gets the team details for a challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     async getTeamDetails() {
         let details;

@@ -276,7 +276,7 @@ class Commands {
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}>} A promise that resolves with the stats for the game.
+     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}>} A promise that resolves with the stats for the game.
      */
     static async checkChallengeStatsComplete(challenge, member, channel) {
         const stats = {};
@@ -5139,10 +5139,10 @@ class Commands {
             mapMessage = newMapMessage;
         }
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]} */
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
         let challengingTeamStats;
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]} */
+        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
         let challengedTeamStats;
 
         let scoreChanged = false;
@@ -5193,7 +5193,7 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`
                 });
 
                 msg.fields.push({
@@ -5203,7 +5203,7 @@ class Commands {
                             return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`
                 });
                 break;
             case "CTF":
@@ -5223,7 +5223,7 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`
                 });
 
                 msg.fields.push({
@@ -5242,7 +5242,7 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${stat.captures} Caps (${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R), ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`
                 });
                 break;
         }
@@ -5525,7 +5525,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
-        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, kills: number, assists: number, deaths: number, captures: number, pickups: number, carrierKills: number, returns: number}[]}} */
+        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}} */
         let stats;
         if (!challenge.details.dateVoided) {
             await Commands.checkChallengeIsConfirmed(challenge, member, channel);
