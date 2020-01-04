@@ -717,151 +717,153 @@ class PlayerDb {
          * @type {{recordsets: [{TeamSize: number, Captures: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
          */
         const data = await db.query(/* sql */`
-        IF @season IS NULL
-        BEGIN
-            SELECT @season = MAX(Season) FROM vwCompletedChallenge
-        END
+            IF @season IS NULL
+            BEGIN
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE DateStart < GETUTCDATE()
+            END
 
-        SELECT s.TeamSize, s.Captures, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Captures DESC) Rank,
-                c.TeamSize,
-                s.ChallengeId,
-                s.TeamId,
-                s.PlayerId,
-                s.Captures
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.Captures, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Captures DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Captures
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT s.TeamSize, s.Pickups, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Pickups DESC) Rank,
-                c.TeamSize,
-                s.ChallengeId,
-                s.TeamId,
-                s.PlayerId,
-                s.Pickups
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.Pickups, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Pickups DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Pickups
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT s.TeamSize, s.CarrierKills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.CarrierKills DESC) Rank,
-                c.TeamSize,
-                s.ChallengeId,
-                s.TeamId,
-                s.PlayerId,
-                s.CarrierKills
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.CarrierKills, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.CarrierKills DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.CarrierKills
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT s.TeamSize, s.Returns, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Returns DESC) Rank,
-                c.TeamSize,
-                s.ChallengeId,
-                s.TeamId,
-                s.PlayerId,
-                s.Returns
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.Returns, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY s.Returns DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    s.Returns
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT s.TeamSize, s.Damage, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) DESC) Rank,
-                c.TeamSize,
-                d.ChallengeId,
-                d.TeamId,
-                d.PlayerId,
-                SUM(d.Damage) Damage
-            FROM tblDamage d
-            INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-                AND d.TeamId <> d.OpponentTeamId
-            GROUP BY
-                c.TeamSize,
-                d.ChallengeId,
-                d.TeamId,
-                d.PlayerId
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.Damage, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) DESC) Rank,
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId,
+                    SUM(d.Damage) Damage
+                FROM tblDamage d
+                INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+                    AND d.TeamId <> d.OpponentTeamId
+                GROUP BY
+                    c.TeamSize,
+                    d.ChallengeId,
+                    d.TeamId,
+                    d.PlayerId
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
-        FROM (
-            SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
-                c.TeamSize,
-                s.ChallengeId,
-                s.TeamId,
-                s.PlayerId,
-                (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) KDA
-            FROM tblStat s
-            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
-            WHERE (@season = 0 OR c.Season = @season)
-                AND c.Season >= 2
-                AND c.Postseason = @postseason
-                AND c.GameType = 'CTF'
-        ) s
-        INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
-        INNER JOIN tblTeam t ON s.TeamId = t.TeamId
-        INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
-        INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-        WHERE Rank = 1
-        ORDER BY c.TeamSize, c.MatchTime
+            SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
+            FROM (
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
+                    c.TeamSize,
+                    s.ChallengeId,
+                    s.TeamId,
+                    s.PlayerId,
+                    (s.Kills + s.Assists) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) KDA
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+                WHERE (@season = 0 OR c.Season = @season)
+                    AND c.Season >= 2
+                    AND c.Postseason = @postseason
+                    AND c.GameType = 'CTF'
+            ) s
+            INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblTeam t ON s.TeamId = t.TeamId
+            INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            WHERE Rank = 1
+            ORDER BY c.TeamSize, c.MatchTime
 
-        SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
-    `, {
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
+        `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
@@ -998,7 +1000,9 @@ class PlayerDb {
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
-                SELECT @season = MAX(Season) FROM vwCompletedChallenge
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE DateStart < GETUTCDATE()
             END
 
             SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
@@ -1253,7 +1257,9 @@ class PlayerDb {
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
-                SELECT @season = MAX(Season) FROM vwCompletedChallenge
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE DateStart < GETUTCDATE()
             END
 
             SELECT s.TeamSize, s.KDA, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
@@ -1536,7 +1542,9 @@ class PlayerDb {
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
-                SELECT @season = MAX(Season) FROM vwCompletedChallenge
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE DateStart < GETUTCDATE()
             END
 
             SELECT s.TeamSize, s.TeamKDA, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
@@ -1830,7 +1838,9 @@ class PlayerDb {
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
-                SELECT @season = MAX(Season) FROM vwCompletedChallenge
+                SELECT @season = MAX(Season)
+                FROM tblSeason
+                WHERE DateStart < GETUTCDATE()
             END
 
             SELECT
