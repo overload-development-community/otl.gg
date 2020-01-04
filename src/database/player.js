@@ -1903,6 +1903,7 @@ class PlayerDb {
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
                 FROM tblDamage
                 GROUP BY ChallengeId, PlayerId
+                WHERE TeamId <> OpponentTeamId
             ) d ON c.ChallengeId = d.ChallengeId AND p.PlayerId = d.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND (@season = 0 OR c.Season = @season)
