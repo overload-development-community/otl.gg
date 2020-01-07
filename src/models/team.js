@@ -1861,11 +1861,23 @@ class Team {
             let channelTopic = topic,
                 captainsChannelTopic = topic;
 
-            if (teamInfo.homes && teamInfo.homes.length > 0) {
-                channelTopic += "\n\nHome Maps:";
-                teamInfo.homes.forEach((home) => {
-                    channelTopic += `\n${home}`;
-                });
+            if (teamInfo.homes) {
+                const taHomes = teamInfo.homes.filter((h) => h.gameType === "TA"),
+                    ctfHomes = teamInfo.homes.filter((h) => h.gameType === "CTF");
+
+                if (taHomes && taHomes.length > 0) {
+                    channelTopic += "\n\nHome Team Anarchy Maps:";
+                    taHomes.forEach((home) => {
+                        channelTopic += `\n${home.map}`;
+                    });
+                }
+
+                if (ctfHomes && ctfHomes.length > 0) {
+                    channelTopic += "\n\nHome Capture the Flag Maps:";
+                    ctfHomes.forEach((home) => {
+                        channelTopic += `\n${home.map}`;
+                    });
+                }
             }
 
             if (typeof teamInfo.penaltiesRemaining === "number") {
