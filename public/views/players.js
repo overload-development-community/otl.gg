@@ -143,7 +143,7 @@ class PlayersView {
                                 `).join("")}
                             </div>
                         </div>
-                        ${season >= 3 ? /* html */`
+                        ${(season || Math.max(...seasonList)) >= 3 ? /* html */`
                             <div id="damage-per-game">
                                 <div class="section">Most Damage Per Game</div>
                                 <div class="stats">
@@ -159,7 +159,7 @@ class PlayersView {
                                         `}</div>
                                         <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
                                         <div class="numeric value">${s.avgDamagePerGame.toFixed(0)}</div>
-                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame > averages.damagePerGame && sortedStats[index].avgDamagePerGame <= averages.damagePerGame ? /* html */`
+                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerGame < averages.damagePerGame && sortedStats[index].avgDamagePerGame >= averages.damagePerGame ? /* html */`
                                             <div class="separator"></div>
                                         ` : ""}
                                     `).join("")}
@@ -180,7 +180,7 @@ class PlayersView {
                                         `}</div>
                                         <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
                                         <div class="numeric value">${s.avgDamagePerDeath.toFixed(0)}</div>
-                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerDeath > averages.damagePerDeath && sortedStats[index].avgDamagePerDeath <= averages.damagePerDeath ? /* html */`
+                                        ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerDeath < averages.damagePerDeath && sortedStats[index].avgDamagePerDeath >= averages.damagePerDeath ? /* html */`
                                             <div class="separator"></div>
                                         ` : ""}
                                     `).join("")}

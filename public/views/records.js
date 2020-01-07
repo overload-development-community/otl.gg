@@ -117,7 +117,7 @@ class RecordsView {
                                 ${records.teamDamage.filter((r) => r.teamSize === teamSize).map((r) => /* html */`
                                     <div class="tag team-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div class="team team-name"><a href="/team/${team.tag}">${team.name}</a></div>
-                                    <div><span class="numeric">${r.record}</span> &nbsp;Damage</div>
+                                    <div><span class="numeric">${r.record.toFixed(0)}</span> &nbsp;Damage</div>
                                     <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
@@ -214,7 +214,7 @@ class RecordsView {
                                     <div class="tag player-tag"><div class="diamond${(team = teams.getTeam(r.teamId, r.teamName, r.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div><a href="/player/${r.playerId}/${encodeURIComponent(RecordsView.Common.normalizeName(r.name, r.tag))}">${RecordsView.Common.htmlEncode(RecordsView.Common.normalizeName(r.name, r.tag))}</a></div>
-                                    <div><span class="numeric">${r.record}</span> &nbsp;Damage</div>
+                                    <div><span class="numeric">${r.record.toFixed(0)}</span> &nbsp;Damage</div>
                                     <div class="tag"><div class="diamond${(team = teams.getTeam(r.opponentTeamId, r.opponentTeamName, r.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                                     <div class="date"><a href="/match/${r.challengeId}/${r.tag}/${r.opponentTag}"><script>document.write(Common.formatDate(new Date("${r.matchTime}")));</script></a></div>
