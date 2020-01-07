@@ -648,7 +648,7 @@ class Challenge {
             }
 
             // Add damage stats.
-            await Db.setDamage(this, game.damage.map((stat) => {
+            await Db.setDamage(this, game.damage.filter((stat) => playerTeam[stat.attacker] && playerTeam[stat.defender]).map((stat) => {
                 stat.attacker = stat.attacker || stat.defender;
 
                 return {
@@ -730,7 +730,7 @@ class Challenge {
             }
         });
 
-        await Db.setDamage(this, game.damage.map((stat) => ({
+        await Db.setDamage(this, game.damage.filter((stat) => playerTeam[stat.attacker] && playerTeam[stat.defender]).map((stat) => ({
             team: playerTeam[stat.attacker].team,
             discordId: map[stat.attacker],
             opponentTeam: playerTeam[stat.defender].team,
