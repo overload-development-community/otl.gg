@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../..").GameRecord} GameRecord
+ * @typedef {import("../../src/database/player").GameRecord} GameRecord
  * @typedef {import("../../web/includes/teams")} Teams
  */
 

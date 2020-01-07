@@ -1,7 +1,7 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {import("../..").GameRecord} GameRecord
+ * @typedef {import("./player").GameRecord} GameRecord
  * @typedef {import("../models/team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  */

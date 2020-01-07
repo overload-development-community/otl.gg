@@ -23,11 +23,6 @@ setTimeout(() => {
 // #  #  #  #  #  #   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
 // # ##  #  #  #  #   #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
 //  # #   ###   ###   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
-/**
- * Adds a Twitch name to the member's account.
- * @param {string} name The Twitch name.
- * @returns {Promise} A promise that resolves when the Twitch name has been added.
- */
 DiscordJs.GuildMember.prototype.addTwitchName = async function(name) {
     try {
         return await Db.setTwitchName(this, name);
@@ -42,11 +37,6 @@ DiscordJs.GuildMember.prototype.addTwitchName = async function(name) {
 // #  #  #  #  #  #  #  #  # ##  #  #  #     #  #  #  #  ####   #    # ##  #  #  ####  #  #  #  #   #     #     #
 // #  #  # ##  #  #  #  #  ##    #  #  #     #     #  #  #  #   #    ##    # ##  #  #  #  #  #  #   #     #     #
 // ###    # #  #  #  #  #   ##    ###  #     #      ##   #  #   #     ##    # #  #  #   ##   #  #    ##  ###   ###
-/**
- * Returns the date and time the pilot is banned from a team until.
- * @param {Team} team The team to check.
- * @returns {Promise<Date>} A promise that resolves with the date and time the pilot is banned from the team until.  Returns nothing if the pilot is not banned.
- */
 DiscordJs.GuildMember.prototype.bannedFromTeamUntil = async function(team) {
     try {
         return await Db.bannedFromTeamUntil(this, team);
@@ -62,10 +52,6 @@ DiscordJs.GuildMember.prototype.bannedFromTeamUntil = async function(team) {
 // #     # ##  #  #  #  #  ##    #  #  # ##  #  #   #    # ##   #    #  #
 //  ##    # #  #  #  ###    ##    ##    # #  ###     ##   # #  ###   #  #
 //                                           #
-/**
- * Returns whether the pilot can be a captain.
- * @returns {Promise<boolean>} A promise that resolves with whether the pilot can be a captain.
- */
 DiscordJs.GuildMember.prototype.canBeCaptain = async function() {
     try {
         return await Db.canBeCaptain(this);
@@ -80,11 +66,6 @@ DiscordJs.GuildMember.prototype.canBeCaptain = async function() {
 // #     #  #  #  #  ###   # ##  ####  #  #  # #   # ##  ###    #     #    #  #   #
 // #     # ##  #  #  # #   ##    #  #  #  #  # #   ##    #      #     #    #  #   #
 //  ##    # #  #  #  #  #   ##   #  #   ##    #     ##   #     ###   ###    ##     ##
-/**
- * Returns whether the pilot can remove another pilot from their team.
- * @param {DiscordJs.GuildMember} pilot The pilot to check.
- * @returns {Promise<boolean>} A promise that resolves with whether the pilot can remove another pilot from their team.
- */
 DiscordJs.GuildMember.prototype.canRemovePilot = async function(pilot) {
     try {
         return await Db.canRemovePilot(this, pilot);
@@ -99,10 +80,6 @@ DiscordJs.GuildMember.prototype.canRemovePilot = async function(pilot) {
 // #      #    # ##  #  #  #  #   #     #    ####  # ##    #   #  #  #  #  # ##
 // #      #    ##    # ##  #      #     #    #  #  ##     #    #  #  #  #  ##
 //  ##   ###    ##    # #  #      #    ###   #  #   ##   ####   ##   #  #   ##
-/**
- * Clears a pilot's timezone.
- * @returns {Promise<void>} A promise that resolves when the timezone is clear.
- */
 DiscordJs.GuildMember.prototype.clearTimezone = async function() {
     try {
         return await Db.clearTimezone(this);
@@ -117,10 +94,6 @@ DiscordJs.GuildMember.prototype.clearTimezone = async function() {
 // #     #  #  # ##  #  #   #    # ##  # ##  # ##  #  #   #    # ##  #  #  ####
 // #     #     ##    # ##   #    ##    # ##  ##    ####   #    ##    # ##  #  #
 //  ##   #      ##    # #    ##   ##   #  #   ##   ####   #     ##    # #  #  #
-/**
- * Starts team creation for the pilot.
- * @returns {Promise<NewTeam>} A promise that resolves with a new team object.
- */
 DiscordJs.GuildMember.prototype.createNewTeam = function() {
     return NewTeam.create(this);
 };
@@ -132,10 +105,6 @@ DiscordJs.GuildMember.prototype.createNewTeam = function() {
 //  ##   ##     #    # ##  ##    ####   #    ##    # ##  #  #
 // #      ##     ##  #  #   ##   ####   #     ##    # #  #  #
 //  ###
-/**
- * Returns the pilot's new team object.
- * @returns {Promise<NewTeam>} A promise that resolves with the new team object for the pilot.
- */
 DiscordJs.GuildMember.prototype.getNewTeam = function() {
     return NewTeam.getByPilot(this);
 };
@@ -147,10 +116,6 @@ DiscordJs.GuildMember.prototype.getNewTeam = function() {
 //  ##   ##     #    # #   ##    #  #  #  #  ##      ##    #    ##    #  #  #  #  #      #    #  #  # #    #     #    ##    #  #   #    ##    # ##  #  #    ##
 // #      ##     ##  #  #   ##    ###   ###   ##   ###      ##   ##    ###   ##   #     ###   #  #   #    ###     ##   ##    ###   #     ##    # #  #  #  ###
 //  ###                             #
-/**
- * Gets the teams that the pilot has requested or has been invited to.
- * @returns {Promise<Team[]>} A promise that resolves with the teams that the pilot has requested or has been invited to.
- */
 DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
     let teams;
     try {
@@ -169,10 +134,6 @@ DiscordJs.GuildMember.prototype.getRequestedOrInvitedTeams = async function() {
 //  ##   ##     #    #  #   #    # ##   #      ##
 // #      ##     ##   ##     ##   # #    ##  ###
 //  ###
-/**
- * Gets the current season stats for the pilot.
- * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: Object<string, number>, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the pilot's stats.
- */
 DiscordJs.GuildMember.prototype.getStats = async function() {
     try {
         return await Db.getStats(this);
@@ -188,10 +149,6 @@ DiscordJs.GuildMember.prototype.getStats = async function() {
 //  ##   ##     #     #    ##    # ##  #  #
 // #      ##     ##   #     ##    # #  #  #
 //  ###
-/**
- * Returns the pilot's team.
- * @returns {Promise<Team>} A promise that resolves with the pilot's team.
- */
 DiscordJs.GuildMember.prototype.getTeam = function() {
     return Team.getByPilot(this);
 };
@@ -203,10 +160,6 @@ DiscordJs.GuildMember.prototype.getTeam = function() {
 //  ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
 // #      ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
 //  ###
-/**
- * Gets a pilot's time zone.  Default to team's time zone if the pilot doesn't have one, or the default time zone if neither have a value.
- * @returns {Promise<string>} A promise that resolves with the pilot's time zone.
- */
 DiscordJs.GuildMember.prototype.getTimezone = async function() {
     try {
         const timezone = await Db.getTimezone(this);
@@ -235,10 +188,6 @@ DiscordJs.GuildMember.prototype.getTimezone = async function() {
 //  ##   ##     #     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
 // #      ##     ##   #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
 //  ###
-/**
- * Gets a pilot's Twitch name.
- * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
- */
 DiscordJs.GuildMember.prototype.getTwitchName = async function() {
     try {
         return await Db.getTwitchName(this);
@@ -253,11 +202,6 @@ DiscordJs.GuildMember.prototype.getTwitchName = async function() {
 // #  #  #  #  ##     #  #  # ##  # ##  #  #   #    #  #  # #    #     #    # ##  #  #   #    #  #   #    # ##  #  #  ####
 // #  #  # ##    ##   #  #  ##    ##    #  #   #    #  #  # #    #     #    ##    #  #   #    #  #   #    ##    # ##  #  #
 // #  #   # #  ###    ###    ##    ##   #  #  ###   #  #   #    ###     ##   ##    ###   #     ##    #     ##    # #  #  #
-/**
- * Gets whether the pilot has been invited to a team.
- * @param {Team} team The team to check.
- * @returns {Promise<boolean>} A promise that resolves with whether the pilot has been invited to the team.
- */
 DiscordJs.GuildMember.prototype.hasBeenInvitedToTeam = async function(team) {
     try {
         return await Db.hasBeenInvitedToTeam(this, team);
@@ -273,11 +217,6 @@ DiscordJs.GuildMember.prototype.hasBeenInvitedToTeam = async function(team) {
 // #  #  # ##    ##   # #   ##    #  #  #  #  ##      ##    #    ##    #  #   #    ##    # ##  #  #
 // #  #   # #  ###    #  #   ##    ###   ###   ##   ###      ##   ##    ###   #     ##    # #  #  #
 //                                   #
-/**
- * Gets whether the pilot has requested a team.
- * @param {Team} team The team requested.
- * @returns {Promise<boolean>} A promise that resolves with whether the pilot has requested the team.
- */
 DiscordJs.GuildMember.prototype.hasRequestedTeam = async function(team) {
     try {
         return await Db.hasRequestedTeam(this, team);
@@ -293,10 +232,6 @@ DiscordJs.GuildMember.prototype.hasRequestedTeam = async function(team) {
 //  #      ##   #  #  # ##  #  #   #    # ##   #    #  #  #  #  #     #     #  #  #  #  #  #  #  #  ##    #
 // ###   ###     ##    # #  ###     ##   # #  ###   #  #   ##   #     #      ##    ###  #  #   ###   ##   #
 //                          #
-/**
- * Returns whether the pilot is a captain or a founder.
- * @returns {boolean} Whether the pilot is a captain or a founder.
- */
 DiscordJs.GuildMember.prototype.isCaptainOrFounder = function() {
     return !!Discord.founderRole.members.find((m) => m.id === this.id) || !!Discord.captainRole.members.find((m) => m.id === this.id);
 };
@@ -307,10 +242,6 @@ DiscordJs.GuildMember.prototype.isCaptainOrFounder = function() {
 //  #    ##     #     #  #  #  #  #  #  #  #  # ##  #  #
 //  #      ##   #     #  #  #  #  #  #  #  #  ##    #
 // ###   ###    #      ##    ###  #  #   ###   ##   #
-/**
- * Returns whether the pilot is a founder.
- * @returns {boolean} Whether the pilot is a founder.
- */
 DiscordJs.GuildMember.prototype.isFounder = function() {
     return !!Discord.founderRole.members.find((m) => m.id === this.id);
 };
@@ -322,10 +253,6 @@ DiscordJs.GuildMember.prototype.isFounder = function() {
 //   #   #  #   #    #  #   #    ##    # ##  #  #  #  #  ##    #  #   #    ##    #  #  #  #  #  #   #     #     #
 // # #    ##   ###   #  #   #     ##    # #  #  #  ###    ##   #  #  ###    ##    ###   ##   #  #    ##  ###   ###
 //  #
-/**
- * Returns the date and time which the pilot is banned from joining teams.
- * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from joining teams.  Returns nothing if the pilot is not banned.
- */
 DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async function() {
     try {
         return await Db.joinTeamDeniedUntil(this);
@@ -340,10 +267,6 @@ DiscordJs.GuildMember.prototype.joinTeamDeniedUntil = async function() {
 //  #    # ##  ###    #    #  #   #    ##     #     #  #  #  #  #  #
 //  #    ##     #     #    #  #   #      ##   #     #  #  #     #  #
 // ###    ##    #      ##  ###   ###   ###     ##    ##   #      ###
-/**
- * Performs the required actions when a pilot leaves the Discord server.
- * @returns {Promise} A promise that resolves when a pilot leaves Discord.
- */
 DiscordJs.GuildMember.prototype.leftDiscord = async function() {
     let team;
     try {
@@ -410,10 +333,6 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
 // #  #  # ##  ####  #  #  # #   # ##   #    #  #   #     #    #     #  #  # ##  #  #  ####  # ##
 // #     ##    #  #  #  #  # #   ##     #    ####   #     #    #     #  #  # ##  # ##  #  #  ##
 // #      ##   #  #   ##    #     ##    #    ####  ###     ##   ##   #  #  #  #   # #  #  #   ##
-/**
- * Removes a Twitch name from the member's account.
- * @returns {Promise} A promise that resolves when the Twitch name has been added.
- */
 DiscordJs.GuildMember.prototype.removeTwitchName = async function() {
     try {
         return await Db.unsetTwitchName(this);
@@ -429,11 +348,6 @@ DiscordJs.GuildMember.prototype.removeTwitchName = async function() {
 // #     ##    #  #  #  #  ##      ##    #     #    ##    # ##  #  #
 // #      ##    ###   ###   ##   ###      ##   #     ##    # #  #  #
 //                #
-/**
- * Requests to join a team.
- * @param {Team} team The team to request joining.
- * @returns {Promise} A promise that resolves when the request to join the team has been sent.
- */
 DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
     try {
         await Db.requestTeam(this, team);
@@ -461,11 +375,6 @@ DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
 // ##     # ##   #     #     #    ####  # ##    #   #  #  #  #  # ##
 //   ##   ##     #     #     #    #  #  ##     #    #  #  #  #  ##
 // ###     ##     ##   #    ###   #  #   ##   ####   ##   #  #   ##
-/**
- * Sets a pilot's time zone.
- * @param {string} timezone The time zone to set.
- * @returns {Promise} A promise that resolves when the time zone has been set.
- */
 DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
     try {
         await Db.setTimezone(this, timezone);
@@ -481,11 +390,6 @@ DiscordJs.GuildMember.prototype.setTimezone = async function(timezone) {
 // #  #  #  #  #  #  # ##   #    ##    # ##  # ##  #  #  ##
 //  ###  ###    ###   # #    ##   ##   #  #   # #  #  #   ##
 //       #
-/**
- * Updates the pilot's name.
- * @param {DiscordJs.GuildMember} oldMember The pilot with their previous name.
- * @returns {Promise} A promise that resolves when the pilot's name is updated.
- */
 DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
     try {
         await Db.setName(this);
@@ -556,11 +460,6 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
 // ####  # ##    ##   #     #     ##    # #    #    #  #  #  #    ##   #  #  # ##  #  #   #    # ##   #    #  #  #  #  #     #     #  #  #  #  #  #  #  #  ##    #     #  #   #     #    ##    # ##  #  #
 // ####   # #  ###    #     #      ##    #    ###    ##    ###  ###     ##    # #  ###     ##   # #  ###   #  #   ##   #     #      ##    ###  #  #   ###   ##   #      ##    #     #     ##    # #  #  #
 //                                                                                 #
-/**
- * Returns whether the pilot was a captain or founder of a team previously.
- * @param {Team} team The team to check.
- * @returns {Promise<boolean>} A promise that resolves with whether the pilot was a captain or founder previously.
- */
 DiscordJs.GuildMember.prototype.wasPreviousCaptainOrFounderOfTeam = async function(team) {
     try {
         return await Db.wasPreviousCaptainOrFounderOfTeam(this, team);

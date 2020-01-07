@@ -12,5 +12,8 @@
     },
     "exclude": [
         "public/**/*"
+    ],
+    "include": [
+        "**/*.d.ts"
     ]
 }
