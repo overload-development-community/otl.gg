@@ -120,15 +120,11 @@ class MatchesView {
     }
 }
 
-/**
- * @type {typeof import("../../web/includes/common")}
- */
+/** @type {typeof import("../../web/includes/common")} */
 // @ts-ignore
 MatchesView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 
-/**
- * @type {typeof import("./matches/match")}
- */
+/** @type {typeof import("./matches/match")} */
 // @ts-ignore
 MatchesView.MatchView = typeof MatchView === "undefined" ? require("./matches/match") : MatchView; // eslint-disable-line no-undef
 

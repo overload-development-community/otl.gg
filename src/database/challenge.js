@@ -183,9 +183,7 @@ class ChallengeDb {
      * @returns {Promise<{clocked: Date, clockDeadline: Date}>} A promise that resolves with the clocked date and the clock deadline date.
      */
     static async clock(team, challenge) {
-        /**
-         * @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateClocked: Date, DateClockDeadline: Date}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateClocked = GETUTCDATE(), DateClockDeadline = DATEADD(DAY, 28, GETUTCDATE()), ClockTeamId = @teamId, DateClockDeadlineNotified = NULL WHERE ChallengeId = @challengeId
 
@@ -209,9 +207,7 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     static async close(challenge) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @challengingTeamId INT
             DECLARE @challengedTeamId INT
@@ -280,9 +276,7 @@ class ChallengeDb {
      * @returns {Promise<string[]>} A promise that resolves with the home map team's home maps for the new game type.
      */
     static async confirmGameType(challenge) {
-        /**
-         * @type {{recordsets: [{Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET GameType = SuggestedGameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
 
@@ -374,9 +368,7 @@ class ChallengeDb {
     static async create(team1, team2, gameType, adminCreated, homeMapTeam, teamSize, startNow) {
         let date;
 
-        /**
-         * @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, OrangeTeamId: number, BlueTeamId: number, HomeMapTeamId: number, Team1Penalized: boolean, Team2Penalized: boolean}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @orangeTeamId INT
             DECLARE @blueTeamId INT
@@ -499,9 +491,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves with the extended clock deadline.
      */
     static async extend(challenge) {
-        /**
-         * @type {{recordsets: [{DateClockDeadline: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateClockDeadline: Date}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, GETUTCDATE()) END,
@@ -534,9 +524,7 @@ class ChallengeDb {
      * @returns {Promise<ChallengeData[]>} A promise that resolves with an array of challenge data.
      */
     static async getAllByTeam(team) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
@@ -564,9 +552,7 @@ class ChallengeDb {
      * @returns {Promise<ChallengeData[]>} A promise that resolves with an array of challenge data.
      */
     static async getAllByTeams(team1, team2) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
@@ -593,9 +579,7 @@ class ChallengeDb {
      * @returns {Promise<ChallengeData>} A promise that resolves with the challenge data.
      */
     static async getById(id) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT ChallengeId, ChallengingTeamId, ChallengedTeamId FROM tblChallenge WHERE ChallengeId = @id
         `, {id: {type: Db.INT, value: id}});
@@ -616,9 +600,7 @@ class ChallengeDb {
      * @returns {Promise<ChallengeData>} A promise that resolves with the challenge data.
      */
     static async getByTeams(team1, team2) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
@@ -647,9 +629,7 @@ class ChallengeDb {
      * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}, challengingTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
      */
     static async getCastData(challenge) {
-        /**
-         * @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, GameType: string, MatchTime: Date, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengingTeamWins: number, ChallengingTeamLosses: number, ChallengingTeamTies: number, ChallengingTeamRating: number, ChallengedTeamWins: number, ChallengedTeamLosses: number, ChallengedTeamTies: number, ChallengedTeamRating: number, ChallengingTeamHeadToHeadWins: number, ChallengedTeamHeadToHeadWins: number, HeadToHeadTies: number, ChallengingTeamId: number, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamScore: number, Map: string, GameType: string, MatchTime: Date, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[], {Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, TwitchName: string}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
             DECLARE @gameType VARCHAR(3)
@@ -904,9 +884,7 @@ class ChallengeDb {
      * @returns {Promise<{discordId: string, name: string, teamId: number, opponentDiscordId: string, opponentName: string, weapon: string, damage: number}[]>} A promise that resolves with the damage done for the challenge.
      */
     static async getDamage(challenge) {
-        /**
-         * @type {{recordsets: [{DiscordId: string, Name: string, TeamId: number, OpponentDiscordId: string, OpponentName: string, Weapon: string, Damage: number}[]]}}
-         */
+        /** @type {{recordsets: [{DiscordId: string, Name: string, TeamId: number, OpponentDiscordId: string, OpponentName: string, Weapon: string, Damage: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT
                 p.DiscordId,
@@ -947,9 +925,7 @@ class ChallengeDb {
      * @returns {Promise<{title: string, orangeTeamId: number, blueTeamId: number, map: string, teamSize: number, matchTime: Date, postseason: boolean, homeMapTeamId: number, adminCreated: boolean, homesLocked: boolean, usingHomeMapTeam: boolean, challengingTeamPenalized: boolean, challengedTeamPenalized: boolean, suggestedMap: string, suggestedMapTeamId: number, suggestedTeamSize: number, suggestedTeamSizeTeamId: number, suggestedTime: Date, suggestedTimeTeamId: number, reportingTeamId: number, challengingTeamScore: number, challengedTeamScore: number, casterDiscordId: string, dateAdded: Date, dateClocked: Date, clockTeamId: number, dateClockDeadline: Date, dateClockDeadlineNotified: Date, dateReported: Date, dateConfirmed: Date, dateClosed: Date, dateRematchRequested: Date, rematchTeamId: number, dateRematched: Date, dateVoided: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string, suggestedGameType: string, suggestedGameTypeTeamId: number, homeMaps: string[]}>} A promise that resolves with the challenge details.
      */
     static async getDetails(challenge) {
-        /**
-         * @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number, GameType: string, SuggestedGameType: string, SuggestedGameTypeTeamId: number}[], {Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Title: string, OrangeTeamId: number, BlueTeamId: number, Map: string, TeamSize: number, MatchTime: Date, Postseason: boolean, HomeMapTeamId: number, AdminCreated: boolean, HomesLocked: boolean, UsingHomeMapTeam: boolean, ChallengingTeamPenalized: boolean, ChallengedTeamPenalized: boolean, SuggestedMap: string, SuggestedMapTeamId: number, SuggestedTeamSize: number, SuggestedTeamSizeTeamId: number, SuggestedTime: Date, SuggestedTimeTeamId: number, ReportingTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, DateAdded: Date, DateClocked: Date, ClockTeamId: number, DiscordId: string, DateClockDeadline: Date, DateClockDeadlineNotified: Date, DateReported: Date, DateConfirmed: Date, DateClosed: Date, DateRematchRequested: Date, RematchTeamId: number, DateRematched: Date, OvertimePeriods: number, DateVoided: Date, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number, GameType: string, SuggestedGameType: string, SuggestedGameTypeTeamId: number}[], {Map: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT
                 c.Title,
@@ -1065,9 +1041,7 @@ class ChallengeDb {
      * @returns {Promise<{expiredClocks: {challengeId: number, dateClockDeadline: Date}[], startingMatches: {challengeId: number, matchTime: Date}[], missedMatches: {challengeId: number, matchTime: Date}[]}>} A promise that resolves with the notifications to send out.
      */
     static async getNotifications() {
-        /**
-         * @type {{recordsets: [{ChallengeId: number, DateClockDeadline: Date}[], {ChallengeId: number, MatchTime: Date}[], {ChallengeId: number, MatchTime: Date}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, DateClockDeadline: Date}[], {ChallengeId: number, MatchTime: Date}[], {ChallengeId: number, MatchTime: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT ChallengeId, DateClockDeadline
             FROM tblChallenge
@@ -1121,9 +1095,7 @@ class ChallengeDb {
      * @returns {Promise<{discordId: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]>} A promise that resolves with the team's stats for the challenge.
      */
     static async getStatsForTeam(challenge, team) {
-        /**
-         * @type {{recordsets: [{DiscordId: string, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[]]}}
-         */
+        /** @type {{recordsets: [{DiscordId: string, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT p.DiscordId, p.Name, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, SUM(d.Damage) Damage
             FROM tblStat s
@@ -1163,9 +1135,7 @@ class ChallengeDb {
      * @returns {Promise<{discordId: string, twitchName: string}[]>} A promise that resolves with the list of streamers for the challenge.
      */
     static async getStreamers(challenge) {
-        /**
-         * @type {{recordsets: [{DiscordId: string, TwitchName: string}[]]}}
-         */
+        /** @type {{recordsets: [{DiscordId: string, TwitchName: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT p.DiscordId, p.TwitchName
             FROM tblPlayer p
@@ -1188,9 +1158,7 @@ class ChallengeDb {
      * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
      */
     static async getTeamDetails(challenge) {
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {PlayerId: number, Name: string, TeamId: number, OpponentName: string, OpponentTeamId: number, Weapon: string, Damage: number}[], {Season: number, Postseason: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Rating: number, Wins: number, Losses: number, Ties: number}[], {PlayerId: number, Name: string, TeamId: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, TwitchName: string}[], {PlayerId: number, Name: string, TeamId: number, OpponentName: string, OpponentTeamId: number, Weapon: string, Damage: number}[], {Season: number, Postseason: boolean}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
             DECLARE @postseason BIT
@@ -1304,9 +1272,7 @@ class ChallengeDb {
      * @returns {Promise<string>} A promise that resolves with the name of the map that was picked.
      */
     static async pickMap(challenge, number) {
-        /**
-         * @type {{recordsets: [{Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE c
             SET Map = ch.Map,
@@ -1395,9 +1361,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves with the date the match was reported.
      */
     static async report(challenge, reportingTeam, challengingTeamScore, challengedTeamScore) {
-        /**
-         * @type {{recordsets: [{DateReported: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateReported: Date}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = @reportingTeamId,
@@ -1476,9 +1440,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves with the date the match was confirmed.
      */
     static async setConfirmed(challenge) {
-        /**
-         * @type {{recordsets: [{DateConfirmed: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateConfirmed: Date}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateConfirmed = GETUTCDATE() WHERE ChallengeId = @challengeId
 
@@ -1583,9 +1545,7 @@ class ChallengeDb {
      * @returns {Promise<string[]>} A promise that resolves with the new home map team's home maps.
      */
     static async setHomeMapTeam(challenge, team) {
-        /**
-         * @type {{recordsets: [{Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET HomeMapTeamId = @teamId, UsingHomeMapTeam = 1, Map = NULL WHERE ChallengeId = @challengeId
 
@@ -1797,9 +1757,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves when the score is set.
      */
     static async setScore(challenge, challengingTeamScore, challengedTeamScore) {
-        /**
-         * @type {{recordsets: [{DateConfirmed: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateConfirmed: Date}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
@@ -2041,9 +1999,7 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is unvoided.
      */
     static async unvoid(challenge) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId
 
@@ -2067,9 +2023,7 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is voided.
      */
     static async void(challenge) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
 
@@ -2158,9 +2112,7 @@ class ChallengeDb {
             `;
         });
 
-        /**
-         * @type {{recordsets: [{TeamId: number, First: boolean}[], {PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, First: boolean}[], {PlayerId: number}[]]}} */
         const data = await db.query(sql, params);
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {

@@ -50,9 +50,7 @@ class MapDb {
      * @returns {Promise<string[]>} A promise that resolves with the list of maps allowed.
      */
     static async getAllAllowed() {
-        /**
-         * @type {{recordsets: [{Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Map FROM tblAllowedMap ORDER BY Map
         `);
@@ -73,15 +71,15 @@ class MapDb {
      */
     static async getPlayedBySeason(season) {
         const key = `${settings.redisPrefix}:db:map:getPlayedBySeason:${season || "null"}`;
+
+        /** @type {string[]} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{Map: string}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -135,9 +133,7 @@ class MapDb {
      * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the validated map.
      */
     static async validate(map) {
-        /**
-         * @type {{recordsets: [{Map: string, Stock: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string, Stock: boolean}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map
         `, {map: {type: Db.VARCHAR(100), value: map}});

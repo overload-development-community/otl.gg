@@ -552,6 +552,8 @@ class PlayerDb {
      */
     static async getFreeAgents() {
         const key = `${settings.redisPrefix}:db:player:getFreeAgents`;
+
+        /** @type {{playerId: number, name: string, discordId: string, timezone: string}[]} */
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -707,6 +709,8 @@ class PlayerDb {
      */
     static async getRecordsCTFPlayer(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:CTF:player:${season === void 0 ? "null" : season}:${!!postseason}`;
+
+        /** @type {Object<string, GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -1245,6 +1249,8 @@ class PlayerDb {
      */
     static async getRecordsTAPlayer(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:TA:player:${season === void 0 ? "null" : season}:${!!postseason}`;
+
+        /** @type {Object<string, GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
@@ -2104,6 +2110,8 @@ class PlayerDb {
      */
     static async getTopKda() {
         const key = `${settings.redisPrefix}:db:player:getTopKda`;
+
+        /** @type {{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]} */
         let cache = await Cache.get(key);
 
         if (cache) {

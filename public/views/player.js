@@ -383,9 +383,7 @@ class PlayerView {
     }
 }
 
-/**
- * @type {typeof import("../../web/includes/common")}
- */
+/** @type {typeof import("../../web/includes/common")} */
 // @ts-ignore
 PlayerView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

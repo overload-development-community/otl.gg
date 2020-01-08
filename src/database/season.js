@@ -26,6 +26,8 @@ class SeasonDb {
      */
     static async getSeasonNumbers() {
         const key = `${settings.redisPrefix}:db:season:getSeasonNumbers`;
+
+        /** @type {number[]} */
         let cache = await Cache.get(key);
 
         if (cache) {

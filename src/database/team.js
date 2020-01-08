@@ -1029,6 +1029,8 @@ class TeamDb {
      */
     static async getSeasonStandings(season, records, map) {
         const key = `${settings.redisPrefix}:db:team:getSeasonStandings:${season || "null"}:${records}:${map || "null"}`;
+
+        /** @type {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[]} */
         let cache = await Cache.get(key);
 
         if (cache) {

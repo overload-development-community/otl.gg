@@ -86,9 +86,7 @@ class TeamGameLogView {
     }
 }
 
-/**
- * @type {typeof import("../../web/includes/common")}
- */
+/** @type {typeof import("../../web/includes/common")} */
 // @ts-ignore
 TeamGameLogView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

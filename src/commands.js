@@ -43,9 +43,7 @@ const tz = require("timezone-js"),
     twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
     vodParse = /^(?<challengeId>[1-9][0-9]*) (?<vod>https?:\/\/.+)$/;
 
-/**
- * @type {typeof import("./discord")}
- */
+/** @type {typeof import("./discord")} */
 let Discord;
 
 setTimeout(() => {

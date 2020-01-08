@@ -85,9 +85,7 @@ class IndexView {
     }
 }
 
-/**
- * @type {typeof import("../../web/includes/common")}
- */
+/** @type {typeof import("../../web/includes/common")} */
 // @ts-ignore
 IndexView.Common = typeof Common === "undefined" ? require("../../web/includes/common") : Common; // eslint-disable-line no-undef
 

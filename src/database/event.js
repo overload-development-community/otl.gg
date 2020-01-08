@@ -48,9 +48,7 @@ class EventDb {
      * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
      */
     static async getUpcoming() {
-        /**
-         * @type {{recordsets: [{Title: string, DateStart: Date, DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{Title: string, DateStart: Date, DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Title, DateStart, DateEnd
             FROM tblEvent
