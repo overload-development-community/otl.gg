@@ -1013,7 +1013,7 @@ class Challenge {
 
             if (this.details.dateConfirmed && !this.details.dateVoided) {
                 await Discord.richQueue(Discord.richEmbed({
-                    title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? `${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
+                    title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
                     description: `Played ${this.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}\n${Challenge.getGameTypeName(this.details.gameType)} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
                     fields: stats.challengingTeamStats.length > 0 && stats.challengedTeamStats.length > 0 ? [
