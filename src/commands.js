@@ -5167,6 +5167,7 @@ class Commands {
                 winningTeam = winningScore === challenge.details.challengingTeamScore ? challenge.challengingTeam : challenge.challengedTeam;
 
             if (winningScore === losingScore) {
+                msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a tie with the score of **${winningScore}** to **${losingScore}**.`});
             } else {
                 msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`});
                 msg.setColor(winningTeam.role.color);
