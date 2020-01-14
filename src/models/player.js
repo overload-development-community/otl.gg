@@ -1,4 +1,6 @@
-/** @typedef {import("../..").GameRecord} GameRecord */
+/**
+ * @typedef {import("../..").GameRecord} GameRecord
+ */
 
 const Db = require("../database/player"),
     Exception = require("../logging/exception");

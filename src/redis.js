@@ -26,9 +26,7 @@ class Redis {
      * @returns {Promise<IoRedis.Redis>} The Redis client.
      */
     static async login() {
-        /**
-         * @type {IoRedis.Redis}
-         */
+        /** @type {IoRedis.Redis} */
         let client;
 
         try {

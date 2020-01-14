@@ -31,9 +31,7 @@ class NewTeamDb {
      * @returns {Promise<{id: number, member: DiscordJs.GuildMember}>} A promise that resolves when the process of creating a new team for the pilot has begun.
      */
     static async create(member) {
-        /**
-         * @type {{recordsets: [{NewTeamId: number}[]]}}
-         */
+        /** @type {{recordsets: [{NewTeamId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -90,9 +88,7 @@ class NewTeamDb {
      * @returns {Promise<NewTeamData>} A promise that resolves with the new team's name and tag.
      */
     static async getByPilot(member) {
-        /**
-         * @type {{recordsets: [{NewTeamId: number, Name: string, Tag: string}[]]}}
-         */
+        /** @type {{recordsets: [{NewTeamId: number, Name: string, Tag: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT nt.NewTeamId, nt.Name, nt.Tag
             FROM tblNewTeam nt

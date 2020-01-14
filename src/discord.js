@@ -13,54 +13,34 @@ const DiscordJs = require("discord.js"),
 
 let readied = false;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let alertsChannel;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let announcementsChannel;
 
-/**
- * @type {DiscordJs.Role}
- */
+/** @type {DiscordJs.Role} */
 let captainRole;
 
-/**
- * @type {DiscordJs.CategoryChannel}
- */
+/** @type {DiscordJs.CategoryChannel} */
 let challengesCategory;
 
-/**
- * @type {DiscordJs.Role}
- */
+/** @type {DiscordJs.Role} */
 let founderRole;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let matchResultsChannel;
 
-/**
- * @type {DiscordJs.Guild}
- */
+/** @type {DiscordJs.Guild} */
 let otlGuild;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let rosterUpdatesChannel;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let scheduledMatchesChannel;
 
-/**
- * @type {DiscordJs.TextChannel}
- */
+/** @type {DiscordJs.TextChannel} */
 let vodsChannel;
 
 require("./extensions/discordJs.GuildMember.extensions");

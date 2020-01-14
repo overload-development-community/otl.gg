@@ -69,9 +69,7 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the pilot has been added to the team.
      */
     static async addPilot(member, team) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -109,9 +107,7 @@ class TeamDb {
      * @returns {Promise<TeamData>} A promise that resolves with the created team.
      */
     static async create(newTeam) {
-        /**
-         * @type {{recordsets: [{TeamId: number, PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
             DECLARE @teamId INT
@@ -166,9 +162,7 @@ class TeamDb {
      * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs that need to be voided due to the team being disbanded.
      */
     static async disband(team) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number}[], {PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number}[], {PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             UPDATE tblTeam SET Disbanded = 1 WHERE TeamId = @teamId
 
@@ -229,9 +223,7 @@ class TeamDb {
      * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getById(id) {
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Locked: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Locked: boolean}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TeamId, Name, Tag, Locked
             FROM tblTeam
@@ -253,9 +245,7 @@ class TeamDb {
      * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getByNameOrTag(text) {
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TeamId, Name, Tag, Disbanded, Locked FROM tblTeam WHERE Name = @text OR Tag = @text
         `, {text: {type: Db.VARCHAR(25), value: text}});
@@ -275,9 +265,7 @@ class TeamDb {
      * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getByPilot(member) {
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, IsFounder: boolean, Locked: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, IsFounder: boolean, Locked: boolean}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -303,9 +291,7 @@ class TeamDb {
      * @returns {Promise<number>} A promise that resolves with the number of clocked challenges for this team.
      */
     static async getClockedChallengeCount(team) {
-        /**
-         * @type {{recordsets: [{ClockedChallenges: number}[]]}}
-         */
+        /** @type {{recordsets: [{ClockedChallenges: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT COUNT(ChallengeId) ClockedChallenges
             FROM tblChallenge
@@ -335,18 +321,14 @@ class TeamDb {
     static async getData(team, season, postseason) {
         const key = `${settings.redisPrefix}:db:team:getData:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /**
-         * @type {{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, gamesWithDamage: number, deathsInGamesWithDamage: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}}
-         */
+        /** @type {{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, gamesWithDamage: number, deathsInGamesWithDamage: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, WinsTA: number, LossesTA: number, TiesTA: number, WinsCTF: number, LossesCTF: number, TiesCTF: number, WinsHomeTA: number, LossesHomeTA: number, TiesHomeTA: number, WinsAwayTA: number, LossesAwayTA: number, TiesAwayTA: number, WinsNeutralTA: number, LossesNeutralTA: number, TiesNeutralTA: number, WinsHomeCTF: number, LossesHomeCTF: number, TiesHomeCTF: number, WinsAwayCTF: number, LossesAwayCTF: number, TiesAwayCTF: number, WinsNeutralCTF: number, LossesNeutralCTF: number, TiesNeutralCTF: number, Wins2v2TA: number, Losses2v2TA: number, Ties2v2TA: number, Wins3v3TA: number, Losses3v3TA: number, Ties3v3TA: number, Wins4v4TA: number, Losses4v4TA: number, Ties4v4TA: number, Wins2v2CTF: number, Losses2v2CTF: number, Ties2v2CTF: number, Wins3v3CTF: number, Losses3v3CTF: number, Ties3v3CTF: number, Wins4v4CTF: number, Losses4v4CTF: number, Ties4v4CTF: number}[], {TeamId: number, Name: string, Tag: string, Wins: number, Losses: number, Ties: number, GameType: string}[], {Map: string, Wins: number, Losses: number, Ties: number, GameType: string}[], {PlayerId: number, Name: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number, TeamId: number, TeamName: string, TeamTag: string, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, Map: string, MatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {PlayerId: number, Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number, TeamId: number, TeamName: string, TeamTag: string, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, Map: string, MatchTime: Date, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, WinsTA: number, LossesTA: number, TiesTA: number, WinsCTF: number, LossesCTF: number, TiesCTF: number, WinsHomeTA: number, LossesHomeTA: number, TiesHomeTA: number, WinsAwayTA: number, LossesAwayTA: number, TiesAwayTA: number, WinsNeutralTA: number, LossesNeutralTA: number, TiesNeutralTA: number, WinsHomeCTF: number, LossesHomeCTF: number, TiesHomeCTF: number, WinsAwayCTF: number, LossesAwayCTF: number, TiesAwayCTF: number, WinsNeutralCTF: number, LossesNeutralCTF: number, TiesNeutralCTF: number, Wins2v2TA: number, Losses2v2TA: number, Ties2v2TA: number, Wins3v3TA: number, Losses3v3TA: number, Ties3v3TA: number, Wins4v4TA: number, Losses4v4TA: number, Ties4v4TA: number, Wins2v2CTF: number, Losses2v2CTF: number, Ties2v2CTF: number, Wins3v3CTF: number, Losses3v3CTF: number, Ties3v3CTF: number, Wins4v4CTF: number, Losses4v4CTF: number, Ties4v4CTF: number}[], {TeamId: number, Name: string, Tag: string, Wins: number, Losses: number, Ties: number, GameType: string}[], {Map: string, Wins: number, Losses: number, Ties: number, GameType: string}[], {PlayerId: number, Name: string, Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number, TeamId: number, TeamName: string, TeamTag: string, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, Map: string, MatchTime: Date, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {PlayerId: number, Name: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number, TeamId: number, TeamName: string, TeamTag: string, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, Map: string, MatchTime: Date, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -705,18 +687,14 @@ class TeamDb {
     static async getGameLog(team, season, postseason) {
         const key = `${settings.redisPrefix}:db:team:getGameLog:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /**
-         * @type {{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}
-         */
+        /** @type {{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, RatingChange: number, Map: string, MatchTime: Date, GameType: string, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengingTeamName: string, ChallengingTeamTag: string, ChallengingTeamScore: number, ChallengedTeamId: number, ChallengedTeamName: string, ChallengedTeamTag: string, ChallengedTeamScore: number, RatingChange: number, Map: string, MatchTime: Date, GameType: string, StatTeamId: number, StatTeamName: string, StatTeamTag: string, PlayerId: number, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -842,9 +820,7 @@ class TeamDb {
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
     static async getHomeMaps(team, gameType) {
-        /**
-         * @type {{recordsets: [{Map: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Map
             FROM tblTeamHome
@@ -871,9 +847,7 @@ class TeamDb {
      * @returns {Promise<{map: string, gameType: string}[]>} A promise that resolves with a list of the team's home maps, divided by type.
      */
     static async getHomeMapsByType(team) {
-        /**
-         * @type {{recordsets: [{Map: string, GameType: string}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string, GameType: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number, GameType
         `, {teamId: {type: Db.INT, value: team.id}});
@@ -896,9 +870,7 @@ class TeamDb {
      * @returns {Promise<TeamInfo>} A promise that resolves with the team's info.
      */
     static async getInfo(team) {
-        /**
-         * @type {{recordsets: [{Map: string, GameType: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}}
-         */
+        /** @type {{recordsets: [{Map: string, GameType: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
 
@@ -958,9 +930,7 @@ class TeamDb {
      * @returns {Promise<Date>} A promise that resolves with the next date this team can put a challenge on the clock.
      */
     static async getNextClockDate(team) {
-        /**
-         * @type {{recordsets: [{NextDate: Date}[]]}}
-         */
+        /** @type {{recordsets: [{NextDate: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT DATEADD(DAY, 28, MAX(DateClocked)) NextDate FROM tblChallenge WHERE ClockTeamId = @teamId AND DateVoided IS NULL
         `, {teamId: {type: Db.INT, value: team.id}});
@@ -980,9 +950,7 @@ class TeamDb {
      * @returns {Promise<number>} A promise that resolves with the number of pilots on and invited pilots for a team.
      */
     static async getPilotAndInvitedCount(team) {
-        /**
-         * @type {{recordsets: [{Members: number}[]]}}
-         */
+        /** @type {{recordsets: [{Members: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT
                 (SELECT COUNT(*) FROM tblRoster WHERE TeamId = @teamId) +
@@ -1004,9 +972,7 @@ class TeamDb {
      * @returns {Promise<number>} A promise that resolves with the number of pilots on a team.
      */
     static async getPilotCount(team) {
-        /**
-         * @type {{recordsets: [{Members: number}[]]}}
-         */
+        /** @type {{recordsets: [{Members: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT COUNT(*) Members FROM tblRoster WHERE TeamId = @teamId
         `, {teamId: {type: Db.INT, value: team.id}});
@@ -1037,9 +1003,7 @@ class TeamDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, Wins1: number, Losses1: number, Ties1: number, Wins2: number, Losses2: number, Ties2: number, Wins3: number, Losses3: number, Ties3: number, WinsMap?: number, LossesMap?: number, TiesMap?: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number, Wins1: number, Losses1: number, Ties1: number, Wins2: number, Losses2: number, Ties2: number, Wins3: number, Losses3: number, Ties3: number, WinsMap?: number, LossesMap?: number, TiesMap?: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1140,9 +1104,7 @@ class TeamDb {
      * @returns {Promise<string>} The team's time zone.
      */
     static async getTimezone(team) {
-        /**
-         * @type {{recordsets: [{Timezone: string}[]]}}
-         */
+        /** @type {{recordsets: [{Timezone: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Timezone FROM tblTeam WHERE TeamId = @teamId
         `, {teamId: {type: Db.INT, value: team.id}});
@@ -1162,9 +1124,7 @@ class TeamDb {
      * @returns {Promise<boolean>} A promise that resolves with whether a team has clocked another this season.
      */
     static async hasClockedTeamThisSeason(team1, team2) {
-        /**
-         * @type {{recordsets: [{HasClocked: boolean}[]]}}
-         */
+        /** @type {{recordsets: [{HasClocked: boolean}[]]}} */
         const data = await db.query(/* sql */`
             SELECT CAST(CASE WHEN COUNT(ChallengeId) > 0 THEN 1 ELSE 0 END AS BIT) HasClocked
             FROM tblChallenge
@@ -1194,9 +1154,7 @@ class TeamDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the team has a stock home map.
      */
     static async hasStockHomeMap(team, excludeNumber) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblTeamHome th
@@ -1292,9 +1250,7 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the team is reinstated.
      */
     static async reinstate(member, team) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -1360,9 +1316,7 @@ class TeamDb {
      * @returns {Promise} A promise that resolves when the pilot has been removed.
      */
     static async removePilot(member, team) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 

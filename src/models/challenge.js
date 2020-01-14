@@ -1,5 +1,7 @@
 /**
- * @typedef {{id?: number, challengingTeam: Team, challengedTeam: Team}} ChallengeData
+ * @typedef {import("./challenge.types").CastData} ChallengeTypes.CastData
+ * @typedef {import("./challenge.types").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
+ * @typedef {import("./challenge.types").TeamDetailsData} ChallengeTypes.TeamDetailsData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
@@ -19,24 +21,16 @@ const Cache = require("../cache"),
     channelParse = /^(?<challengingTeamTag>[0-9a-z]{1,5})-(?<challengedTeamTag>[0-9a-z]{1,5})-(?<id>[1-9][0-9]*)$/,
     timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/;
 
-/**
- * @type {Object.<number, schedule.Job>}
- */
+/** @type {Object.<number, schedule.Job>} */
 const clockExpiredJobs = {};
 
-/**
- * @type {Object.<number, schedule.Job>}
- */
+/** @type {Object.<number, schedule.Job>} */
 const upcomingMatchJobs = {};
 
-/**
- * @type {Object.<number, schedule.Job>}
- */
+/** @type {Object.<number, schedule.Job>} */
 const missedMatchJobs = {};
 
-/**
- * @type {typeof import("../discord")}
- */
+/** @type {typeof import("../discord")} */
 let Discord;
 
 setTimeout(() => {
@@ -64,7 +58,7 @@ class Challenge {
     //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
     /**
      * A constructor to create a challenge.
-     * @param {ChallengeData} data The data to load into the challenge.
+     * @param {ChallengeTypes.ChallengeConstructor} data The data to load into the challenge.
      */
     constructor(data) {
         this.id = data.id;
@@ -1419,7 +1413,7 @@ class Challenge {
     //  ###
     /**
      * Gets the challenge data for the cast page.
-     * @returns {Promise<{data: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}, challengingTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[], challengedTeamRoster: {name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}[]}>} A promise that resolves with the challenge data.
+     * @returns {Promise<ChallengeTypes.CastData>} A promise that resolves with the challenge data.
      */
     async getCastData() {
         try {
@@ -1458,7 +1452,7 @@ class Challenge {
     //  ###
     /**
      * Gets the team details for a challenge.
-     * @return {Promise<{teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, opponentTeamId: number, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}>} A promise that resolves with the team details for the challenge.
+     * @return {Promise<ChallengeTypes.TeamDetailsData>} A promise that resolves with the team details for the challenge.
      */
     async getTeamDetails() {
         let details;

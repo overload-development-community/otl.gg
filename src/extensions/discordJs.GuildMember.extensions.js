@@ -8,9 +8,7 @@ const DiscordJs = require("discord.js"),
     settings = require("../../settings"),
     Team = require("../models/team");
 
-/**
- * @type {typeof import("../discord")}
- */
+/** @type {typeof import("../discord")} */
 let Discord;
 
 setTimeout(() => {

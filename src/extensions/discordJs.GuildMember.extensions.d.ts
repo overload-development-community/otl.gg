@@ -1,3 +1,4 @@
+import { GuildMember } from "discord.js";
 import NewTeam from "../models/newTeam";
 import Team from "../models/team";
 

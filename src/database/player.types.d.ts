@@ -1,6 +1,4 @@
-import Player from "./player";
-
-type GameRecord = {
+export type GameRecord = {
     teamSize: number,
     record: number,
     playerId?: number,

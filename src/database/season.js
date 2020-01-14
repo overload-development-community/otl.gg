@@ -34,9 +34,7 @@ class SeasonDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{Season: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{Season: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Season
             FROM tblSeason

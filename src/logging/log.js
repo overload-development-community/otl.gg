@@ -8,14 +8,10 @@ const request = require("request-promise-native"),
 
     settings = require("../../settings");
 
-/**
- * @type {LogEntry[]}
- */
+/** @type {LogEntry[]} */
 const queue = [];
 
-/**
- * @type {typeof import("../discord")}
- */
+/** @type {typeof import("../discord")} */
 let Discord;
 
 //  #
