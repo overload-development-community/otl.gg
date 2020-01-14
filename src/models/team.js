@@ -18,18 +18,14 @@ const Db = require("../database/team"),
     MatchDb = require("../database/match"),
     settings = require("../../settings");
 
-/**
- * @type {typeof import("./challenge")}
- */
+/** @type {typeof import("./challenge")} */
 let Challenge;
 
 setTimeout(() => {
     Challenge = require("./challenge");
 }, 0);
 
-/**
- * @type {typeof import("../discord")}
- */
+/** @type {typeof import("../discord")} */
 let Discord;
 
 setTimeout(() => {

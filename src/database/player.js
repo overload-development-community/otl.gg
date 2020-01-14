@@ -38,9 +38,7 @@ class PlayerDb {
      * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from the team until.  Returns nothing if the pilot is not banned.
      */
     static async bannedFromTeamUntil(member, team) {
-        /**
-         * @type {{recordsets: [{DateExpires: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateExpires: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT tb.DateExpires
             FROM tblTeamBan tb
@@ -67,9 +65,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot can be a captain.
      */
     static async canBeCaptain(member) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblLeadershipPenalty lp
@@ -92,9 +88,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot can remove the pilot.
      */
     static async canRemovePilot(member, pilot) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
             DECLARE @pilotPlayerId INT
@@ -131,9 +125,7 @@ class PlayerDb {
      * @returns {Promise<void>} A promise that resolves when the timezone is clear.
      */
     static async clearTimezone(member) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -180,18 +172,14 @@ class PlayerDb {
     static async getCareer(playerId, season, postseason, gameType) {
         const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}:${gameType}`;
 
-        /**
-         * @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>}}
-         */
+        /** @type {{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>}} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Weapon: string, Damage: string}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Weapon: string, Damage: string}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -526,9 +514,7 @@ class PlayerDb {
      * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs they are casting.
      */
     static async getCastedChallenges(pilot) {
-        /**
-         * @type {{recordsets: [{ChallengeId: number}[]]}}
-         */
+        /** @type {{recordsets: [{ChallengeId: number}[]]}} */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId
             FROM tblChallenge c
@@ -560,9 +546,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, DiscordId: string, Timezone: string}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number, Name: string, DiscordId: string, Timezone: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT PlayerId, Name, DiscordId, Timezone
             FROM tblPlayer
@@ -595,18 +579,14 @@ class PlayerDb {
     static async getGameLog(playerId, season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getGameLog:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /**
-         * @type {{player: {name: string, teamId: number, tag: string, teamName: string}, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], seasons: number[]}}
-         */
+        /** @type {{player: {name: string, teamId: number, tag: string, teamName: string}, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], seasons: number[]}} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{Name: string, TeamId: number, Tag: string, TeamName: string}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, RatingChange: number, TeamSize: number, MatchTime: Date, Map: string, GameType: string}[], {Season: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{Name: string, TeamId: number, Tag: string, TeamName: string}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, RatingChange: number, TeamSize: number, MatchTime: Date, Map: string, GameType: string}[], {Season: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -717,9 +697,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamSize: number, Captures: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamSize: number, Captures: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -998,9 +976,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1257,9 +1233,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1542,9 +1516,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1793,9 +1765,7 @@ class PlayerDb {
      * @returns {Promise<TeamData[]>} A promise that resolves with the list of teams the pilot has requested or is invited to.
      */
     static async getRequestedOrInvitedTeams(member) {
-        /**
-         * @type {{recordsets: [{TeamId: number, Name: string, Tag: string}[]]}}
-         */
+        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -1829,18 +1799,14 @@ class PlayerDb {
      */
     static async getSeasonStats(season, postseason, gameType, all) {
         const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${gameType}:${!!postseason}:${all ? "all" : "active"}`;
-        /**
-         * @type {{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]}
-         */
+        /** @type {{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, AvgDamagePerGame: number, AvgDamagePerDeath: number, KDA: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, AvgDamagePerGame: number, AvgDamagePerDeath: number, KDA: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1965,9 +1931,7 @@ class PlayerDb {
      * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: Object<string, number>, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the player's stats.
      */
     static async getStats(pilot) {
-        /**
-         * @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Weapon: string, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}}
-         */
+        /** @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Weapon: string, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
 
@@ -2088,9 +2052,7 @@ class PlayerDb {
      * @returns {Promise<string>} The pilot's time zone.
      */
     static async getTimezone(member) {
-        /**
-         * @type {{recordsets: [{Timezone: string}[]]}}
-         */
+        /** @type {{recordsets: [{Timezone: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
@@ -2118,9 +2080,7 @@ class PlayerDb {
             return cache;
         }
 
-        /**
-         * @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[], {DateEnd: Date}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[], {DateEnd: Date}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
 
@@ -2203,9 +2163,7 @@ class PlayerDb {
      * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
      */
     static async getTwitchName(member) {
-        /**
-         * @type {{recordsets: [{TwitchName: string}[]]}}
-         */
+        /** @type {{recordsets: [{TwitchName: string}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TwitchName FROM tblPlayer WHERE DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
@@ -2225,9 +2183,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot has been invited to a team.
      */
     static async hasBeenInvitedToTeam(member, team) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblInvite i
@@ -2255,9 +2211,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot has requested a team.
      */
     static async hasRequestedTeam(member, team) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblRequest r
@@ -2284,9 +2238,7 @@ class PlayerDb {
      * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from joining a team.  Returns nothing if the pilot is not banned.
      */
     static async joinTeamDeniedUntil(member) {
-        /**
-         * @type {{recordsets: [{DateExpires: Date}[]]}}
-         */
+        /** @type {{recordsets: [{DateExpires: Date}[]]}} */
         const data = await db.query(/* sql */`
             SELECT jb.DateExpires
             FROM tblJoinBan jb
@@ -2365,9 +2317,7 @@ class PlayerDb {
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
     static async setTimezone(member, timezone) {
-        /**
-         * @type {{recordsets: [{PlayerId: number}[]]}}
-         */
+        /** @type {{recordsets: [{PlayerId: number}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -2461,9 +2411,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pliot was a previous captain or founder of a team.
      */
     static async wasPreviousCaptainOrFounderOfTeam(member, team) {
-        /**
-         * @type {{recordsets: [{}[]]}}
-         */
+        /** @type {{recordsets: [{}[]]}} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 

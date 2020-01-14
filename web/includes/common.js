@@ -13,9 +13,7 @@ const HtmlMinifier = require("html-minifier"),
     nameParenthesisEnd = / \(.*\)$/,
     nameParenthesisTagStart = /^\(.*\) /;
 
-/**
- * @type {typeof import("../../public/views/index")}
- */
+/** @type {typeof import("../../public/views/index")} */
 let IndexView;
 
 //   ###

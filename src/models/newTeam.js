@@ -8,9 +8,7 @@ const Db = require("../database/newTeam"),
     Exception = require("../logging/exception"),
     Team = require("./team");
 
-/**
- * @type {typeof import("../discord")}
- */
+/** @type {typeof import("../discord")} */
 let Discord;
 
 setTimeout(() => {
