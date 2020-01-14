@@ -21,6 +21,14 @@ type KDAStats = {
     Deaths: number
 }
 
+type PlayerCastData = GameStats & CTFStats & {
+    Name: string,
+    Games: number,
+    GamesWithDamage: number,
+    DeathsInGamesWithDamage: number,
+    TwitchName: string
+}
+
 export type ClockRecordsets = {
     recordsets: [
         {
@@ -115,20 +123,8 @@ export type GetCastDataRecordsets = {
             Name: string,
             TeamId: number
         })[],
-        (GameStats & CTFStats & {
-            Name: string,
-            Games: number,
-            GamesWithDamage: number,
-            DeathsInGamesWithDamage: number,
-            TwitchName: string
-        })[],
-        (GameStats & CTFStats & {
-            Name: string,
-            Games: number,
-            GamesWithDamage: number,
-            DeathsInGamesWithDamage: number,
-            TwitchName: string
-        })[]
+        PlayerCastData[],
+        PlayerCastData[]
     ]
 }
 
@@ -263,6 +259,74 @@ export type GetTeamDetailsRecordsets = {
         {
             Season: number,
             Postseason: boolean
+        }[]
+    ]
+}
+
+export type PickMapRecordsets = {
+    recordsets: [
+        {
+            Map: string
+        }[]
+    ]
+}
+
+export type ReportRecordsets = {
+    recordsets: [
+        {
+            DateReported: Date
+        }[]
+    ]
+}
+
+export type SetConfirmedRecordsets = {
+    recordsets: [
+        {
+            DateConfirmed: Date
+        }[]
+    ]
+}
+
+export type SetHomeMapTeamRecordsets = {
+    recordsets: [
+        {
+            Map: string
+        }[]
+    ]
+}
+
+export type SetScoreRecordsets = {
+    recordsets: [
+        {
+            DateConfirmed: Date
+        }[]
+    ]
+}
+
+export type UnvoidRecordsets = {
+    recordsets: [
+        {
+            PlayerId: number
+        }[]
+    ]
+}
+
+export type VoidRecordsets = {
+    recordsets: [
+        {
+            PlayerId: number
+        }[]
+    ]
+}
+
+export type VoidWithPenaltiesRecordsets = {
+    recordsets: [
+        {
+            TeamId: number,
+            First: boolean
+        }[],
+        {
+            PlayerId: number
         }[]
     ]
 }

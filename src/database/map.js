@@ -1,3 +1,9 @@
+/**
+ * @typedef {import("./map.types").GetPlayedBySeasonRecordsets} MapDbTypes.GetPlayedBySeasonRecordsets
+ * @typedef {import("./map.types").ValidateRecordsets} MapDbTypes.ValidateRecordsets
+ * @typedef {import("../models/map.types").MapData} MapTypes.MapData
+ */
+
 const Db = require("node-database"),
 
     Cache = require("../cache"),
@@ -79,7 +85,7 @@ class MapDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{Map: string}[], {DateEnd: Date}[]]}} */
+        /** @type {MapDbTypes.GetPlayedBySeasonRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -130,10 +136,10 @@ class MapDb {
     /**
      * Validates a map.
      * @param {string} map The map.
-     * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the validated map.
+     * @returns {Promise<MapTypes.MapData>} A promise that resolves with the validated map.
      */
     static async validate(map) {
-        /** @type {{recordsets: [{Map: string, Stock: boolean}[]]}} */
+        /** @type {MapDbTypes.ValidateRecordsets} */
         const data = await db.query(/* sql */`
             SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map
         `, {map: {type: Db.VARCHAR(100), value: map}});

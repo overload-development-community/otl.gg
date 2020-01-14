@@ -1,5 +1,6 @@
 /**
  * @typedef {import("../models/challenge")} Challenge
+ * @typedef {import("./index.types").Parameters} DbTypes.Parameters
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {import("../models/team")} Team
@@ -1519,7 +1520,7 @@ class TeamDb {
             DELETE FROM tblTeamRating WHERE Season = @season
         `;
 
-        /** @type {Object<string, {type: object, value: object}>} */
+        /** @type {DbTypes.Parameters} */
         let params = {
             challengeId: {type: Db.INT, value: challenge.id}
         };

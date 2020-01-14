@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("../models/map.types").MapData} MapTypes.MapData
+ */
+
 const Db = require("../database/map"),
     Exception = require("../logging/exception");
 
@@ -98,7 +102,7 @@ class Map {
     /**
      * Validates a map with the database.
      * @param {string} map The map to validate.
-     * @returns {Promise<{map: string, stock: boolean}>} The validated map.
+     * @returns {Promise<MapTypes.MapData>} The validated map.
      */
     static async validate(map) {
         try {

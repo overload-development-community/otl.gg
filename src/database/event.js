@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("./event.types").GetUpcomingRecordsets} EventDbTypes.GetUpcomingRecordsets
+ * @typedef {import("../models/event.types").EventData} EventTypes.EventData
+ */
+
 const Db = require("node-database"),
 
     db = require("./index");
@@ -45,10 +50,10 @@ class EventDb {
     //  ###                    #                                    ###
     /**
      * Gets the upcoming scheduled events.
-     * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
+     * @returns {Promise<EventTypes.EventData[]>} A promise that resolves with the upcoming events.
      */
     static async getUpcoming() {
-        /** @type {{recordsets: [{Title: string, DateStart: Date, DateEnd: Date}[]]}} */
+        /** @type {EventDbTypes.GetUpcomingRecordsets} */
         const data = await db.query(/* sql */`
             SELECT Title, DateStart, DateEnd
             FROM tblEvent

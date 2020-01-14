@@ -1,5 +1,15 @@
 /**
  * @typedef {import("../models/challenge")} Challenge
+ * @typedef {import("./match.types").GetConfirmedRecordsets} MatchDbTypes.GetConfirmedRecordsets
+ * @typedef {import("./match.types").GetCurrentRecordsets} MatchDbTypes.GetCurrentRecordsets
+ * @typedef {import("./match.types").GetPendingRecordsets} MatchDbTypes.GetPendingRecordsets
+ * @typedef {import("./match.types").GetSeasonDataFromChallengeRecordsets} MatchDbTypes.GetSeasonDataFromChallengeRecordsets
+ * @typedef {import("./match.types").GetUpcomingRecordsets} MatchDbTypes.GetUpcomingRecordsets
+ * @typedef {import("../models/match.types").ConfirmedMatchesData} MatchTypes.ConfirmedMatchesData
+ * @typedef {import("../models/match.types").CurrentMatchesData} MatchTypes.CurrentMatchesData
+ * @typedef {import("../models/match.types").PendingMatchesData} MatchTypes.PendingMatchesData
+ * @typedef {import("../models/match.types").SeasonData} MatchTypes.SeasonData
+ * @typedef {import("../models/match.types").UpcomingMatch} MatchTypes.UpcomingMatch
  */
 
 const Db = require("node-database"),
@@ -31,19 +41,19 @@ class MatchDb {
      * @param {number} [season] The season number, or void for the latest season.
      * @param {number} [page] The page number, or void for the first page.
      * @param {number} matchesPerPage The number of matches per page.
-     * @returns {Promise<{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the season's matches for the specified page.
+     * @returns {Promise<MatchTypes.ConfirmedMatchesData>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
         const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
 
-        /** @type {{completed: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}[], stats: {challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}} */
+        /** @type {MatchTypes.ConfirmedMatchesData} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Map: string, DateClosed: Date, OvertimePeriods: number, VoD: string, RatingChange: number, ChallengingTeamRating: number, ChallengedTeamRating: number, GameType: string}[], {ChallengeId: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {DateEnd: Date}[]]}} */
+        /** @type {MatchDbTypes.GetConfirmedRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -209,19 +219,19 @@ class MatchDb {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<MatchTypes.CurrentMatchesData>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
         const key = `${settings.redisPrefix}:db:match:getCurrent`;
 
-        /** @type {{matches: {id: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, postseason: boolean, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]}} */
+        /** @type {MatchTypes.CurrentMatchesData} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, MatchTime: Date, Postseason: boolean, Map: string, DateClosed: Date, OvertimePeriods: number, GameType: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[]]}} */
+        /** @type {MatchDbTypes.GetCurrentRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @currentSeason INT
             SELECT TOP 1
@@ -374,19 +384,19 @@ class MatchDb {
     /**
      * Gets the pending matches.  Includes the number of completed matches for the season.
      * @param {number} [season] The season number, or void for the latest season.
-     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}>} A promise that resolves with the season's matches.
+     * @returns {Promise<MatchTypes.PendingMatchesData>} A promise that resolves with the season's matches.
      */
     static async getPending(season) {
         const key = `${settings.redisPrefix}:db:match:getPending:${season || "null"}`;
 
-        /** @type {{matches: {challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, matchTime: Date, map: string, postseason: boolean, twitchName: string, gameType: string}[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], previousStandings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[], completed: number}} */
+        /** @type {MatchTypes.PendingMatchesData} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{ChallengeId: number, Title: string, ChallengingTeamId: number, ChallengedTeamId: number, MatchTime: Date, Map: string, Postseason: boolean, TwitchName: string, GameType: string}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean, Rating: number, Wins: number, Losses: number, Ties: number}[], {Completed: number}[], {DateEnd: Date}[]]}} */
+        /** @type {MatchDbTypes.GetPendingRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -524,10 +534,10 @@ class MatchDb {
     /**
      * Gets the season data from a challenge that is in the desired season.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise<{matches: {id: number, season: number, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, gameType: string}[], k: number}>} A promise that resolves with the season data.
+     * @returns {Promise<MatchTypes.SeasonData>} A promise that resolves with the season data.
      */
     static async getSeasonDataFromChallenge(challenge) {
-        /** @type {{recordsets: [{ChallengeId: number, Season: number, ChallengingTeamId: number, ChallengedTeamId: number, ChallengingTeamScore: number, ChallengedTeamScore: number, GameType: string}[], {K: number, SeasonAdded: boolean}[]]}} */
+        /** @type {MatchDbTypes.GetSeasonDataFromChallengeRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @matchTime DATETIME
             DECLARE @k FLOAT
@@ -602,10 +612,10 @@ class MatchDb {
     //  ###                    #                                    ###
     /**
      * Gets the upcoming scheduled matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string, gameType: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<MatchTypes.UpcomingMatch[]>} A promise that resolves with the upcoming matches.
      */
     static async getUpcoming() {
-        /** @type {{recordsets: [{ChallengeId: number, ChallengingTeamTag: string, ChallengingTeamName: string, ChallengedTeamTag: string, ChallengedTeamName: string, MatchTime: Date, Map: string, TwitchName: string, GameType: string}[]]}} */
+        /** @type {MatchDbTypes.GetUpcomingRecordsets} */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId,
                 t1.Tag ChallengingTeamTag,

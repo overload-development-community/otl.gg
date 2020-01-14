@@ -16,6 +16,14 @@
  * @typedef {import("./challenge.types").GetStatsForTeamRecordsets} ChallengeDbTypes.GetStatsForTeamRecordsets
  * @typedef {import("./challenge.types").GetStreamersRecordsets} ChallengeDbTypes.GetStreamersRecordsets
  * @typedef {import("./challenge.types").GetTeamDetailsRecordsets} ChallengeDbTypes.GetTeamDetailsRecordsets
+ * @typedef {import("./challenge.types").PickMapRecordsets} ChallengeDbTypes.PickMapRecordsets
+ * @typedef {import("./challenge.types").ReportRecordsets} ChallengeDbTypes.ReportRecordsets
+ * @typedef {import("./challenge.types").SetConfirmedRecordsets} ChallengeDbTypes.SetConfirmedRecordsets
+ * @typedef {import("./challenge.types").SetHomeMapTeamRecordsets} ChallengeDbTypes.SetHomeMapTeamRecordsets
+ * @typedef {import("./challenge.types").SetScoreRecordsets} ChallengeDbTypes.SetScoreRecordsets
+ * @typedef {import("./challenge.types").UnvoidRecordsets} ChallengeDbTypes.UnvoidRecordsets
+ * @typedef {import("./challenge.types").VoidRecordsets} ChallengeDbTypes.VoidRecordsets
+ * @typedef {import("./challenge.types").VoidWithPenaltiesRecordsets} ChallengeDbTypes.VoidWithPenaltiesRecordsets
  * @typedef {import("../models/challenge.types").CastData} ChallengeTypes.CastData
  * @typedef {import("../models/challenge.types").ChallengeData} ChallengeTypes.ChallengeData
  * @typedef {import("../models/challenge.types").ClockedData} ChallengeTypes.ClockedData
@@ -23,10 +31,12 @@
  * @typedef {import("../models/challenge.types").DamageData} ChallengeTypes.DamageData
  * @typedef {import("../models/challenge.types").DetailsData} ChallengeTypes.DetailsData
  * @typedef {import("../models/challenge.types").NotificationsData} ChallengeTypes.NotificationsData
+ * @typedef {import("../models/challenge.types").SetDamageData} ChallengeTypes.SetDamageData
  * @typedef {import("../models/challenge.types").StreamerData} ChallengeTypes.StreamerData
  * @typedef {import("../models/challenge.types").TeamDetailsData} ChallengeTypes.TeamDetailsData
  * @typedef {import("../models/challenge.types").TeamPenaltyData} ChallengeTypes.TeamPenaltyData
  * @typedef {import("../models/challenge.types").TeamStatsData} ChallengeTypes.TeamStatsData
+ * @typedef {import("./index.types").Parameters} DbTypes.Parameters
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").User} DiscordJs.User
  * @typedef {import("../models/team")} Team
@@ -392,6 +402,7 @@ class ChallengeDb {
      * @returns {Promise<ChallengeTypes.CreateData>} A promise that resolves with the challenge ID.
      */
     static async create(team1, team2, gameType, adminCreated, homeMapTeam, teamSize, startNow) {
+        /** @type {Date} */
         let date;
 
         /** @type {ChallengeDbTypes.CreateRecordsets} */
@@ -1299,7 +1310,7 @@ class ChallengeDb {
      * @returns {Promise<string>} A promise that resolves with the name of the map that was picked.
      */
     static async pickMap(challenge, number) {
-        /** @type {{recordsets: [{Map: string}[]]}} */
+        /** @type {ChallengeDbTypes.PickMapRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE c
             SET Map = ch.Map,
@@ -1388,7 +1399,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves with the date the match was reported.
      */
     static async report(challenge, reportingTeam, challengingTeamScore, challengedTeamScore) {
-        /** @type {{recordsets: [{DateReported: Date}[]]}} */
+        /** @type {ChallengeDbTypes.ReportRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = @reportingTeamId,
@@ -1467,7 +1478,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves with the date the match was confirmed.
      */
     static async setConfirmed(challenge) {
-        /** @type {{recordsets: [{DateConfirmed: Date}[]]}} */
+        /** @type {ChallengeDbTypes.SetConfirmedRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateConfirmed = GETUTCDATE() WHERE ChallengeId = @challengeId
 
@@ -1489,7 +1500,7 @@ class ChallengeDb {
     /**
      * Sets the damage for a challenge.
      * @param {Challenge} challenge The challenge to set damage for.
-     * @param {{team: Team, discordId: string, opponentTeam: Team, opponentDiscordId: string, weapon: string, damage: number}[]} damage The damage stats.
+     * @param {ChallengeTypes.SetDamageData[]} damage The damage stats.
      * @returns {Promise} A promise that resolves when the damage stats have been set.
      */
     static async setDamage(challenge, damage) {
@@ -1497,7 +1508,7 @@ class ChallengeDb {
             DELETE FROM tblDamage WHERE ChallengeId = @id
         `;
 
-        /** @type {Object<string, {type: object, value: object}>} */
+        /** @type {DbTypes.Parameters} */
         let params = {
             id: {type: Db.INT, value: challenge.id}
         };
@@ -1572,7 +1583,7 @@ class ChallengeDb {
      * @returns {Promise<string[]>} A promise that resolves with the new home map team's home maps.
      */
     static async setHomeMapTeam(challenge, team) {
-        /** @type {{recordsets: [{Map: string}[]]}} */
+        /** @type {ChallengeDbTypes.SetHomeMapTeamRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET HomeMapTeamId = @teamId, UsingHomeMapTeam = 1, Map = NULL WHERE ChallengeId = @challengeId
 
@@ -1784,7 +1795,7 @@ class ChallengeDb {
      * @returns {Promise<Date>} A promise that resolves when the score is set.
      */
     static async setScore(challenge, challengingTeamScore, challengedTeamScore) {
-        /** @type {{recordsets: [{DateConfirmed: Date}[]]}} */
+        /** @type {ChallengeDbTypes.SetScoreRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
@@ -2026,7 +2037,7 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is unvoided.
      */
     static async unvoid(challenge) {
-        /** @type {{recordsets: [{PlayerId: number}[]]}} */
+        /** @type {ChallengeDbTypes.UnvoidRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = NULL WHERE ChallengeId = @challengeId
 
@@ -2050,7 +2061,7 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the challenge is voided.
      */
     static async void(challenge) {
-        /** @type {{recordsets: [{PlayerId: number}[]]}} */
+        /** @type {ChallengeDbTypes.VoidRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET DateVoided = GETUTCDATE() WHERE ChallengeId = @challengeId
 
@@ -2139,7 +2150,7 @@ class ChallengeDb {
             `;
         });
 
-        /** @type {{recordsets: [{TeamId: number, First: boolean}[], {PlayerId: number}[]]}} */
+        /** @type {ChallengeDbTypes.VoidWithPenaltiesRecordsets} */
         const data = await db.query(sql, params);
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {

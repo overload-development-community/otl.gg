@@ -1,8 +1,9 @@
 /**
+ * @typedef {import("./models/challenge.types").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {DiscordJs.GuildMember|DiscordJs.User} DiscordJs.UserOrGuildMember
+ * @typedef {import("./models/player.types").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  * @typedef {import("./models/newteam")} NewTeam
  */
 
@@ -274,7 +275,7 @@ class Commands {
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}>} A promise that resolves with the stats for the game.
+     * @returns {Promise<ChallengeTypes.GamePlayerStatsByTeam>} A promise that resolves with the stats for the game.
      */
     static async checkChallengeStatsComplete(challenge, member, channel) {
         const stats = {};
@@ -341,7 +342,7 @@ class Commands {
     /**
      * Checks to ensure that adding a pilot's stat won't put the team over the number of pilots per side in the challenge.
      * @param {Challenge} challenge The challenge.
-     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to check.
+     * @param {PlayerTypes.UserOrGuildMember} pilot The pilot to check.
      * @param {Team} team The team to check.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
@@ -993,10 +994,10 @@ class Commands {
      * @param {string} message The message sent.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<DiscordJs.UserOrGuildMember>} A promise that resolves with the pilot if they exist on the server, or the user if not.
+     * @returns {Promise<PlayerTypes.UserOrGuildMember>} A promise that resolves with the pilot if they exist on the server, or the user if not.
      */
     static async checkUserExists(message, member, channel) {
-        /** @type {DiscordJs.UserOrGuildMember} */
+        /** @type {PlayerTypes.UserOrGuildMember} */
         let pilot;
         if (idParse.test(message)) {
             const {groups: {id}} = idParse.exec(message);
@@ -5137,10 +5138,10 @@ class Commands {
             mapMessage = newMapMessage;
         }
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
+        /** @type {{pilot: PlayerTypes.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
         let challengingTeamStats;
 
-        /** @type {{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
+        /** @type {{pilot: PlayerTypes.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
         let challengedTeamStats;
 
         let scoreChanged = false;
@@ -5524,7 +5525,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
-        /** @type {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}} */
+        /** @type {ChallengeTypes.GamePlayerStatsByTeam} */
         let stats;
         if (!challenge.details.dateVoided) {
             await Commands.checkChallengeIsConfirmed(challenge, member, channel);

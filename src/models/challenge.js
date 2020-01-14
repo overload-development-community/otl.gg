@@ -1,11 +1,17 @@
 /**
  * @typedef {import("./challenge.types").CastData} ChallengeTypes.CastData
  * @typedef {import("./challenge.types").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
+ * @typedef {import("./challenge.types").CreateData} ChallengeTypes.CreateData
+ * @typedef {import("./challenge.types").GameBoxScore} ChallengeTypes.GameBoxScore
+ * @typedef {import("./challenge.types").GamePlayerStats} ChallengeTypes.GamePlayerStats
+ * @typedef {import("./challenge.types").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
+ * @typedef {import("./challenge.types").PlayersByTeam} ChallengeTypes.PlayersByTeam
+ * @typedef {import("./challenge.types").StreamerData} ChallengeTypes.StreamerData
  * @typedef {import("./challenge.types").TeamDetailsData} ChallengeTypes.TeamDetailsData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {DiscordJs.GuildMember|DiscordJs.User} DiscordJs.UserOrGuildMember
+ * @typedef {import("./player.types").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
 const Cache = require("../cache"),
@@ -278,9 +284,8 @@ class Challenge {
      * @returns {Promise<Challenge[]>} A promise that resolves with an array of the team's currently active challenges.
      */
     static async getAllByTeam(team) {
-        let challenges;
         try {
-            challenges = await Db.getAllByTeam(team);
+            const challenges = await Db.getAllByTeam(team);
 
             return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
@@ -302,9 +307,8 @@ class Challenge {
      * @returns {Promise<Challenge[]>} A promise that resolves with an array of the team's challenges.
      */
     static async getAllByTeams(team1, team2) {
-        let challenges;
         try {
-            challenges = await Db.getAllByTeams(team1, team2);
+            const challenges = await Db.getAllByTeams(team1, team2);
 
             return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
         } catch (err) {
@@ -456,7 +460,7 @@ class Challenge {
     /**
      * Adds a stat to the challenge for capture the flag.
      * @param {Team} team The team to add the stat for.
-     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to add the stat for.
+     * @param {PlayerTypes.UserOrGuildMember} pilot The pilot to add the stat for.
      * @param {number} captures The number of flag captures the pilot had.
      * @param {number} pickups The number of flag pickups the pilot had.
      * @param {number} carrierKills The number of flag carrier kills the pilot had.
@@ -485,7 +489,7 @@ class Challenge {
     /**
      * Adds a stat to the challenge for team anarchy.
      * @param {Team} team The team to add the stat for.
-     * @param {DiscordJs.UserOrGuildMember} pilot The pilot to add the stat for.
+     * @param {PlayerTypes.UserOrGuildMember} pilot The pilot to add the stat for.
      * @param {number} kills The number of kills the pilot had.
      * @param {number} assists The number of assists the pilot had.
      * @param {number} deaths The number of deaths the pilot had.
@@ -511,7 +515,7 @@ class Challenge {
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
-     * @returns {Promise<{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[], scoreChanged: boolean}>} A promise that returns data about the game's stats and score.
+     * @returns {Promise<ChallengeTypes.GameBoxScore>} A promise that returns data about the game's stats and score.
      */
     async addStats(gameId, nameMap) {
         let game;
@@ -576,7 +580,7 @@ class Challenge {
         let challengingTeamMembers = 0,
             challengedTeamMembers = 0;
 
-        /** @type {Object<string, {member: DiscordJs.UserOrGuildMember, team: Team}>} */
+        /** @type {ChallengeTypes.PlayersByTeam} */
         const playerTeam = {};
 
         for (const player of game.players) {
@@ -988,7 +992,7 @@ class Challenge {
     /**
      * Closes a challenge.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
-     * @param {{challengingTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number}[], challengedTeamStats: {pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number}[]}} stats The stats for the game.
+     * @param {ChallengeTypes.GamePlayerStatsByTeam} stats The stats for the game.
      * @returns {Promise} A promise that resolves when the challenge is closed.
      */
     async close(member, stats) {
@@ -1433,7 +1437,7 @@ class Challenge {
     /**
      * Gets the stats from a challenge for a team.
      * @param {Team} team The team to get stats for.
-     * @return {Promise<{pilot: DiscordJs.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, captures: number, pickups: number, carrierKills: number, returns: number}[]>} A promise that resolves with an array of pilot stats for a team.
+     * @return {Promise<ChallengeTypes.GamePlayerStats[]>} A promise that resolves with an array of pilot stats for a team.
      */
     async getStatsForTeam(team) {
         try {
@@ -1780,7 +1784,7 @@ class Challenge {
     // #      ##   #  #   ##    #     ##    ##     ##   # #    ##
     /**
      * Removes a stat from a challenge for a pilot.
-     * @param {DiscordJs.UserOrGuildMember} pilot The pilot.
+     * @param {PlayerTypes.UserOrGuildMember} pilot The pilot.
      * @returns {Promise} A promise that resolves when the stat has been removed.
      */
     async removeStat(pilot) {
@@ -2811,6 +2815,7 @@ class Challenge {
             await this.loadDetails();
         }
 
+        /** @type {ChallengeTypes.StreamerData[]} */
         let streamers;
         try {
             streamers = await Db.getStreamers(this);

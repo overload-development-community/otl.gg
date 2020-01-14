@@ -1,4 +1,5 @@
 import Team from "./team";
+import PlayerTypes from "./player.types";
 
 type CTFStats = {
     captures: number,
@@ -15,6 +16,11 @@ type KDAStats = {
     kills: number,
     assists: number,
     deaths: number
+}
+
+type WeaponStats = {
+    weapon: string,
+    damage: number
 }
 
 export type ChallengeConstructor = {
@@ -78,14 +84,12 @@ export type CreateData = {
     team2Penalized: boolean
 }
 
-export type DamageData = {
+export type DamageData = WeaponStats & {
     discordId: string,
     name: string,
     teamId: number,
     opponentDiscordId: string,
-    opponentName: string,
-    weapon: string,
-    damage: number
+    opponentName: string
 }
 
 export type DetailsData = {
@@ -135,6 +139,20 @@ export type DetailsData = {
     homeMaps: string[]
 }
 
+export type GameBoxScore = GamePlayerStatsByTeam & {
+    scoreChanged: boolean
+}
+
+export type GamePlayerStats = GameStats & CTFStats & {
+    pilot: PlayerTypes.UserOrGuildMember,
+    name: string
+}
+
+export type GamePlayerStatsByTeam = {
+    challengingTeamStats: GamePlayerStats[],
+    challengedTeamStats: GamePlayerStats[]
+}
+
 export type NotificationsData = {
     expiredClocks: {
         challengeId: number,
@@ -148,6 +166,20 @@ export type NotificationsData = {
         challengeId: number,
         matchTime: Date
     }[]
+}
+
+export type PlayersByTeam = {
+    [x: string]: {
+        member: PlayerTypes.UserOrGuildMember,
+        team: Team
+    }
+}
+
+export type SetDamageData = WeaponStats & {
+    team: Team,
+    discordId: string,
+    opponentTeam: Team,
+    opponentDiscordId: string
 }
 
 export type StreamerData = {
@@ -171,15 +203,13 @@ export type TeamDetailsData = {
         teamId: number,
         twitchName: string
     })[],
-    damage: {
+    damage: (WeaponStats & {
         playerId: number,
         name: string,
         teamId: number,
         opponentName: string,
-        opponentTeamId: number,
-        weapon: string,
-        damage: number
-    }[],
+        opponentTeamId: number
+    })[],
     season: {
         season: number,
         postseason: boolean

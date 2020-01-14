@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("../models/event.types").EventData} EventTypes.EventData
+ */
+
 const Db = require("../database/event"),
     Exception = require("../logging/exception");
 
@@ -42,17 +46,14 @@ class Event {
     //  ###                    #                                    ###
     /**
      * Gets the list of upcoming events.
-     * @returns {Promise<{title: string, dateStart: Date, dateEnd: Date}[]>} A promise that resolves with the upcoming events.
+     * @returns {Promise<EventTypes.EventData[]>} A promise that resolves with the upcoming events.
      */
     static async getUpcoming() {
-        let events;
         try {
-            events = await Db.getUpcoming();
+            return await Db.getUpcoming();
         } catch (err) {
             throw new Exception("There was a database error getting the upcoming events.", err);
         }
-
-        return events;
     }
 
     // ###    ##   # #    ##   # #    ##

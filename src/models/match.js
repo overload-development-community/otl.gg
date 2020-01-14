@@ -1,12 +1,16 @@
+/**
+ * @typedef {import("./match.types").ConfirmedMatch} MatchTypes.ConfirmedMatch
+ * @typedef {import("./match.types").ConfirmedMatchStatData} MatchTypes.ConfirmedMatchStatData
+ * @typedef {import("./match.types").CurrentMatch} MatchTypes.CurrentMatch
+ * @typedef {import("./match.types").PendingMatches} MatchTypes.PendingMatches
+ * @typedef {import("./match.types").UpcomingMatch} MatchTypes.UpcomingMatch
+ * @typedef {import("./team.types").TeamInfo} TeamTypes.TeamInfo
+ */
+
 const Common = require("../../web/includes/common"),
     Db = require("../database/match"),
     Exception = require("../logging/exception"),
     Teams = require("../../web/includes/teams");
-
-/**
- * @typedef {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}} Standing
- * @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} TeamRecord
- */
 
 //  #   #          #            #
 //  #   #          #            #
@@ -30,17 +34,17 @@ class Match {
      * Gets paginated matches for a season.
      * @param {number} [season] The season number.
      * @param {number} [page] The page to get.
-     * @returns {Promise<{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}[]>} A promise that resolves with the completed matches.
+     * @returns {Promise<MatchTypes.ConfirmedMatch[]>} A promise that resolves with the completed matches.
      */
     static async getBySeason(season, page) {
-        /** @type {{challengeId: number, title: string, challengingTeamId: number, challengedTeamId: number, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}[]} */
         let completed;
 
-        /** @type {{challengeId: number, teamId: number, tag: string, teamName: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
+        /** @type {MatchTypes.ConfirmedMatchStatData[]} */
         let stats;
 
-        /** @type {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}[]} */
+        /** @type {TeamTypes.TeamInfo[]} */
         let standings;
+
         try {
             ({completed, stats, standings} = await Db.getConfirmed(isNaN(season) ? void 0 : season, isNaN(page) ? 1 : page, Match.matchesPerPage));
         } catch (err) {
@@ -123,10 +127,17 @@ class Match {
     //  ###
     /**
      * Gets the current matches.
-     * @returns {Promise<{id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[]>} A promise that resolves with the upcoming matches.
+     * @returns {Promise<MatchTypes.CurrentMatch[]>} A promise that resolves with the upcoming matches.
      */
     static async getCurrent() {
-        let matches, standings, previousStandings;
+        let matches;
+
+        /** @type {TeamTypes.TeamInfo[]} */
+        let standings;
+
+        /** @type {TeamTypes.TeamInfo[]} */
+        let previousStandings;
+
         try {
             ({matches, standings, previousStandings} = await Db.getCurrent());
         } catch (err) {
@@ -156,17 +167,14 @@ class Match {
     //  ###                    #                                    ###
     /**
      * Gets the list of pending matches.
-     * @returns {Promise<{challengeId: number, challengingTeamTag: string, challengingTeamName: string, challengedTeamTag: string, challengedTeamName: string, matchTime: Date, map: string, twitchName: string, gameType: string}[]>} A promise that resolves with the list of upcoming matches.
+     * @returns {Promise<MatchTypes.UpcomingMatch[]>} A promise that resolves with the list of upcoming matches.
      */
     static async getUpcoming() {
-        let matches;
         try {
-            matches = await Db.getUpcoming();
+            return await Db.getUpcoming();
         } catch (err) {
             throw new Exception("There was a database error getting the upcoming matches.", err);
         }
-
-        return matches;
     }
 
     //              #    #  #                           #                 ##            #   ##                     ##           #             #   ##                      #
@@ -179,10 +187,19 @@ class Match {
     /**
      * Gets the pending matches, along with the number of completed matches for the season.
      * @param {number} [season] The season number.
-     * @returns {Promise<{matches: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, matchTime: Date, map: string, twitchName: string, timeRemaining: number, gameType: string}[], completed: number}>} A promise that resolves with the season's matches.
+     * @returns {Promise<MatchTypes.PendingMatches>} A promise that resolves with the season's matches.
      */
     static async getUpcomingAndCompletedCount(season) {
-        let matches, standings, previousStandings, completed;
+        let matches;
+
+        /** @type {TeamTypes.TeamInfo[]} */
+        let standings;
+
+        /** @type {TeamTypes.TeamInfo[]} */
+        let previousStandings;
+
+        let completed;
+
         try {
             ({matches, standings, previousStandings, completed} = await Db.getPending(isNaN(season) ? void 0 : season));
         } catch (err) {
