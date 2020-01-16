@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../../src/database/player").GameRecord} GameRecord
+ * @typedef {import("../../src/models/player.types").GameRecord} PlayerTypes.GameRecord
  * @typedef {import("../../web/includes/teams")} Teams
  */
 
@@ -23,7 +23,7 @@ class RecordsView {
     //  ###
     /**
      * Gets the records template.
-     * @param {{seasonList: number[], records: Object<string, GameRecord[]>, season: number, postseason: boolean, gameType: string, recordType: string, gameTypeName: string, teams: Teams}} data The records data.
+     * @param {{seasonList: number[], records: Object<string, PlayerTypes.GameRecord[]>, season: number, postseason: boolean, gameType: string, recordType: string, gameTypeName: string, teams: Teams}} data The records data.
      * @returns {string} An HTML string of the records.
      */
     static get(data) {

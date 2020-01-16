@@ -1,7 +1,7 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
+ * @typedef {import("./newTeam.types").NewTeamData} NewTeamTypes.NewTeamData
  */
 
 const Db = require("../database/newTeam"),
@@ -34,7 +34,7 @@ class NewTeam {
     //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
     /**
      * A constructor to create an object that represents a team being created.
-     * @param {NewTeamData} data The data to load into the team being created.
+     * @param {NewTeamTypes.NewTeamData} data The data to load into the team being created.
      */
     constructor(data) {
         this.id = data.id;

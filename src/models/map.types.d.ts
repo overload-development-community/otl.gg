@@ -1,4 +1,8 @@
-export type MapData = {
-    map: string,
-    stock: boolean
+declare namespace MapTypes {
+    type MapData = {
+        map: string
+        stock: boolean
+    }
 }
+
+export = MapTypes

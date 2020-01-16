@@ -1,7 +1,26 @@
 /**
+ * @typedef {import("./index.types").EmptyRecordsets} DbTypes.EmptyRecordsets
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {import("./player").GameRecord} GameRecord
+ * @typedef {import("./player.types").BannedFromTeamUntilRecordsets} PlayerDbTypes.BannedFromTeamUntilRecordsets
+ * @typedef {import("./player.types").ClearTimezoneRecordsets} PlayerDbTypes.ClearTimezoneRecordsets
+ * @typedef {import("./player.types").GetCareerRecordsets} PlayerDbTypes.GetCareerRecordsets
+ * @typedef {import("./player.types").GetCastedChallengesRecordsets} PlayerDbTypes.GetCastedChallengesRecordsets
+ * @typedef {import("./player.types").GetFreeAgentsRecordsets} PlayerDbTypes.GetFreeAgentsRecordsets
+ * @typedef {import("./player.types").GetGameLogRecordsets} PlayerDbTypes.GetGameLogRecordsets
+ * @typedef {import("./player.types").GetRecordsCTFPlayerRecordsets} PlayerDbTypes.GetRecordsCTFPlayerRecordsets
+ * @typedef {import("./player.types").GetRecordsCTFTeamRecordsets} PlayerDbTypes.GetRecordsCTFTeamRecordsets
+ * @typedef {import("./player.types").GetRecordsTAPlayerRecordsets} PlayerDbTypes.GetRecordsTAPlayerRecordsets
+ * @typedef {import("./player.types").GetRecordsTATeamRecordsets} PlayerDbTypes.GetRecordsTATeamRecordsets
+ * @typedef {import("./player.types").GetRequestedOrInvitedTeamsRecordsets} PlayerDbTypes.GetRequestedOrInvitedTeamsRecordsets
+ * @typedef {import("./player.types").GetSeasonStatsRecordsets} PlayerDbTypes.GetSeasonStatsRecordsets
+ * @typedef {import("./player.types").GetStatsRecordsets} PlayerDbTypes.GetStatsRecordsets
+ * @typedef {import("./player.types").GetTimezoneRecordsets} PlayerDbTypes.GetTimezoneRecordsets
+ * @typedef {import("./player.types").GetTopKdaRecordsets} PlayerDbTypes.GetTopKdaRecordsets
+ * @typedef {import("./player.types").GetTwitchNameRecordsets} PlayerDbTypes.GetTwitchNameRecordsets
+ * @typedef {import("./player.types").JoinTeamDeniedUntilRecordsets} PlayerDbTypes.JoinTeamDeniedUntilRecordsets
+ * @typedef {import("./player.types").SetTimezoneRecordsets} PlayerDbTypes.SetTimezoneRecordsets
+ * @typedef {import("../models/player.types").GameRecord} PlayerTypes.GameRecord
  * @typedef {import("../models/team")} Team
  * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
  */
@@ -38,7 +57,7 @@ class PlayerDb {
      * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from the team until.  Returns nothing if the pilot is not banned.
      */
     static async bannedFromTeamUntil(member, team) {
-        /** @type {{recordsets: [{DateExpires: Date}[]]}} */
+        /** @type {PlayerDbTypes.BannedFromTeamUntilRecordsets} */
         const data = await db.query(/* sql */`
             SELECT tb.DateExpires
             FROM tblTeamBan tb
@@ -65,7 +84,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot can be a captain.
      */
     static async canBeCaptain(member) {
-        /** @type {{recordsets: [{}[]]}} */
+        /** @type {DbTypes.EmptyRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblLeadershipPenalty lp
@@ -88,7 +107,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot can remove the pilot.
      */
     static async canRemovePilot(member, pilot) {
-        /** @type {{recordsets: [{}[]]}} */
+        /** @type {DbTypes.EmptyRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
             DECLARE @pilotPlayerId INT
@@ -125,7 +144,7 @@ class PlayerDb {
      * @returns {Promise<void>} A promise that resolves when the timezone is clear.
      */
     static async clearTimezone(member) {
-        /** @type {{recordsets: [{PlayerId: number}[]]}} */
+        /** @type {PlayerDbTypes.ClearTimezoneRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -179,7 +198,7 @@ class PlayerDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{Name: string, TwitchName: string, Timezone: string, TeamId: number, Tag: string, TeamName: string}[], {Season: number, Postseason: boolean, TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, GamesWithDamage: number, DeathsInGamesWithDamage: number, OvertimePeriods: number}[], {TeamId: number, Tag: string, TeamName: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestMatchTime: Date, BestMap: string, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Map: string, Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, OvertimePeriods: number, ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, BestOpponentTeamId: number, BestOpponentTag: string, BestOpponentTeamName: string, BestMatchTime: Date, BestCaptures: number, BestPickups: number, BestCarrierKills: number, BestReturns: number, BestKills: number, BestAssists: number, BestDeaths: number, BestDamage: number}[], {Weapon: string, Damage: string}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetCareerRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -514,7 +533,7 @@ class PlayerDb {
      * @returns {Promise<number[]>} A promise that resolves with the list of challenge IDs they are casting.
      */
     static async getCastedChallenges(pilot) {
-        /** @type {{recordsets: [{ChallengeId: number}[]]}} */
+        /** @type {PlayerDbTypes.GetCastedChallengesRecordsets} */
         const data = await db.query(/* sql */`
             SELECT c.ChallengeId
             FROM tblChallenge c
@@ -546,7 +565,7 @@ class PlayerDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{PlayerId: number, Name: string, DiscordId: string, Timezone: string}[]]}} */
+        /** @type {PlayerDbTypes.GetFreeAgentsRecordsets} */
         const data = await db.query(/* sql */`
             SELECT PlayerId, Name, DiscordId, Timezone
             FROM tblPlayer
@@ -586,7 +605,7 @@ class PlayerDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{Name: string, TeamId: number, Tag: string, TeamName: string}[], {ChallengeId: number, ChallengingTeamTag: string, ChallengedTeamTag: string, TeamId: number, Tag: string, Name: string, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number, OvertimePeriods: number, OpponentTeamId: number, OpponentTag: string, OpponentName: string, TeamScore: number, OpponentScore: number, RatingChange: number, TeamSize: number, MatchTime: Date, Map: string, GameType: string}[], {Season: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetGameLogRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -685,19 +704,19 @@ class PlayerDb {
      * Gets the league player records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
+     * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
     static async getRecordsCTFPlayer(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:CTF:player:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /** @type {Object<string, GameRecord[]>} */
+        /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{TeamSize: number, Captures: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetRecordsCTFPlayerRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -964,19 +983,19 @@ class PlayerDb {
      * Gets the league team records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
+     * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
     static async getRecordsCTFTeam(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:CTF:team:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /** @type {Object<string, GameRecord[]>} */
+        /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Pickups: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, CarrierKills: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Returns: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetRecordsCTFTeamRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1221,19 +1240,19 @@ class PlayerDb {
      * Gets the league player records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
+     * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
     static async getRecordsTAPlayer(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:TA:player:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /** @type {Object<string, GameRecord[]>} */
+        /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{TeamSize: number, KDA: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Kills: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, PlayerId: number, Name: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetRecordsTAPlayerRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1504,19 +1523,19 @@ class PlayerDb {
      * Gets the league team records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
+     * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
     static async getRecordsTATeam(season, postseason) {
         const key = `${settings.redisPrefix}:db:player:getRecords:TA:team:${season === void 0 ? "null" : season}:${!!postseason}`;
 
-        /** @type {Object<string, GameRecord[]>} */
+        /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
 
         if (cache) {
             return cache;
         }
 
-        /** @type {{recordsets: [{TeamSize: number, TeamKDA: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Score: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Assists: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Deaths: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, Damage: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {TeamSize: number, DamagePerDeath: number, TeamId: number, Tag: string, TeamName: string, OpponentTeamId: number, OpponentTag: string, OpponentTeamName: string, ChallengeId: number, MatchTime: Date, Map: string, OvertimePeriods: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetRecordsTATeamRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1765,7 +1784,7 @@ class PlayerDb {
      * @returns {Promise<TeamData[]>} A promise that resolves with the list of teams the pilot has requested or is invited to.
      */
     static async getRequestedOrInvitedTeams(member) {
-        /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string}[]]}} */
+        /** @type {PlayerDbTypes.GetRequestedOrInvitedTeamsRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -1806,7 +1825,7 @@ class PlayerDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, AvgCaptures: number, AvgPickups: number, AvgCarrierKills: number, AvgReturns: number, AvgKills: number, AvgAssists: number, AvgDeaths: number, AvgDamagePerGame: number, AvgDamagePerDeath: number, KDA: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetSeasonStatsRecordsets} */
         const data = await db.query(/* sql */`
             IF @season IS NULL
             BEGIN
@@ -1931,7 +1950,7 @@ class PlayerDb {
      * @returns {Promise<{ta: {games: number, kills: number, assists: number, deaths: number, damage: number, deathsInGamesWithDamage: number}, ctf: {games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}, damage: Object<string, number>, playerId: number, name: string, tag: string, season: number}>} A promise that resolves with the player's stats.
      */
     static async getStats(pilot) {
-        /** @type {{recordsets: [{Games: number, Kills: number, Assists: number, Deaths: number, Damage: number, DeathsInGamesWithDamage: number}[], {Games: number, Captures: number, Pickups: number, CarrierKills: number, Returns: number, Kills: number, Assists: number, Deaths: number, Damage: number}[], {Weapon: string, Damage: number}[], {PlayerId: number, Name: string, Tag: string, Season: number}[]]}} */
+        /** @type {PlayerDbTypes.GetStatsRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
 
@@ -2052,7 +2071,7 @@ class PlayerDb {
      * @returns {Promise<string>} The pilot's time zone.
      */
     static async getTimezone(member) {
-        /** @type {{recordsets: [{Timezone: string}[]]}} */
+        /** @type {PlayerDbTypes.GetTimezoneRecordsets} */
         const data = await db.query(/* sql */`
             SELECT Timezone FROM tblPlayer WHERE DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
@@ -2080,7 +2099,7 @@ class PlayerDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{PlayerId: number, Name: string, TeamId: number, TeamName: string, Tag: string, Disbanded: boolean, Locked: boolean, KDA: number}[], {DateEnd: Date}[]]}} */
+        /** @type {PlayerDbTypes.GetTopKdaRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
 
@@ -2145,7 +2164,7 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`].concat(cache.map((player) => `${settings.redisPrefix}:invalidate:player:${player.id}:updated`)));
+        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`].concat(cache.map((player) => `${settings.redisPrefix}:invalidate:player:${player.playerId}:updated`)));
 
         return cache;
     }
@@ -2163,7 +2182,7 @@ class PlayerDb {
      * @returns {Promise<string>} A promise that resolves with the pilot's Twitch name.
      */
     static async getTwitchName(member) {
-        /** @type {{recordsets: [{TwitchName: string}[]]}} */
+        /** @type {PlayerDbTypes.GetTwitchNameRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TwitchName FROM tblPlayer WHERE DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
@@ -2183,7 +2202,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot has been invited to a team.
      */
     static async hasBeenInvitedToTeam(member, team) {
-        /** @type {{recordsets: [{}[]]}} */
+        /** @type {DbTypes.EmptyRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblInvite i
@@ -2211,7 +2230,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pilot has requested a team.
      */
     static async hasRequestedTeam(member, team) {
-        /** @type {{recordsets: [{}[]]}} */
+        /** @type {DbTypes.EmptyRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 1
             FROM tblRequest r
@@ -2238,7 +2257,7 @@ class PlayerDb {
      * @returns {Promise<Date>} A promise that resolves with the date and time which the pilot is banned from joining a team.  Returns nothing if the pilot is not banned.
      */
     static async joinTeamDeniedUntil(member) {
-        /** @type {{recordsets: [{DateExpires: Date}[]]}} */
+        /** @type {PlayerDbTypes.JoinTeamDeniedUntilRecordsets} */
         const data = await db.query(/* sql */`
             SELECT jb.DateExpires
             FROM tblJoinBan jb
@@ -2317,7 +2336,7 @@ class PlayerDb {
      * @returns {Promise} A promise that resolves when the time zone is set.
      */
     static async setTimezone(member, timezone) {
-        /** @type {{recordsets: [{PlayerId: number}[]]}} */
+        /** @type {PlayerDbTypes.SetTimezoneRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -2411,7 +2430,7 @@ class PlayerDb {
      * @returns {Promise<boolean>} A promise that resolves with whether the pliot was a previous captain or founder of a team.
      */
     static async wasPreviousCaptainOrFounderOfTeam(member, team) {
-        /** @type {{recordsets: [{}[]]}} */
+        /** @type {DbTypes.EmptyRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 

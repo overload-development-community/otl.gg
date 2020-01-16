@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../..").GameRecord} GameRecord
+ * @typedef {import("./player.types").GameRecord} PlayerTypes.GameRecord
  */
 
 const Db = require("../database/player"),
@@ -95,7 +95,7 @@ class Player {
      * @param {boolean} postseason Whether to get postseason records.
      * @param {string} gameType The game type to get records for.
      * @param {string} recordType The record type to get records for.
-     * @returns {Promise<Object<string, GameRecord[]>>} A promise that resolves with the league records.
+     * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
     static async getRecords(season, postseason, gameType, recordType) {
         try {

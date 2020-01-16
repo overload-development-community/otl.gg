@@ -1,7 +1,9 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("../models/newTeam")} NewTeam
- * @typedef {{id: number, member: DiscordJs.GuildMember, name?: string, tag?: string}} NewTeamData
+ * @typedef {import("./newTeam.types").CreateRecordsets} NewTeamDbTypes.CreateRecordsets
+ * @typedef {import("./newTeam.types").GetByPilotRecordsets} NewTeamDbTypes.GetByPilotRecordsets
+ * @typedef {import("../models/newTeam.types").NewTeamData} NewTeamTypes.NewTeamData
  */
 
 const Db = require("node-database"),
@@ -28,10 +30,10 @@ class NewTeamDb {
     /**
      * Begins the process of creating a new team for the pilot.
      * @param {DiscordJs.GuildMember} member The pilot creating a new team.
-     * @returns {Promise<{id: number, member: DiscordJs.GuildMember}>} A promise that resolves when the process of creating a new team for the pilot has begun.
+     * @returns {Promise<NewTeamTypes.NewTeamData>} A promise that resolves with the data to create the new team object with.
      */
     static async create(member) {
-        /** @type {{recordsets: [{NewTeamId: number}[]]}} */
+        /** @type {NewTeamDbTypes.CreateRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
 
@@ -85,10 +87,10 @@ class NewTeamDb {
     /**
      * Gets new team data for the pilot.
      * @param {DiscordJs.GuildMember} member The pilot to get the new team for.
-     * @returns {Promise<NewTeamData>} A promise that resolves with the new team's name and tag.
+     * @returns {Promise<NewTeamTypes.NewTeamData>} A promise that resolves with the new team's name and tag.
      */
     static async getByPilot(member) {
-        /** @type {{recordsets: [{NewTeamId: number, Name: string, Tag: string}[]]}} */
+        /** @type {NewTeamDbTypes.GetByPilotRecordsets} */
         const data = await db.query(/* sql */`
             SELECT nt.NewTeamId, nt.Name, nt.Tag
             FROM tblNewTeam nt
