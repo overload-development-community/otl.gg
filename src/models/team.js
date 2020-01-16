@@ -7,8 +7,8 @@
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("./newTeam.js")} NewTeam
- * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: {map: string, gameType: string}[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {import("./team.types").TeamData} TeamTypes.TeamData
+ * @typedef {import("./team.types").TeamInfo} TeamTypes.TeamInfo
  */
 
 const Db = require("../database/team"),
@@ -51,7 +51,7 @@ class Team {
     //  ##    ##   #  #  ###      ##  #      ###   ##     ##   ##   #
     /**
      * A constructor to create a team.
-     * @param {TeamData} data The data to load into the team.
+     * @param {TeamTypes.TeamData} data The data to load into the team.
      */
     constructor(data) {
         if (data) {
@@ -842,7 +842,7 @@ class Team {
     //  ###
     /**
      * Gets the team info.
-     * @returns {Promise<TeamInfo>} A promise that resolves with the team's info.
+     * @returns {Promise<TeamTypes.TeamInfo>} A promise that resolves with the team's info.
      */
     async getInfo() {
         try {

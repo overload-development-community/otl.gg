@@ -6,10 +6,10 @@ declare namespace MatchTypes {
         match: {
             challengeId: number
             title: string
-            challengingTeam: TeamTypes.TeamInfo & {
+            challengingTeam: TeamTypes.TeamRecord & {
                 color: string
             }
-            challengedTeam: TeamTypes.TeamInfo & {
+            challengedTeam: TeamTypes.TeamRecord & {
                 color: string
             }
             challengingTeamScore: number
@@ -52,7 +52,7 @@ declare namespace MatchTypes {
             gameType: string
         }[]
         stats: ConfirmedMatchStatData[]
-        standings: TeamTypes.TeamInfo[]
+        standings: TeamTypes.TeamRecord[]
     }
 
     type ConfirmedMatchStatData = PlayerTypes.GameStats & PlayerTypes.CTFStats & {
@@ -66,8 +66,8 @@ declare namespace MatchTypes {
 
     type CurrentMatch = {
         id: number
-        challengingTeam: TeamTypes.TeamInfo
-        challengedTeam: TeamTypes.TeamInfo
+        challengingTeam: TeamTypes.TeamRecord
+        challengedTeam: TeamTypes.TeamRecord
         challengingTeamScore: number
         challengedTeamScore: number
         matchTime: Date
@@ -91,18 +91,18 @@ declare namespace MatchTypes {
             overtimePeriods: number
             gameType: string
         }[]
-        standings: TeamTypes.TeamInfo[]
-        previousStandings: TeamTypes.TeamInfo[]
+        standings: TeamTypes.TeamRecord[]
+        previousStandings: TeamTypes.TeamRecord[]
     }
 
     type PendingMatches = {
         matches: {
             challengeId: number
             title: string
-            challengingTeam: TeamTypes.TeamInfo & {
+            challengingTeam: TeamTypes.TeamRecord & {
                 color: string
             }
-            challengedTeam: TeamTypes.TeamInfo & {
+            challengedTeam: TeamTypes.TeamRecord & {
                 color: string
             }
             matchTime: Date
@@ -126,8 +126,8 @@ declare namespace MatchTypes {
             twitchName: string
             gameType: string
         }[]
-        standings: TeamTypes.TeamInfo[]
-        previousStandings: TeamTypes.TeamInfo[]
+        standings: TeamTypes.TeamRecord[]
+        previousStandings: TeamTypes.TeamRecord[]
         completed: number
     }
 

@@ -51,7 +51,7 @@ Support for Season 3 of the OTL.
 * New `!homes (<team>)` command to list your team's homes or a specific team's homes.
 * `!addstat` will now allow players not on the server.
 * `!addstat` will no longer add a player twice to a game.
-* New `!clearstats` command 
+* New `!clearstats` command
 * Games reported to #match-results will now link to the match page on the website.
 * All references to home server have been removed.
 * A player leaving the server who was scheduled to stream a match no longer crashes the challenge's topic.

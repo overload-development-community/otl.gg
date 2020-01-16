@@ -38,7 +38,7 @@ declare namespace ChallengeTypes {
             teamId: number
         }
         challengingTeamRoster: CastDataRoster[]
-        challengedTeamRoster: CastDataRoster[]    
+        challengedTeamRoster: CastDataRoster[]
     }
 
     type CastDataRoster = PlayerTypes.GameStats & PlayerTypes.CTFStats & {

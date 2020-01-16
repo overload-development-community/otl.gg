@@ -1,3 +1,7 @@
+/**
+ * @typedef {import("./season.types").GetSeasonNumbersRecordset} SeasonDbTypes.GetSeasonNumbersRecordset
+ */
+
 const Cache = require("../cache"),
     db = require("./index"),
     settings = require("../../settings");
@@ -34,7 +38,7 @@ class SeasonDb {
             return cache;
         }
 
-        /** @type {{recordsets: [{Season: number}[], {DateEnd: Date}[]]}} */
+        /** @type {SeasonDbTypes.GetSeasonNumbersRecordset} */
         const data = await db.query(/* sql */`
             SELECT Season
             FROM tblSeason

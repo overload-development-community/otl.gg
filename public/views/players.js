@@ -1,4 +1,6 @@
 /**
+ * @typedef {import("../../src/models/player.types").FreeAgent} PlayerTypes.FreeAgent
+ * @typedef {import("../../src/models/player.types").SeasonStats} PlayerTypes.SeasonStats
  * @typedef {import("../../web/includes/teams")} Teams
  */
 
@@ -24,7 +26,7 @@ class PlayersView {
     //  ###
     /**
      * Gets the players template.
-     * @param {{freeAgents: {playerId: number, name: string, discordId: string, timezone: string}[], seasonList: number[], stats: {playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[], averages: {captures: number, pickups: number, carrierKills: number, returns: number, kda: number, kills: number, assists: number, deaths: number, damagePerGame: number, damagePerDeath: number}, season: number, postseason: boolean, gameType: string, gameTypeName: string, all: boolean, teams: Teams}} data The players data.
+     * @param {{freeAgents: PlayerTypes.FreeAgent[], seasonList: number[], stats: PlayerTypes.SeasonStats[], averages: {captures: number, pickups: number, carrierKills: number, returns: number, kda: number, kills: number, assists: number, deaths: number, damagePerGame: number, damagePerDeath: number}, season: number, postseason: boolean, gameType: string, gameTypeName: string, all: boolean, teams: Teams}} data The players data.
      * @returns {string} An HTML string of the players.
      */
     static get(data) {

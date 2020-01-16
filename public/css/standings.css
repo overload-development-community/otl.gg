@@ -79,7 +79,7 @@
 @media (max-width: 1000px) {
     #standings div.header, #disbanded div.header {
         font-size: 18px;
-    }    
+    }
 
     #standings div, #disbanded div {
         font-size: 18px;
@@ -89,7 +89,7 @@
 @media (max-width: 800px) {
     #standings div.header, #disbanded div.header {
         font-size: 14px;
-    }    
+    }
 
     #standings div, #disbanded div {
         font-size: 14px;

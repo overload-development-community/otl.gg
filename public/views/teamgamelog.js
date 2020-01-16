@@ -1,6 +1,5 @@
 /**
  * @typedef {import("../../src/models/team")} Team
- * @typedef {{homes: string[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
  * @typedef {import("../../web/includes/teams")} Teams
  */
 

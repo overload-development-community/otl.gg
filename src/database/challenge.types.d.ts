@@ -202,7 +202,7 @@ declare namespace ChallengeDbTypes {
         recordsets: [
             (GameStats & CTFStats & {
                 DiscordId: string
-                Name: string            
+                Name: string
             })[]
         ]
     }

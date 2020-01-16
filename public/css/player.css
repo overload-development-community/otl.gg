@@ -197,11 +197,11 @@
     #maps.maps-TA {
         grid-template-columns: repeat(9, auto);
     }
-    
+
     #maps.maps-CTF {
         grid-template-columns: repeat(10, auto);
     }
-    
+
     #maps .best {
         grid-column-end: span 3;
     }
@@ -229,11 +229,11 @@
     #maps.maps-TA {
         grid-template-columns: repeat(8, auto);
     }
-    
+
     #maps.maps-CTF {
         grid-template-columns: repeat(9, auto);
     }
-    
+
     #maps .best {
         grid-column-end: span 2;
     }
@@ -256,11 +256,11 @@
     #maps.maps-TA {
         grid-template-columns: repeat(6, auto);
     }
-    
+
     #maps.maps-CTF {
         grid-template-columns: repeat(7, auto);
     }
-    
+
     #opponents .best,
     #opponents .best-stats,
     #maps .best,
@@ -326,7 +326,7 @@
     #stats .lifetime {
         grid-column-end: span 2;
     }
-    
+
     #team-stats-TA {
         grid-template-columns: repeat(11, auto);
     }

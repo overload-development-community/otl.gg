@@ -4,7 +4,7 @@
  * @typedef {import("./match.types").CurrentMatch} MatchTypes.CurrentMatch
  * @typedef {import("./match.types").PendingMatches} MatchTypes.PendingMatches
  * @typedef {import("./match.types").UpcomingMatch} MatchTypes.UpcomingMatch
- * @typedef {import("./team.types").TeamInfo} TeamTypes.TeamInfo
+ * @typedef {import("./team.types").TeamRecord} TeamTypes.TeamRecord
  */
 
 const Common = require("../../web/includes/common"),
@@ -42,7 +42,7 @@ class Match {
         /** @type {MatchTypes.ConfirmedMatchStatData[]} */
         let stats;
 
-        /** @type {TeamTypes.TeamInfo[]} */
+        /** @type {TeamTypes.TeamRecord[]} */
         let standings;
 
         try {
@@ -132,10 +132,10 @@ class Match {
     static async getCurrent() {
         let matches;
 
-        /** @type {TeamTypes.TeamInfo[]} */
+        /** @type {TeamTypes.TeamRecord[]} */
         let standings;
 
-        /** @type {TeamTypes.TeamInfo[]} */
+        /** @type {TeamTypes.TeamRecord[]} */
         let previousStandings;
 
         try {
@@ -192,10 +192,10 @@ class Match {
     static async getUpcomingAndCompletedCount(season) {
         let matches;
 
-        /** @type {TeamTypes.TeamInfo[]} */
+        /** @type {TeamTypes.TeamRecord[]} */
         let standings;
 
-        /** @type {TeamTypes.TeamInfo[]} */
+        /** @type {TeamTypes.TeamRecord[]} */
         let previousStandings;
 
         let completed;

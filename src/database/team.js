@@ -4,8 +4,8 @@
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {import("../models/team")} Team
- * @typedef {{member?: DiscordJs.GuildMember, id: number, name: string, tag: string, isFounder?: boolean, disbanded?: boolean, locked?: boolean}} TeamData
- * @typedef {{homes: {map: string, gameType: string}[], members: {playerId: number, name: string, role: string}[], requests: {name: string, date: Date}[], invites: {name: string, date: Date}[], penaltiesRemaining: number}} TeamInfo
+ * @typedef {import("../models/team.types").TeamData} TeamTypes.TeamData
+ * @typedef {import("../models/team.types").TeamInfo} TeamTypes.TeamInfo
  */
 
 const Db = require("node-database"),
@@ -105,7 +105,7 @@ class TeamDb {
     /**
      * Creates a team with the specified pilot as the founder.
      * @param {NewTeam} newTeam The new team.
-     * @returns {Promise<TeamData>} A promise that resolves with the created team.
+     * @returns {Promise<TeamTypes.TeamData>} A promise that resolves with the created team.
      */
     static async create(newTeam) {
         /** @type {{recordsets: [{TeamId: number, PlayerId: number}[]]}} */
@@ -221,7 +221,7 @@ class TeamDb {
     /**
      * Gets the team by the team ID.
      * @param {number} id The Team ID.
-     * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
+     * @returns {Promise<TeamTypes.TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getById(id) {
         /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Locked: boolean}[]]}} */
@@ -243,7 +243,7 @@ class TeamDb {
     /**
      * Gets a team by name or tag.
      * @param {string} text The name or tag of the team.
-     * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
+     * @returns {Promise<TeamTypes.TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getByNameOrTag(text) {
         /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, Disbanded: boolean, Locked: boolean}[]]}} */
@@ -263,7 +263,7 @@ class TeamDb {
     /**
      * Gets the team for the pilot.
      * @param {DiscordJs.GuildMember} member The pilot to get the team for.
-     * @returns {Promise<TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
+     * @returns {Promise<TeamTypes.TeamData>} A promise that resolves with the retrieved team.  Returns nothing if the team is not found.
      */
     static async getByPilot(member) {
         /** @type {{recordsets: [{TeamId: number, Name: string, Tag: string, IsFounder: boolean, Locked: boolean}[]]}} */
@@ -868,7 +868,7 @@ class TeamDb {
     /**
      * Gets a team's info.
      * @param {Team} team The team to get the info for.
-     * @returns {Promise<TeamInfo>} A promise that resolves with the team's info.
+     * @returns {Promise<TeamTypes.TeamInfo>} A promise that resolves with the team's info.
      */
     static async getInfo(team) {
         /** @type {{recordsets: [{Map: string, GameType: string}[], {PlayerId: number, Name: string, Captain: boolean, Founder: boolean}[], {Name: string, DateRequested: Date}[], {Name: string, DateInvited: Date}[], {PenaltiesRemaining: number}[]]}} */

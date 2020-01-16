@@ -284,7 +284,7 @@ span.grey {
     #matches .header.player {
         grid-column-end: span 2;
     }
-    
+
     #matches .best-stats {
         display: none;
     }
@@ -376,15 +376,15 @@ span.grey {
     .stats-ta {
         grid-template-columns: repeat(15, auto);
     }
-    
+
     .stats-ctf {
         grid-template-columns: repeat(21, auto);
     }
-    
+
     .stats .header.best {
         grid-column-end: span 3;
     }
-    
+
     .stats .best-stats {
         display: none;
     }
@@ -394,11 +394,11 @@ span.grey {
     .stats-ta {
         grid-template-columns: repeat(12, auto);
     }
-    
+
     .stats-ctf {
         grid-template-columns: repeat(18, auto);
     }
-    
+
     .stats .best {
         display: none;
     }
@@ -408,11 +408,11 @@ span.grey {
     .stats-ta {
         grid-template-columns: repeat(8, auto);
     }
-    
+
     .stats-ctf {
         grid-template-columns: repeat(16, auto);
     }
-    
+
     .stats .totals {
         display: none;
     }

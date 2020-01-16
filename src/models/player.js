@@ -1,5 +1,10 @@
 /**
+ * @typedef {import("./player.types").CareerData} PlayerTypes.CareerData
+ * @typedef {import("./player.types").FreeAgent} PlayerTypes.FreeAgent
+ * @typedef {import("./player.types").GameLogData} PlayerTypes.GameLogData
  * @typedef {import("./player.types").GameRecord} PlayerTypes.GameRecord
+ * @typedef {import("./player.types").PlayerKDAStats} PlayerTypes.PlayerKDAStats
+ * @typedef {import("./player.types").SeasonStats} PlayerTypes.SeasonStats
  */
 
 const Db = require("../database/player"),
@@ -31,7 +36,7 @@ class Player {
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
      * @param {string} gameType The game type to get data for.
-     * @returns {Promise<{player: {name: string, twitchName: string, timezone: string, teamId: number, tag: string, teamName: string}, career: {season: number, postseason: boolean, teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], careerTeams: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, overtimePeriods: number}[], opponents: {teamId: number, tag: string, teamName: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestMatchTime: Date, bestMap: string, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], maps: {map: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, overtimePeriods: number, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, bestOpponentTeamId: number, bestOpponentTag: string, bestOpponentTeamName: string, bestMatchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], damage: Object<string, number>}>} A promise that resolves with a player's career data.
+     * @returns {Promise<PlayerTypes.CareerData>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason, gameType) {
         try {
@@ -50,7 +55,7 @@ class Player {
     //  ###                                             ###
     /**
      * Gets the current list of free agents.
-     * @returns {Promise<{playerId: number, name: string, discordId: string, timezone: string}[]>} The list of free agents.
+     * @returns {Promise<PlayerTypes.FreeAgent[]>} The list of free agents.
      */
     static async getFreeAgents() {
         try {
@@ -72,7 +77,7 @@ class Player {
      * @param {number} playerId The player ID to get the game log for.
      * @param {number} season The season to get the player's gamelog for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{player: {name: string, teamId: number, tag: string, teamName: string}, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], seasons: number[]}>} A promise that resolves with a player's game log.
+     * @returns {Promise<PlayerTypes.GameLogData>} A promise that resolves with a player's game log.
      */
     static async getGameLog(playerId, season, postseason) {
         try {
@@ -136,7 +141,7 @@ class Player {
      * @param {boolean} postseason Whether to get stats for the postseason.
      * @param {string} gameType The game type to get season stats for.
      * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
-     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, avgCaptures: number, avgPickups: number, avgCarrierKills: number, avgReturns: number, avgKills: number, avgAssists: number, avgDeaths: number, avgDamagePerGame: number, avgDamagePerDeath: number, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<PlayerTypes.SeasonStats[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason, gameType, all) {
         try {
@@ -155,7 +160,7 @@ class Player {
     //  ###                          #
     /**
      * Gets all player stats for the season.
-     * @returns {Promise<{playerId: number, name: string, teamId: number, teamName: string, tag: string, disbanded: boolean, locked: boolean, kda: number}[]>} A promise that resolves with the stats.
+     * @returns {Promise<PlayerTypes.PlayerKDAStats[]>} A promise that resolves with the stats.
      */
     static async getTopKda() {
         try {
