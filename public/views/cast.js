@@ -114,7 +114,7 @@ class CastView {
                                             ` : ""}
                                             ${castData.gameType === "CTF" ? /* html */`
                                                 ${(castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag} ${CastView.Common.htmlEncode(CastView.Common.normalizeName(castData.name, (castData.teamId === challenge.challengingTeam.id ? challenge.challengingTeam : challenge.challengedTeam).tag))}<br />
-                                                <span class="numeric">${castData.captures}</span> C (<span class="numeric">${castData.pickups}</span> P, <span class="numeric">${castData.carrierKills}</span> CK, <span class="numeric">${castData.returns}</span> R)<br />
+                                                <span class="numeric">${castData.captures}</span> C/<span class="numeric">${castData.pickups}</span> P (<span class="numeric">${castData.carrierKills}</span> CK, <span class="numeric">${castData.returns}</span> R)<br />
                                                 <span class="numeric">${((castData.kills + castData.assists) / Math.max(1, castData.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${castData.kills}</span> K, <span class="numeric">${castData.assists}</span> A, <span class="numeric">${castData.deaths}</span> D)<br />
                                                 ${castData.damage ? /* html */`
                                                     <span class="numeric">${castData.damage.toFixed(0)}</span> Dmg
@@ -150,10 +150,10 @@ class CastView {
                                 ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
                                 ${challenge.details.gameType === "CTF" ? /* html */`
-                                    <div class="header">CPG</div>
-                                    <div class="header">PPG</div>
-                                    <div class="header">CKPG</div>
-                                    <div class="header">RPG</div>
+                                    <div class="numeric">${p.games ? (p.captures / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.pickups / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.carrierKills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.returns / p.games).toFixed(2) : ""}</div>
                                 ` : ""}
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                 ${challenge.details.gameType === "TA" ? /* html */`
@@ -192,10 +192,10 @@ class CastView {
                                 ` : ""}${CastView.Common.htmlEncode(CastView.Common.normalizeName(p.name, challenge.challengingTeam.tag))}</div>
                                 <div class="numeric">${p.games}</div>
                                 ${challenge.details.gameType === "CTF" ? /* html */`
-                                    <div class="header">CPG</div>
-                                    <div class="header">PPG</div>
-                                    <div class="header">CKPG</div>
-                                    <div class="header">RPG</div>
+                                    <div class="numeric">${p.games ? (p.captures / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.pickups / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.carrierKills / p.games).toFixed(2) : ""}</div>
+                                    <div class="numeric">${p.games ? (p.returns / p.games).toFixed(2) : ""}</div>
                                 ` : ""}
                                 <div class="numeric">${p.games ? ((p.kills + p.assists) / Math.max(1, p.deaths)).toFixed(3) : ""}</div>
                                 ${challenge.details.gameType === "TA" ? /* html */`

@@ -673,16 +673,21 @@ class ChallengeDb {
             DECLARE @gameType VARCHAR(3)
             DECLARE @postseason BIT
 
-            SELECT TOP 1
-                @season = Season
-            FROM tblSeason
-            WHERE DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
-            ORDER BY Season DESC
+            SELECT @season = Season FROM vwCompletedChallenge WHERE ChallengeId = @challengeId
 
-            IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND Postseason = 1)
+            IF @season IS NULL
             BEGIN
-                SET @season = @season - 1
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+
+                IF EXISTS(SELECT TOP 1 1 FROM tblChallenge WHERE ChallengeId = @challengeId AND Postseason = 1)
+                BEGIN
+                    SET @season = @season - 1
+                END
             END
 
             SELECT @gameType = GameType, @postseason = Postseason FROM tblChallenge WHERE ChallengeId = @challengeId
@@ -713,7 +718,7 @@ class ChallengeDb {
                     s.Map,
                     s.GameType,
                     s.MatchTime,
-                    s.OvertimePeriods
+                    s.OvertimePeriods,
                     s.Name,
                     s.TeamId,
                     s.Captures,
@@ -795,7 +800,7 @@ class ChallengeDb {
             LEFT OUTER JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             LEFT OUTER JOIN (
                 tblStat s
-                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season AND cc.GameType = @gameType
             ) ON r.PlayerId = s.PlayerId
             LEFT OUTER JOIN (
                 SELECT c2.GameType, c2.Season, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
@@ -826,7 +831,7 @@ class ChallengeDb {
             LEFT OUTER JOIN tblChallengeStreamer cs ON c.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             LEFT OUTER JOIN (
                 tblStat s
-                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season
+                INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season AND cc.GameType = @gameType
             ) ON r.PlayerId = s.PlayerId
             LEFT OUTER JOIN (
                 SELECT c2.GameType, c2.Season, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
