@@ -2796,6 +2796,7 @@ class Commands {
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
         await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
@@ -2850,6 +2851,7 @@ class Commands {
 
         await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
         await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
