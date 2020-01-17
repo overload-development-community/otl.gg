@@ -1,4 +1,4 @@
-import {GuildMember, User} from "discord.js";
+import DiscordJs from "discord.js"
 
 declare namespace PlayerTypes {
     type CareerData = {
@@ -145,6 +145,11 @@ declare namespace PlayerTypes {
         deaths: number
     }
 
+    type PilotWithConfirmation = {
+        pilot: DiscordJs.GuildMember,
+        confirm: string
+    }
+
     type PlayerKDAStats = {
         playerId: number
         name: string
@@ -193,7 +198,7 @@ declare namespace PlayerTypes {
         kda: number
     }
 
-    type UserOrGuildMember = GuildMember|User
+    type UserOrGuildMember = DiscordJs.GuildMember|DiscordJs.User
 
     type WeaponStats = {
         weapon: string

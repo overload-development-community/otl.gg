@@ -132,6 +132,14 @@ declare namespace ChallengeTypes {
         challengedTeamStats: GamePlayerStats[]
     }
 
+    type GamesByChallengeId = {
+        [x: number]: {
+            challengingTeamRating: number
+            challengedTeamRating: number
+            change: number
+        }
+    }
+
     type NotificationsData = {
         expiredClocks: {
             challengeId: number

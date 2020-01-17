@@ -6,12 +6,8 @@ declare namespace MatchTypes {
         match: {
             challengeId: number
             title: string
-            challengingTeam: TeamTypes.TeamRecord & {
-                color: string
-            }
-            challengedTeam: TeamTypes.TeamRecord & {
-                color: string
-            }
+            challengingTeam: TeamTypes.TeamRecord
+            challengedTeam: TeamTypes.TeamRecord
             challengingTeamScore: number
             challengedTeamScore: number
             matchTime: Date

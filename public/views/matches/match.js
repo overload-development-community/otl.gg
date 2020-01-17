@@ -1,5 +1,5 @@
 /**
- * @typedef {{teamId: number, name: string, tag: string, color: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number}} TeamRecord
+ * @typedef {import("../../../src/models/team.types").TeamRecord} TeamTypes.TeamRecord
  */
 
 //  #   #          #            #      #   #    #
@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamRecord, challengedTeam: TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}} data The match data.
+     * @param {{match: {challengeId: number, title: string, challengingTeam: TeamTypes.TeamRecord, challengedTeam: TeamTypes.TeamRecord, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, vod: string, ratingChange: number, challengingTeamRating: number, challengedTeamRating: number, gameType: string}, stats: {teamId: number, tag: string, playerId: number, name: string, kda: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]}} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {

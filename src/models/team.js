@@ -1,4 +1,5 @@
 /**
+ * @typedef {import("./challenge.types").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
  * @typedef {import("discord.js").CategoryChannel} DiscordJs.CategoryChannel
  * @typedef {import("discord.js").ColorResolvable} DiscordJs.ColorResolvable
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
@@ -7,8 +8,11 @@
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("./newTeam.js")} NewTeam
+ * @typedef {import("./team.types").GameLog} TeamTypes.GameLog
+ * @typedef {import("./team.types").Standing} TeamTypes.Standing
  * @typedef {import("./team.types").TeamData} TeamTypes.TeamData
  * @typedef {import("./team.types").TeamInfo} TeamTypes.TeamInfo
+ * @typedef {import("./team.types").TeamStats} TeamTypes.TeamStats
  */
 
 const Db = require("../database/team"),
@@ -179,7 +183,7 @@ class Team {
      * @param {Team} team The team to get the data for.
      * @param {number} season The season to get the team's data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{records: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, winsTA: number, lossesTA: number, tiesTA: number, winsCTF: number, lossesCTF: number, tiesCTF: number, winsHomeTA: number, lossesHomeTA: number, tiesHomeTA: number, winsAwayTA: number, lossesAwayTA: number, tiesAwayTA: number, winsNeutralTA: number, lossesNeutralTA: number, tiesNeutralTA: number, winsHomeCTF: number, lossesHomeCTF: number, tiesHomeCTF: number, winsAwayCTF: number, lossesAwayCTF: number, tiesAwayCTF: number, winsNeutralCTF: number, lossesNeutralCTF: number, tiesNeutralCTF: number, wins2v2TA: number, losses2v2TA: number, ties2v2TA: number, wins3v3TA: number, losses3v3TA: number, ties3v3TA: number, wins4v4TA: number, losses4v4TA: number, ties4v4TA: number, wins2v2CTF: number, losses2v2CTF: number, ties2v2CTF: number, wins3v3CTF: number, losses3v3CTF: number, ties3v3CTF: number, wins4v4CTF: number, losses4v4CTF: number, ties4v4CTF: number}, opponents: {teamId: number, name: string, tag: string, wins: number, losses: number, ties: number, gameType: string}[], maps: {map: string, wins: number, losses: number, ties: number, gameType: string}[], statsTA: {playerId: number, name: string, games: number, kills: number, assists: number, deaths: number, gamesWithDamage: number, deathsInGamesWithDamage: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[], statsCTF: {playerId: number, name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, teamId: number, teamName: string, teamTag: string, challengeId: number, challengingTeamTag: string, challengedTeamTag: string, map: string, matchTime: Date, bestCaptures: number, bestPickups: number, bestCarrierKills: number, bestReturns: number, bestKills: number, bestAssists: number, bestDeaths: number, bestDamage: number}[]}>} The team data.
+     * @returns {Promise<TeamTypes.TeamStats>} The team data.
      */
     static async getData(team, season, postseason) {
         try {
@@ -201,7 +205,7 @@ class Team {
      * @param {Team} team The team to get the game log for.
      * @param {number} season The season to get the team's game log for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
-     * @returns {Promise<{challengeId: number, challengingTeamId: number, challengingTeamName: string, challengingTeamTag: string, challengingTeamScore: number, challengedTeamId: number, challengedTeamName: string, challengedTeamTag: string, challengedTeamScore: number, ratingChange: number, map: string, matchTime: Date, gameType: string, statTeamId: number, statTeamName: string, statTeamTag: string, playerId: number, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]>} The team's game log.
+     * @returns {Promise<TeamTypes.GameLog[]>} The team's game log.
      */
     static async getGameLog(team, season, postseason) {
         try {
@@ -223,7 +227,7 @@ class Team {
      * @param {number} [season] The season number, or void for the latest season.
      * @param {string} [records] The type of record split to retrieve.
      * @param {string} [map] The map record to retrieve.
-     * @returns {Promise<{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[]>} A promise that resolves with the season standings.
+     * @returns {Promise<TeamTypes.Standing[]>} A promise that resolves with the season standings.
      */
     static async getSeasonStandings(season, records, map) {
         try {
@@ -1928,7 +1932,7 @@ class Team {
         /** @type {Object<number, number>} */
         const ratings = {};
 
-        /** @type {Object<number, {challengingTeamRating: number, challengedTeamRating: number, change: number}>} */
+        /** @type {ChallengeTypes.GamesByChallengeId} */
         const challengeRatings = {};
 
         data.matches.forEach((match) => {

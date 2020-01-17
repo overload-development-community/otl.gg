@@ -1,10 +1,14 @@
 /**
+ * @typedef {import("./models/challenge.types").GamePlayerStats} ChallengeTypes.GamePlayerStats
  * @typedef {import("./models/challenge.types").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
+ * @typedef {import("./models/map.types").MapData} MapTypes.MapData
+ * @typedef {import("./models/player.types").PilotWithConfirmation} PlayerTypes.PilotWithConfirmation
  * @typedef {import("./models/player.types").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  * @typedef {import("./models/newteam")} NewTeam
+ * @typedef {import("./models/team.types").TeamWithConfirmation} TeamTypes.TeamWithConfirmation
  */
 
 const tz = require("timezone-js"),
@@ -429,7 +433,7 @@ class Commands {
      * @param {string} map The map to check.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{map: string, stock: boolean}>} A promise that resolves with the chosen map, properly cased, and whether it is a stock map.
+     * @returns {Promise<MapTypes.MapData>} A promise that resolves with the chosen map, properly cased, and whether it is a stock map.
      */
     static async checkMapIsValid(map, member, channel) {
         let correctedMap;
@@ -825,7 +829,7 @@ class Commands {
      * @param {string} message The message sent.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{pilot: DiscordJs.GuildMember, confirm: string}>} A promise that resolves with the pilot and whether there was confirmation.
+     * @returns {Promise<PlayerTypes.PilotWithConfirmation>} A promise that resolves with the pilot and whether there was confirmation.
      */
     static async checkPilotExistsWithConfirmation(message, member, channel) {
         let pilot, confirm;
@@ -911,7 +915,7 @@ class Commands {
      * @param {string} message The message sent.
      * @param {DiscordJs.GuildMember} member The pilot sending the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
-     * @returns {Promise<{team: Team, confirm: string}>} A promise that resolves with the team and whether there was confirmation.
+     * @returns {Promise<TeamTypes.TeamWithConfirmation>} A promise that resolves with the team and whether there was confirmation.
      */
     static async checkTeamExistsWithConfirmation(message, member, channel) {
         const {groups: {name, confirmed}} = nameConfirmParse.exec(message);
@@ -5138,10 +5142,10 @@ class Commands {
             mapMessage = newMapMessage;
         }
 
-        /** @type {{pilot: PlayerTypes.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
+        /** @type {ChallengeTypes.GamePlayerStats[]} */
         let challengingTeamStats;
 
-        /** @type {{pilot: PlayerTypes.UserOrGuildMember, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number}[]} */
+        /** @type {ChallengeTypes.GamePlayerStats[]} */
         let challengedTeamStats;
 
         let scoreChanged = false;

@@ -1,6 +1,6 @@
 /**
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {{type: string, date: Date, obj?: object, message?: string}} LogEntry
+ * @typedef {import("./log.types").LogEntry} LogTypes.LogEntry
  */
 
 const request = require("request-promise-native"),
@@ -8,7 +8,7 @@ const request = require("request-promise-native"),
 
     settings = require("../../settings");
 
-/** @type {LogEntry[]} */
+/** @type {LogTypes.LogEntry[]} */
 const queue = [];
 
 /** @type {typeof import("../discord")} */
@@ -205,7 +205,7 @@ class Log {
     //                   #
     /**
      * Outputs a log to Discord.
-     * @param {LogEntry} log The log to write.
+     * @param {LogTypes.LogEntry} log The log to write.
      * @param {Error} err The error that caused the initial failure.
      * @returns {Promise} A promise that resolves when the output has been completed.
      */

@@ -1,6 +1,6 @@
 /**
  * @typedef {import("../../src/models/challenge")} Challenge
- * @typedef {{name: string, games: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, gamesWithDamage: number, deathsInGamesWithDamage: number, twitchName: string}} Roster
+ * @typedef {import("../../src/models/challenge.types").CastDataRoster} ChallengeTypes.CastDataRoster
  */
 
 //   ###                  #     #   #    #
@@ -23,7 +23,7 @@ class CastView {
     //  ###
     /**
      * Gets the rendered cast template.
-     * @param {{challenge: Challenge, challengingTeamRoster: Roster[], challengedTeamRoster: Roster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}}} data The cast data.
+     * @param {{challenge: Challenge, challengingTeamRoster: ChallengeTypes.CastDataRoster[], challengedTeamRoster: ChallengeTypes.CastDataRoster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}}} data The cast data.
      * @returns {string} An HTML string of the cast.
      */
     static get(data) {

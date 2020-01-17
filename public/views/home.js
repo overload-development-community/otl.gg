@@ -1,7 +1,7 @@
 /**
  * @typedef {import("discord.js").Message} DiscordJs.Message
  * @typedef {import("../../src/models/player.types").PlayerKDAStats} PlayerTypes.PlayerKDAStats
- * @typedef {{teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}} Standing
+ * @typedef {import("../../src/models/team.types").Standing} TeamTypes.Standing
  * @typedef {import("../../web/includes/teams")} Teams
  */
 
@@ -25,7 +25,7 @@ class HomeView {
     //  ###
     /**
      * Gets the rendered home template.
-     * @param {{standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[], stats: PlayerTypes.PlayerKDAStats[], matches: {id: number, challengingTeam: Standing, challengedTeam: Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], news: DiscordJs.Message[], teams: Teams}} data The home page data.
+     * @param {{standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[], stats: PlayerTypes.PlayerKDAStats[], matches: {id: number, challengingTeam: TeamTypes.Standing, challengedTeam: TeamTypes.Standing, challengingTeamScore: number, challengedTeamScore: number, matchTime: Date, map: string, dateClosed: Date, overtimePeriods: number, gameType: string}[], news: DiscordJs.Message[], teams: Teams}} data The home page data.
      * @returns {string} An HTML string of the home page.
      */
     static get(data) {
