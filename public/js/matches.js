@@ -65,29 +65,33 @@ class Matches {
             });
         });
 
-        document.getElementById("select-prev").addEventListener("click", () => {
-            const el = document.getElementsByClassName(`select-page-${Matches.page - 1}`)[0];
+        if (document.getElementById("select-prev")) {
+            document.getElementById("select-prev").addEventListener("click", () => {
+                const el = document.getElementsByClassName(`select-page-${Matches.page - 1}`)[0];
 
-            if (el) {
-                el.click();
-            }
-        });
+                if (el) {
+                    el.click();
+                }
+            });
 
-        document.getElementById("select-prev").addEventListener("selectstart", (ev) => {
-            ev.preventDefault();
-        });
+            document.getElementById("select-prev").addEventListener("selectstart", (ev) => {
+                ev.preventDefault();
+            });
+        }
 
-        document.getElementById("select-next").addEventListener("click", () => {
-            const el = document.getElementsByClassName(`select-page-${Matches.page + 1}`)[0];
+        if (document.getElementById("select-next")) {
+            document.getElementById("select-next").addEventListener("click", () => {
+                const el = document.getElementsByClassName(`select-page-${Matches.page + 1}`)[0];
 
-            if (el) {
-                el.click();
-            }
-        });
+                if (el) {
+                    el.click();
+                }
+            });
 
-        document.getElementById("select-next").addEventListener("selectstart", (ev) => {
-            ev.preventDefault();
-        });
+            document.getElementById("select-next").addEventListener("selectstart", (ev) => {
+                ev.preventDefault();
+            });
+        }
 
         Matches.parseTime();
     }
