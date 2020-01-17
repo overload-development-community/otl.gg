@@ -1819,7 +1819,7 @@ class PlayerDb {
      * @param {number} [season] The season number, or void for the latest season.
      * @param {boolean} postseason Whether to get stats for the postseason.
      * @param {string} gameType The game type to get season stats for.
-     * @param {boolean} [all] Whether to show all players, or just players over 10% games played.
+     * @param {boolean} all Whether to show all players, or just players over 10% games played.
      * @returns {Promise<PlayerTypes.SeasonStats[]>} A promise that resolves with the stats.
      */
     static async getSeasonStats(season, postseason, gameType, all) {

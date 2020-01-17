@@ -45,7 +45,7 @@ class Players {
             gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
             postseason = !!req.query.postseason,
             all = !!req.query.all,
-            stats = await Player.getSeasonStats(season, postseason, gameType, all),
+            stats = await Player.getSeasonStats(season, postseason, gameType, postseason || all),
             averages = {
                 captures: stats.reduce((acc, cur) => acc + cur.avgCaptures, 0) / stats.length,
                 pickups: stats.reduce((acc, cur) => acc + cur.avgPickups, 0) / stats.length,
