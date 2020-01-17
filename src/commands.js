@@ -4380,15 +4380,15 @@ class Commands {
 
         let team1HomeMaps;
         try {
-            team1HomeMaps = await team1.getHomeMaps();
+            team1HomeMaps = await team1.getHomeMapsByType();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (team1HomeMaps.length !== 10) {
-            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set for each game type to be in a match.`, channel);
-            throw new Warning("Team does not have 5 home maps set for each game type.");
+        if (!team1HomeMaps[gameTypeUpper] || team1HomeMaps[gameTypeUpper].length < 5) {
+            await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set for the specified game type to be in a match.`, channel);
+            throw new Warning("Team does not have 5 home maps set for specified game type.");
         }
 
         const team2 = await Commands.checkTeamExists(teamTag2, member, channel);
@@ -4413,15 +4413,15 @@ class Commands {
 
         let team2HomeMaps;
         try {
-            team2HomeMaps = await team2.getHomeMaps();
+            team2HomeMaps = await team2.getHomeMapsByType();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (team2HomeMaps.length !== 10) {
-            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set for each game type to be in a match.`, channel);
-            throw new Warning("Team does not have 5 home maps set.");
+        if (!team2HomeMaps[gameTypeUpper] || team2HomeMaps[gameTypeUpper].length < 5) {
+            await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set for the specified game type to be in a match.`, channel);
+            throw new Warning("Team does not have 5 home maps set for specified game type.");
         }
 
         try {
