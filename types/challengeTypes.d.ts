@@ -39,6 +39,7 @@ declare namespace ChallengeTypes {
         map: string
         gameType: string
         matchTime: Date
+        overtimePeriods: number
         name: string
         teamId: number
     }

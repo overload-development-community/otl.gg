@@ -100,7 +100,7 @@ class CastView {
                                         <div class="right-tag">${challenge.challengedTeam.tag}</div>
                                         <div class="numeric right-score">${castData.challengingTeamScore}</div>
                                     `}
-                                    <div class="map">${castData.map}</div>
+                                    <div class="map">${castData.map}${castData.overtimePeriods > 0 ? `, ${castData.overtimePeriods > 1 ? castData.overtimePeriods : ""}OT` : ""}</div>
                                     <div class="date"><script>document.write(Common.formatDate(new Date("${castData.matchTime}")));</script></div>
                                     ${castData.teamId ? /* html */`
                                         <div class="best">Best Performer</div>

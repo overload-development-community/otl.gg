@@ -692,7 +692,7 @@ class ChallengeDb {
                 CASE WHEN ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies < 10 THEN (ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies) * ChallengingTeamRating / 10 ELSE ChallengingTeamRating END ChallengingTeamRating,
                 ChallengedTeamWins, ChallengedTeamLosses, ChallengedTeamTies,
                 CASE WHEN ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies < 10 THEN (ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies) * ChallengedTeamRating / 10 ELSE ChallengedTeamRating END ChallengedTeamRating,
-                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, GameType, MatchTime, Name, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, Damage
+                ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, GameType, MatchTime, OvertimePeriods, Name, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, Damage
             FROM (
                 SELECT
                     (SELECT COUNT(*) FROM vwCompletedChallenge cc WHERE Season = @season AND ((cc.ChallengingTeamId = c.ChallengingTeamId AND cc.ChallengingTeamScore > cc.ChallengedTeamScore) OR (cc.ChallengedTeamId = c.ChallengingTeamId AND cc.ChallengedTeamScore > cc.ChallengingTeamScore))) ChallengingTeamWins,
@@ -713,6 +713,7 @@ class ChallengeDb {
                     s.Map,
                     s.GameType,
                     s.MatchTime,
+                    s.OvertimePeriods
                     s.Name,
                     s.TeamId,
                     s.Captures,
@@ -737,6 +738,7 @@ class ChallengeDb {
                         c.Map,
                         c.GameType,
                         c.MatchTime,
+                        c.OvertimePeriods,
                         p.Name,
                         s.TeamId,
                         s.Captures,
@@ -868,6 +870,7 @@ class ChallengeDb {
                 map: data.recordsets[0][0].Map,
                 gameType: data.recordsets[0][0].GameType,
                 matchTime: data.recordsets[0][0].MatchTime,
+                overtimePeriods: data.recordsets[0][0].OvertimePeriods,
                 name: data.recordsets[0][0].Name,
                 teamId: data.recordsets[0][0].TeamId,
                 captures: data.recordsets[0][0].Captures,

@@ -106,6 +106,7 @@ declare namespace ChallengeDbTypes {
                 Map: string
                 GameType: string
                 MatchTime: Date
+                OvertimePeriods: number,
                 Name: string
                 TeamId: number
             })[],
