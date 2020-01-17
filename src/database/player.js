@@ -228,7 +228,7 @@ class PlayerDb {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN (
-                SELECT c2.Season, c2.PostSeason, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                SELECT c2.Season, c2.Postseason, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
@@ -2126,7 +2126,7 @@ class PlayerDb {
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            LEFT JOIN (
+            LEFT OUTER JOIN (
                 tblRoster r
                 INNER JOIN tblTeam t ON r.TeamId = t.TeamId
             ) ON p.PlayerId = r.PlayerId

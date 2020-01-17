@@ -490,7 +490,7 @@ class TeamDb {
             INNER JOIN tblTeam t1 ON bc.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON bc.ChallengedTeamId = t2.TeamId
             LEFT OUTER JOIN (
-                SELECT c2.Season, c2.PostSeason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                SELECT c2.Season, c2.Postseason, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
