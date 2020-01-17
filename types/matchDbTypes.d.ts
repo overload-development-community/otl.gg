@@ -1,5 +1,5 @@
-import PlayerDbTypes from "./player.types"
-import TeamDbTypes from "./team.types"
+import PlayerDbTypes from "./playerDbTypes"
+import TeamDbTypes from "./teamDbTypes"
 
 declare namespace MatchDbTypes {
     type GetConfirmedRecordsets = {

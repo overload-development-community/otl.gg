@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../models/map.types").MapData} MapTypes.MapData
+ * @typedef {import("../../types/mapTypes").MapData} MapTypes.MapData
  */
 
 const Db = require("../database/map"),

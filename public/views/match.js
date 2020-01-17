@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../../src/models/challenge")} Challenge
+ * @typedef {import("../../types/viewTypes").MatchViewParameters} ViewTypes.MatchViewParameters
  */
 
 //  #   #          #            #      #   #    #
@@ -22,7 +22,7 @@ class MatchView {
     //  ###
     /**
      * Gets the match template.
-     * @param {{challenge: Challenge, details: {teams: {teamId: number, name: string, tag: string, rating: number, wins: number, losses: number, ties: number}[], stats: {playerId: number, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, twitchName: string}[], damage: {playerId: number, name: string, teamId: number, opponentName: string, weapon: string, damage: number}[], season: {season: number, postseason: boolean}}, weapons: string[], gameTypeName: string}} data The match data.
+     * @param {ViewTypes.MatchViewParameters} data The match data.
      * @returns {string} An HTML string of the match.
      */
     static get(data) {

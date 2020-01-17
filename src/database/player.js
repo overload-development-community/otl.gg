@@ -1,34 +1,34 @@
 /**
- * @typedef {import("./index.types").EmptyRecordsets} DbTypes.EmptyRecordsets
+ * @typedef {import("../../types/dbTypes").EmptyRecordsets} DbTypes.EmptyRecordsets
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {import("./player.types").BannedFromTeamUntilRecordsets} PlayerDbTypes.BannedFromTeamUntilRecordsets
- * @typedef {import("./player.types").ClearTimezoneRecordsets} PlayerDbTypes.ClearTimezoneRecordsets
- * @typedef {import("./player.types").GetCareerRecordsets} PlayerDbTypes.GetCareerRecordsets
- * @typedef {import("./player.types").GetCastedChallengesRecordsets} PlayerDbTypes.GetCastedChallengesRecordsets
- * @typedef {import("./player.types").GetFreeAgentsRecordsets} PlayerDbTypes.GetFreeAgentsRecordsets
- * @typedef {import("./player.types").GetGameLogRecordsets} PlayerDbTypes.GetGameLogRecordsets
- * @typedef {import("./player.types").GetRecordsCTFPlayerRecordsets} PlayerDbTypes.GetRecordsCTFPlayerRecordsets
- * @typedef {import("./player.types").GetRecordsCTFTeamRecordsets} PlayerDbTypes.GetRecordsCTFTeamRecordsets
- * @typedef {import("./player.types").GetRecordsTAPlayerRecordsets} PlayerDbTypes.GetRecordsTAPlayerRecordsets
- * @typedef {import("./player.types").GetRecordsTATeamRecordsets} PlayerDbTypes.GetRecordsTATeamRecordsets
- * @typedef {import("./player.types").GetRequestedOrInvitedTeamsRecordsets} PlayerDbTypes.GetRequestedOrInvitedTeamsRecordsets
- * @typedef {import("./player.types").GetSeasonStatsRecordsets} PlayerDbTypes.GetSeasonStatsRecordsets
- * @typedef {import("./player.types").GetStatsRecordsets} PlayerDbTypes.GetStatsRecordsets
- * @typedef {import("./player.types").GetTimezoneRecordsets} PlayerDbTypes.GetTimezoneRecordsets
- * @typedef {import("./player.types").GetTopKdaRecordsets} PlayerDbTypes.GetTopKdaRecordsets
- * @typedef {import("./player.types").GetTwitchNameRecordsets} PlayerDbTypes.GetTwitchNameRecordsets
- * @typedef {import("./player.types").JoinTeamDeniedUntilRecordsets} PlayerDbTypes.JoinTeamDeniedUntilRecordsets
- * @typedef {import("./player.types").SetTimezoneRecordsets} PlayerDbTypes.SetTimezoneRecordsets
- * @typedef {import("../models/player.types").CareerData} PlayerTypes.CareerData
- * @typedef {import("../models/player.types").FreeAgent} PlayerTypes.FreeAgent
- * @typedef {import("../models/player.types").GameLogData} PlayerTypes.GameLogData
- * @typedef {import("../models/player.types").GameRecord} PlayerTypes.GameRecord
- * @typedef {import("../models/player.types").PlayerKDAStats} PlayerTypes.PlayerKDAStats
- * @typedef {import("../models/player.types").PlayerStats} PlayerTypes.PlayerStats
- * @typedef {import("../models/player.types").SeasonStats} PlayerTypes.SeasonStats
+ * @typedef {import("../../types/playerDbTypes").BannedFromTeamUntilRecordsets} PlayerDbTypes.BannedFromTeamUntilRecordsets
+ * @typedef {import("../../types/playerDbTypes").ClearTimezoneRecordsets} PlayerDbTypes.ClearTimezoneRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetCareerRecordsets} PlayerDbTypes.GetCareerRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetCastedChallengesRecordsets} PlayerDbTypes.GetCastedChallengesRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetFreeAgentsRecordsets} PlayerDbTypes.GetFreeAgentsRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetGameLogRecordsets} PlayerDbTypes.GetGameLogRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetRecordsCTFPlayerRecordsets} PlayerDbTypes.GetRecordsCTFPlayerRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetRecordsCTFTeamRecordsets} PlayerDbTypes.GetRecordsCTFTeamRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetRecordsTAPlayerRecordsets} PlayerDbTypes.GetRecordsTAPlayerRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetRecordsTATeamRecordsets} PlayerDbTypes.GetRecordsTATeamRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetRequestedOrInvitedTeamsRecordsets} PlayerDbTypes.GetRequestedOrInvitedTeamsRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetSeasonStatsRecordsets} PlayerDbTypes.GetSeasonStatsRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetStatsRecordsets} PlayerDbTypes.GetStatsRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetTimezoneRecordsets} PlayerDbTypes.GetTimezoneRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetTopKdaRecordsets} PlayerDbTypes.GetTopKdaRecordsets
+ * @typedef {import("../../types/playerDbTypes").GetTwitchNameRecordsets} PlayerDbTypes.GetTwitchNameRecordsets
+ * @typedef {import("../../types/playerDbTypes").JoinTeamDeniedUntilRecordsets} PlayerDbTypes.JoinTeamDeniedUntilRecordsets
+ * @typedef {import("../../types/playerDbTypes").SetTimezoneRecordsets} PlayerDbTypes.SetTimezoneRecordsets
+ * @typedef {import("../../types/playerTypes").CareerData} PlayerTypes.CareerData
+ * @typedef {import("../../types/playerTypes").FreeAgent} PlayerTypes.FreeAgent
+ * @typedef {import("../../types/playerTypes").GameLogData} PlayerTypes.GameLogData
+ * @typedef {import("../../types/playerTypes").GameRecord} PlayerTypes.GameRecord
+ * @typedef {import("../../types/playerTypes").PlayerKDAStats} PlayerTypes.PlayerKDAStats
+ * @typedef {import("../../types/playerTypes").PlayerStats} PlayerTypes.PlayerStats
+ * @typedef {import("../../types/playerTypes").SeasonStats} PlayerTypes.SeasonStats
  * @typedef {import("../models/team")} Team
- * @typedef {import("../models/team.types").TeamData} TeamTypes.TeamData
+ * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
  */
 
 const Db = require("node-database"),

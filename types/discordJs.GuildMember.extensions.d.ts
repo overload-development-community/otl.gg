@@ -1,7 +1,7 @@
 import {GuildMember} from "discord.js"
-import NewTeam from "../models/newTeam"
-import PlayerTypes from "../models/player.types"
-import Team from "../models/team"
+import NewTeam from "../src/models/newTeam"
+import PlayerTypes from "./playerTypes"
+import Team from "../src/models/team"
 
 declare module "discord.js" {
     interface GuildMember {

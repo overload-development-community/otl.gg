@@ -1,4 +1,4 @@
-import {CTFStats, GameStats, KDAStats} from "./player.types"
+import {CTFStats, GameStats, KDAStats} from "./playerDbTypes"
 
 declare namespace ChallengeDbTypes {
     type ChallengeData = {

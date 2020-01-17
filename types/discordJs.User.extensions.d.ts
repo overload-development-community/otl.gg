@@ -1,5 +1,5 @@
 import {User} from "discord.js"
-import PlayerTypes from "../models/player.types"
+import PlayerTypes from "./playerTypes"
 
 declare module "discord.js" {
     interface User {

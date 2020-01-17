@@ -1,10 +1,10 @@
 /**
- * @typedef {import("./player.types").CareerData} PlayerTypes.CareerData
- * @typedef {import("./player.types").FreeAgent} PlayerTypes.FreeAgent
- * @typedef {import("./player.types").GameLogData} PlayerTypes.GameLogData
- * @typedef {import("./player.types").GameRecord} PlayerTypes.GameRecord
- * @typedef {import("./player.types").PlayerKDAStats} PlayerTypes.PlayerKDAStats
- * @typedef {import("./player.types").SeasonStats} PlayerTypes.SeasonStats
+ * @typedef {import("../../types/playerTypes").CareerData} PlayerTypes.CareerData
+ * @typedef {import("../../types/playerTypes").FreeAgent} PlayerTypes.FreeAgent
+ * @typedef {import("../../types/playerTypes").GameLogData} PlayerTypes.GameLogData
+ * @typedef {import("../../types/playerTypes").GameRecord} PlayerTypes.GameRecord
+ * @typedef {import("../../types/playerTypes").PlayerKDAStats} PlayerTypes.PlayerKDAStats
+ * @typedef {import("../../types/playerTypes").SeasonStats} PlayerTypes.SeasonStats
  */
 
 const Db = require("../database/player"),

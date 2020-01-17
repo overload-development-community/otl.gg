@@ -1,15 +1,15 @@
 /**
  * @typedef {import("../models/challenge")} Challenge
- * @typedef {import("./match.types").GetConfirmedRecordsets} MatchDbTypes.GetConfirmedRecordsets
- * @typedef {import("./match.types").GetCurrentRecordsets} MatchDbTypes.GetCurrentRecordsets
- * @typedef {import("./match.types").GetPendingRecordsets} MatchDbTypes.GetPendingRecordsets
- * @typedef {import("./match.types").GetSeasonDataFromChallengeRecordsets} MatchDbTypes.GetSeasonDataFromChallengeRecordsets
- * @typedef {import("./match.types").GetUpcomingRecordsets} MatchDbTypes.GetUpcomingRecordsets
- * @typedef {import("../models/match.types").ConfirmedMatchesData} MatchTypes.ConfirmedMatchesData
- * @typedef {import("../models/match.types").CurrentMatchesData} MatchTypes.CurrentMatchesData
- * @typedef {import("../models/match.types").PendingMatchesData} MatchTypes.PendingMatchesData
- * @typedef {import("../models/match.types").SeasonData} MatchTypes.SeasonData
- * @typedef {import("../models/match.types").UpcomingMatch} MatchTypes.UpcomingMatch
+ * @typedef {import("../../types/matchDbTypes").GetConfirmedRecordsets} MatchDbTypes.GetConfirmedRecordsets
+ * @typedef {import("../../types/matchDbTypes").GetCurrentRecordsets} MatchDbTypes.GetCurrentRecordsets
+ * @typedef {import("../../types/matchDbTypes").GetPendingRecordsets} MatchDbTypes.GetPendingRecordsets
+ * @typedef {import("../../types/matchDbTypes").GetSeasonDataFromChallengeRecordsets} MatchDbTypes.GetSeasonDataFromChallengeRecordsets
+ * @typedef {import("../../types/matchDbTypes").GetUpcomingRecordsets} MatchDbTypes.GetUpcomingRecordsets
+ * @typedef {import("../../types/matchTypes").ConfirmedMatchesData} MatchTypes.ConfirmedMatchesData
+ * @typedef {import("../../types/matchTypes").CurrentMatchesData} MatchTypes.CurrentMatchesData
+ * @typedef {import("../../types/matchTypes").PendingMatchesData} MatchTypes.PendingMatchesData
+ * @typedef {import("../../types/matchTypes").SeasonData} MatchTypes.SeasonData
+ * @typedef {import("../../types/matchTypes").UpcomingMatch} MatchTypes.UpcomingMatch
  */
 
 const Db = require("node-database"),

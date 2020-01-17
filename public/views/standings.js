@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../../web/includes/teams")} Teams
+ * @typedef {import("../../types/viewTypes").StandingsViewParameters} ViewTypes.StandingsViewParameters
  */
 
 //   ###    #                       #    #                         #   #    #
@@ -24,7 +24,7 @@ class StandingsView {
     //  ###
     /**
      * Gets the standings template.
-     * @param {{seasonList: number[], maps: string[], standings: {teamId: number, name: string, tag: string, disbanded: boolean, locked: boolean, rating: number, wins: number, losses: number, ties: number, wins1: number, losses1: number, ties1: number, wins2: number, losses2: number, ties2: number, wins3: number, losses3: number, ties3: number, winsMap: number, lossesMap: number, tiesMap: number}[], season: number, records: string, recordsTitle: string, records1: string, records2: string, records3: string, map: string, teams: Teams}} data The standings data.
+     * @param {ViewTypes.StandingsViewParameters} data The standings data.
      * @returns {string} An HTML string of the standings.
      */
     static get(data) {

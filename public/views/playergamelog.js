@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../../web/includes/teams")} Teams
+ * @typedef {import("../../types/viewTypes").PlayerGameLogViewParameters} ViewTypes.PlayerGameLogViewParameters
  */
 
 //  ####    ##                                 ###                        #                    #   #    #
@@ -24,7 +24,7 @@ class PlayerGameLogView {
     //  ###
     /**
      * Gets the player game log template.
-     * @param {{playerId: number, player: {name: string, teamId: number, tag: string, teamName: string}, seasonList: number[], season: number, postseason: boolean, matches: {challengeId: number, challengingTeamTag: string, challengedTeamTag: string, teamId: number, tag: string, name: string, captures: number, pickups: number, carrierKills: number, returns: number, kills: number, assists: number, deaths: number, damage: number, overtimePeriods: number, opponentTeamId: number, opponentTag: string, opponentName: string, teamScore: number, opponentScore: number, ratingChange: number, teamSize: number, matchTime: Date, map: string, gameType: string}[], teams: Teams}} data The player data.
+     * @param {ViewTypes.PlayerGameLogViewParameters} data The player data.
      * @returns {string} An HTML string of the player game log.
      */
     static get(data) {

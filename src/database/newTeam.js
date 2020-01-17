@@ -1,9 +1,9 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("../models/newTeam")} NewTeam
- * @typedef {import("./newTeam.types").CreateRecordsets} NewTeamDbTypes.CreateRecordsets
- * @typedef {import("./newTeam.types").GetByPilotRecordsets} NewTeamDbTypes.GetByPilotRecordsets
- * @typedef {import("../models/newTeam.types").NewTeamData} NewTeamTypes.NewTeamData
+ * @typedef {import("../../types/newTeamDbTypes").CreateRecordsets} NewTeamDbTypes.CreateRecordsets
+ * @typedef {import("../../types/newTeamDbTypes").GetByPilotRecordsets} NewTeamDbTypes.GetByPilotRecordsets
+ * @typedef {import("../../types/newTeamTypes").NewTeamData} NewTeamTypes.NewTeamData
  */
 
 const Db = require("node-database"),

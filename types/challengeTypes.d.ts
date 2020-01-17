@@ -1,5 +1,5 @@
-import Team from "./team";
-import PlayerTypes from "./player.types";
+import Team from "../src/models/team";
+import PlayerTypes from "./playerTypes";
 
 declare namespace ChallengeTypes {
     type ChallengeConstructor = {
@@ -15,30 +15,32 @@ declare namespace ChallengeTypes {
     };
 
     type CastData = {
-        data: PlayerTypes.GameStats & PlayerTypes.CTFStats & {
-            challengingTeamWins: number
-            challengingTeamLosses: number
-            challengingTeamTies: number
-            challengingTeamRating: number
-            challengedTeamWins: number
-            challengedTeamLosses: number
-            challengedTeamTies: number
-            challengedTeamRating: number
-            challengingTeamHeadToHeadWins: number
-            challengedTeamHeadToHeadWins: number
-            headToHeadTies: number
-            challengingTeamId: number
-            challengingTeamScore: number
-            challengedTeamId: number
-            challengedTeamScore: number
-            map: string
-            gameType: string
-            matchTime: Date
-            name: string
-            teamId: number
-        }
+        data: CastDataChallenge
         challengingTeamRoster: CastDataRoster[]
         challengedTeamRoster: CastDataRoster[]
+    }
+
+    type CastDataChallenge = PlayerTypes.GameStats & PlayerTypes.CTFStats & {
+        challengingTeamWins: number
+        challengingTeamLosses: number
+        challengingTeamTies: number
+        challengingTeamRating: number
+        challengedTeamWins: number
+        challengedTeamLosses: number
+        challengedTeamTies: number
+        challengedTeamRating: number
+        challengingTeamHeadToHeadWins: number
+        challengedTeamHeadToHeadWins: number
+        headToHeadTies: number
+        challengingTeamId: number
+        challengingTeamScore: number
+        challengedTeamId: number
+        challengedTeamScore: number
+        map: string
+        gameType: string
+        matchTime: Date
+        name: string
+        teamId: number
     }
 
     type CastDataRoster = PlayerTypes.GameStats & PlayerTypes.CTFStats & {

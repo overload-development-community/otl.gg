@@ -1,5 +1,5 @@
 /**
- * @typedef {import("./season.types").GetSeasonNumbersRecordset} SeasonDbTypes.GetSeasonNumbersRecordset
+ * @typedef {import("../../types/seasonDbTypes").GetSeasonNumbersRecordset} SeasonDbTypes.GetSeasonNumbersRecordset
  */
 
 const Cache = require("../cache"),

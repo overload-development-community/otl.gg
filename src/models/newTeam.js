@@ -1,7 +1,7 @@
 /**
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("./newTeam.types").NewTeamData} NewTeamTypes.NewTeamData
+ * @typedef {import("../../types/newTeamTypes").NewTeamData} NewTeamTypes.NewTeamData
  */
 
 const Db = require("../database/newTeam"),

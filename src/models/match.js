@@ -1,10 +1,10 @@
 /**
- * @typedef {import("./match.types").ConfirmedMatch} MatchTypes.ConfirmedMatch
- * @typedef {import("./match.types").ConfirmedMatchStatData} MatchTypes.ConfirmedMatchStatData
- * @typedef {import("./match.types").CurrentMatch} MatchTypes.CurrentMatch
- * @typedef {import("./match.types").PendingMatches} MatchTypes.PendingMatches
- * @typedef {import("./match.types").UpcomingMatch} MatchTypes.UpcomingMatch
- * @typedef {import("./team.types").TeamRecord} TeamTypes.TeamRecord
+ * @typedef {import("../../types/matchTypes").ConfirmedMatch} MatchTypes.ConfirmedMatch
+ * @typedef {import("../../types/matchTypes").ConfirmedMatchStatData} MatchTypes.ConfirmedMatchStatData
+ * @typedef {import("../../types/matchTypes").CurrentMatch} MatchTypes.CurrentMatch
+ * @typedef {import("../../types/matchTypes").PendingMatches} MatchTypes.PendingMatches
+ * @typedef {import("../../types/matchTypes").UpcomingMatch} MatchTypes.UpcomingMatch
+ * @typedef {import("../../types/teamTypes").TeamRecord} TeamTypes.TeamRecord
  */
 
 const Common = require("../../web/includes/common"),

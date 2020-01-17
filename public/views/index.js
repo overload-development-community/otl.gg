@@ -1,5 +1,5 @@
 /**
- * @typedef {import("express").Request} Express.Request
+ * @typedef {import("../../types/viewTypes").IndexViewParameters} ViewTypes.IndexViewParameters
  */
 
 //   ###              #                #   #    #
@@ -22,7 +22,7 @@ class IndexView {
     //  ###
     /**
      * Gets the rendered page template.
-     * @param {{head: string, html: string, protocol: string, host: string, originalUrl: string, year: number, version: string}} data The data to render the page with.
+     * @param {ViewTypes.IndexViewParameters} data The data to render the page with.
      * @returns {string} An HTML string of the page.
      */
     static get(data) {

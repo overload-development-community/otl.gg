@@ -1,6 +1,6 @@
 /**
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("./log.types").LogEntry} LogTypes.LogEntry
+ * @typedef {import("../../types/logTypes").LogEntry} LogTypes.LogEntry
  */
 
 const request = require("request-promise-native"),

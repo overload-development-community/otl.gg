@@ -1,6 +1,6 @@
 /**
- * @typedef {import("./event.types").GetUpcomingRecordsets} EventDbTypes.GetUpcomingRecordsets
- * @typedef {import("../models/event.types").EventData} EventTypes.EventData
+ * @typedef {import("../../types/eventDbTypes").GetUpcomingRecordsets} EventDbTypes.GetUpcomingRecordsets
+ * @typedef {import("../../types/eventTypes").EventData} EventTypes.EventData
  */
 
 const Db = require("node-database"),

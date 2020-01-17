@@ -89,7 +89,7 @@ declare namespace PlayerTypes {
         timezone: string
     }
 
-    type GameLogData = {
+    type GameLog = {
         player: {
             name: string
             teamId: number
@@ -115,6 +115,9 @@ declare namespace PlayerTypes {
             map: string
             gameType: string
         })[]
+    }
+
+    type GameLogData = GameLog & {
         seasons: number[]
     }
 

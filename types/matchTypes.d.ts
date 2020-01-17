@@ -1,5 +1,5 @@
-import PlayerTypes from "./player.types"
-import TeamTypes from "./team.types"
+import PlayerTypes from "./playerTypes"
+import TeamTypes from "./teamTypes"
 
 declare namespace MatchTypes {
     type ConfirmedMatch = {
@@ -91,22 +91,20 @@ declare namespace MatchTypes {
         previousStandings: TeamTypes.TeamRecord[]
     }
 
+    type PendingMatch = {
+        challengeId: number
+        title: string
+        challengingTeam: TeamTypes.TeamRecord
+        challengedTeam: TeamTypes.TeamRecord
+        matchTime: Date
+        map: string
+        twitchName: string
+        timeRemaining: number
+        gameType: string
+    }
+
     type PendingMatches = {
-        matches: {
-            challengeId: number
-            title: string
-            challengingTeam: TeamTypes.TeamRecord & {
-                color: string
-            }
-            challengedTeam: TeamTypes.TeamRecord & {
-                color: string
-            }
-            matchTime: Date
-            map: string
-            twitchName: string
-            timeRemaining: number
-            gameType: string
-        }[]
+        matches: PendingMatch[]
         completed: number
     }
 

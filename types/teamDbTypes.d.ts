@@ -1,4 +1,4 @@
-import PlayerDbTypes from "./player.types"
+import PlayerDbTypes from "./playerDbTypes"
 
 declare namespace TeamDbTypes {
     type AddPilotRecordsets = {

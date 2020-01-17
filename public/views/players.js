@@ -1,7 +1,5 @@
 /**
- * @typedef {import("../../src/models/player.types").FreeAgent} PlayerTypes.FreeAgent
- * @typedef {import("../../src/models/player.types").SeasonStats} PlayerTypes.SeasonStats
- * @typedef {import("../../web/includes/teams")} Teams
+ * @typedef {import("../../types/viewTypes").PlayersViewParameters} ViewTypes.PlayersViewParameters
  */
 
 //  ####    ##                                       #   #    #
@@ -26,7 +24,7 @@ class PlayersView {
     //  ###
     /**
      * Gets the players template.
-     * @param {{freeAgents: PlayerTypes.FreeAgent[], seasonList: number[], stats: PlayerTypes.SeasonStats[], averages: {captures: number, pickups: number, carrierKills: number, returns: number, kda: number, kills: number, assists: number, deaths: number, damagePerGame: number, damagePerDeath: number}, season: number, postseason: boolean, gameType: string, gameTypeName: string, all: boolean, teams: Teams}} data The players data.
+     * @param {ViewTypes.PlayersViewParameters} data The players data.
      * @returns {string} An HTML string of the players.
      */
     static get(data) {

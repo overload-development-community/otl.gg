@@ -1,5 +1,5 @@
 /**
- * @typedef {import("./challenge.types").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
+ * @typedef {import("../../types/challengeTypes").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
  * @typedef {import("discord.js").CategoryChannel} DiscordJs.CategoryChannel
  * @typedef {import("discord.js").ColorResolvable} DiscordJs.ColorResolvable
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
@@ -8,11 +8,11 @@
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("./newTeam.js")} NewTeam
- * @typedef {import("./team.types").GameLog} TeamTypes.GameLog
- * @typedef {import("./team.types").Standing} TeamTypes.Standing
- * @typedef {import("./team.types").TeamData} TeamTypes.TeamData
- * @typedef {import("./team.types").TeamInfo} TeamTypes.TeamInfo
- * @typedef {import("./team.types").TeamStats} TeamTypes.TeamStats
+ * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
+ * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
+ * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
+ * @typedef {import("../../types/teamTypes").TeamInfo} TeamTypes.TeamInfo
+ * @typedef {import("../../types/teamTypes").TeamStats} TeamTypes.TeamStats
  */
 
 const Db = require("../database/team"),

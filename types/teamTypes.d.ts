@@ -1,6 +1,6 @@
 import DiscordJs from "discord.js"
-import PlayerTypes from "./player.types"
-import Team from "./team"
+import PlayerTypes from "./playerTypes"
+import Team from "../src/models/team"
 
 declare namespace TeamTypes {
     type GameLog = PlayerTypes.GameStats & PlayerTypes.CTFStats & {

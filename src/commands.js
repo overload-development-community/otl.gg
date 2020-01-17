@@ -1,14 +1,14 @@
 /**
- * @typedef {import("./models/challenge.types").GamePlayerStats} ChallengeTypes.GamePlayerStats
- * @typedef {import("./models/challenge.types").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
+ * @typedef {import("../types/challengeTypes").GamePlayerStats} ChallengeTypes.GamePlayerStats
+ * @typedef {import("../types/challengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {import("./models/map.types").MapData} MapTypes.MapData
- * @typedef {import("./models/player.types").PilotWithConfirmation} PlayerTypes.PilotWithConfirmation
- * @typedef {import("./models/player.types").UserOrGuildMember} PlayerTypes.UserOrGuildMember
+ * @typedef {import("../types/mapTypes").MapData} MapTypes.MapData
+ * @typedef {import("../types/playerTypes").PilotWithConfirmation} PlayerTypes.PilotWithConfirmation
+ * @typedef {import("../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  * @typedef {import("./models/newteam")} NewTeam
- * @typedef {import("./models/team.types").TeamWithConfirmation} TeamTypes.TeamWithConfirmation
+ * @typedef {import("../types/teamTypes").TeamWithConfirmation} TeamTypes.TeamWithConfirmation
  */
 
 const tz = require("timezone-js"),

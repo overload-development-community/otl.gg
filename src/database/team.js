@@ -1,37 +1,37 @@
 /**
  * @typedef {import("../models/challenge")} Challenge
- * @typedef {import("../models/challenge.types").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
- * @typedef {import("./index.types").EmptyRecordsets} DbTypes.EmptyRecordsets
- * @typedef {import("./index.types").Parameters} DbTypes.Parameters
+ * @typedef {import("../../types/challengeTypes").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
+ * @typedef {import("../../types/dbTypes").EmptyRecordsets} DbTypes.EmptyRecordsets
+ * @typedef {import("../../types/dbTypes").Parameters} DbTypes.Parameters
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("../models/map.types").MapGameType} MapTypes.MapGameType
+ * @typedef {import("../../types/mapTypes").MapGameType} MapTypes.MapGameType
  * @typedef {import("../models/newTeam")} NewTeam
  * @typedef {import("../models/team")} Team
- * @typedef {import("./team.types").AddPilotRecordsets} TeamDbTypes.AddPilotRecordsets
- * @typedef {import("./team.types").CreateRecordsets} TeamDbTypes.CreateRecordsets
- * @typedef {import("./team.types").DisbandRecordsets} TeamDbTypes.DisbandRecordsets
- * @typedef {import("./team.types").GetByIdRecordsets} TeamDbTypes.GetByIdRecordsets
- * @typedef {import("./team.types").GetByNameOrTagRecordsets} TeamDbTypes.GetByNameOrTagRecordsets
- * @typedef {import("./team.types").GetByPilotRecordsets} TeamDbTypes.GetByPilotRecordsets
- * @typedef {import("./team.types").GetClockedChallengeCountRecordsets} TeamDbTypes.GetClockedChallengeCountRecordsets
- * @typedef {import("./team.types").GetDataRecordsets} TeamDbTypes.GetDataRecordsets
- * @typedef {import("./team.types").GetGameLogRecordsets} TeamDbTypes.GetGameLogRecordsets
- * @typedef {import("./team.types").GetHomeMapsRecordsets} TeamDbTypes.GetHomeMapsRecordsets
- * @typedef {import("./team.types").GetHomeMapsByTypeRecordsets} TeamDbTypes.GetHomeMapsByTypeRecordsets
- * @typedef {import("./team.types").GetInfoRecordsets} TeamDbTypes.GetInfoRecordsets
- * @typedef {import("./team.types").GetNextClockDateRecordsets} TeamDbTypes.GetNextClockDateRecordsets
- * @typedef {import("./team.types").GetPilotAndInvitedCountRecordsets} TeamDbTypes.GetPilotAndInvitedCountRecordsets
- * @typedef {import("./team.types").GetPilotCountRecordsets} TeamDbTypes.GetPilotCountRecordsets
- * @typedef {import("./team.types").GetSeasonStandingsRecordsets} TeamDbTypes.GetSeasonStandingsRecordsets
- * @typedef {import("./team.types").GetTimezoneRecordsets} TeamDbTypes.GetTimezoneRecordsets
- * @typedef {import("./team.types").HasClockedTeamThisSeasonRecordsets} TeamDbTypes.HasClockedTeamThisSeasonRecordsets
- * @typedef {import("./team.types").ReinstateRecordsets} TeamDbTypes.ReinstateRecordsets
- * @typedef {import("./team.types").RemovePilotRecordsets} TeamDbTypes.RemovePilotRecordsets
- * @typedef {import("../models/team.types").GameLog} TeamTypes.GameLog
- * @typedef {import("../models/team.types").Standing} TeamTypes.Standing
- * @typedef {import("../models/team.types").TeamData} TeamTypes.TeamData
- * @typedef {import("../models/team.types").TeamInfo} TeamTypes.TeamInfo
- * @typedef {import("../models/team.types").TeamStats} TeamTypes.TeamStats
+ * @typedef {import("../../types/teamDbTypes").AddPilotRecordsets} TeamDbTypes.AddPilotRecordsets
+ * @typedef {import("../../types/teamDbTypes").CreateRecordsets} TeamDbTypes.CreateRecordsets
+ * @typedef {import("../../types/teamDbTypes").DisbandRecordsets} TeamDbTypes.DisbandRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetByIdRecordsets} TeamDbTypes.GetByIdRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetByNameOrTagRecordsets} TeamDbTypes.GetByNameOrTagRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetByPilotRecordsets} TeamDbTypes.GetByPilotRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetClockedChallengeCountRecordsets} TeamDbTypes.GetClockedChallengeCountRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetDataRecordsets} TeamDbTypes.GetDataRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetGameLogRecordsets} TeamDbTypes.GetGameLogRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetHomeMapsRecordsets} TeamDbTypes.GetHomeMapsRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetHomeMapsByTypeRecordsets} TeamDbTypes.GetHomeMapsByTypeRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetInfoRecordsets} TeamDbTypes.GetInfoRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetNextClockDateRecordsets} TeamDbTypes.GetNextClockDateRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetPilotAndInvitedCountRecordsets} TeamDbTypes.GetPilotAndInvitedCountRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetPilotCountRecordsets} TeamDbTypes.GetPilotCountRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetSeasonStandingsRecordsets} TeamDbTypes.GetSeasonStandingsRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetTimezoneRecordsets} TeamDbTypes.GetTimezoneRecordsets
+ * @typedef {import("../../types/teamDbTypes").HasClockedTeamThisSeasonRecordsets} TeamDbTypes.HasClockedTeamThisSeasonRecordsets
+ * @typedef {import("../../types/teamDbTypes").ReinstateRecordsets} TeamDbTypes.ReinstateRecordsets
+ * @typedef {import("../../types/teamDbTypes").RemovePilotRecordsets} TeamDbTypes.RemovePilotRecordsets
+ * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
+ * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
+ * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
+ * @typedef {import("../../types/teamTypes").TeamInfo} TeamTypes.TeamInfo
+ * @typedef {import("../../types/teamTypes").TeamStats} TeamTypes.TeamStats
  */
 
 const Db = require("node-database"),

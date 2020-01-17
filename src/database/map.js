@@ -1,7 +1,7 @@
 /**
- * @typedef {import("./map.types").GetPlayedBySeasonRecordsets} MapDbTypes.GetPlayedBySeasonRecordsets
- * @typedef {import("./map.types").ValidateRecordsets} MapDbTypes.ValidateRecordsets
- * @typedef {import("../models/map.types").MapData} MapTypes.MapData
+ * @typedef {import("../../types/mapDbTypes").GetPlayedBySeasonRecordsets} MapDbTypes.GetPlayedBySeasonRecordsets
+ * @typedef {import("../../types/mapDbTypes").ValidateRecordsets} MapDbTypes.ValidateRecordsets
+ * @typedef {import("../../types/mapTypes").MapData} MapTypes.MapData
  */
 
 const Db = require("node-database"),

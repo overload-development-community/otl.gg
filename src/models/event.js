@@ -1,5 +1,5 @@
 /**
- * @typedef {import("../models/event.types").EventData} EventTypes.EventData
+ * @typedef {import("../../types/eventTypes").EventData} EventTypes.EventData
  */
 
 const Db = require("../database/event"),

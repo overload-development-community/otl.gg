@@ -1,6 +1,5 @@
 /**
- * @typedef {import("../../src/models/challenge")} Challenge
- * @typedef {import("../../src/models/challenge.types").CastDataRoster} ChallengeTypes.CastDataRoster
+ * @typedef {import("../../types/viewTypes").CastViewParameters} ViewTypes.CastViewParameters
  */
 
 //   ###                  #     #   #    #
@@ -23,7 +22,7 @@ class CastView {
     //  ###
     /**
      * Gets the rendered cast template.
-     * @param {{challenge: Challenge, challengingTeamRoster: ChallengeTypes.CastDataRoster[], challengedTeamRoster: ChallengeTypes.CastDataRoster[], castData: {challengingTeamWins: number, challengingTeamLosses: number, challengingTeamTies: number, challengingTeamRating: number, challengedTeamWins: number, challengedTeamLosses: number, challengedTeamTies: number, challengedTeamRating: number, challengingTeamHeadToHeadWins: number, challengedTeamHeadToHeadWins: number, headToHeadTies: number, challengingTeamId: number, challengingTeamScore: number, challengedTeamId: number, challengedTeamScore: number, map: string, gameType: string, matchTime: Date, name: string, teamId: number, captures: number, pickups: number, carrierKills: number, returns: number,kills: number, assists: number, deaths: number, damage: number}}} data The cast data.
+     * @param {ViewTypes.CastViewParameters} data The cast data.
      * @returns {string} An HTML string of the cast.
      */
     static get(data) {

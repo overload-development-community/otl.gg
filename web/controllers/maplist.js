@@ -1,11 +1,11 @@
-const Common = require("../includes/common"),
-    Map = require("../../src/models/map"),
-    MapListView = require("../../public/views/maplist")
-
 /**
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
  */
+
+const Common = require("../includes/common"),
+    Map = require("../../src/models/map"),
+    MapListView = require("../../public/views/maplist");
 
 //  #   #                #        #            #
 //  #   #                #                     #

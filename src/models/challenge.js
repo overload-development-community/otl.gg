@@ -1,17 +1,17 @@
 /**
- * @typedef {import("./challenge.types").CastData} ChallengeTypes.CastData
- * @typedef {import("./challenge.types").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
- * @typedef {import("./challenge.types").CreateData} ChallengeTypes.CreateData
- * @typedef {import("./challenge.types").GameBoxScore} ChallengeTypes.GameBoxScore
- * @typedef {import("./challenge.types").GamePlayerStats} ChallengeTypes.GamePlayerStats
- * @typedef {import("./challenge.types").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
- * @typedef {import("./challenge.types").PlayersByTeam} ChallengeTypes.PlayersByTeam
- * @typedef {import("./challenge.types").StreamerData} ChallengeTypes.StreamerData
- * @typedef {import("./challenge.types").TeamDetailsData} ChallengeTypes.TeamDetailsData
+ * @typedef {import("../../types/challengeTypes").CastData} ChallengeTypes.CastData
+ * @typedef {import("../../types/challengeTypes").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
+ * @typedef {import("../../types/challengeTypes").CreateData} ChallengeTypes.CreateData
+ * @typedef {import("../../types/challengeTypes").GameBoxScore} ChallengeTypes.GameBoxScore
+ * @typedef {import("../../types/challengeTypes").GamePlayerStats} ChallengeTypes.GamePlayerStats
+ * @typedef {import("../../types/challengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
+ * @typedef {import("../../types/challengeTypes").PlayersByTeam} ChallengeTypes.PlayersByTeam
+ * @typedef {import("../../types/challengeTypes").StreamerData} ChallengeTypes.StreamerData
+ * @typedef {import("../../types/challengeTypes").TeamDetailsData} ChallengeTypes.TeamDetailsData
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
- * @typedef {import("./player.types").UserOrGuildMember} PlayerTypes.UserOrGuildMember
+ * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
 const Cache = require("../cache"),
