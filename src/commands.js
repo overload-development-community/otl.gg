@@ -4041,14 +4041,14 @@ class Commands {
             if (stats.ta && stats.ta.games > 0) {
                 fields.push({
                     name: "Team Anarchy",
-                    value: `${stats.ta.games} Games, ${((stats.ta.kills + stats.ta.assists) / (stats.ta.deaths < 1 ? 1 : stats.ta.deaths)).toFixed(3)} KDA, ${stats.ta.kills} Kills, ${stats.ta.assists} Assists, ${stats.ta.deaths} Deaths${stats.ta.damage ? `, ${stats.ta.damage.toFixed(0)} Damage, ${(stats.ta.damage / Math.max(stats.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
+                    value: `${stats.ta.games} Game${stats.ta.games === 1 ? "" : "s"}, ${((stats.ta.kills + stats.ta.assists) / (stats.ta.deaths < 1 ? 1 : stats.ta.deaths)).toFixed(3)} KDA, ${stats.ta.kills} Kill${stats.ta.kills === 1 ? "" : "s"}, ${stats.ta.assists} Assist${stats.ta.assists === 1 ? "" : "s"}, ${stats.ta.deaths} Death${stats.ta.deaths === 1 ? "" : "s"}${stats.ta.damage ? `, ${stats.ta.damage.toFixed(0)} Damage, ${(stats.ta.damage / Math.max(stats.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
                 });
             }
 
             if (stats.ctf && stats.ctf.games > 0) {
                 fields.push({
                     name: "Capture the Flag",
-                    value: `${stats.ctf.games} Games, ${stats.ctf.captures} Captures, ${stats.ctf.pickups} Pickups, ${stats.ctf.carrierKills} Carrier Kills, ${stats.ctf.returns} Returns, ${((stats.ctf.kills + stats.ctf.assists) / (stats.ctf.deaths < 1 ? 1 : stats.ctf.deaths)).toFixed(3)} KDA${stats.ctf.damage ? `, ${stats.ctf.damage.toFixed(0)} Damage` : ""}`
+                    value: `${stats.ctf.games} Game${stats.ctf.games === 1 ? "" : "s"}, ${stats.ctf.captures} Capture${stats.ctf.captures === 1 ? "" : "s"}, ${stats.ctf.pickups} Pickup${stats.ctf.pickups === 1 ? "" : "s"}, ${stats.ctf.carrierKills} Carrier Kill${stats.ctf.carrierKills === 1 ? "" : "s"}, ${stats.ctf.returns} Return${stats.ctf.returns === 1 ? "" : "s"}, ${((stats.ctf.kills + stats.ctf.assists) / (stats.ctf.deaths < 1 ? 1 : stats.ctf.deaths)).toFixed(3)} KDA${stats.ctf.damage ? `, ${stats.ctf.damage.toFixed(0)} Damage` : ""}`
                 });
             }
 
