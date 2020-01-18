@@ -1887,6 +1887,8 @@ class PlayerDb {
                         FROM tblStat s3
                         INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
                         WHERE (@season = 0 OR c3.Season = @season)
+                            AND c3.Postseason = @postseason
+                            AND c3.GameType = @gameType
                         GROUP BY s3.TeamId
                     ) g2 ON r2.TeamId = g2.TeamId
                     WHERE (@season = 0 OR c2.Season = @season)
@@ -1899,8 +1901,8 @@ class PlayerDb {
             LEFT OUTER JOIN (
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
                 FROM tblDamage
-                GROUP BY ChallengeId, PlayerId
                 WHERE TeamId <> OpponentTeamId
+                GROUP BY ChallengeId, PlayerId
             ) d ON c.ChallengeId = d.ChallengeId AND p.PlayerId = d.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND (@season = 0 OR c.Season = @season)
@@ -2139,12 +2141,16 @@ class PlayerDb {
                     FROM tblStat s3
                     INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
                     WHERE c3.Season = @season
+                        AND c3.Postseason = 0
+                        AND c3.GameType = 'TA'
                 ) r2 ON s2.PlayerId = r2.PlayerId AND r2.Row = 1
                 INNER JOIN (
                     SELECT COUNT(DISTINCT s3.ChallengeId) Games, s3.TeamId
                     FROM tblStat s3
                     INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
                     WHERE c3.Season = @season
+                        AND c3.Postseason = 0
+                        AND c3.GameType = 'TA'
                     GROUP BY s3.TeamId
                 ) g2 ON r2.TeamId = g2.TeamId
                 WHERE c2.Season = @season
@@ -2152,6 +2158,7 @@ class PlayerDb {
             ) g ON p.PlayerId = g.PlayerId
             WHERE c.MatchTime IS NOT NULL
                 AND c.Season = @season
+                AND c.Postseason = 0
                 AND c.GameType = 'TA'
                 AND g.PctPlayed >= 0.1
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
