@@ -1,6 +1,7 @@
 const compression = require("compression"),
     express = require("express"),
-    minify = require("express-minify"),
+    expressMinify = require("express-minify"),
+    minify = require("./src/minify"),
     morgan = require("morgan"),
     morganExtensions = require("./src/extensions/morgan.extensions"),
     tz = require("timezone-js"),
@@ -53,7 +54,7 @@ const compression = require("compression"),
     // Initialize middleware stack.
     app.use(compression());
     app.use(morgan(":colorstatus \x1b[30m\x1b[0m:method\x1b[0m :url\x1b[30m\x1b[0m:newline    Date :date[iso]    IP :req[ip]    Time :colorresponse ms"));
-    app.use(minify());
+    app.use(expressMinify());
 
     // Web server routes.
     app.use(express.static("public"));
@@ -61,6 +62,9 @@ const compression = require("compression"),
     app.get("/discord", (req, res) => {
         res.redirect("http://ronc.li/otl-discord");
     });
+
+    app.get("/css", minify.cssHandler);
+    app.get("/js", minify.jsHandler);
 
     app.use("/", router);
     app.all("*", (req, res) => {

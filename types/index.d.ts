@@ -1,5 +1,5 @@
-import NewTeam from "./src/models/newTeam"
-import Team from "./src/models/team"
+import NewTeam from "../src/models/newTeam"
+import Team from "../src/models/team"
 
 declare module "discord.js" {
     /**

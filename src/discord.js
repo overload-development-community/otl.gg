@@ -43,7 +43,7 @@ let scheduledMatchesChannel;
 /** @type {DiscordJs.TextChannel} */
 let vodsChannel;
 
-require("../types/discordJs.GuildMember.extensions");
+require("./extensions/discordJs.GuildMember.extensions");
 require("./extensions/discordJs.User.extensions");
 
 //  ####     #                                    #
