@@ -1,9 +1,11 @@
 const csso = require("csso"),
     fs = require("fs").promises,
-    Log = require("./logging/log"),
     path = require("path"),
-    settings = require("../settings").minify,
-    terser = require("terser");
+    terser = require("terser"),
+
+    Cache = require("./cache"),
+    Log = require("./logging/log"),
+    settings = require("../settings");
 
 const nameCache = {};
 
@@ -43,6 +45,18 @@ class Minify {
             return next();
         }
 
+        const key = `${settings.redisPrefix}:minify:${req.query.files}`;
+
+        let cache;
+        if (settings.minify.cache) {
+            cache = await Cache.get(key);
+
+            if (cache) {
+                res.status(200).send(cache);
+                return void 0;
+            }
+        }
+
         /** @type {string[]} */
         const files = req.query.files.split(",");
 
@@ -63,8 +77,11 @@ class Minify {
 
             const output = csso.minify(str);
 
-            res.status(200).send(output.css);
+            if (settings.minify.cache) {
+                Cache.add(key, output.css, new Date(new Date().getTime() + 86400000));
+            }
 
+            res.status(200).send(output.css);
             return void 0;
         } catch (err) {
             return next(err);
@@ -88,6 +105,18 @@ class Minify {
     static async jsHandler(req, res, next) {
         if (!req.query.files || req.query.files === "") {
             return next();
+        }
+
+        const key = `${settings.redisPrefix}:minify:${req.query.files}`;
+
+        let cache;
+        if (settings.minify.cache) {
+            cache = await Cache.get(key);
+
+            if (cache) {
+                res.status(200).send(cache);
+                return void 0;
+            }
         }
 
         /** @type {string[]} */
@@ -122,8 +151,11 @@ class Minify {
                 return void 0;
             }
 
-            res.status(200).send(output.code);
+            if (settings.minify.cache) {
+                Cache.add(key, output.code, new Date(new Date().getTime() + 86400000));
+            }
 
+            res.status(200).send(output.code);
             return void 0;
         } catch (err) {
             return next(err);
@@ -143,7 +175,7 @@ class Minify {
      * @returns {string} The combined filename.
      */
     static combine(files, type) {
-        if (settings.enabled) {
+        if (settings.minify.enabled) {
             switch (type) {
                 case "js":
                     return `<script src="/js?files=${files.join(",")}"></script>`;
