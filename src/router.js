@@ -1,6 +1,7 @@
 /**
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
+ * @typedef {import("express").Router} Express.Router
  */
 
 const fs = require("fs"),
@@ -93,7 +94,7 @@ class Router {
     //  ###
     /**
      * Gets the router to use for the website.
-     * @returns {Promise<express.Router>} A promise that resolves with the router to use for the website.
+     * @returns {Promise<Express.Router>} A promise that resolves with the router to use for the website.
      */
     static async getRouter() {
         await Router.getClasses(`${__dirname}/../web`);

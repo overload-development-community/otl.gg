@@ -32,9 +32,8 @@ class NotFound {
      */
     static get(req, res) {
         res.status(404).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/error.css" />
-            `,
+            "",
+            {css: ["/css/error.css"]},
             NotFoundView.get({message: "This page does not exist."}),
             req
         ));

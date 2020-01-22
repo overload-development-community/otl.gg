@@ -40,12 +40,8 @@ class Matches {
             completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
 
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/matches.css" />
-                <script src="/views/matches/match.js"></script>
-                <script src="/js/countdown.js"></script>
-                <script src="/js/matches.js"></script>
-            `,
+            "",
+            {css: ["/css/matches.css"], js: ["/views/matches/match.js", "/js/countdown.js", "/js/matches.js"]},
             MatchesView.get({
                 season,
                 seasonList,

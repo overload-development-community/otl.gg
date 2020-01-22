@@ -62,17 +62,15 @@ class TeamPage {
             const timezone = await pageTeam.getTimezone();
 
             res.status(200).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/team.css" />
-                `,
+                "",
+                {css: ["/css/team.css"]},
                 TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
                 req
             ));
         } else {
             res.status(404).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/error.css" />
-                `,
+                "",
+                {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This team does not exist."}),
                 req
             ));

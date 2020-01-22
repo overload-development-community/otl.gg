@@ -1,13 +1,13 @@
 const csso = require("csso"),
     fs = require("fs").promises,
+    Log = require("./logging/log"),
     path = require("path"),
-    settings = require("../settings").uglify,
+    settings = require("../settings").minify,
     terser = require("terser");
 
 const nameCache = {};
 
 /**
- * @typedef {import("express-serve-static-core").ParamsDictionary} Express.ParamsDictionary
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
  */
@@ -39,8 +39,8 @@ class Minify {
      * @returns {Promise<void>} A promise that resolves when the handler has been run.
      */
     static async cssHandler(req, res, next) {
-        if (!req.query.file || req.query.file === "") {
-            res.status(400);
+        if (!req.query.files || req.query.files === "") {
+            return next();
         }
 
         /** @type {string[]} */
@@ -49,8 +49,16 @@ class Minify {
         try {
             let str = "";
 
-            for (const file of files) {
-                str = `${str}${await fs.readFile(path.join(__dirname, "..\\public", file), "utf8")}`;
+            try {
+                for (const file of files) {
+                    str = `${str}${await fs.readFile(path.join(__dirname, "..", "public", file), "utf8")}`;
+                }
+            } catch (err) {
+                if (err.code === "ENOENT") {
+                    return next();
+                }
+
+                return next(err);
             }
 
             const output = csso.minify(str);
@@ -59,7 +67,7 @@ class Minify {
 
             return void 0;
         } catch (err) {
-            return next();
+            return next(err);
         }
     }
 
@@ -78,8 +86,8 @@ class Minify {
      * @returns {Promise<void>} A promise that resolves when the handler has been run.
      */
     static async jsHandler(req, res, next) {
-        if (!req.query.file || req.query.file === "") {
-            res.status(400);
+        if (!req.query.files || req.query.files === "") {
+            return next();
         }
 
         /** @type {string[]} */
@@ -87,19 +95,30 @@ class Minify {
 
         try {
             /** @type {Object<string, string>} */
-            const code = await files.reduce(async (prev, cur) => {
-                const obj = await prev;
+            let code;
 
-                obj[cur] = await fs.readFile(path.join(__dirname, "..\\public", cur), "utf8");
+            try {
+                code = await files.reduce(async (prev, cur) => {
+                    const obj = await prev;
 
-                return obj;
-            }, Promise.resolve({}));
+                    obj[cur] = await fs.readFile(path.join(__dirname, "..", "public", cur), "utf8");
+
+                    return obj;
+                }, Promise.resolve({}));
+            } catch (err) {
+                if (err.code === "ENOENT") {
+                    return next();
+                }
+
+                return next(err);
+            }
 
             const output = terser.minify(code, {nameCache});
 
             if (output.error) {
-                // TODO: Log error
-                res.status(500).send(output.error);
+                Log.exception("An uglify-js error occurred.", output.error);
+
+                next(output.error);
                 return void 0;
             }
 
@@ -107,7 +126,7 @@ class Minify {
 
             return void 0;
         } catch (err) {
-            return next();
+            return next(err);
         }
     }
 

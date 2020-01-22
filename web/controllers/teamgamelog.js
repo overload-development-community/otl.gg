@@ -49,17 +49,15 @@ class TeamGameLogPage {
                 teams = new Teams();
 
             res.status(200).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/team.css" />
-                `,
+                "",
+                {css: ["/css/team.css"]},
                 TeamGameLogView.get({pageTeam, seasonList, matches, season, postseason, teams}),
                 req
             ));
         } else {
             res.status(404).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/error.css" />
-                `,
+                "",
+                {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This team does not exist."}),
                 req
             ));

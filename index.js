@@ -1,3 +1,7 @@
+/**
+ * @typedef {express.Router} Express.Router
+ */
+
 const compression = require("compression"),
     express = require("express"),
     expressMinify = require("express-minify"),
@@ -27,6 +31,7 @@ const compression = require("compression"),
 (async function startup() {
     Log.log("Starting up...");
 
+    /** @type {Express.Router} */
     let router;
     try {
         router = await Router.getRouter();
@@ -56,21 +61,41 @@ const compression = require("compression"),
     app.use(morgan(":colorstatus \x1b[30m\x1b[0m:method\x1b[0m :url\x1b[30m\x1b[0m:newline    Date :date[iso]    IP :req[ip]    Time :colorresponse ms"));
     app.use(expressMinify());
 
-    // Web server routes.
+    // Setup public redirects.
     app.use(express.static("public"));
 
+    // Setup Discord redirect.
     app.get("/discord", (req, res) => {
         res.redirect("http://ronc.li/otl-discord");
     });
 
+    // Setup JS/CSS handlers.
     app.get("/css", minify.cssHandler);
     app.get("/js", minify.jsHandler);
 
-    app.use("/", router);
-    app.all("*", (req, res) => {
+    // 500 is an internal route, 404 it if it's requested directly.
+    app.use("/500", (req, res, next) => {
         req.method = "GET";
         req.url = "/404";
-        router(req, res);
+        router(req, res, next);
+    });
+
+    // Setup dynamic routing.
+    app.use("/", router);
+
+    // 404 remaining pages.
+    app.use((req, res, next) => {
+        req.method = "GET";
+        req.url = "/404";
+        router(req, res, next);
+    });
+
+    // 500 errors.
+    app.use((err, req, res, next) => {
+        Log.exception("Unhandled error has occurred.", err);
+        req.method = "GET";
+        req.url = "/500";
+        router(req, res, next);
     });
 
     // Startup web server.

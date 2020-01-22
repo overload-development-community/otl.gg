@@ -32,9 +32,8 @@ class MethodNotAllowed {
      */
     static get(req, res) {
         res.status(405).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/error.css" />
-            `,
+            "",
+            {css: ["/css/error.css"]},
             MethodNotAllowedView.get({message: "This method not allowed."}),
             req
         ));

@@ -32,15 +32,16 @@ class ServerError {
      */
     static get(req, res) {
         res.status(500).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/error.css" />
-            `,
+            "",
+            {css: ["/css/error.css"]},
             ServerErrorView.get(),
             req
         ));
     }
 }
 
-ServerError.route = {};
+ServerError.route = {
+    path: "/500"
+};
 
 module.exports = ServerError;

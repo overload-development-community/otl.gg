@@ -61,9 +61,8 @@ class Players {
             teams = new Teams();
 
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/players.css" />
-            `,
+            "",
+            {css: ["/css/players.css"]},
             PlayersView.get({
                 freeAgents,
                 seasonList,

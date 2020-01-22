@@ -32,9 +32,8 @@ class About {
      */
     static get(req, res) {
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/about.css" />
-            `,
+            "",
+            {css: ["/css/about.css"]},
             AboutView.get(),
             req
         ));

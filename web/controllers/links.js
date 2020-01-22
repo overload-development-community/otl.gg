@@ -32,9 +32,8 @@ class Links {
      */
     static get(req, res) {
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/links.css" />
-            `,
+            "",
+            {css: ["/css/links.css"]},
             LinksView.get(),
             req
         ));

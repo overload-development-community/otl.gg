@@ -37,9 +37,8 @@ class MapList {
         const maplist = await Map.getAllAllowed();
 
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/maplist.css" />
-            `,
+            "",
+            {css: ["/css/maplist.css"]},
             MapListView.get(maplist),
             req
         ));

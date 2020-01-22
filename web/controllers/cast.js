@@ -55,9 +55,8 @@ class Cast {
             }), settings.htmlMinifier));
         } else {
             res.status(404).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/error.css" />
-                `,
+                "",
+                {css: ["/css/error.css"]},
                 NotFoundView.get({message: "There is no scheduled match with this Match ID."}),
                 req
             ));

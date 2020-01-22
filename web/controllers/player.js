@@ -84,9 +84,8 @@ class Player {
             };
 
             res.status(200).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/player.css" />
-                `,
+                "",
+                {css: ["/css/player.css"]},
                 PlayerView.get({
                     playerId,
                     player: career.player,
@@ -106,9 +105,8 @@ class Player {
             ));
         } else {
             res.status(404).send(Common.page(
-                /* html */`
-                    <link rel="stylesheet" href="/css/error.css" />
-                `,
+                "",
+                {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This player does not exist."}),
                 req
             ));

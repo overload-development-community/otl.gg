@@ -51,10 +51,8 @@ class Match {
                 }
 
                 res.status(200).send(Common.page(
-                    /* html */`
-                        <link rel="stylesheet" href="/css/match.css" />
-                        <script src="/js/match.js"></script>
-                    `,
+                    "",
+                    {css: ["/css/match.css"], js: ["/js/match/js"]},
                     MatchView.get({
                         challenge,
                         details,
@@ -69,9 +67,8 @@ class Match {
         }
 
         res.status(404).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/error.css" />
-            `,
+            "",
+            {css: ["/css/error.css"]},
             NotFoundView.get({message: "This match does not exist."}),
             req
         ));

@@ -40,9 +40,6 @@ class IndexView {
                     <meta name="twitter:card" content="summary" />
                     <meta name="twitter:creator" content="@roncli" />
                     ${IndexView.Common.favIcon()}
-                    <link rel="stylesheet" href="/css/reset.css" />
-                    <link rel="stylesheet" href="/css/common.css" />
-                    <script src="/js/common.js"></script>
                     ${head}
                 </head>
                 <body>

@@ -45,9 +45,8 @@ class Records {
             teams = new Teams();
 
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/records.css" />
-            `,
+            "",
+            {css: ["/css/records.css"]},
             RecordsView.get({
                 seasonList,
                 records,

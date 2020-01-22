@@ -66,9 +66,8 @@ class Home {
         });
 
         res.status(200).send(Common.page(
-            /* html */`
-                <link rel="stylesheet" href="/css/home.css" />
-            `,
+            "",
+            {css: ["/css/home.css"]},
             HomeView.get({
                 standings,
                 stats,
