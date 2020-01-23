@@ -1153,6 +1153,7 @@ class ChallengeDb {
             WHERE s.ChallengeId = @challengeId
                 AND s.TeamId = @teamId
                 AND d.TeamId <> d.OpponentTeamId
+            GROUP BY p.DiscordId, p.Name, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             teamId: {type: Db.INT, value: team.id}

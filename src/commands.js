@@ -4358,7 +4358,7 @@ class Commands {
         }
 
         const {groups: {teamTag1, teamTag2, gameType}} = createMatchParse.exec(message),
-            gameTypeUpper = gameType ? gameType.toUpperCase() : void 0;
+            gameTypeUpper = gameType ? gameType.toUpperCase() : "TA";
 
         const team1 = await Commands.checkTeamExists(teamTag1, member, channel);
 
