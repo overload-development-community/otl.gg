@@ -63,7 +63,7 @@ class PlayerGameLogView {
                     ` : ""}</div>
                     <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
                     <div class="map">${m.gameType} ${m.map}</div>
-                    <div>
+                    <div class="stats">
                         ${m.gameType === "TA" ? /* html */`
                             <span class="numeric">${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(3)}</span> KDA (<span class="numeric">${m.kills}</span> K, <span class="numeric">${m.assists}</span> A, <span class="numeric">${m.deaths}</span> D)${m.damage > 0 ? /* html */`, <span class="numeric">${m.damage.toFixed(0)}</span> Dmg (<span class="numeric">${(m.damage / m.deaths).toFixed(2)}</span> DmgPD)` : ""}
                         ` : ""}

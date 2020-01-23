@@ -113,15 +113,15 @@ class MatchView {
                         <div class="header">Team</div>
                         <div class="header name">Name</div>
                         ${challenge.details.gameType === "CTF" ? /* html */`
-                            <div class="header">Caps</div>
-                            <div class="header">Pickups</div>
-                            <div class="header">CKs</div>
-                            <div class="header">Returns</div>
+                            <div class="header">C</div>
+                            <div class="header">P</div>
+                            <div class="header">CK</div>
+                            <div class="header">R</div>
                         ` : ""}
                         <div class="header">KDA</div>
-                        <div class="header">Kills</div>
-                        <div class="header">Assists</div>
-                        <div class="header">Deaths</div>
+                        <div class="header">K</div>
+                        <div class="header">A</div>
+                        <div class="header">D</div>
                         ${details.stats.sort((a, b) => (a.kills + a.assists) / Math.max(a.deaths, 1) === (b.kills + b.assists) / Math.max(b.deaths, 1) ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1)).map((s) => /* html */ `
                             <div class="tag">${(team = challenge.challengingTeam.id === s.teamId ? challenge.challengingTeam : challenge.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>

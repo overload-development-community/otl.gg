@@ -162,7 +162,7 @@ class TeamView {
                             <div class="header">DmgPD</div>
                             <div class="header best">Best Performance Vs.</div>
                             ${teamData.statsTA.map((s) => /* html */`
-                                <div><a href="/player/${s.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(s.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(s.name, team.tag))}</a></div>
+                                <div class="player"><a href="/player/${s.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(s.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(s.name, team.tag))}</a></div>
                                 <div class="numeric">${s.games}</div>
                                 <div class="numeric">${((s.kills + s.assists) / Math.max(1, s.deaths)).toFixed(3)}</div>
                                 <div class="numeric totals">${s.kills}</div>
@@ -175,7 +175,7 @@ class TeamView {
                                 <div class="numeric">${s.damage ? (s.damage / (s.gamesWithDamage + 0.15 * s.overtimePeriods)).toFixed(2) : ""}</div>
                                 <div class="numeric">${s.damage ? (s.damage / Math.max(s.deathsInGamesWithDamage, 1)).toFixed(2) : ""}</div>
                                 <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                                <div class="best">${s.map}</div>
+                                <div class="best map">${s.map}</div>
                                 <div class="best"><a href="/match/${s.challengeId}/${s.challengingTeamTag}/${s.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${s.matchTime}")));</script></a></div>
                                 <div class="best-stats"><span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)${s.bestDamage > 0 ? /* html */` <span class="numeric">${s.bestDamage.toFixed(0)}</span> Dmg (<span class="numeric">${(s.bestDamage / s.bestDeaths).toFixed(2)}</span> DmgPD)` : ""}</div>
                             `).join("")}
@@ -204,7 +204,7 @@ class TeamView {
                             <div class="header">DPG</div>
                             <div class="header best">Best Performance Vs.</div>
                             ${teamData.statsCTF.map((s) => /* html */`
-                                <div><a href="/player/${s.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(s.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(s.name, team.tag))}</a></div>
+                                <div class="player"><a href="/player/${s.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(s.name, team.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(s.name, team.tag))}</a></div>
                                 <div class="numeric">${s.games}</div>
                                 <div class="numeric totals">${s.captures}</div>
                                 <div class="numeric totals">${s.pickups}</div>
@@ -223,7 +223,7 @@ class TeamView {
                                 <div class="numeric">${(s.assists / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="numeric">${(s.deaths / (s.games + 0.15 * s.overtimePeriods)).toFixed(2)}</div>
                                 <div class="tag best"><div class="diamond${(team = teams.getTeam(s.teamId, s.teamName, s.teamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                                <div class="best">${s.map}</div>
+                                <div class="best map">${s.map}</div>
                                 <div class="best"><a href="/match/${s.challengeId}/${s.challengingTeamTag}/${s.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${s.matchTime}")));</script></a></div>
                                 <div class="best-stats"><span class="numeric">${s.bestCaptures}</span> C/<span class="numeric">${s.bestPickups}</span> P, <span class="numeric">${s.bestCarrierKills}</span> CK, <span class="numeric">${s.bestReturns}</span> R, <span class="numeric">${((s.bestKills + s.bestAssists) / Math.max(1, s.bestDeaths)).toFixed(3)}</span> KDA (<span class="numeric">${s.bestKills}</span> K, <span class="numeric">${s.bestAssists}</span> A, <span class="numeric">${s.bestDeaths}</span> D)${s.bestDamage > 0 ? /* html */` <span class="numeric">${s.bestDamage.toFixed(0)}</span> Dmg` : ""}</div>
                             `).join("")}

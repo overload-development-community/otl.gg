@@ -33,3 +33,21 @@
     font-family: monospace;
     background-color: #333333;
 }
+
+@media (max-width: 1000px) {
+    #commands {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 800px) {
+    #commands {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    #commands {
+        font-size: 11px;
+    }
+}

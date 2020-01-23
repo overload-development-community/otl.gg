@@ -87,7 +87,7 @@ class AboutView {
                     <div>Gets the amount of time until the match begins.</div>
                     <div class="example">!countdown 12</div>
 
-                    <div class="command">!cast (&lt;challengeId>|next)</div>
+                    <div class="command">!cast (&lt;challengeId>|<wbr />next)</div>
                     <div>Indicates that you wish to cast a scheduled match that you are not playing in.  You can get the challenge ID from the #scheduled-matches channel on Discord.  You will join the challenge channel and be able to coordinate your efforts with both teams.  You can see what match is next by using the word "next" instead of a challenge ID.</div>
                     <div class="example">!cast 1<br />!cast next</div>
 
@@ -139,7 +139,7 @@ class AboutView {
 
                     <div class="section">Team Management</div>
 
-                    <div class="command">!color<br />[(light|dark)]<br />(red|orange|yellow|green|blue|purple)</div>
+                    <div class="command">!color<br />[(light|<wbr />dark)]<br />(red|<wbr />orange|<wbr />yellow|<wbr />green|<wbr />blue|<wbr />purple)</div>
                     <div>Founder only.  Gives your team role a color on the Discord server.</div>
                     <div class="example">!color red<br />!color dark green</div>
 
@@ -147,7 +147,7 @@ class AboutView {
                     <div>Changes your team's time zone.  See #timezone-faq on the Discord server for details.</div>
                     <div class="example">!teamtimezone America/Los_Angeles<br />!teamtimezone Europe/Berlin</div>
 
-                    <div class="command">!home (CTF|TA) (1|2|3|4|5) &lt;map></div>
+                    <div class="command">!home (CTF|<wbr />TA) (1|<wbr />2|<wbr />3|<wbr />4|<wbr />5) &lt;map></div>
                     <div>Founder only.  Sets a home map for your team.  You must have 5 home maps set for each game type before you can issue a challenge.</div>
                     <div class="example">!home TA 1 Vault<br />!home CTF 3 Halcyon<br />!home TA 5 Terminal</div>
 
@@ -179,7 +179,7 @@ class AboutView {
                     <div>Reinstates a disbanded team.  You must have previously been a founder or captain of the team you are trying to reinstate.</div>
                     <div class="example">!reinstate CF<br />!reinstate Cronus Frontier</div>
 
-                    <div class="command">!challenge &lt;team> (TA|CTF)</div>
+                    <div class="command">!challenge &lt;team> (TA|<wbr />CTF)</div>
                     <div>Founder or Captain only.  Challenges another team to a match.  Creates a challenge channel where you can negotiate the match parameters with the other team.  You can optionally include the game type.</div>
                     <div class="example">!challenge CF<br />!challenge Cronus Frontier TA</div>
 
@@ -209,7 +209,7 @@ class AboutView {
                     <div>Indicates that you will not be streaming this match as you play it.  This is the default, you only need to issue this command if you previously used the !streaming command but no longer will be streaming the match as you play.</div>
                     <div class="example">!notstreaming</div>
 
-                    <div class="command">!pickmap (a|b|c|d|e)</div>
+                    <div class="command">!pickmap (a|<wbr />b|<wbr />c|<wbr />d|<wbr />e)</div>
                     <div>Founder or Captain only.  Picks a map from the home map team's home maps and locks in that map for the match.  Cannot be used once the map is locked in.</div>
                     <div class="example">!pickmap b</div>
 
@@ -221,7 +221,7 @@ class AboutView {
                     <div>Founder or Captain only.  Confirms a neutral map suggestion from the other team and locks in that map for the match.  Cannot be used once the map is locked in.</div>
                     <div class="example">!confirmmap</div>
 
-                    <div class="command">!suggestteamsize (2|3|4|5|6|7|8)</div>
+                    <div class="command">!suggestteamsize (2|<wbr />3|<wbr />4|<wbr />5|<wbr />6|<wbr />7|<wbr />8)</div>
                     <div>Founder or Captain only.  Suggests the team size for the match.</div>
                     <div class="example">!suggestteamsize 3</div>
 
@@ -229,7 +229,7 @@ class AboutView {
                     <div>Founder or Captain only.  Confirms a team size suggestion from the other team.</div>
                     <div class="example">!confirmteamsize</div>
 
-                    <div class="command">!suggesttype (TA|CTF)</div>
+                    <div class="command">!suggesttype (TA|<wbr />CTF)</div>
                     <div>Founder or Captain only.  Suggests the game type for the match.</div>
                     <div class="example">!suggesttype CTF</div>
 
@@ -237,7 +237,7 @@ class AboutView {
                     <div>Founder or Captain only.  Confirms a game type suggestion from the other team.</div>
                     <div class="example">!confirmtype</div>
 
-                    <div class="command">!suggesttime (&lt;date and time&gt;|now)</div>
+                    <div class="command">!suggesttime (&lt;date and time&gt;|<wbr />now)</div>
                     <div>Founder or Captain only.  Suggests a date and time for the challenge.  Uses your personal time zone.</div>
                     <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00<br />!suggesttime now</div>
 

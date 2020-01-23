@@ -52,7 +52,7 @@ class Match {
 
                 res.status(200).send(Common.page(
                     "",
-                    {css: ["/css/match.css"], js: ["/js/match/js"]},
+                    {css: ["/css/match.css"], js: ["/js/match.js"]},
                     MatchView.get({
                         challenge,
                         details,

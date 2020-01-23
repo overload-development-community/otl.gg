@@ -170,7 +170,7 @@ class PlayersView {
                             <div id="damage-per-death">
                                 <div class="section">Most Damage Per Death</div>
                                 <div class="stats">
-                                    <div class="average">League Average: <span class="numeric">${averages.damagePerDeath.toFixed(0)}</span></div>
+                                    <div class="average">League Average: <span class="numeric">${averages.damagePerDeath.toFixed(2)}</span></div>
                                     <div class="header">Pos</div>
                                     <div class="header">Team</div>
                                     <div class="header">Name</div>
@@ -181,7 +181,7 @@ class PlayersView {
                                             <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                                         `}</div>
                                         <div class="name"><a href="/player/${s.playerId}/${encodeURIComponent(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}">${PlayersView.Common.htmlEncode(PlayersView.Common.normalizeName(s.name, team ? team.tag : ""))}</a></div>
-                                        <div class="numeric value">${s.avgDamagePerDeath.toFixed(0)}</div>
+                                        <div class="numeric value">${s.avgDamagePerDeath.toFixed(2)}</div>
                                         ${sortedStats[index + 1] && sortedStats[index + 1].avgDamagePerDeath < averages.damagePerDeath && sortedStats[index].avgDamagePerDeath >= averages.damagePerDeath ? /* html */`
                                             <div class="separator"></div>
                                         ` : ""}
