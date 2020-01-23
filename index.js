@@ -4,7 +4,6 @@
 
 const compression = require("compression"),
     express = require("express"),
-    expressMinify = require("express-minify"),
     minify = require("./src/minify"),
     morgan = require("morgan"),
     morganExtensions = require("./src/extensions/morgan.extensions"),
@@ -57,9 +56,8 @@ const compression = require("compression"),
     morganExtensions(morgan);
 
     // Initialize middleware stack.
-    app.use(compression());
     app.use(morgan(":colorstatus \x1b[30m\x1b[0m:method\x1b[0m :url\x1b[30m\x1b[0m:newline    Date :date[iso]    IP :req[ip]    Time :colorresponse ms"));
-    app.use(expressMinify());
+    app.use(compression());
 
     // Setup public redirects.
     app.use(express.static("public"));
