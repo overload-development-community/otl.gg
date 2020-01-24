@@ -4,6 +4,37 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v3.0.1 - 1/23/2020
+
+### Bot:
+
+* `!close` now displays stats for both teams, rather than for one team twice.
+* Channel topics for challenges and teams are formatted correctly.
+* CTF formats have been standardized across the bot and the website.  Example: `4 C/8 P (12 CK, 8 R), 1.250 KDA (40 K, 10 A, 40 D), 5000 Dmg`
+* Join in progress games where players not part of the match accidentally joined are now ignored.
+* `!suggesttype` and `!confirmtype` are now disabled for locked matches.
+* `!addstats` will now notify on score change if it changed the score to a tie.
+* `!creatematch` now allows being called without a game type, defaulting to Team Anarchy.
+* `!creatematch` no longer checks validity of home map count for game types other than the type of match it is creating.
+
+### Website:
+
+* Players page no longer counts friendly fire damage towards damage stats.
+* Removed option to display all or active pilots for postseason on players page.  This will now always display all players who competed in the postseason.
+* Players page now only counts the game type selected when considering if a player was active.
+* Cast page no longer lists players twice in a postseason game.
+* Cast page now displays whether the last game the teams played was an overtime game.
+* Matches page now shows dates if there is only one page of matches available.
+* Records and player pages will now show the last season if the new season has no data yet.
+* Various formatting fixes across the website related to damage and CTF stats.
+* Improved mobile support.  If something doesn't look good on mobile devices, please file an issue.
+* Replaced express-minify with custom combination and minification handlers using terser and csso with caching to Redis.
+
+### Back end:
+
+* Now using .d.ts files for complex types across JavaScript.  These can be found in the /types directory, and all existing .d.ts files have been moved to that directory.
+* Various dependency upgrades.
+
 ## v3.0.0 - 12/31/2019
 
 Support for Season 3 of the OTL.
