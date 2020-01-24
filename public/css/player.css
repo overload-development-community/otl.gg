@@ -469,6 +469,11 @@
 #damage .damage-grid > .numeric,
 #damage .damage-grid-small > .numeric {
     margin-top: 0px;
+    font-size: 14px;
+}
+
+#damage .mixed {
+    font-size: 14px;
 }
 
 #damage .percent {
