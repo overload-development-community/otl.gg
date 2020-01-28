@@ -13,9 +13,7 @@ const compression = require("compression"),
     Discord = require("./src/discord"),
     Log = require("./src/logging/log"),
     Router = require("./src/router"),
-    settings = require("./settings"),
-
-    app = express();
+    settings = require("./settings");
 
 //         #                 #
 //         #                 #
@@ -30,6 +28,17 @@ const compression = require("compression"),
 (async function startup() {
     Log.log("Starting up...");
 
+    // Set title.
+    if (process.platform === "win32") {
+        process.title = "Overload Teams League";
+    } else {
+        process.stdout.write("\x1b]2;Overload Teams League\x1b\x5c");
+    }
+
+    // Setup express app.
+    const app = express();
+
+    // Get the router.
     /** @type {Express.Router} */
     let router;
     try {
@@ -41,12 +50,6 @@ const compression = require("compression"),
 
     tz.timezone.loadingScheme = tz.timezone.loadingSchemes.MANUAL_LOAD;
     tz.timezone.loadZoneDataFromObject(tzdata);
-
-    if (process.platform === "win32") {
-        process.title = "Overload Teams League";
-    } else {
-        process.stdout.write("\x1b]2;Overload Teams League\x1b\x5c");
-    }
 
     // Startup Discord.
     Discord.startup();

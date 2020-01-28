@@ -65,7 +65,14 @@ class Minify {
 
             try {
                 for (const file of files) {
-                    str = `${str}${await fs.readFile(path.join(__dirname, "..", "public", file), "utf8")}`;
+                    const dir = path.join(__dirname, "..", "public"),
+                        filePath = path.join(__dirname, "..", "public", file);
+
+                    if (!filePath.startsWith(dir)) {
+                        return next();
+                    }
+
+                    str = `${str}${await fs.readFile(filePath, "utf8")}`;
                 }
             } catch (err) {
                 if (err.code === "ENOENT") {
@@ -128,9 +135,15 @@ class Minify {
 
             try {
                 code = await files.reduce(async (prev, cur) => {
-                    const obj = await prev;
+                    const obj = await prev,
+                        dir = path.join(__dirname, "..", "public"),
+                        filePath = path.join(__dirname, "..", "public", cur);
 
-                    obj[cur] = await fs.readFile(path.join(__dirname, "..", "public", cur), "utf8");
+                    if (!filePath.startsWith(dir)) {
+                        return next();
+                    }
+
+                    obj[cur] = await fs.readFile(filePath, "utf8");
 
                     return obj;
                 }, Promise.resolve({}));
