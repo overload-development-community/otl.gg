@@ -4,6 +4,14 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v3.0.2 - 1/28/2020
+
+* `!addstats` now will move the match time back if it was played earlier than the game was agreed upon.
+* The font in the damage breakdown section of the players page is now more consistent on Windows.
+* Records page now only counts season 3 and later for all time damage records.
+* Links page now points to tracker.otl.gg instead of olproxy.otl.gg.
+* Security fix with minification.
+
 ## v3.0.1 - 1/23/2020
 
 ### Bot:
