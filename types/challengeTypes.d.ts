@@ -123,6 +123,7 @@ declare namespace ChallengeTypes {
 
     type GameBoxScore = GamePlayerStatsByTeam & {
         scoreChanged: boolean
+        timeChanged: boolean
     }
 
     type GamePlayerStats = PlayerTypes.GameStats & PlayerTypes.CTFStats & {

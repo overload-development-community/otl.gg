@@ -5150,9 +5150,10 @@ class Commands {
         /** @type {ChallengeTypes.GamePlayerStats[]} */
         let challengedTeamStats;
 
-        let scoreChanged = false;
+        let scoreChanged = false,
+            timeChanged = false;
         try {
-            ({challengingTeamStats, challengedTeamStats, scoreChanged} = await challenge.addStats(+gameId, mapping));
+            ({challengingTeamStats, challengedTeamStats, scoreChanged, timeChanged} = await challenge.addStats(+gameId, mapping));
         } catch (err) {
             if (err.constructor.name === "Error") {
                 await Discord.queue(`Sorry, ${member}, but there was a problem adding stats: ${err.message}`, channel);
@@ -5179,6 +5180,10 @@ class Commands {
                 msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`});
                 msg.setColor(winningTeam.role.color);
             }
+        }
+
+        if (timeChanged) {
+            msg.fields.push({name: "Match Time Updated", value: `The match time for this match has been updated to **${challenge.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}**`});
         }
 
         switch (challenge.details.gameType) {
