@@ -1473,7 +1473,7 @@ class ChallengeDb {
 
             UPDATE tblChallenge SET CasterPlayerId = @playerId WHERE ChallengeId = @challengeId
         `, {
-            discordId: {type: Db.VARCHAR(24), value: member.id},
+            discordId: {type: Db.VARCHAR(24), value: member ? member.id : void 0},
             challengeId: {type: Db.INT, value: challenge.id}
         });
     }
