@@ -1,7 +1,7 @@
 [
     {
         "title": "OTL Team Anarchy",
-        "matchMode": 0,
+        "matchMode": 1,
         "maxPlayers": 16,
         "friendlyFire": 0,
         "timeLimit": 6,
