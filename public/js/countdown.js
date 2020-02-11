@@ -45,7 +45,7 @@ class Countdown {
             days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000));
 
         if (difference > 0) {
-            countdown.innerText = `Match begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"} ` : ""}${new Date(difference).toLocaleString("en-US", {timeZone: "GMT", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false})}`;
+            countdown.innerText = `Match begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"} ` : ""}${new Date(difference).toLocaleString("en-US", {timeZone: "GMT", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"})}`;
 
             setTimeout(() => {
                 this.update();
