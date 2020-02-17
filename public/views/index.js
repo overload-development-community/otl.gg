@@ -36,7 +36,7 @@ class IndexView {
                     <meta name="og:image" content="${protocol}://otl.gg/images/otl.png" />
                     <meta name="og:title" content="Overload Teams League" />
                     <meta name="og:type" content="website" />
-                    <meta name="og:url" content="${protocol}://${host}${originalUrl}" />
+                    <meta name="og:url" content="${protocol}://${host}${encodeURI(originalUrl)}" />
                     <meta name="twitter:card" content="summary" />
                     <meta name="twitter:creator" content="@roncli" />
                     ${IndexView.Common.favIcon()}
