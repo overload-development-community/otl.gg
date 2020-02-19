@@ -627,21 +627,6 @@ class Team {
         }
     }
 
-    //                    #           #           ##                      #
-    //                    #                      #  #                     #
-    //  ##    ###  ###   ###    ###  ##    ###   #      ##   #  #  ###   ###
-    // #     #  #  #  #   #    #  #   #    #  #  #     #  #  #  #  #  #   #
-    // #     # ##  #  #   #    # ##   #    #  #  #  #  #  #  #  #  #  #   #
-    //  ##    # #  ###     ##   # #  ###   #  #   ##    ##    ###  #  #    ##
-    //             #
-    /**
-     * Gets the count of captains on the team.
-     * @returns {number} The number of captains on the team.
-     */
-    captainCount() {
-        return this.role.members.filter((tm) => !!Discord.captainRole.members.find((cm) => cm.id === tm.id)).size;
-    }
-
     //       #                              ##         ##
     //       #                             #  #         #
     //  ##   ###    ###  ###    ###   ##   #      ##    #     ##   ###

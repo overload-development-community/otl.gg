@@ -1584,12 +1584,6 @@ class Commands {
             throw new Warning("Pilot is already a captain.");
         }
 
-        const captainCount = team.captainCount();
-        if (captainCount >= 2) {
-            await Discord.queue(`Sorry, ${member}, but you already have ${captainCount} captains, and the limit is 2.`, channel);
-            throw new Warning("Captain count limit reached.");
-        }
-
         await Commands.checkPilotCanBeCaptain(captain, member, channel);
 
         try {
@@ -1746,13 +1740,6 @@ class Commands {
         const team = await Commands.checkMemberOnTeam(member, channel);
 
         await Commands.checkPilotOnTeam(team, pilot, member, channel);
-
-        const captainCount = team.captainCount();
-        if (captainCount === 2 && !pilot.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but you already have ${captainCount} captains, and the limit is 2.`, channel);
-            throw new Warning("Captain count limit reached.");
-        }
-
         await Commands.checkPilotCanBeCaptain(pilot, member, channel);
 
         if (!confirm) {
@@ -4212,13 +4199,6 @@ class Commands {
             pilot = await Commands.checkPilotExists(id, member, channel);
 
         await Commands.checkPilotOnTeam(team, pilot, member, channel);
-
-        const captainCount = team.captainCount();
-        if (captainCount === 2 && !pilot.isCaptainOrFounder()) {
-            await Discord.queue(`Sorry, ${member}, but this team already has ${captainCount} captains, and the limit is 2.`, channel);
-            throw new Warning("Captain count limit reached.");
-        }
-
         await Commands.checkPilotCanBeCaptain(pilot, member, channel);
 
         try {
