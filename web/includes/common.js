@@ -8,12 +8,12 @@ const HtmlMinifier = require("html-minifier"),
     pjson = require("../../package.json"),
     settings = require("../../settings"),
 
-    nameAngledBracketTagStart = /^<.*> /,
-    nameBraceTagStart = /^\{.*\} /,
-    nameBracketTagStart = /^\[.*\] /,
+    nameAngledBracketTagStart = /^<.*> ?/,
+    nameBraceTagStart = /^\{.*\} ?/,
+    nameBracketTagStart = /^\[.*\] ?/,
     nameDesignaterEnd = / - .*$/,
     nameParenthesisEnd = / \(.*\)$/,
-    nameParenthesisTagStart = /^\(.*\) /;
+    nameParenthesisTagStart = /^\(.*\) ?/;
 
 /** @type {typeof import("../../public/views/index")} */
 let IndexView;
