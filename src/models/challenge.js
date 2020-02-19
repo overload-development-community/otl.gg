@@ -2,6 +2,7 @@
  * @typedef {import("../../types/challengeTypes").CastData} ChallengeTypes.CastData
  * @typedef {import("../../types/challengeTypes").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
  * @typedef {import("../../types/challengeTypes").CreateData} ChallengeTypes.CreateData
+ * @typedef {import("../../types/challengeTypes").CreateOptions} ChallengeTypes.CreateOptions
  * @typedef {import("../../types/challengeTypes").GameBoxScore} ChallengeTypes.GameBoxScore
  * @typedef {import("../../types/challengeTypes").GamePlayerStats} ChallengeTypes.GamePlayerStats
  * @typedef {import("../../types/challengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
@@ -82,20 +83,21 @@ class Challenge {
      * Creates a challenge between two teams.
      * @param {Team} challengingTeam The challenging team.
      * @param {Team} challengedTeam The challenged team.
-     * @param {string} [gameType] The game type.
-     * @param {boolean} [adminCreated] Whether the match is being created by an admin.
-     * @param {number} [teamSize] The team size to set.
-     * @param {boolean} [startNow] Whether to start the match now.
+     * @param {ChallengeTypes.CreateOptions} options The options to create the match with.
      * @returns {Promise<Challenge>} A promise that resolves with the newly created challenge.
      */
-    static async create(challengingTeam, challengedTeam, gameType, adminCreated, teamSize, startNow) {
+    static async create(challengingTeam, challengedTeam, options) {
+
+        const {adminCreated, teamSize, startNow, blueTeam} = options;
+        let {gameType} = options;
+
         if (!gameType) {
             gameType = "TA";
         }
 
         let data;
         try {
-            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow);
+            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam ? blueTeam.id : void 0);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -1415,7 +1417,17 @@ class Challenge {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
 
-        const challenge = await Challenge.create(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam, team, this.details.gameType, false, this.details.teamSize, true);
+        const challenge = await Challenge.create(
+            team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam,
+            team,
+            {
+                gameType: this.details.gameType,
+                adminCreated: false,
+                teamSize: this.details.teamSize,
+                startNow: true,
+                blueTeam: this.details.blueTeam
+            }
+        );
 
         challenge.setNotifyMatchMissed(new Date(new Date().getTime() + 3600000));
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));

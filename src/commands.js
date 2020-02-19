@@ -2467,7 +2467,7 @@ class Commands {
 
         let challenge;
         try {
-            challenge = await Challenge.create(team, opponent, gameTypeUpper);
+            challenge = await Challenge.create(team, opponent, {gameType: gameTypeUpper});
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4407,7 +4407,7 @@ class Commands {
         }
 
         try {
-            await Challenge.create(team1, team2, gameTypeUpper, true);
+            await Challenge.create(team1, team2, {gameType: gameTypeUpper, adminCreated: true});
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;

@@ -66,6 +66,14 @@ declare namespace ChallengeTypes {
         team2Penalized: boolean
     }
 
+    type CreateOptions = {
+        gameType?: string
+        adminCreated?: boolean
+        teamSize?: number
+        startNow?: boolean
+        blueTeam?: Team
+    }
+
     type DamageData = PlayerTypes.WeaponStats & {
         discordId: string
         name: string

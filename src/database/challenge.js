@@ -399,9 +399,10 @@ class ChallengeDb {
      * @param {Team} [homeMapTeam] The home map team.
      * @param {number} [teamSize] The team size.
      * @param {boolean} [startNow] Whether to start the match now.
+     * @param {Team} [blueTeam] The blue team.
      * @returns {Promise<ChallengeTypes.CreateData>} A promise that resolves with the challenge ID.
      */
-    static async create(team1, team2, gameType, adminCreated, homeMapTeam, teamSize, startNow) {
+    static async create(team1, team2, gameType, adminCreated, homeMapTeam, teamSize, startNow, blueTeam) {
         /** @type {Date} */
         let date;
 
@@ -431,6 +432,12 @@ class ChallengeDb {
                 WHERE ((ChallengingTeamId = @team1Id AND ChallengedTeamId = @team2Id) OR (ChallengingTeamId = @team2Id AND ChallengedTeamId = @team1Id))
                     AND DateVoided IS NULL
             ) a
+
+            IF @setBlueTeamId IS NOT NULL
+            BEGIN
+                SET @blueTeamId = @setBlueTeamId
+                SET @orangeTeamId = CASE WHEN @challengingTeamId = @setBlueTeamId THEN @challengedTeamId ELSE @challengingTeamId END
+            END
 
             EXEC sp_getapplock @Resource = 'tblChallenge', @LockMode = 'Update', @LockOwner = 'Session', @LockTimeout = 10000
 
@@ -501,7 +508,8 @@ class ChallengeDb {
             adminCreated: {type: Db.BIT, value: adminCreated},
             requestedHomeMapTeamId: {type: Db.INT, value: homeMapTeam ? homeMapTeam.id : void 0},
             teamSize: {type: Db.INT, value: teamSize},
-            matchTime: {type: Db.DATETIME, value: startNow ? new Date((date = new Date()).getTime() + 300000 - date.getTime() % 300000) : void 0}
+            matchTime: {type: Db.DATETIME, value: startNow ? new Date((date = new Date()).getTime() + 300000 - date.getTime() % 300000) : void 0},
+            setBlueTeamId: {type: Db.INT, value: blueTeam ? blueTeam.id : void 0}
         });
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
