@@ -623,8 +623,8 @@ class Challenge {
             challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
 
         // Fix colors for known localized team names.
-        game.teamScore.BLUE = game.teamScore.BLUE || game.teamScore.BLEU || game.teamScore.BLAU || game.teamScore.AZUL;
-        game.teamScore.ORANGE = game.teamScore.ORANGE || game.teamScore.NARANJA;
+        game.teamScore.BLUE = game.teamScore.BLUE || game.teamScore.BLEU || game.teamScore.BLAU || game.teamScore.AZUL || game.teamScore.СИНИЙ || 0;
+        game.teamScore.ORANGE = game.teamScore.ORANGE || game.teamScore.NARANJA || game.teamScore.АПЕЛЬСИН || 0;
 
         if (challengingTeamStats.length === 0 && challengedTeamStats.length === 0) {
             // Add all the stats to the database.
