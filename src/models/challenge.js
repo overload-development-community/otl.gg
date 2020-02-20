@@ -97,7 +97,7 @@ class Challenge {
 
         let data;
         try {
-            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam ? blueTeam.id : void 0);
+            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam);
         } catch (err) {
             throw new Exception("There was a database error creating a challenge.", err);
         }
@@ -1422,7 +1422,7 @@ class Challenge {
             team,
             {
                 gameType: this.details.gameType,
-                adminCreated: false,
+                adminCreated: false,
                 teamSize: this.details.teamSize,
                 startNow: true,
                 blueTeam: this.details.blueTeam
