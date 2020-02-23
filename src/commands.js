@@ -853,6 +853,27 @@ class Commands {
         return {pilot, confirm};
     }
 
+    //       #                 #     ###    #    ##           #    #  #         #     ##         ###
+    //       #                 #     #  #         #           #    ## #         #    #  #         #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   ## #   ##   ###   #  #  ###    #     ##    ###  # #
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #    # ##  #  #   #    #  #  #  #   #    # ##  #  #  ####
+    // #     #  #  ##    #     # #   #      #     #    #  #   #    # ##  #  #   #    #  #  #  #   #    ##    # ##  #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##  #  #   ##     ##   ##   #  #   #     ##    # #  #  #
+    /**
+     * Checks to ensure the pilot is not on a team.
+     * @param {DiscordJs.GuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember} member The member issuing the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkPilotNotOnTeam(pilot, member, channel) {
+        const team = await pilot.getTeam();
+        if (team) {
+            await Discord.queue(`Sorry, ${member}, but this pilot is already on **${team.name}**.`, channel);
+            throw new Warning("Pilot is already on a team.");
+        }
+    }
+
     //       #                 #     ###    #    ##           #     ##         ###
     //       #                 #     #  #         #           #    #  #         #
     //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   #  #  ###    #     ##    ###  # #
@@ -2088,6 +2109,52 @@ class Commands {
         }
 
         await Discord.queue(`${member}, ${pilot.displayName} has been invited to your team.`, channel);
+        return true;
+    }
+
+    //                                                  #
+    //                                                  #
+    //  ##    ###  ###    ##   #  #   ##   # #   ###   ###
+    // #     #  #  #  #  # ##   ##   # ##  ####  #  #   #
+    // #     # ##  #  #  ##     ##   ##    #  #  #  #   #
+    //  ##    # #  ###    ##   #  #   ##   #  #  ###     ##
+    //             #                             #
+    /**
+     * Add a pilot to a roster and make them cap exempt.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async capexempt(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!teamPilotParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must specify the team and mention the pilot, for example, \`!capexempt CF @roncli\`.`, channel);
+            throw new Warning("Invalid parameters.");
+        }
+
+        const {groups: {teamName, id}} = teamPilotParse.exec(message);
+
+        const team = await Commands.checkTeamExists(teamName, member, channel),
+            pilot = await Commands.checkPilotExists(id, member, channel);
+
+        await Commands.checkPilotNotOnTeam(pilot, member, channel);
+
+        const pilots = await team.getPilotCount();
+
+        if (pilots < 10) {
+            await Discord.queue(`Sorry, ${member}, but ${team.name} is not at the roster cap.`, channel);
+            throw new Warning("Team not at roster cap.");
+        }
+
+        team.addPilot(pilot);
+        pilot.addRole(Discord.exemptRole);
+
         return true;
     }
 

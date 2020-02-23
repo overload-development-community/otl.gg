@@ -26,6 +26,9 @@ let captainRole;
 let challengesCategory;
 
 /** @type {DiscordJs.Role} */
+let exemptRole;
+
+/** @type {DiscordJs.Role} */
 let founderRole;
 
 /** @type {DiscordJs.TextChannel} */
@@ -131,6 +134,21 @@ class Discord {
         }
 
         return new DiscordJs.Collection();
+    }
+
+    //                                #    ###         ##
+    //                                #    #  #         #
+    //  ##   #  #   ##   # #   ###   ###   #  #   ##    #     ##
+    // # ##   ##   # ##  ####  #  #   #    ###   #  #   #    # ##
+    // ##     ##   ##    #  #  #  #   #    # #   #  #   #    ##
+    //  ##   #  #   ##   #  #  ###     ##  #  #   ##   ###    ##
+    //                         #
+    /**
+     * Returns the cap exempt role.
+     * @returns {DiscordJs.Role} The cap exempt role.
+     */
+    static get exemptRole() {
+        return exemptRole;
     }
 
     //   #                        #              ###         ##
@@ -262,6 +280,7 @@ class Discord {
             }
 
             captainRole = otlGuild.roles.find((r) => r.name === "Captain");
+            exemptRole = otlGuild.roles.find((r) => r.name === "Cap Exempt");
             founderRole = otlGuild.roles.find((r) => r.name === "Founder");
 
             alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
