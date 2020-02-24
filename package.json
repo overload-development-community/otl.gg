@@ -20,7 +20,7 @@
     "dependencies": {
         "compression": "1.7.4",
         "csso": "4.0.2",
-        "discord-markdown": "2.2.0",
+        "discord-markdown": "2.3.1",
         "discord.js": "11.5.1",
         "express": "4.17.1",
         "express-minify": "1.0.0",
