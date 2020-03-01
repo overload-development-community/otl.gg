@@ -1936,7 +1936,7 @@ class Commands {
         const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
             homes = await team.getHomeMapsByType();
 
-        const msg = Discord.richEmbed({
+        const msg = Discord.messageEmbed({
             title: `Home maps for **${team.name}**`,
             fields: []
         });
@@ -1944,7 +1944,8 @@ class Commands {
         Object.keys(homes).forEach((gameType) => {
             msg.fields.push({
                 name: Challenge.getGameTypeName(gameType),
-                value: homes[gameType].join("\n")
+                value: homes[gameType].join("\n"),
+                inline: false
             });
         });
 
@@ -2153,7 +2154,7 @@ class Commands {
         }
 
         team.addPilot(pilot);
-        pilot.addRole(Discord.exemptRole);
+        pilot.roles.add(Discord.exemptRole);
 
         return true;
     }
@@ -3213,7 +3214,7 @@ class Commands {
             return true;
         }
 
-        const msg = Discord.richEmbed({
+        const msg = Discord.messageEmbed({
             title: "Overload Teams League Schedule",
             fields: []
         });
@@ -4125,7 +4126,7 @@ class Commands {
                 value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`
             });
 
-            Discord.richQueue(Discord.richEmbed({
+            Discord.richQueue(Discord.messageEmbed({
                 title: `Season ${stats.season} Stats for ${Common.normalizeName(Discord.getName(pilot), stats.tag)}`,
                 fields
             }), channel);
@@ -5211,7 +5212,7 @@ class Commands {
             }
         }
 
-        const msg = Discord.richEmbed({
+        const msg = Discord.messageEmbed({
             title: "Stats Added",
             fields: []
         });
@@ -5222,15 +5223,27 @@ class Commands {
                 winningTeam = winningScore === challenge.details.challengingTeamScore ? challenge.challengingTeam : challenge.challengedTeam;
 
             if (winningScore === losingScore) {
-                msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a tie with the score of **${winningScore}** to **${losingScore}**.`});
+                msg.fields.push({
+                    name: "Score Updated",
+                    value: `The score for this match has been updated to a tie with the score of **${winningScore}** to **${losingScore}**.`,
+                    inline: false
+                });
             } else {
-                msg.fields.push({name: "Score Updated", value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`});
+                msg.fields.push({
+                    name: "Score Updated",
+                    value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`,
+                    inline: false
+                });
                 msg.setColor(winningTeam.role.color);
             }
         }
 
         if (timeChanged) {
-            msg.fields.push({name: "Match Time Updated", value: `The match time for this match has been updated to **${challenge.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}**`});
+            msg.fields.push({
+                name: "Match Time Updated",
+                value: `The match time for this match has been updated to **${challenge.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}**`,
+                inline: false
+            });
         }
 
         switch (challenge.details.gameType) {
@@ -5251,7 +5264,8 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`,
+                    inline: false
                 });
 
                 msg.fields.push({
@@ -5261,7 +5275,8 @@ class Commands {
                             return (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1);
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D), ${stat.damage.toFixed(0)} Dmg (${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} DmgPD)`).join("\n")}`,
+                    inline: false
                 });
                 break;
             case "CTF":
@@ -5281,7 +5296,8 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`,
+                    inline: false
                 });
 
                 msg.fields.push({
@@ -5300,7 +5316,8 @@ class Commands {
                             return 0;
                         }
                         return a.name.localeCompare(b.name);
-                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`
+                    }).map((stat) => `${stat.pilot}: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA, ${stat.damage.toFixed(0)} Dmg`).join("\n")}`,
+                    inline: false
                 });
                 break;
         }

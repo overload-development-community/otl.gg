@@ -1,7 +1,7 @@
 import {GuildMember} from "discord.js"
 import NewTeam from "../src/models/newTeam"
 import PlayerTypes from "./playerTypes"
-import Team from "../src/models/team"
+import OTLTeam from "../src/models/team"
 
 declare module "discord.js" {
     interface GuildMember {
@@ -14,10 +14,10 @@ declare module "discord.js" {
 
         /**
          * Returns the date and time the pilot is banned from a team until.
-         * @param {Team} team The team to check.
+         * @param {OTLTeam} team The team to check.
          * @returns {Promise<Date>} A promise that resolves with the date and time the pilot is banned from the team until.  Returns nothing if the pilot is not banned.
          */
-        bannedFromTeamUntil(team: Team): Promise<Date>
+        bannedFromTeamUntil(team: OTLTeam): Promise<Date>
 
         /**
          * Returns whether the pilot can be a captain.
@@ -52,9 +52,9 @@ declare module "discord.js" {
 
         /**
          * Gets the teams that the pilot has requested or has been invited to.
-         * @returns {Promise<Team[]>} A promise that resolves with the teams that the pilot has requested or has been invited to.
+         * @returns {Promise<OTLTeam[]>} A promise that resolves with the teams that the pilot has requested or has been invited to.
          */
-        getRequestedOrInvitedTeams(): Promise<Team[]>
+        getRequestedOrInvitedTeams(): Promise<OTLTeam[]>
 
         /**
          * Gets the current season stats for the pilot.
@@ -64,9 +64,9 @@ declare module "discord.js" {
 
         /**
          * Returns the pilot's team.
-         * @returns {Promise<Team>} A promise that resolves with the pilot's team.
+         * @returns {Promise<OTLTeam>} A promise that resolves with the pilot's team.
          */
-        getTeam(): Promise<Team>
+        getTeam(): Promise<OTLTeam>
 
         /**
          * Gets a pilot's time zone.  Default to team's time zone if the pilot doesn't have one, or the default time zone if neither have a value.
@@ -82,17 +82,17 @@ declare module "discord.js" {
 
         /**
          * Gets whether the pilot has been invited to a team.
-         * @param {Team} team The team to check.
+         * @param {OTLTeam} team The team to check.
          * @returns {Promise<boolean>} A promise that resolves with whether the pilot has been invited to the team.
          */
-        hasBeenInvitedToTeam(team: Team): Promise<boolean>
+        hasBeenInvitedToTeam(team: OTLTeam): Promise<boolean>
 
         /**
          * Gets whether the pilot has requested a team.
-         * @param {Team} team The team requested.
+         * @param {OTLTeam} team The team requested.
          * @returns {Promise<boolean>} A promise that resolves with whether the pilot has requested the team.
          */
-        hasRequestedTeam(team: Team): Promise<boolean>
+        hasRequestedTeam(team: OTLTeam): Promise<boolean>
 
         /**
          * Returns whether the pilot is a captain or a founder.
@@ -126,10 +126,10 @@ declare module "discord.js" {
 
         /**
          * Requests to join a team.
-         * @param {Team} team The team to request joining.
+         * @param {OTLTeam} team The team to request joining.
          * @returns {Promise} A promise that resolves when the request to join the team has been sent.
          */
-        requestTeam(team: Team): Promise<void>
+        requestTeam(team: OTLTeam): Promise<void>
 
         /**
          * Sets a pilot's time zone.
@@ -147,9 +147,9 @@ declare module "discord.js" {
 
         /**
          * Returns whether the pilot was a captain or founder of a team previously.
-         * @param {Team} team The team to check.
+         * @param {OTLTeam} team The team to check.
          * @returns {Promise<boolean>} A promise that resolves with whether the pilot was a captain or founder previously.
          */
-        wasPreviousCaptainOrFounderOfTeam(team: Team): Promise<boolean>
+        wasPreviousCaptainOrFounderOfTeam(team: OTLTeam): Promise<boolean>
     }
 }

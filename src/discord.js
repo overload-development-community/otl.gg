@@ -130,7 +130,7 @@ class Discord {
      */
     static get channels() {
         if (otlGuild) {
-            return otlGuild.channels;
+            return otlGuild.channels.cache;
         }
 
         return new DiscordJs.Collection();
@@ -176,8 +176,8 @@ class Discord {
      * @returns {string} The URL of the icon.
      */
     static get icon() {
-        if (discord && discord.status === 0) {
-            return discord.user.avatarURL;
+        if (discord && discord.ws && discord.ws.status === 0) {
+            return discord.user.avatarURL();
         }
 
         return void 0;
@@ -273,24 +273,24 @@ class Discord {
         discord.on("ready", () => {
             Log.log("Connected to Discord.");
 
-            otlGuild = discord.guilds.find((g) => g.name === settings.guild);
+            otlGuild = discord.guilds.cache.find((g) => g.name === settings.guild);
 
             if (!readied) {
                 readied = true;
             }
 
-            captainRole = otlGuild.roles.find((r) => r.name === "Captain");
-            exemptRole = otlGuild.roles.find((r) => r.name === "Cap Exempt");
-            founderRole = otlGuild.roles.find((r) => r.name === "Founder");
+            captainRole = otlGuild.roles.cache.find((r) => r.name === "Captain");
+            exemptRole = otlGuild.roles.cache.find((r) => r.name === "Cap Exempt");
+            founderRole = otlGuild.roles.cache.find((r) => r.name === "Founder");
 
-            alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
-            announcementsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "announcements")); // eslint-disable-line no-extra-parens
-            matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
-            rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
-            scheduledMatchesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "scheduled-matches")); // eslint-disable-line no-extra-parens
-            vodsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.find((c) => c.name === "vods")); // eslint-disable-line no-extra-parens
+            alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
+            announcementsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "announcements")); // eslint-disable-line no-extra-parens
+            matchResultsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "match-results")); // eslint-disable-line no-extra-parens
+            rosterUpdatesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "roster-updates")); // eslint-disable-line no-extra-parens
+            scheduledMatchesChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "scheduled-matches")); // eslint-disable-line no-extra-parens
+            vodsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "vods")); // eslint-disable-line no-extra-parens
 
-            challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (otlGuild.channels.find((c) => c.name === "Challenges")); // eslint-disable-line no-extra-parens
+            challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (otlGuild.channels.cache.find((c) => c.name === "Challenges")); // eslint-disable-line no-extra-parens
 
             Notify.setupNotifications();
         });
@@ -313,7 +313,7 @@ class Discord {
             }
         });
 
-        discord.on("guildMemberUpdate", async (oldMember, newMember) => {
+        discord.on("guildMemberUpdate", async (/** @type {DiscordJs.GuildMember} */ oldMember, newMember) => {
             if (newMember.guild && newMember.guild.id === otlGuild.id) {
                 if (oldMember.displayName === newMember.displayName) {
                     return;
@@ -369,7 +369,7 @@ class Discord {
      * @returns {boolean} Whether the bot is connected to Discord.
      */
     static isConnected() {
-        return discord && otlGuild ? discord.status === 0 : false;
+        return discord && discord.ws && otlGuild ? discord.ws.status === 0 : false;
     }
 
     // # #    ##    ###    ###    ###   ###   ##
@@ -381,11 +381,11 @@ class Discord {
      * Parses a message.
      * @param {DiscordJs.User} user The user who sent the message.
      * @param {string} message The text of the message.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GroupDMChannel} channel The channel the message was sent on.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel} channel The channel the message was sent on.
      * @returns {Promise} A promise that resolves when the message is parsed.
      */
     static async message(user, message, channel) {
-        const member = otlGuild.members.find((m) => m.id === user.id);
+        const member = otlGuild.members.cache.find((m) => m.id === user.id);
 
         for (const text of message.split("\n")) {
             if (!messageParse.test(text)) {
@@ -426,7 +426,7 @@ class Discord {
     /**
      * Queues a message to be sent.
      * @param {string} message The message to be sent.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GroupDMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
     static async queue(message, channel) {
@@ -436,24 +436,25 @@ class Discord {
 
         let msg;
         try {
-            msg = await Discord.richQueue(new DiscordJs.RichEmbed({description: message}), channel);
+            msg = await Discord.richQueue(new DiscordJs.MessageEmbed({description: message}), channel);
         } catch {}
         return msg;
     }
 
-    //        #          #     ####        #              #
-    //                   #     #           #              #
-    // ###   ##     ##   ###   ###   # #   ###    ##    ###
-    // #  #   #    #     #  #  #     ####  #  #  # ##  #  #
-    // #      #    #     #  #  #     #  #  #  #  ##    #  #
-    // #     ###    ##   #  #  ####  #  #  ###    ##    ###
+    //                                             ####        #              #
+    //                                             #           #              #
+    // # #    ##    ###    ###    ###   ###   ##   ###   # #   ###    ##    ###
+    // ####  # ##  ##     ##     #  #  #  #  # ##  #     ####  #  #  # ##  #  #
+    // #  #  ##      ##     ##   # ##   ##   ##    #     #  #  #  #  ##    #  #
+    // #  #   ##   ###    ###     # #  #      ##   ####  #  #  ###    ##    ###
+    //                                  ###
     /**
-     * Gets a new DiscordJs RichEmbed object.
-     * @param {DiscordJs.RichEmbedOptions} [options] The options to pass.
-     * @returns {DiscordJs.RichEmbed} The RichEmbed object.
+     * Gets a new DiscordJs MessageEmbed object.
+     * @param {DiscordJs.MessageEmbedOptions} [options] The options to pass.
+     * @returns {DiscordJs.MessageEmbed} The MessageEmbed object.
      */
-    static richEmbed(options) {
-        return new DiscordJs.RichEmbed(options);
+    static messageEmbed(options) {
+        return new DiscordJs.MessageEmbed(options);
     }
 
     //        #          #      ##
@@ -465,8 +466,8 @@ class Discord {
     //                            #
     /**
      * Queues a rich embed message to be sent.
-     * @param {DiscordJs.RichEmbed} embed The message to be sent.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GroupDMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
+     * @param {DiscordJs.MessageEmbed} embed The message to be sent.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
     static async richQueue(embed, channel) {
@@ -542,7 +543,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.createRole(data, reason);
+        return otlGuild.roles.create({data, reason});
     }
 
     //   #    #             #   ##   #                             ##    ###         ###      #
@@ -561,7 +562,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.channels.find((c) => c.id === id);
+        return otlGuild.channels.cache.find((c) => c.id === id);
     }
 
     //   #    #             #   ##   #                             ##    ###         #  #
@@ -580,7 +581,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.channels.find((c) => c.name === name);
+        return otlGuild.channels.cache.find((c) => c.name === name);
     }
 
     //   #    #             #   ##          #    ##       #  #  #              #                 ###         ###    #                 ##                #  #
@@ -599,7 +600,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.members.find((m) => m.displayName === displayName);
+        return otlGuild.members.cache.find((m) => m.displayName === displayName);
     }
 
     //   #    #             #   ##          #    ##       #  #  #              #                 ###         ###      #
@@ -618,7 +619,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.members.find((m) => m.id === id);
+        return otlGuild.members.cache.find((m) => m.id === id);
     }
 
     //   #    #             #  ###         ##          ###         ###      #
@@ -637,7 +638,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.roles.find((r) => r.id === id);
+        return otlGuild.roles.cache.find((r) => r.id === id);
     }
 
     //   #    #             #  ###         ##          ###         #  #
@@ -656,7 +657,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.roles.find((r) => r.name === name);
+        return otlGuild.roles.cache.find((r) => r.name === name);
     }
 
     //   #    #             #  #  #                     ###         ###      #
@@ -672,7 +673,7 @@ class Discord {
      * @returns {Promise<DiscordJs.User>} A promise that resolves with the user.
      */
     static findUserById(id) {
-        return discord.fetchUser(id, false);
+        return discord.users.fetch(id, false);
     }
 
     //              #    #  #

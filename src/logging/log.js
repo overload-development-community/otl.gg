@@ -163,7 +163,7 @@ class Log {
                             await Log.outputToDiscord(log, err);
                         }
                     } else {
-                        const message = Discord.richEmbed({
+                        const message = Discord.messageEmbed({
                             color: 0xFF0000,
                             fields: [],
                             timestamp: log.date
@@ -176,7 +176,7 @@ class Log {
                         await Discord.richQueue(message, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
                     }
                 } else {
-                    const message = Discord.richEmbed({
+                    const message = Discord.messageEmbed({
                         color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
                         fields: [],
                         timestamp: log.date
@@ -217,7 +217,7 @@ class Log {
             if (continued) {
                 await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
             } else if (log.message) {
-                const message = Discord.richEmbed({
+                const message = Discord.messageEmbed({
                     color: 0xFF0000,
                     fields: [],
                     timestamp: log.date
@@ -227,7 +227,8 @@ class Log {
 
                 message.fields.push({
                     name: "Message",
-                    value: value.substring(0, 1024)
+                    value: value.substring(0, 1024),
+                    inline: false
                 });
 
                 continued = true;
@@ -245,7 +246,7 @@ class Log {
             if (continued) {
                 await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
             } else if (log.message) {
-                const message = Discord.richEmbed({
+                const message = Discord.messageEmbed({
                     color: 0xFF0000,
                     fields: [],
                     timestamp: log.date
@@ -255,7 +256,8 @@ class Log {
 
                 message.fields.push({
                     name: "Message",
-                    value: value.substring(0, 1024)
+                    value: value.substring(0, 1024),
+                    inline: false
                 });
 
                 continued = true;

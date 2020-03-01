@@ -87,7 +87,7 @@ class NewTeam {
 
             await newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`);
 
-            const msg = await Discord.richQueue(Discord.richEmbed({
+            const msg = await Discord.richQueue(Discord.messageEmbed({
                 title: "Team creation commands",
                 fields: [
                     {

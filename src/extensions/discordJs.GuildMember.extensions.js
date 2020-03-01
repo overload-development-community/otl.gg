@@ -424,7 +424,7 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
         return;
     }
 
-    await Discord.richQueue(Discord.richEmbed({
+    await Discord.richQueue(Discord.messageEmbed({
         title: `${team.name} (${team.tag})`,
         description: "Pilot Name Change",
         color: team.role.color,
