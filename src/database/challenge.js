@@ -436,7 +436,7 @@ class ChallengeDb {
             IF @setBlueTeamId IS NOT NULL
             BEGIN
                 SET @blueTeamId = @setBlueTeamId
-                SET @orangeTeamId = CASE WHEN @challengingTeamId = @setBlueTeamId THEN @challengedTeamId ELSE @challengingTeamId END
+                SET @orangeTeamId = CASE WHEN @team1Id = @setBlueTeamId THEN @team2Id ELSE @team1Id END
             END
 
             EXEC sp_getapplock @Resource = 'tblChallenge', @LockMode = 'Update', @LockOwner = 'Session', @LockTimeout = 10000

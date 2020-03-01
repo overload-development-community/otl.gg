@@ -524,7 +524,7 @@ class Discord {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.createChannel(name, {type, permissionOverwrites: overwrites, reason});
+        return otlGuild.channels.create(name, {type, permissionOverwrites: overwrites, reason});
     }
 
     //                          #          ###         ##
