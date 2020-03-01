@@ -102,6 +102,14 @@ class TeamDb {
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
 
+            IF @playerId IS NULL
+            BEGIN
+                INSERT INTO tblPlayer (DiscordId, Name)
+                VALUES (@discordId, @name)
+
+                SET @playerId = SCOPE_IDENTITY()
+            END
+
             INSERT INTO tblRoster (TeamId, PlayerId) VALUES (@teamId, @playerId)
             DELETE FROM tblRequest WHERE PlayerId = @playerId
             DELETE FROM tblInvite WHERE PlayerId = @playerId
@@ -112,6 +120,7 @@ class TeamDb {
             SELECT @playerId PlayerId
         `, {
             discordId: {type: Db.VARCHAR(24), value: member.id},
+            name: {type: Db.VARCHAR(64), value: member.displayName},
             teamId: {type: Db.INT, value: team.id}
         });
 
