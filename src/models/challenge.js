@@ -1954,13 +1954,9 @@ class Challenge {
 
         if (this.channel) {
             try {
-                await this.channel.overwritePermissions(
-                    [
-                        {
-                            id: member.id,
-                            allow: ["VIEW_CHANNEL"]
-                        }
-                    ],
+                await this.channel.updateOverwrite(
+                    member,
+                    {"VIEW_CHANNEL": true},
                     `${member} is scheduled to cast this match.`
                 );
 
@@ -2763,13 +2759,9 @@ class Challenge {
         if (this.channel) {
             try {
                 if (Discord.findGuildMemberById(member.id)) {
-                    await this.channel.overwritePermissions(
-                        [
-                            {
-                                id: member.id,
-                                deny: ["VIEW_CHANNEL"]
-                            }
-                        ],
+                    await this.channel.updateOverwrite(
+                        member,
+                        {"VIEW_CHANNEL": null},
                         `${member} is no longer scheduled to cast this match.`
                     );
                 }
