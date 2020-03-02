@@ -1855,8 +1855,8 @@ class PlayerDb {
                 SUM(s.Kills) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgKills,
                 SUM(s.Assists) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgAssists,
                 SUM(s.Deaths) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDeaths,
-                ISNULL(SUM(d.Damage), 0) / (COUNT(c.ChallengeId) + 0.15 * SUM(c.OvertimePeriods)) AvgDamagePerGame,
-                ISNULL(SUM(d.Damage), 0) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END AvgDamagePerDeath,
+                ISNULL(s3.Damage, 0) / (s3.Games + 0.15 * s3.OvertimePeriods) AvgDamagePerGame,
+                ISNULL(s3.Damage, 0) / CASE WHEN s3.Deaths = 0 THEN 1 ELSE s3.Deaths END AvgDamagePerDeath,
                 CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END KDA
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1869,35 +1869,26 @@ class PlayerDb {
                     AND (@season = 0 OR lc.Season = @season)
                     AND lc.Postseason = @postseason
             ) ls ON p.PlayerId = ls.PlayerId
-            ${all ? "" : /* sql */`
-                INNER JOIN (
-                    SELECT s2.PlayerId, CAST(COUNT(s2.StatId) AS FLOAT) / g2.Games PctPlayed
-                    FROM tblStat s2
-                    INNER JOIN vwCompletedChallenge c2 ON s2.ChallengeId = c2.ChallengeId
-                    INNER JOIN (
-                        SELECT ROW_NUMBER() OVER(PARTITION BY s3.PlayerId ORDER BY c3.MatchTime) Row, s3.PlayerId, s3.TeamId
-                        FROM tblStat s3
-                        INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
-                        WHERE (@season = 0 OR c3.Season = @season)
-                            AND c3.Postseason = @postseason
-                            AND c3.GameType = @gameType
-                    ) r2 ON s2.PlayerId = r2.PlayerId AND r2.Row = 1
-                    INNER JOIN (
-                        SELECT COUNT(DISTINCT s3.ChallengeId) Games, s3.TeamId
-                        FROM tblStat s3
-                        INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
-                        WHERE (@season = 0 OR c3.Season = @season)
-                            AND c3.Postseason = @postseason
-                            AND c3.GameType = @gameType
-                        GROUP BY s3.TeamId
-                    ) g2 ON r2.TeamId = g2.TeamId
-                    WHERE (@season = 0 OR c2.Season = @season)
-                        AND c2.Postseason = @postseason
-                        AND c2.GameType = @gameType
-                    GROUP BY s2.PlayerId, g2.Games
-                ) g on p.PlayerId = g.PlayerId
-            `}
             INNER JOIN tblTeam t ON ls.TeamId = t.TeamId
+            LEFT OUTER JOIN (
+                SELECT s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(c2.OvertimePeriods) OvertimePeriods, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE (@season = 0 OR c2.Season = @season)
+                    AND c2.Postseason = @postseason
+                    AND c2.GameType = 'TA'
+                GROUP BY s2.TeamId, s2.PlayerId
+            ) s3 ON s.PlayerId = s3.PlayerId
             LEFT OUTER JOIN (
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
                 FROM tblDamage
@@ -1909,10 +1900,7 @@ class PlayerDb {
                 AND c.Postseason = @postseason
                 AND c.GameType = @gameType
                 AND ls.Row = 1
-                ${all ? "" : /* sql */`
-                    AND g.PctPlayed >= 0.1
-                `}
-            GROUP BY p.PlayerId, p.Name, ls.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
+            GROUP BY p.PlayerId, p.Name, ls.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked, s3.Games, s3.OvertimePeriods, s3.Damage, s3.Deaths
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {

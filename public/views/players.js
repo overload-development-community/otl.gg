@@ -154,7 +154,7 @@ class PlayersView {
                                     <div class="header">Team</div>
                                     <div class="header">Name</div>
                                     <div class="header">DmgPG</div>
-                                    ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
+                                    ${stats.filter((s) => s.avgDamagePerGame).sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
                                         <div class="numeric pos">${index + 1}</div>
                                         <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                             <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
@@ -175,7 +175,7 @@ class PlayersView {
                                     <div class="header">Team</div>
                                     <div class="header">Name</div>
                                     <div class="header">DmgPD</div>
-                                    ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerDeath - a.avgDamagePerDeath).map((s, index, sortedStats) => /* html */`
+                                    ${stats.filter((s) => s.avgDamagePerDeath).sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerDeath - a.avgDamagePerDeath).map((s, index, sortedStats) => /* html */`
                                         <div class="numeric pos">${index + 1}</div>
                                         <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                             <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
@@ -289,7 +289,7 @@ class PlayersView {
                                 <div class="header">Team</div>
                                 <div class="header">Name</div>
                                 <div class="header">DmgPG</div>
-                                ${stats.sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
+                                ${stats.filter((s) => s.avgDamagePerGame).sort((a, b) => a === b ? a.name.localeCompare(b.name) : b.avgDamagePerGame - a.avgDamagePerGame).map((s, index, sortedStats) => /* html */`
                                     <div class="numeric pos">${index + 1}</div>
                                     <div class="tag">${(team = teams.getTeam(s.teamId, s.teamName, s.tag)) === void 0 ? "" : /* html */`
                                         <div class="diamond${team.role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
