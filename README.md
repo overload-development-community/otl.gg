@@ -4,6 +4,19 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v3.0.3 - 3/1/2020
+
+* New `!capexempt` command allows the server owner to add players to teams beyond the roster cap.
+* `!uncast` now works as expected.
+* Various bugs with stats on the website are fixed.
+* Colors for rematches will no longer change between matches.
+* Captains cap has been removed.
+* Added game settings for olmod to read.
+* Fixed bug introduced in newer versions of Chrome having to do with countdowns.
+* Fixed security bug in the og:url meta tag.
+* Fixed a new instance of an unnormalized name on the website.
+* Added support for adding stats from a game on a Russian server.
+
 ## v3.0.2 - 1/28/2020
 
 * `!addstats` now will move the match time back if it was played earlier than the game was agreed upon.
