@@ -220,8 +220,8 @@ class Challenge {
                         name: "!confirm",
                         value: "Confirms the reported score by the other team."
                     }, {
-                        name: "Screenshot required!",
-                        value: "At least one pilot must post a screenshot of the final score screen, which includes each pilot's individual performance.  Games reported without a screenshot will not be counted."
+                        name: "Tracker Required!",
+                        value: "The game must be reported on the tracker at https://tracker.otl.gg.  If it's not reported there, you may still report the game with a copy of the .ssl file from the server.  Games reported that aren't on the tracker or don't have aan .ssl file will not be counted."
                     }
                 ]
             }), challenge.channel);
@@ -1252,8 +1252,8 @@ class Challenge {
                 title: "Match Confirmed",
                 fields: [
                     {
-                        name: "Post a screenshot",
-                        value: "Remember, OTL matches are only official with pilot statistics from a screenshot.  Be sure that at least one pilot posts the screenshot showing full match details, including each pilots' kills, assists, and deaths."
+                        name: "Post the game stats",
+                        value: "Remember, OTL matches are only official with pilot statistics from the tracker at https://tracker.otl.gg or from the .ssl file for the game from the server."
                     },
                     {
                         name: "This channel is now closed",
@@ -2260,8 +2260,8 @@ class Challenge {
                 title: "Match Confirmed",
                 fields: [
                     {
-                        name: "Post a screenshot",
-                        value: "Remember, OTL matches are only official with pilot statistics from a screenshot.  Be sure that at least one pilot posts the screenshot showing full match details, including each pilots' kills, assists, and deaths."
+                        name: "Post the game stats",
+                        value: "Remember, OTL matches are only official with pilot statistics from the tracker at https://tracker.otl.gg or from the .ssl file for the game from the server."
                     },
                     {
                         name: "This channel is now closed",
