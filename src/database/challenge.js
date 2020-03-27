@@ -13,6 +13,7 @@
  * @typedef {import("../../types/challengeDbTypes").GetDamageRecordsets} ChallengeDbTypes.GetDamageRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetDetailsRecordsets} ChallengeDbTypes.GetDetailsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetNotificationsRecordsets} ChallengeDbTypes.GetNotificationsRecordsets
+ * @typedef {import("../../types/challengeDbTypes").GetRandomMapRecordsets} ChallengeDbTypes.GetRandomMapRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetStatsForTeamRecordsets} ChallengeDbTypes.GetStatsForTeamRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetStreamersRecordsets} ChallengeDbTypes.GetStreamersRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetTeamDetailsRecordsets} ChallengeDbTypes.GetTeamDetailsRecordsets
@@ -1136,6 +1137,41 @@ class ChallengeDb {
                 matchTime: row.MatchTime
             }))
         } || {expiredClocks: [], startingMatches: [], missedMatches: []};
+    }
+
+    //              #    ###                  #              #  #
+    //              #    #  #                 #              ####
+    //  ###   ##   ###   #  #   ###  ###    ###   ##   # #   ####   ###  ###
+    // #  #  # ##   #    ###   #  #  #  #  #  #  #  #  ####  #  #  #  #  #  #
+    //  ##   ##     #    # #   # ##  #  #  #  #  #  #  #  #  #  #  # ##  #  #
+    // #      ##     ##  #  #   # #  #  #   ###   ##   #  #  #  #   # #  ###
+    //  ###                                                              #
+    /**
+     * Gets a random map for a challenge.
+     * @param {Challenge} challenge The challenge to get a random map for.
+     * @param {string} direction The order to sort on, "top" or "bottom".
+     * @param {number} count The number of maps to choose from.
+     * @returns {Promise<string>} A promise that resolves with the randomly chosen map.
+     */
+    static async getRandomMap(challenge, direction, count) {
+        /** @type {ChallengeDbTypes.GetRandomMapRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT Map
+            FROM (
+                SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
+                FROM vwCompletedChallenge
+                WHERE GameType = @type
+                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = 1 AND GameType = @type)
+                GROUP BY Map
+                ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "top" ? "DESC" : "ASC"} ` : ""}
+            ) a
+            ORDER BY Id
+        `, {
+            id: {type: Db.INT, value: challenge.id},
+            type: {type: Db.VARCHAR(5), value: challenge.details.gameType}
+        });
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
 
     //              #     ##    #           #           ####              ###

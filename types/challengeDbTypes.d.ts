@@ -199,6 +199,14 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type GetRandomMapRecordsets = {
+        recordsets: [
+            {
+                Map: string
+            }[]
+        ]
+    }
+
     type GetStatsForTeamRecordsets = {
         recordsets: [
             (GameStats & CTFStats & {

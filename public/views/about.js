@@ -181,7 +181,7 @@ class AboutView {
 
                     <div class="command">!challenge &lt;team> (TA|<wbr />CTF)</div>
                     <div>Founder or Captain only.  Challenges another team to a match.  Creates a challenge channel where you can negotiate the match parameters with the other team.  You can optionally include the game type.</div>
-                    <div class="example">!challenge CF<br />!challenge Cronus Frontier TA</div>
+                    <div class="example">!challenge CF<br />!challenge Cronus Frontier TA<br />!shenanigans</div>
 
                     <div class="section">Challenges (Only allowed in challenge channels)</div>
 
@@ -216,6 +216,10 @@ class AboutView {
                     <div class="command">!suggestmap &lt;map></div>
                     <div>Founder or Captain only.  Suggests a neutral map.  The suggested map cannot be one of the home map team's home maps.  Cannot be used once the map is locked in.</div>
                     <div class="example">!suggestmap Vault</div>
+
+                    <div class="command">!suggestrandommap [(top|<wbr />bottom) &ltcount>]</div>
+                    <div>Founder or Captain only.  Suggests a random map.  This will choose a map for the game type that's been played on the OTL before, but is not one of the home map team's home maps.  You can limit the random selection to the most popular (top) or least popular (bottom) maps in the league.</div>
+                    <div class="example">!suggestrandommap<br />!suggestrandommap top 10<br />!suggestrandommap bottom 20</div>
 
                     <div class="command">!confirmmap</div>
                     <div>Founder or Captain only.  Confirms a neutral map suggestion from the other team and locks in that map for the match.  Cannot be used once the map is locked in.</div>

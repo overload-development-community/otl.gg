@@ -41,6 +41,7 @@ const tz = require("timezone-js"),
     scoreParse = /^(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))$/,
     statCTFParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<captures>0|[1-9][0-9]*) (?<pickups>0|[1-9][0-9]*) (?<carrierKills>0|[1-9][0-9]*) (?<returns>0|[1-9][0-9]*) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
     statTAParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
+    suggestRandomMapParse = /^(?:(?<direction>top|bottom) (?<count>[1-9][0-9]*))?/,
     teamNameParse = /^[0-9a-zA-Z' -]{6,25}$/,
     teamPilotParse = /^(?<teamName>.{1,25}) (?<id><@!?[0-9]+>)$/,
     teamTagParse = /^[0-9A-Za-z]{1,5}$/,
@@ -2646,6 +2647,65 @@ class Commands {
 
         try {
             await challenge.suggestMap(team, map.map);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                                        #                         #
+    //                                        #                         #
+    //  ###   #  #   ###   ###   ##    ###   ###   ###    ###  ###    ###   ##   # #   # #    ###  ###
+    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  #  #  #  #  #  #  #  #  ####  ####  #  #  #  #
+    //   ##   #  #   ##    ##   ##      ##    #    #     # ##  #  #  #  #  #  #  #  #  #  #  # ##  #  #
+    // ###     ###  #     #      ##   ###      ##  #      # #  #  #   ###   ##   #  #  #  #   # #  ###
+    //               ###   ###                                                                     #
+    /**
+     * Suggests a random neutral map for a challenge.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async suggestrandommap(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
+        await Commands.checkChallengeIsNotLocked(challenge, member, channel);
+        await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
+
+        if (!suggestRandomMapParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but to suggest a random map, either use \`!suggestrandommap\` by itself to suggest a map from the full map pool, or \`suggestrandommap top 10\` or \`suggestrandommap bottom 20\` to pick from the most or least popular maps.`, channel);
+            throw new Warning("Invalid syntax.");
+        }
+
+        const {groups: {direction, count}} = suggestRandomMapParse.exec(message);
+
+        const map = await challenge.getRandomMap(direction.toLowerCase(), +count);
+
+        if (!map) {
+            await Discord.queue(`Sorry, ${member}, but I could not find a map to suggest.`, channel);
+            throw new Warning("No matching maps.");
+        }
+
+        try {
+            await challenge.suggestMap(team, map, true);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -6064,6 +6124,16 @@ class Commands {
 
         await Discord.queue(`${member}, the map **${message}** is no longer available for play.`, channel);
         return true;
+    }
+
+    // April fools. :)
+    async shenanigans(member, channel, message) {
+        if (message) {
+            await Discord.queue(`Come on, ${member}, shenanigans speaks for itself.  Try \`!shenanigans\` by itself.`, channel);
+            return false;
+        }
+
+        return await this.challenge(member, channel, "DC");
     }
 }
 

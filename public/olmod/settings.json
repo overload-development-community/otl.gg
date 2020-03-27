@@ -1,6 +1,6 @@
 [
     {
-        "title": "OTL Team Anarchy",
+        "title": "OTL Season 3 TA",
         "matchMode": 1,
         "maxPlayers": 16,
         "friendlyFire": 0,
@@ -41,7 +41,7 @@
         "jipEnabled": 0
     },
     {
-        "title": "OTL Capture the Flag",
+        "title": "OTL Season 3 CTF",
         "matchMode": 3,
         "maxPlayers": 16,
         "friendlyFire": 0,
@@ -80,5 +80,46 @@
             1
         ],
         "jipEnabled": 0
+    },
+    {
+        "title": "Oops! All Devs",
+        "matchMode": 0,
+        "maxPlayers": 16,
+        "friendlyFire": 0,
+        "timeLimit": 6,
+        "scoreLimit": 0,
+        "respawnTime": 2,
+        "respawnInvuln": 2,
+        "showNames": 2,
+        "turnSpeedLimit": 2,
+        "forceLoadout": 1,
+        "forcePrimary1": 8,
+        "forcePrimary2": 8,
+        "forceSecondary1": 5,
+        "forceSecondary2": 8,
+        "forceModifier1": 4,
+        "forceModifier2": 4,
+        "powerupSpawn": 3,
+        "powerupInitial": 2,
+        "powerupBigSpawn": 3,
+        "powerupFilter": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0
+        ],
+        "jipEnabled": 1
     }
 ]

@@ -1461,6 +1461,32 @@ class Challenge {
         }
     }
 
+    //              #    ###                  #              #  #
+    //              #    #  #                 #              ####
+    //  ###   ##   ###   #  #   ###  ###    ###   ##   # #   ####   ###  ###
+    // #  #  # ##   #    ###   #  #  #  #  #  #  #  #  ####  #  #  #  #  #  #
+    //  ##   ##     #    # #   # ##  #  #  #  #  #  #  #  #  #  #  # ##  #  #
+    // #      ##     ##  #  #   # #  #  #   ###   ##   #  #  #  #   # #  ###
+    //  ###                                                              #
+    /**
+     * Gets a random map for the challenge.
+     * @param {string} direction The direction, "top" or "bottom".
+     * @param {number} count The number of maps to use from the pool.
+     * @returns {Promise<string>} A promise that resolves with a random map.
+     */
+    async getRandomMap(direction, count) {
+        await this.loadDetails();
+
+        let map;
+        try {
+            map = await Db.getRandomMap(this, direction, count);
+        } catch (err) {
+            throw new Exception("There was a database error getting a random map.", err);
+        }
+
+        return map;
+    }
+
     //              #     ##    #           #           ####              ###
     //              #    #  #   #           #           #                  #
     //  ###   ##   ###    #    ###    ###  ###    ###   ###    ##   ###    #     ##    ###  # #
@@ -2497,9 +2523,10 @@ class Challenge {
      * Suggests a map for the challenge.
      * @param {Team} team The team suggesting the map.
      * @param {string} map The map.
+     * @param {boolean} [random] Whether the map was random.
      * @returns {Promise} A promise that resolves when the map has been suggested.
      */
-    async suggestMap(team, map) {
+    async suggestMap(team, map, random) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2514,7 +2541,7 @@ class Challenge {
         this.details.suggestedMapTeam = team;
 
         try {
-            await Discord.queue(`**${team.name}** is suggesting to play a neutral map, **${map}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmmap\` to agree to this suggestion.`, this.channel);
+            await Discord.queue(`**${team.name}** is suggesting to play a ${random ? "random" : "neutral"} map, **${map}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmmap\` to agree to this suggestion.`, this.channel);
 
             await this.updateTopic();
         } catch (err) {
