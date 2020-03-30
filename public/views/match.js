@@ -170,13 +170,13 @@ class MatchView {
                                 `).join("")}
                                 <div class="header">Total</div>
                                 ${details.stats.map((player, index) => /* html */`
-                                    <div id="damage-total-${index}" class="right"></div>
+                                    <div id="damage-total-${index}" class="numeric right"></div>
                                 `).join("")}
                                 <div class="empty"></div>
                                 <div class="empty"></div>
                                 <div class="header">All Weapons</div>
                                 ${details.stats.map((player) => /* html */`
-                                    <div class="right">${details.damage.filter((d) => d.opponentName === player.name && d.name !== d.opponentName && (!details.stats.find((p) => p.name === d.opponentName).teamId || details.stats.find((p) => p.name === d.name) && details.stats.find((p) => p.name === d.opponentName).teamId !== details.stats.find((p) => p.name === d.name).teamId)).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
+                                    <div class="numeric right">${details.damage.filter((d) => d.opponentName === player.name && d.name !== d.opponentName && (!details.stats.find((p) => p.name === d.opponentName).teamId || details.stats.find((p) => p.name === d.name) && details.stats.find((p) => p.name === d.opponentName).teamId !== details.stats.find((p) => p.name === d.name).teamId)).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
                                 `).join("")}
                                 <div class="empty"></div>
                                 <div class="empty"></div>

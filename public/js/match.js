@@ -40,7 +40,7 @@ class MatchJs {
             for (let x = 0; x < MatchJs.players.length; x++) {
                 let total = 0;
                 for (let y = 0; y < MatchJs.players.length; y++) {
-                    const damage = (MatchJs.damage.find((d) => d.defender === MatchJs.players[x] && d.attacker === MatchJs.players[y] && d.weapon === a.title) || {damage: 0}).damage,
+                    const damage = (MatchJs.damage.find((d) => d.opponentName === MatchJs.players[x] && d.name === MatchJs.players[y] && d.weapon === a.title) || {damage: 0}).damage,
                         el = document.getElementById(`damage-${y}-${x}`);
 
                     if (!el.classList.contains("friendly")) {

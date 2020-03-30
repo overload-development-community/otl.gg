@@ -2697,7 +2697,7 @@ class Commands {
 
         const {groups: {direction, count}} = suggestRandomMapParse.exec(message);
 
-        const map = await challenge.getRandomMap(direction.toLowerCase(), +count);
+        const map = await challenge.getRandomMap(direction && direction.toLowerCase() || void 0, +count);
 
         if (!map) {
             await Discord.queue(`Sorry, ${member}, but I could not find a map to suggest.`, channel);

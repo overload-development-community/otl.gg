@@ -1158,10 +1158,10 @@ class ChallengeDb {
         const data = await db.query(/* sql */`
             SELECT Map
             FROM (
-                SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
+                SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} WITH TIES ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
                 FROM vwCompletedChallenge
                 WHERE GameType = @type
-                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = 1 AND GameType = @type)
+                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = @id AND GameType = @type)
                 GROUP BY Map
                 ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "top" ? "DESC" : "ASC"} ` : ""}
             ) a
