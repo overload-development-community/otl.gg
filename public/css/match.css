@@ -319,6 +319,10 @@
     color: red;
 }
 
+#damage #grid .table .empty {
+    border: none;
+}
+
 #details {
     display: grid;
     grid-template-columns: repeat(6, auto);
