@@ -1601,6 +1601,8 @@ class TeamDb {
         }
 
         await db.query(sql, params);
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
     }
 }
 
