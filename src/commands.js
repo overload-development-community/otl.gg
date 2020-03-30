@@ -6133,7 +6133,7 @@ class Commands {
             return false;
         }
 
-        return await this.challenge(member, channel, "DC");
+        return this.challenge(member, channel, "DC");
     }
 }
 

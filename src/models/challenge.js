@@ -540,21 +540,6 @@ class Challenge {
 
         await this.loadDetails();
 
-        // Set game time if it's earlier than the specified time.
-        const matchTime = new Date(Math.floor(new Date(game.start).getTime() / 300000 + 0.5) * 300000);
-        let timeChanged = false;
-
-        if (matchTime < this.details.matchTime) {
-            try {
-                await Db.setTime(this, matchTime);
-            } catch (err) {
-                throw new Exception("There was a database error setting the time for a challenge while adding stats.", err);
-            }
-
-            this.details.matchTime = matchTime;
-            timeChanged = true;
-        }
-
         if (this.details.gameType === "TA" && game.settings.matchMode !== "TEAM ANARCHY") {
             throw new Error("The specified match on the tracker is not a team anarchy match.");
         }
@@ -687,6 +672,21 @@ class Challenge {
             challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
             challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
 
+            // Set game time if it's earlier than the specified time.
+            const matchTime = new Date(Math.floor(new Date(game.start).getTime() / 300000 + 0.5) * 300000);
+            let timeChanged = false;
+
+            if (matchTime < this.details.matchTime) {
+                try {
+                    await Db.setTime(this, matchTime);
+                } catch (err) {
+                    throw new Exception("There was a database error setting the time for a challenge while adding stats.", err);
+                }
+
+                this.details.matchTime = matchTime;
+                timeChanged = true;
+            }
+
             return {challengingTeamStats, challengedTeamStats, scoreChanged, timeChanged};
         }
 
@@ -765,6 +765,21 @@ class Challenge {
         // Get the new stats and return them.
         challengingTeamStats = await this.getStatsForTeam(this.challengingTeam);
         challengedTeamStats = await this.getStatsForTeam(this.challengedTeam);
+
+        // Set game time if it's earlier than the specified time.
+        const matchTime = new Date(Math.floor(new Date(game.start).getTime() / 300000 + 0.5) * 300000);
+        let timeChanged = false;
+
+        if (matchTime < this.details.matchTime) {
+            try {
+                await Db.setTime(this, matchTime);
+            } catch (err) {
+                throw new Exception("There was a database error setting the time for a challenge while adding stats.", err);
+            }
+
+            this.details.matchTime = matchTime;
+            timeChanged = true;
+        }
 
         return {challengingTeamStats, challengedTeamStats, scoreChanged: true, timeChanged};
     }
