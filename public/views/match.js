@@ -122,7 +122,7 @@ class MatchView {
                         <div class="header">K</div>
                         <div class="header">A</div>
                         <div class="header">D</div>
-                        ${details.stats.sort((a, b) => (a.kills + a.assists) / Math.max(a.deaths, 1) === (b.kills + b.assists) / Math.max(b.deaths, 1) ? a.kills === b.kills ? a.deaths - b.deaths : b.kills - a.kills : (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1)).map((s) => /* html */ `
+                        ${details.stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name)).map((s) => /* html */ `
                             <div class="tag">${(team = challenge.challengingTeam.id === s.teamId ? challenge.challengingTeam : challenge.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                             `}</div>
