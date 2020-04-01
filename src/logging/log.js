@@ -3,7 +3,7 @@
  * @typedef {import("../../types/logTypes").LogEntry} LogTypes.LogEntry
  */
 
-const request = require("request-promise-native"),
+const request = require("@root/request"),
     util = require("util"),
 
     settings = require("../../settings");

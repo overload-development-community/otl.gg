@@ -529,7 +529,7 @@ class Challenge {
     async addStats(gameId, nameMap) {
         let game;
         try {
-            game = await Tracker.getMatch(gameId);
+            game = (await Tracker.getMatch(gameId)).body;
         } catch (err) {
             throw new Error("That is not a valid game ID.");
         }

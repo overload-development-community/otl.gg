@@ -1,5 +1,5 @@
 const config = require("../settings").tracker,
-    request = require("request-promise-native");
+    request = require("@root/request");
 
 //  #####                       #
 //    #                         #
