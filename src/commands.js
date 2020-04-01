@@ -2534,6 +2534,11 @@ class Commands {
             throw new Warning("Challenge already exists.");
         }
 
+        if (team.id === opponent.id) {
+            await Discord.queue(`Sorry, ${member}, but this would cause shenanigans.  Challenge some other team!`, channel);
+            throw new Warning("Attempted to challenge own team.");
+        }
+
         let challenge;
         try {
             challenge = await Challenge.create(team, opponent, {gameType: gameTypeUpper});
