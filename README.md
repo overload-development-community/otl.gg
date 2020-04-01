@@ -4,6 +4,18 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v3.0.4 - 3/31/2020
+
+* Added the `!suggestrandommap` command, see https://otl.gg/about for more details.
+* Match page now orders players by number of captures instead of by KDA for the CTF game type.
+* Added damage totals taken per player to the match page.
+* Fixed the players page, the option to show active or all players should work again.
+* Players page should no longer show players listed twice.
+* All references to screenshots have been removed, in favor of providing tracker links.
+* Closed games will now invalidate caches so that the home page and the standings page will refresh with current ratings.
+* Fixed bug with an incomplete `!addstats` command inadvertantly changing the challenge's match time.
+* ???
+
 ## v3.0.3 - 3/1/2020
 
 * New `!capexempt` command allows the server owner to add players to teams beyond the roster cap.
