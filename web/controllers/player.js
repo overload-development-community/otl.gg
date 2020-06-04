@@ -1,4 +1,5 @@
-const Common = require("../includes/common"),
+const Season = require("../../src/models/season"),
+    Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
     NotFoundView = require("../../public/views/404"),
@@ -38,10 +39,18 @@ class Player {
      */
     static async get(req, res) {
         const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
-            season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
             postseason = !!req.query.postseason,
             gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
-            career = await PlayerModel.getCareer(playerId, season, postseason, gameType);
+            validSeasonNumbers = await Season.getSeasonNumbers();
+
+        let season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10);
+
+        validSeasonNumbers.push(0);
+        if (validSeasonNumbers.indexOf(season) === -1) {
+            season = void 0;
+        }
+
+        const career = await PlayerModel.getCareer(playerId, season, postseason, gameType);
 
         if (career) {
             const seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort(),
