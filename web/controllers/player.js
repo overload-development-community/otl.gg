@@ -1,10 +1,10 @@
-const Season = require("../../src/models/season"),
-    Common = require("../includes/common"),
+const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
     NotFoundView = require("../../public/views/404"),
     PlayerModel = require("../../src/models/player"),
-    PlayerView = require("../../public/views/player");
+    PlayerView = require("../../public/views/player"),
+    Season = require("../../src/models/season");
 
 /**
  * @typedef {import("express").Request} Express.Request
