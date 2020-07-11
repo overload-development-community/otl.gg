@@ -155,7 +155,7 @@ class Log {
                             });
 
                             if (res.body.id) {
-                                await Discord.queue(`Error occurred, see ${res.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
+                                await Discord.queue(`Error occurred, see ${res.body.url}.`, /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
                             } else {
                                 await Discord.queue("Error occurred, problem sending log, see http://logger.roncli.com.", /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
                             }
