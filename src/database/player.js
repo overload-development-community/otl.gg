@@ -228,7 +228,7 @@ class PlayerDb {
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
             LEFT OUTER JOIN (
-                SELECT c2.Season, c2.Postseason, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                SELECT c2.Season, c2.Postseason, s2.PlayerId, s2.TeamId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
@@ -237,14 +237,14 @@ class PlayerDb {
                     GROUP BY PlayerId, ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
-                    SELECT PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    SELECT PlayerId, TeamId, ChallengeId, SUM(Deaths) Deaths
                     FROM tblStat
-                    GROUP BY PlayerId, ChallengeId
+                    GROUP BY PlayerId, TeamId, ChallengeId
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.GameType = @gameType
                     AND d.PlayerId = @playerId
-                GROUP BY c2.Season, c2.Postseason, s2.PlayerId
-            ) d ON p.PlayerId = d.PlayerId AND c.Season = d.Season AND c.Postseason = d.Postseason
+                GROUP BY c2.Season, c2.Postseason, s2.PlayerId, s2.TeamId
+            ) d ON p.PlayerId = d.PlayerId AND t.TeamID = d.TeamID AND c.Season = d.Season AND c.Postseason = d.Postseason
             WHERE s.PlayerId = @playerId
                 AND c.GameType = @gameType
             GROUP BY c.Season, c.Postseason, s.TeamId, t.Tag, t.Name, d.Damage, d.Games, d.Deaths
@@ -1915,7 +1915,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c2.Season = @season)
                     AND c2.Postseason = @postseason
                     AND c2.GameType = 'TA'
-                GROUP BY s2.TeamId, s2.PlayerId
+                GROUP BY s2.PlayerId
             ) s3 ON s.PlayerId = s3.PlayerId
             LEFT OUTER JOIN (
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
