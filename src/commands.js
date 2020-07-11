@@ -6131,7 +6131,20 @@ class Commands {
         return true;
     }
 
-    // April fools. :)
+    //        #                              #
+    //        #
+    //  ###   ###    ##   ###    ###  ###   ##     ###   ###  ###    ###
+    // ##     #  #  # ##  #  #  #  #  #  #   #    #  #  #  #  #  #  ##
+    //   ##   #  #  ##    #  #  # ##  #  #   #     ##   # ##  #  #    ##
+    // ###    #  #   ##   #  #   # #  #  #  ###   #      # #  #  #  ###
+    //                                             ###
+    /**
+     * Alias for `!challenge DC`.  Added as an April Fools joke for 2020.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
     async shenanigans(member, channel, message) {
         if (message) {
             await Discord.queue(`Come on, ${member}, shenanigans speaks for itself.  Try \`!shenanigans\` by itself.`, channel);

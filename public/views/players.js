@@ -58,7 +58,7 @@ class PlayersView {
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"} for ${gameTypeName}</div>
             ${gameType === "TA" ? /* html */`
                 ${stats.length === 0 ? /* html */`
-                    <div id="no-results">No Team Anarchy stats avialable.</div>
+                    <div id="no-results">No Team Anarchy stats available.</div>
                 ` : /* html */`
                     <div id="stats">
                         <div id="kda">
@@ -194,7 +194,7 @@ class PlayersView {
             ` : ""}
             ${gameType === "CTF" ? /* html */`
                 ${stats.length === 0 ? /* html */`
-                    <div id="no-results">No Capture the Flag stats avialable.</div>
+                    <div id="no-results">No Capture the Flag stats available.</div>
                 ` : /* html */`
                     <div id="stats">
                         <div id="captures">
