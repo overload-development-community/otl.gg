@@ -6,6 +6,7 @@
 
 const Db = require("../database/newTeam"),
     Exception = require("../logging/exception"),
+    Log = require("../logging/log"),
     Team = require("./team");
 
 /** @type {typeof import("../discord")} */
@@ -85,7 +86,9 @@ class NewTeam {
                 }
             ], `${member.displayName} has started the process of creating a team.`);
 
-            await newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`);
+            newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`).catch((err) => {
+                Log.exception(`There was an error updating the topic in ${newTeam.channel}.`, err);
+            });
 
             const msg = await Discord.richQueue(Discord.messageEmbed({
                 title: "Team creation commands",
@@ -230,7 +233,7 @@ class NewTeam {
         this.name = name;
 
         try {
-            await this.updateChannel();
+            this.updateChannel();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a new team name.  Please resolve this manually as soon as possible.", err);
         }
@@ -258,7 +261,7 @@ class NewTeam {
         this.tag = tag;
 
         try {
-            await this.updateChannel();
+            this.updateChannel();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a new team tag.  Please resolve this manually as soon as possible.", err);
         }
@@ -273,12 +276,14 @@ class NewTeam {
     //       #
     /**
      * Updates a new team's channel topic.
-     * @returns {Promise} A promise that resolves when the channel is updated.
+     * @returns {void}
      */
-    async updateChannel() {
+    updateChannel() {
         const topic = `Team Name: ${this.name || "(unset)"}\r\nTeam Tag: ${this.tag || "(unset)"}`;
 
-        await this.channel.setTopic(topic, `${this.member.displayName} updated the team info.`);
+        this.channel.setTopic(topic, `${this.member.displayName} updated the team info.`).catch((err) => {
+            Log.exception(`There was an error updating the topic in ${this.channel}.`, err);
+        });
     }
 }
 

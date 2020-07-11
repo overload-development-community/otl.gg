@@ -1883,8 +1883,12 @@ class Team {
                 });
             }
 
-            await teamChannel.setTopic(channelTopic, "Team topic update requested.");
-            await captainsChannel.setTopic(captainsChannelTopic, "Team topic update requested.");
+            teamChannel.setTopic(channelTopic, "Team topic update requested.").catch((err) => {
+                Log.exception(`There was an error updating the topic in ${teamChannel}.`, err);
+            });
+            captainsChannel.setTopic(captainsChannelTopic, "Team topic update requested.").catch((err) => {
+                Log.exception(`There was an error updating the topic in ${captainsChannel}.`, err);
+            });
         } catch (err) {
             Log.exception(`There was an error updating team information for ${this.name}.  Please update ${this.name} manually.`, err);
         }

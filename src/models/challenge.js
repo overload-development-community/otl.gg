@@ -2959,7 +2959,9 @@ class Challenge {
             }
         }
 
-        await channel.setTopic(topic);
+        channel.setTopic(topic).catch((err) => {
+            Log.exception(`There was an error updating the topic in ${this.channel}.`, err);
+        });
     }
 
     //              #       #
