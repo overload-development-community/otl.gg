@@ -4,6 +4,14 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.1 - 7/11/2020
+
+* Fix various website bugs with stats for players that switch teams.
+* Commands that set topics no longer wait for the topic to be set, and will throw errors if they timeout.
+* Fix bug with error logging.
+* Fix HTML encoding in JavaScript.
+* Various code cleanup.
+
 ## v4.0.0 - 6/30/2020
 
 Support for Season 4 of the OTL.
