@@ -11,6 +11,8 @@
  * @typedef {import("../types/teamTypes").TeamWithConfirmation} TeamTypes.TeamWithConfirmation
  */
 
+const Exception = require("./logging/exception");
+
 const tz = require("timezone-js"),
     tzdata = require("tzdata"),
 
@@ -38,7 +40,7 @@ const tz = require("timezone-js"),
     nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
     numberParse = /^[1-9][0-9]*$/,
     numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
-    scoreParse = /^(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))$/,
+    scoreParse = /^(?:(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))|(?:https:\/\/(?:tracker|olproxy).otl.gg\/archive\/(?<gameId>[1-9][0-9]*)))$/,
     statCTFParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<captures>0|[1-9][0-9]*) (?<pickups>0|[1-9][0-9]*) (?<carrierKills>0|[1-9][0-9]*) (?<returns>0|[1-9][0-9]*) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
     statTAParse = /^(?<pilotName>.+) (?<teamName>[^ ]{1,5}) (?<kills>-?0|[1-9][0-9]*) (?<assists>0|[1-9][0-9]*) (?<deaths>0|[1-9][0-9]*)$/,
     suggestRandomMapParse = /^(?:(?<direction>top|bottom) (?<count>[1-9][0-9]*))?/,
@@ -3962,13 +3964,34 @@ class Commands {
         await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
         if (!scoreParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the command followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the command followed by either the score using a space to separate the scores, for example \`!report 49 27\`, or with a URL to the tracker game played, for example \`report https://tracker.otl.gg/archive/12345\`.  Note that only the losing team should report the score.`, channel);
             return false;
         }
 
-        const {groups: {scoreStr1, scoreStr2}} = scoreParse.exec(message);
-        let score1 = +scoreStr1,
+        const {groups: {scoreStr1, scoreStr2, gameId}} = scoreParse.exec(message);
+
+        let score1, score2;
+
+        if (gameId) {
+            try {
+                await challenge.addStats(+gameId, {});
+            } catch (err) {
+                await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
+                throw new Exception(err.message, err);
+            }
+
+            score1 = challenge.details.challengingTeamScore;
+            score2 = challenge.details.challengedTeamScore;
+        } else {
+            const details = await challenge.getTeamDetails();
+
+            if (details.stats.length > 0) {
+                await challenge.clearStats(member);
+            }
+
+            score1 = +scoreStr1;
             score2 = +scoreStr2;
+        }
 
         if (score2 > score1) {
             [score1, score2] = [score2, score1];
@@ -3979,6 +4002,10 @@ class Commands {
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
+        }
+
+        if (gameId) {
+            await Discord.queue("If there are multiple games to include in this report, continue to `!report` more tracker URLs.  You may `!report 0 0` in order to reset the stats and restart the reporting process.", channel);
         }
 
         return true;
@@ -4969,7 +4996,7 @@ class Commands {
         }
 
         if (!scoreParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but to report a completed match, enter the command followed by the score, using a space to separate the scores, for example \`!report 49 27\`.  Note that only the losing team should report the score.`, channel);
+            await Discord.queue(`Sorry, ${member}, but to force report a completed match, enter the command followed by the score, using a space to separate the scores putting the challenging team first, for example \`!forcereport 49 27\`.`, channel);
             throw new Warning("Invalid parameters.");
         }
 
@@ -4978,9 +5005,14 @@ class Commands {
         await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
         await Commands.checkChallengeMatchTimeIsSet(challenge, member, channel);
 
-        const {groups: {scoreStr1, scoreStr2}} = scoreParse.exec(message),
+        const {groups: {scoreStr1, scoreStr2, gameId}} = scoreParse.exec(message),
             score1 = +scoreStr1,
             score2 = +scoreStr2;
+
+        if (gameId) {
+            await Discord.queue(`Sorry, ${member}, but to force report a completed match, enter the command followed by the score, using a space to separate the scores putting the challenging team first, for example \`!forcereport 49 27\`.`, channel);
+            return false;
+        }
 
         try {
             await challenge.setScore(score1, score2);
