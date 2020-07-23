@@ -59,6 +59,18 @@ class AboutView {
                     <div>Get a link to the map list.</div>
                     <div class="example">!maplist</div>
 
+                    <div class="command">!maplist</div>
+                    <div>Get a link to the map list.</div>
+                    <div class="example">!maplist</div>
+
+                    <div class="command">!testing</div>
+                    <div>Adds you to the publicly mentionable Testing Discord role.</div>
+                    <div class="example">!testing</div>
+
+                    <div class="command">!stoptesting</div>
+                    <div>Removes you from the publicly mentionable Testing Discord role.</div>
+                    <div class="example">!stoptesting</div>
+
                     <div class="command">!timezone [&lt;timezone>]</div>
                     <div>Changes your personal time zone.  See #timezone-faq on the Discord server for details.  Pass no parameters to clear your timezone.</div>
                     <div class="example">!timezone America/Los_Angeles<br />!timezone Europe/Berlin<br />!timezone</div>
@@ -201,9 +213,9 @@ class AboutView {
                     <div>Gets the amount of time until the clock deadline expires.</div>
                     <div class="example">!deadlinecountdown</div>
 
-                    <div class="command">!streaming</div>
+                    <div class="command">!stream<br />!streaming</div>
                     <div>Indicates that you will be streaming this match as you play it.</div>
-                    <div class="example">!streaming</div>
+                    <div class="example">!stream<br />!streaming</div>
 
                     <div class="command">!notstreaming</div>
                     <div>Indicates that you will not be streaming this match as you play it.  This is the default, you only need to issue this command if you previously used the !streaming command but no longer will be streaming the match as you play.</div>
@@ -253,9 +265,9 @@ class AboutView {
                     <div>Founder or Captain only.  Puts a challenge on the clock, giving both teams 28 days to schedule and play the match.  Limits apply, see #challenges on the Discord server for details.</div>
                     <div class="example">!clock</div>
 
-                    <div class="command">!report &lt;score1> &lt;score2></div>
+                    <div class="command">!report (&lt;score1> &lt;score2>|&lt;tracker url>)</div>
                     <div>Founder or Captain only.  Reports the score, indicating that your team has not won the match.</div>
-                    <div class="example">!report 62 39<br />!report 45 78<br />!report 63 63</div>
+                    <div class="example">!report 62 39<br />!report 45 78<br />!report 63 63<br />!report https://tracker.otl.gg/archive/12345</div>
 
                     <div class="command">!confirm</div>
                     <div>Founder or Captain only.  Confirms the score reported by the other team.</div>
