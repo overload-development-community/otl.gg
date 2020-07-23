@@ -88,196 +88,218 @@ class Challenge {
      */
     static async create(challengingTeam, challengedTeam, options) {
 
-        const {adminCreated, teamSize, startNow, blueTeam} = options;
-        let {gameType} = options;
+        const {adminCreated, teamSize, startNow} = options;
+        let {blueTeam, gameType, number} = options;
 
         if (!gameType) {
             gameType = "TA";
         }
 
-        let data;
-        try {
-            data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam);
-        } catch (err) {
-            throw new Exception("There was a database error creating a challenge.", err);
+        if (!number) {
+            number = 1;
         }
 
-        const challenge = new Challenge({id: data.id, challengingTeam, challengedTeam});
+        let firstChallenge;
 
-        try {
-            if (challenge.channel) {
-                throw new Error("Channel already exists.");
+        for (let count = 0; count < number; count++) {
+            let data;
+            try {
+                data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam);
+            } catch (err) {
+                throw new Exception("There was a database error creating a challenge.", err);
             }
 
-            await Discord.createChannel(challenge.channelName, "text", [
-                {
-                    id: Discord.id,
-                    deny: ["VIEW_CHANNEL"]
-                }, {
-                    id: challengingTeam.role.id,
-                    allow: ["VIEW_CHANNEL"]
-                }, {
-                    id: challengedTeam.role.id,
-                    allow: ["VIEW_CHANNEL"]
+            const challenge = new Challenge({id: data.id, challengingTeam, challengedTeam});
+
+            try {
+                if (challenge.channel) {
+                    throw new Error("Channel already exists.");
                 }
-            ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
-            await challenge.channel.setParent(Discord.challengesCategory);
-
-            const mapEmbed = Discord.messageEmbed({
-                title: "Challenge commands - Map",
-                description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
-                color: data.homeMapTeam.role.color,
-                fields: [
+                await Discord.createChannel(challenge.channelName, "text", [
                     {
-                        name: "!pickmap <a|b|c|d|e>",
-                        value: "Pick the map to play.  Locks the map for the match."
+                        id: Discord.id,
+                        deny: ["VIEW_CHANNEL"]
+                    }, {
+                        id: challengingTeam.role.id,
+                        allow: ["VIEW_CHANNEL"]
+                    }, {
+                        id: challengedTeam.role.id,
+                        allow: ["VIEW_CHANNEL"]
                     }
-                ]
-            });
+                ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
-            if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
-                mapEmbed.fields.push({
-                    name: "!suggestmap <map>",
-                    value: "Suggest a neutral map to play.",
-                    inline: false
-                }, {
-                    name: "!confirmmap",
-                    value: "Confirms a neutral map suggested by the other team.  Locks the map for the match.",
-                    inline: false
+                await challenge.channel.setParent(Discord.challengesCategory);
+
+                const mapEmbed = Discord.messageEmbed({
+                    title: "Challenge commands - Map",
+                    description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
+                    color: data.homeMapTeam.role.color,
+                    fields: [
+                        {
+                            name: "!pickmap <a|b|c|d|e>",
+                            value: "Pick the map to play.  Locks the map for the match."
+                        }
+                    ]
                 });
-            }
 
-            const mapMsg = await Discord.richQueue(mapEmbed, challenge.channel);
+                if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
+                    mapEmbed.fields.push({
+                        name: "!suggestmap <map>",
+                        value: "Suggest a neutral map to play.",
+                        inline: false
+                    }, {
+                        name: "!confirmmap",
+                        value: "Confirms a neutral map suggested by the other team.  Locks the map for the match.",
+                        inline: false
+                    });
+                }
 
-            if (mapMsg) {
-                await mapMsg.pin();
-            }
+                const mapMsg = await Discord.richQueue(mapEmbed, challenge.channel);
 
-            const optionsEmbed = Discord.messageEmbed({
-                title: "Challenge commands - Options",
-                description: "Challenges must also have a team size and scheduled time to play.",
-                fields: []
-            });
+                if (mapMsg) {
+                    await mapMsg.pin();
+                }
 
-            if (teamSize) {
-                optionsEmbed.addField("Team size", `The team size has been set to be ${teamSize}v${teamSize}.`);
-            }
+                const optionsEmbed = Discord.messageEmbed({
+                    title: "Challenge commands - Options",
+                    description: "Challenges must also have a team size and scheduled time to play.",
+                    fields: []
+                });
 
-            if (startNow) {
-                optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
-            }
+                if (teamSize) {
+                    optionsEmbed.addField("Team size", `The team size has been set to be ${teamSize}v${teamSize}.`);
+                }
 
-            if (gameType) {
-                optionsEmbed.addField("Game type", `The game type has been set to **${Challenge.getGameTypeName(gameType)}**.`);
-            }
+                if (startNow) {
+                    optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
+                }
 
-            optionsEmbed.addField("!suggestteamsize <2|3|4|5|6|7|8>", "Suggests a team size for the match.");
-            optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
-            optionsEmbed.addField("!suggesttype <TA|CTF>", "Suggests a game type for the match.");
-            optionsEmbed.addField("!confirmtype", "Confirms a game type suggested by the other team.");
+                if (gameType) {
+                    optionsEmbed.addField("Game type", `The game type has been set to **${Challenge.getGameTypeName(gameType)}**.`);
+                }
 
-            if (!adminCreated) {
+                optionsEmbed.addField("!suggestteamsize <2|3|4|5|6|7|8>", "Suggests a team size for the match.");
+                optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
+                optionsEmbed.addField("!suggesttype <TA|CTF>", "Suggests a game type for the match.");
+                optionsEmbed.addField("!confirmtype", "Confirms a game type suggested by the other team.");
+
+                if (!adminCreated) {
+                    optionsEmbed.fields.push({
+                        name: "!suggesttime <month name> <day> <year>, <hh:mm> (AM|PM)",
+                        value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command.",
+                        inline: false
+                    }, {
+                        name: "!confirmtime",
+                        value: "Confirms the date and time to play the match as suggested by the other team.",
+                        inline: false
+                    }, {
+                        name: "!clock",
+                        value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`,
+                        inline: false
+                    });
+                }
+
                 optionsEmbed.fields.push({
-                    name: "!suggesttime <month name> <day> <year>, <hh:mm> (AM|PM)",
-                    value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command.",
+                    name: "!streaming",
+                    value: "Indicates that a pilot will be streaming the match live.",
                     inline: false
                 }, {
-                    name: "!confirmtime",
-                    value: "Confirms the date and time to play the match as suggested by the other team.",
-                    inline: false
-                }, {
-                    name: "!clock",
-                    value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`,
+                    name: "!notstreaming",
+                    value: "Indicates that a pilot will not be streaming the match live, which is the default setting.",
                     inline: false
                 });
+
+                const optionsMsg = await Discord.richQueue(optionsEmbed, challenge.channel);
+
+                if (optionsMsg) {
+                    await optionsMsg.pin();
+                }
+
+                const reportMsg = await Discord.richQueue(Discord.messageEmbed({
+                    title: "Challenge commands - Reporting",
+                    description: "Upon completion of the match, the losing team reports the game.",
+                    fields: [
+                        {
+                            name: "!report <score> <score>",
+                            value: "Reports the score for the match.  Losing team must report the match."
+                        }, {
+                            name: "!confirm",
+                            value: "Confirms the reported score by the other team."
+                        }, {
+                            name: "Tracker Required!",
+                            value: "The game must be reported on the tracker at https://tracker.otl.gg.  If it's not reported there, you may still report the game with a copy of the .ssl file from the server.  Games reported that aren't on the tracker or don't have aan .ssl file will not be counted."
+                        }
+                    ]
+                }), challenge.channel);
+
+                if (reportMsg) {
+                    await reportMsg.pin();
+                }
+
+                const otherMsg = await Discord.richQueue(Discord.messageEmbed({
+                    title: "Challenge commands - Other",
+                    fields: [
+                        {
+                            name: "!matchtime",
+                            value: "Get the match time in your local timezone."
+                        },
+                        {
+                            name: "!countdown",
+                            value: "Get the amount of time until the match begins."
+                        },
+                        {
+                            name: "!deadline",
+                            value: "Get the clock deadline time in your local timezone."
+                        },
+                        {
+                            name: "!deadlinecountdown",
+                            value: "Get the amount of time until the clock deadline."
+                        },
+                        {
+                            name: "!streaming",
+                            value: "Indicate that you will be streaming this match."
+                        },
+                        {
+                            name: "!notstreaming",
+                            value: "Use this command if you've previously indicated that you will be streaming this match but won't be."
+                        }
+                    ]
+                }), challenge.channel);
+
+                if (otherMsg) {
+                    await otherMsg.pin();
+                }
+
+                if (data.team1Penalized && data.team2Penalized) {
+                    await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map selection is disabled.", challenge.channel);
+                } else if (data.team1Penalized) {
+                    await Discord.queue(`A penalty has been applied to **${challengingTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
+                } else if (data.team2Penalized) {
+                    await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
+                }
+
+                await challenge.updateTopic();
+            } catch (err) {
+                throw new Exception("There was a critical Discord error creating a challenge.  Please resolve this manually as soon as possible.", err);
             }
 
-            optionsEmbed.fields.push({
-                name: "!streaming",
-                value: "Indicates that a pilot will be streaming the match live.",
-                inline: false
-            }, {
-                name: "!notstreaming",
-                value: "Indicates that a pilot will not be streaming the match live, which is the default setting.",
-                inline: false
-            });
-
-            const optionsMsg = await Discord.richQueue(optionsEmbed, challenge.channel);
-
-            if (optionsMsg) {
-                await optionsMsg.pin();
+            if (!firstChallenge) {
+                firstChallenge = challenge;
             }
 
-            const reportMsg = await Discord.richQueue(Discord.messageEmbed({
-                title: "Challenge commands - Reporting",
-                description: "Upon completion of the match, the losing team reports the game.",
-                fields: [
-                    {
-                        name: "!report <score> <score>",
-                        value: "Reports the score for the match.  Losing team must report the match."
-                    }, {
-                        name: "!confirm",
-                        value: "Confirms the reported score by the other team."
-                    }, {
-                        name: "Tracker Required!",
-                        value: "The game must be reported on the tracker at https://tracker.otl.gg.  If it's not reported there, you may still report the game with a copy of the .ssl file from the server.  Games reported that aren't on the tracker or don't have aan .ssl file will not be counted."
-                    }
-                ]
-            }), challenge.channel);
+            if (!blueTeam) {
+                if (!challenge.details) {
+                    await challenge.loadDetails();
+                }
 
-            if (reportMsg) {
-                await reportMsg.pin();
+                blueTeam = challenge.details.blueTeam;
             }
 
-            const otherMsg = await Discord.richQueue(Discord.messageEmbed({
-                title: "Challenge commands - Other",
-                fields: [
-                    {
-                        name: "!matchtime",
-                        value: "Get the match time in your local timezone."
-                    },
-                    {
-                        name: "!countdown",
-                        value: "Get the amount of time until the match begins."
-                    },
-                    {
-                        name: "!deadline",
-                        value: "Get the clock deadline time in your local timezone."
-                    },
-                    {
-                        name: "!deadlinecountdown",
-                        value: "Get the amount of time until the clock deadline."
-                    },
-                    {
-                        name: "!streaming",
-                        value: "Indicate that you will be streaming this match."
-                    },
-                    {
-                        name: "!notstreaming",
-                        value: "Use this command if you've previously indicated that you will be streaming this match but won't be."
-                    }
-                ]
-            }), challenge.channel);
-
-            if (otherMsg) {
-                await otherMsg.pin();
-            }
-
-            if (data.team1Penalized && data.team2Penalized) {
-                await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map selection is disabled.", challenge.channel);
-            } else if (data.team1Penalized) {
-                await Discord.queue(`A penalty has been applied to **${challengingTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
-            } else if (data.team2Penalized) {
-                await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
-            }
-
-            await challenge.updateTopic();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error creating a challenge.  Please resolve this manually as soon as possible.", err);
+            [challengingTeam, challengedTeam] = [challengedTeam, challengingTeam];
         }
 
-        return challenge;
+        return firstChallenge;
     }
 
     //              #     ##   ##    ##    ###         ###
