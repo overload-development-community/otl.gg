@@ -3032,6 +3032,8 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
+        message = message.replace(/-/g, "/");
+
         let date;
         if (message.toLowerCase() === "now") {
             date = new Date();
