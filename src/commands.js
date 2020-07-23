@@ -6153,6 +6153,68 @@ class Commands {
 
         return this.challenge(member, channel, "DC");
     }
+
+    //  #                  #     #
+    //  #                  #
+    // ###    ##    ###   ###   ##    ###    ###
+    //  #    # ##  ##      #     #    #  #  #  #
+    //  #    ##      ##    #     #    #  #   ##
+    //   ##   ##   ###      ##  ###   #  #  #
+    //                                       ###
+    /**
+     * Adds the user to the testing role.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async testing(member, channel, message) {
+        if (!await Commands.checkNoParameters(message, member, `Use \`!testing\` by itself to add yourself to the ${Discord.testersRole} role.`, channel)) {
+            return false;
+        }
+
+        if (member.roles.cache.find((r) => r.id === Discord.testersRole.id)) {
+            await Discord.queue(`Sorry, ${member}, but you are already a tester.  Use \`!stoptesting\` to remove yourself from the testers role.`, channel);
+            throw new Warning("User is already a tester.");
+        }
+
+        await member.roles.add(Discord.testersRole);
+
+        await Discord.queue(`${member}, you have been added to the ${Discord.testersRole} role.  Use \`!stoptesting\` to remove yourself from the ${Discord.testersRole} role.`, channel);
+
+        return true;
+    }
+
+    //         #                 #                  #     #
+    //         #                 #                  #
+    //  ###   ###    ##   ###   ###    ##    ###   ###   ##    ###    ###
+    // ##      #    #  #  #  #   #    # ##  ##      #     #    #  #  #  #
+    //   ##    #    #  #  #  #   #    ##      ##    #     #    #  #   ##
+    // ###      ##   ##   ###     ##   ##   ###      ##  ###   #  #  #
+    //                    #                                           ###
+    /**
+     * Adds the user to the testing role.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async stoptesting(member, channel, message) {
+        if (!await Commands.checkNoParameters(message, member, `Use \`!stoptesting\` by itself to remove yourself from the ${Discord.testersRole} role.`, channel)) {
+            return false;
+        }
+
+        if (!member.roles.cache.find((r) => r.id === Discord.testersRole.id)) {
+            await Discord.queue(`Sorry, ${member}, but you are not currently a tester.  Use \`!testing\` to add yourself to the ${Discord.testersRole} role.`, channel);
+            throw new Warning("User is already a tester.");
+        }
+
+        await member.roles.remove(Discord.testersRole);
+
+        await Discord.queue(`${member}, you have been remove from the ${Discord.testersRole} role.  Use \`!testing\` to add yourself back to this role.`, channel);
+
+        return true;
+    }
 }
 
 module.exports = Commands;

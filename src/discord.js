@@ -43,6 +43,9 @@ let rosterUpdatesChannel;
 /** @type {DiscordJs.TextChannel} */
 let scheduledMatchesChannel;
 
+/** @type {DiscordJs.Role} */
+let testersRole;
+
 /** @type {DiscordJs.TextChannel} */
 let vodsChannel;
 
@@ -244,6 +247,20 @@ class Discord {
         return scheduledMatchesChannel;
     }
 
+    //  #                  #                       ###         ##
+    //  #                  #                       #  #         #
+    // ###    ##    ###   ###    ##   ###    ###   #  #   ##    #     ##
+    //  #    # ##  ##      #    # ##  #  #  ##     ###   #  #   #    # ##
+    //  #    ##      ##    #    ##    #       ##   # #   #  #   #    ##
+    //   ##   ##   ###      ##   ##   #     ###    #  #   ##   ###    ##
+    /**
+     * Returns the testers role.
+     * @returns {DiscordJs.Role} The testers role.
+     */
+    static get testersRole() {
+        return testersRole;
+    }
+
     //                #          ##   #                             ##
     //                #         #  #  #                              #
     // # #    ##    ###   ###   #     ###    ###  ###   ###    ##    #
@@ -282,6 +299,7 @@ class Discord {
             captainRole = otlGuild.roles.cache.find((r) => r.name === "Captain");
             exemptRole = otlGuild.roles.cache.find((r) => r.name === "Cap Exempt");
             founderRole = otlGuild.roles.cache.find((r) => r.name === "Founder");
+            testersRole = otlGuild.roles.cache.find((r) => r.name === "Testers");
 
             alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
             announcementsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "announcements")); // eslint-disable-line no-extra-parens
