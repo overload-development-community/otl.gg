@@ -403,12 +403,13 @@ class Challenge {
      * Gets a challenge by teams.
      * @param {Team} team1 The first team.
      * @param {Team} team2 The second team.
+     * @param {boolean} [includePostseason] Whether to include postseason matches.
      * @returns {Promise<Challenge>} The challenge.
      */
-    static async getByTeams(team1, team2) {
+    static async getByTeams(team1, team2, includePostseason) {
         let data;
         try {
-            data = await Db.getByTeams(team1, team2);
+            data = await Db.getByTeams(team1, team2, includePostseason);
         } catch (err) {
             throw new Exception("There was a database error getting a challenge by teams.", err);
         }

@@ -644,9 +644,10 @@ class ChallengeDb {
      * Gets a challenge between two teams.
      * @param {Team} team1 The first team.
      * @param {Team} team2 The second team.
+     * @param {boolean} [includePostseason] Whether to include postseason matches.
      * @returns {Promise<ChallengeTypes.ChallengeData>} A promise that resolves with the challenge data.
      */
-    static async getByTeams(team1, team2) {
+    static async getByTeams(team1, team2, includePostseason) {
         /** @type {ChallengeDbTypes.GetByTeamsRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TOP 1 ChallengeId, ChallengingTeamId, ChallengedTeamId
@@ -655,10 +656,12 @@ class ChallengeDb {
                 AND DateConfirmed IS NULL
                 AND DateClosed IS NULL
                 AND DateVoided IS NULL
+                AND (@includePostseason = 1 OR Postseason = 0)
             ORDER BY ChallengeId
         `, {
             team1Id: {type: Db.INT, value: team1.id},
-            team2Id: {type: Db.INT, value: team2.id}
+            team2Id: {type: Db.INT, value: team2.id},
+            includePostseason: {type: Db.BIT, value: includePostseason}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {id: data.recordsets[0][0].ChallengeId, challengingTeamId: data.recordsets[0][0].ChallengingTeamId, challengedTeamId: data.recordsets[0][0].ChallengedTeamId} || void 0;
     }
