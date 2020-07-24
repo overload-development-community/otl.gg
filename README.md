@@ -4,6 +4,15 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.2 - 7/23/2020
+* Maps are now categorized into game types.  You cannot fly a map in game modes other than Team Anarchy if they were not intended for that game mode.  However, any map can be flown in team anarchy.
+* `!report` now accepts a tracker URL instead of the score.  You can `!report` multiple games this way to combine stats from multiple games in the event of disconnections.
+* `!report` using the score, the old way of reporting games, still works but will now wipe out any stats accumulated up to that point.  Use this as a workaround if you're having trouble using `!report` with the tracker URL parameter.  `!report 0 0` will reset both the score and the stats for the game, so use that if you need to start over using `!report` with the tracker URL parameter.
+* Teams may now `!challenge` another team even if they have pending postseason challenges open.
+* `!creatematch` now has a parameter to create a number of games, alternating the home team of each game but keeping the colors throughout the series.
+* Add `!testing` and `!stoptesting` commands for users to join the publicly mentionalbe @Testers role.
+* `!suggesttime` no longer defaults to GMT when using dashes in the date.  Technical note: The workaround is to replace the dashes with slashes, so if you were using dashes in your date previously keep this in mind.
+
 ## v4.0.1 - 7/11/2020
 
 * Fix various website bugs with stats for players that switch teams.
