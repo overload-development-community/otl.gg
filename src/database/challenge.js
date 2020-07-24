@@ -1171,7 +1171,7 @@ class ChallengeDb {
             ORDER BY Id
         `, {
             id: {type: Db.INT, value: challenge.id},
-            type: {type: Db.VARCHAR(5), value: challenge.details.gameType}
+            type: {type: Db.VARCHAR(3), value: challenge.details.gameType}
         });
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
@@ -1851,23 +1851,25 @@ class ChallengeDb {
      * @param {Challenge} challenge The challenge.
      * @param {number} challengingTeamScore The challenging team's score.
      * @param {number} challengedTeamScore The challenged team's score.
+     * @param {boolean} [requireConfirmation] Whether to require confirmation of the report.
      * @returns {Promise<Date>} A promise that resolves when the score is set.
      */
-    static async setScore(challenge, challengingTeamScore, challengedTeamScore) {
+    static async setScore(challenge, challengingTeamScore, challengedTeamScore, requireConfirmation) {
         /** @type {ChallengeDbTypes.SetScoreRecordsets} */
         const data = await db.query(/* sql */`
             UPDATE tblChallenge SET
                 ReportingTeamId = NULL,
                 ChallengingTeamScore = @challengingTeamScore,
                 ChallengedTeamScore = @challengedTeamScore,
-                DateConfirmed = GETUTCDATE()
+                DateConfirmed = CASE WHEN @requireConfirmation = 1 THEN NULL ELSE GETUTCDATE() END
             WHERE ChallengeId = @challengeId
 
             SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
             challengingTeamScore: {type: Db.INT, value: challengingTeamScore},
             challengedTeamScore: {type: Db.INT, value: challengedTeamScore},
-            challengeId: {type: Db.INT, value: challenge.id}
+            challengeId: {type: Db.INT, value: challenge.id},
+            requireConfirmation: {type: Db.BIT, value: !!requireConfirmation}
         });
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);

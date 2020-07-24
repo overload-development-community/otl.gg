@@ -32,7 +32,7 @@ const tz = require("timezone-js"),
     addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
-    createMatchParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})(?: (?<gameType>(?:CTF|TA)))(?: (?<number>(?:[1-9][0-9]*)))?$/i,
+    createMatchParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})(?: (?<gameType>(?:CTF|TA)))?(?: (?<number>(?:[1-9][0-9]*)))?$/i,
     eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
@@ -3976,7 +3976,7 @@ class Commands {
 
         if (gameId) {
             try {
-                await challenge.addStats(+gameId, {});
+                await challenge.addStats(+gameId, {}, true);
             } catch (err) {
                 await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
                 throw new Exception(err.message, err);

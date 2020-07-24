@@ -547,9 +547,10 @@ class Challenge {
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
+     * @param {boolean} [requireConfirmation] Whether to require confirmation of the report.
      * @returns {Promise<ChallengeTypes.GameBoxScore>} A promise that returns data about the game's stats and score.
      */
-    async addStats(gameId, nameMap) {
+    async addStats(gameId, nameMap, requireConfirmation) {
         let game;
         try {
             game = (await Tracker.getMatch(gameId)).body;
@@ -669,7 +670,7 @@ class Challenge {
 
                 let dateConfirmed;
                 try {
-                    dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+                    dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore, !!requireConfirmation);
                 } catch (err) {
                     throw new Exception("There was a database error setting the score for a challenge.", err);
                 }
@@ -750,7 +751,7 @@ class Challenge {
 
         let dateConfirmed;
         try {
-            dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore);
+            dateConfirmed = await Db.setScore(this, this.details.challengingTeamScore, this.details.challengedTeamScore, !!requireConfirmation);
         } catch (err) {
             throw new Exception("There was a database error setting the score for a challenge.", err);
         }

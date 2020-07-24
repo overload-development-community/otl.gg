@@ -43,7 +43,7 @@ class MapDb {
             INSERT INTO tblAllowedMap (Map, GameType, Stock) VALUES (@map, @gameType, @stock)
         `, {
             map: {type: Db.VARCHAR(100), value: map},
-            gameType: {type: Db.VARCHAR(5), value: gameType},
+            gameType: {type: Db.VARCHAR(3), value: gameType},
             stock: {type: Db.BIT, value: !!stock}
         });
     }
@@ -62,7 +62,7 @@ class MapDb {
     static async getAllAllowed() {
         /** @type {MapDbTypes.MapGameTypeRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT Map FROM tblAllowedMap ORDER BY Map
+            SELECT Map, GameType FROM tblAllowedMap ORDER BY Map
         `);
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length && data.recordsets[0].map((row) => ({
             map: row.Map,
@@ -152,7 +152,7 @@ class MapDb {
             SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map AND (@gameType = 'TA' OR GameType = @gameType)
         `, {
             map: {type: Db.VARCHAR(100), value: map},
-            gameType: {type: Db.VARCHAR(5), value: gameType}
+            gameType: {type: Db.VARCHAR(3), value: gameType}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {map: data.recordsets[0][0].Map, stock: data.recordsets[0][0].Stock} || void 0;
     }
