@@ -1,7 +1,9 @@
 /**
  * @typedef {import("../../types/mapDbTypes").GetPlayedBySeasonRecordsets} MapDbTypes.GetPlayedBySeasonRecordsets
+ * @typedef {import("../../types/mapDbTypes").MapGameTypeRecordsets} MapDbTypes.MapGameTypeRecordsets
  * @typedef {import("../../types/mapDbTypes").ValidateRecordsets} MapDbTypes.ValidateRecordsets
  * @typedef {import("../../types/mapTypes").MapData} MapTypes.MapData
+ * @typedef {import("../../types/mapTypes").MapGameType} MapTypes.MapGameType
  */
 
 const Db = require("node-database"),
@@ -32,14 +34,16 @@ class MapDb {
     /**
      * Adds a map to the database.
      * @param {string} map The map to add.
+     * @param {string} gameType The game type for the map.
      * @param {boolean} [stock] Whether or not this is a stock map.
      * @returns {Promise} A promise that resolves when the map has been added.
      */
-    static async create(map, stock) {
+    static async create(map, gameType, stock) {
         await db.query(/* sql */`
-            INSERT INTO tblAllowedMap (Map, Stock) VALUES (@map, @stock)
+            INSERT INTO tblAllowedMap (Map, GameType, Stock) VALUES (@map, @gameType, @stock)
         `, {
             map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType},
             stock: {type: Db.BIT, value: !!stock}
         });
     }
@@ -53,14 +57,17 @@ class MapDb {
     //  ###
     /**
      * Gets the full list of allowed maps in the OTL.
-     * @returns {Promise<string[]>} A promise that resolves with the list of maps allowed.
+     * @returns {Promise<MapTypes.MapGameType[]>} A promise that resolves with the list of maps allowed.
      */
     static async getAllAllowed() {
-        /** @type {{recordsets: [{Map: string}[]]}} */
+        /** @type {MapDbTypes.MapGameTypeRecordsets} */
         const data = await db.query(/* sql */`
             SELECT Map FROM tblAllowedMap ORDER BY Map
         `);
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length && data.recordsets[0].map((row) => row.Map) || [];
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length && data.recordsets[0].map((row) => ({
+            map: row.Map,
+            gameType: row.GameType
+        })) || [];
     }
 
     //              #    ###   ##                         #  ###          ##
@@ -136,13 +143,17 @@ class MapDb {
     /**
      * Validates a map.
      * @param {string} map The map.
+     * @param {string} gameType The game type.
      * @returns {Promise<MapTypes.MapData>} A promise that resolves with the validated map.
      */
-    static async validate(map) {
+    static async validate(map, gameType) {
         /** @type {MapDbTypes.ValidateRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map
-        `, {map: {type: Db.VARCHAR(100), value: map}});
+            SELECT Map, Stock FROM tblAllowedMap WHERE Map = @map AND (@gameType = 'TA' OR GameType = @gameType)
+        `, {
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {map: data.recordsets[0][0].Map, stock: data.recordsets[0][0].Stock} || void 0;
     }
 }

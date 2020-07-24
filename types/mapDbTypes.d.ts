@@ -10,6 +10,15 @@ declare namespace MapDbTypes {
         ]
     }
 
+    type MapGameTypeRecordsets = {
+        recordsets: [
+            {
+                Map: string
+                GameType: string
+            }[]
+        ]
+    }
+
     type ValidateRecordsets = {
         recordsets: [
             {

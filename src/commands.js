@@ -27,6 +27,7 @@ const tz = require("timezone-js"),
     Warning = require("./logging/warning"),
 
     adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
+    addMapParse = /^(?<gameType>TA|CTF|MB) (?<map>.*)$/i,
     addStatsParse = /^(?<gameId>[0-9]+)(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
@@ -434,14 +435,15 @@ class Commands {
     /**
      * Checks to ensure a map is valid.
      * @param {string} map The map to check.
+     * @param {string} gameType The game type.
      * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {DiscordJs.TextChannel} channel The channel to reply on.
      * @returns {Promise<MapTypes.MapData>} A promise that resolves with the chosen map, properly cased, and whether it is a stock map.
      */
-    static async checkMapIsValid(map, member, channel) {
+    static async checkMapIsValid(map, gameType, member, channel) {
         let correctedMap;
         try {
-            correctedMap = await Map.validate(map);
+            correctedMap = await Map.validate(map, gameType);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -1883,7 +1885,7 @@ class Commands {
         }
 
         const {groups: {gameType, number, mapToCheck}} = mapParse.exec(message),
-            map = await Commands.checkMapIsValid(mapToCheck, member, channel),
+            map = await Commands.checkMapIsValid(mapToCheck, gameType, member, channel),
             team = await Commands.checkMemberOnTeam(member, channel),
             gameTypeUpper = gameType.toUpperCase();
 
@@ -2645,7 +2647,7 @@ class Commands {
         await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
 
-        const map = await Commands.checkMapIsValid(message, member, channel);
+        const map = await Commands.checkMapIsValid(message, challenge.details.gameType, member, channel);
 
         if (challenge.details.homeMaps.indexOf(map.map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but this is one of the home maps for the home map team, **${challenge.details.homeMapTeam.name}**, and cannot be used as a neutral map.`, channel);
@@ -4757,7 +4759,7 @@ class Commands {
             return true;
         }
 
-        const map = await Commands.checkMapIsValid(message, member, channel);
+        const map = await Commands.checkMapIsValid(message, challenge.details.gameType, member, channel);
 
         try {
             await challenge.setMap(member, map.map);
@@ -6089,27 +6091,33 @@ class Commands {
             return false;
         }
 
-        let map;
+        if (!addMapParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but in order to add a map, you must first specify the game type followed by the name of the map, for example \`!addmap TA Vault\`.`, channel);
+            throw new Warning("Invalid syntax.");
+        }
+
+        const {groups: {gameType, map}} = addMapParse.exec(message);
+        let mapData;
         try {
-            map = await Map.validate(message);
+            mapData = await Map.validate(map, "TA");
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
         }
 
-        if (map) {
-            await Discord.queue(`Sorry, ${member}, but ${map.map} is already allowed.`, channel);
+        if (mapData) {
+            await Discord.queue(`Sorry, ${member}, but ${mapData.map} is already allowed.`, channel);
             throw new Warning("Map already allowed.");
         }
 
         try {
-            await Map.create(message);
+            await Map.create(message, gameType);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
         }
 
-        await Discord.queue(`${member}, the map **${message}** is now available for play.`, channel);
+        await Discord.queue(`${member}, the map **${message}** is now available for ${gameType} play.`, channel);
         return true;
     }
 
@@ -6138,7 +6146,7 @@ class Commands {
 
         let map;
         try {
-            map = await Map.validate(message);
+            map = await Map.validate(message, "TA");
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;

@@ -1,5 +1,6 @@
 /**
  * @typedef {import("../../types/mapTypes").MapData} MapTypes.MapData
+ * @typedef {import("../../types/mapTypes").MapGameType} MapTypes.MapGameType
  */
 
 const Db = require("../database/map"),
@@ -27,11 +28,12 @@ class Map {
     /**
      * Adds a map to the OTL.
      * @param {string} map The map to add.
+     * @param {string} gameType The game type for the map.
      * @returns {Promise} A promise that resolves when the map has been added.
      */
-    static async create(map) {
+    static async create(map, gameType) {
         try {
-            await Db.create(map);
+            await Db.create(map, gameType);
         } catch (err) {
             throw new Exception("There was a database error adding a map.", err);
         }
@@ -46,7 +48,7 @@ class Map {
     //  ###
     /**
      * Gets the full list of allowed maps in the OTL.
-     * @returns {Promise<string[]>} A promise that resolves with the list of maps allowed.
+     * @returns {Promise<MapTypes.MapGameType[]>} A promise that resolves with the list of maps allowed.
      */
     static async getAllAllowed() {
         try {
@@ -102,11 +104,12 @@ class Map {
     /**
      * Validates a map with the database.
      * @param {string} map The map to validate.
+     * @param {string} gameType The game type.
      * @returns {Promise<MapTypes.MapData>} The validated map.
      */
-    static async validate(map) {
+    static async validate(map, gameType) {
         try {
-            return await Db.validate(map);
+            return await Db.validate(map, gameType);
         } catch (err) {
             throw new Exception("There was a database error validating a map.", err);
         }
