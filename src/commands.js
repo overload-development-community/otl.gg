@@ -6111,13 +6111,13 @@ class Commands {
         }
 
         try {
-            await Map.create(mapData.map, gameType);
+            await Map.create(map, gameType);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
         }
 
-        await Discord.queue(`${member}, the map **${mapData.map}** is now available for ${gameType} play.`, channel);
+        await Discord.queue(`${member}, the map **${map}** is now available for ${gameType} play.`, channel);
         return true;
     }
 
