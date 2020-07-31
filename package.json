@@ -1,6 +1,6 @@
 {
     "name": "otl-bot",
-    "version": "4.0.2",
+    "version": "4.0.3",
     "description": "A Discord bot for the Overload Teams League.",
     "homepage": "https://github.com/overload-development-community/otl-bot",
     "bugs": {
