@@ -40,10 +40,10 @@ class Player {
     static async get(req, res) {
         const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             postseason = !!req.query.postseason,
-            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toString().toUpperCase()) === -1 ? "TA" : req.query.gameType.toString().toUpperCase(),
             validSeasonNumbers = await Season.getSeasonNumbers();
 
-        let season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10);
+        let season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10);
 
         validSeasonNumbers.push(0);
         if (validSeasonNumbers.indexOf(season) === -1) {

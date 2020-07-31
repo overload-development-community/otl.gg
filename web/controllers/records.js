@@ -38,12 +38,12 @@ class Records {
     static async get(req, res) {
         const seasonList = await Season.getSeasonNumbers(),
             postseason = !!req.query.postseason,
-            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
-            recordType = !req.query.recordType || ["team", "player"].indexOf(req.query.recordType.toLowerCase()) === -1 ? "team" : req.query.recordType.toLowerCase(),
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toString().toUpperCase()) === -1 ? "TA" : req.query.gameType.toString().toUpperCase(),
+            recordType = !req.query.recordType || ["team", "player"].indexOf(req.query.recordType.toString().toLowerCase()) === -1 ? "team" : req.query.recordType.toString().toLowerCase(),
             validSeasonNumbers = await Season.getSeasonNumbers(),
             teams = new Teams();
 
-        let season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10);
+        let season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10);
 
         validSeasonNumbers.push(0);
         if (validSeasonNumbers.indexOf(season) === -1) {

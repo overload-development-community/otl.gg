@@ -62,13 +62,13 @@ class Standings {
         }
 
         const seasonList = await Season.getSeasonNumbers(),
-            season = Number.parseInt(req.query.season, 10) || void 0,
+            season = Number.parseInt(req.query.season.toString(), 10) || void 0,
             maps = await Map.getPlayedBySeason(season),
             teams = new Teams();
 
         let map;
-        if (maps.indexOf(req.query.map) !== -1) {
-            map = req.query.map;
+        if (maps.indexOf(req.query.map.toString()) !== -1) {
+            map = req.query.map.toString();
         }
 
         const standings = await Team.getSeasonStandings(isNaN(season) ? void 0 : season, recordsTitle, map);
@@ -81,7 +81,7 @@ class Standings {
                 maps,
                 standings,
                 season,
-                records: req.query.records,
+                records: req.query.records.toString(),
                 recordsTitle,
                 records1,
                 records2,

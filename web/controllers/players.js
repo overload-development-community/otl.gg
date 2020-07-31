@@ -41,8 +41,8 @@ class Players {
     static async get(req, res) {
         const freeAgents = (await Player.getFreeAgents()).filter((f) => Discord.findGuildMemberById(f.discordId)),
             seasonList = await Season.getSeasonNumbers(),
-            season = isNaN(req.query.season) ? void 0 : Number.parseInt(req.query.season, 10),
-            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toUpperCase()) === -1 ? "TA" : req.query.gameType.toUpperCase(),
+            season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10),
+            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toString().toUpperCase()) === -1 ? "TA" : req.query.gameType.toString().toUpperCase(),
             postseason = !!req.query.postseason,
             all = !!req.query.all,
             stats = await Player.getSeasonStats(season, postseason, gameType, postseason || all),
