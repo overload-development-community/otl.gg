@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.3 - 7/30/2020
+* Captains will no longer be left in a team's captains channel after they've left the team.
+* Due to league growth and Discord category channel limits, the Challenges channel category will now cap at 40 challenges.  If any challenges go in that would put it above the cap, it will rename the Challenges channel to "Old Challenges" and create a brand new "Challenges" channel.
+* `!pickmap` is now case insensitive.
+
 ## v4.0.2 - 7/23/2020
 * Maps are now categorized into game types.  You cannot fly a map in game modes other than Team Anarchy if they were not intended for that game mode.  However, any map can be flown in team anarchy.
 * `!report` now accepts a tracker URL instead of the score.  You can `!report` multiple games this way to combine stats from multiple games in the event of disconnections.

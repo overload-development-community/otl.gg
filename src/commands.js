@@ -2599,7 +2599,7 @@ class Commands {
         }
 
         try {
-            await challenge.pickMap(message.charCodeAt(0) - 96);
+            await challenge.pickMap(message.toLowerCase().charCodeAt(0) - 96);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
@@ -4748,9 +4748,9 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
 
-        if (["a", "b", "c", "d", "e"].indexOf(message) !== -1) {
+        if (["a", "b", "c", "d", "e"].indexOf(message.toLowerCase()) !== -1) {
             try {
-                await challenge.pickMap(message.charCodeAt(0) - 96);
+                await challenge.pickMap(message.toLowerCase().charCodeAt(0) - 96);
             } catch (err) {
                 await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
                 throw err;
