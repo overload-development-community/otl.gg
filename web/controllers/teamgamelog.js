@@ -38,12 +38,13 @@ class TeamGameLogPage {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const tag = req.params.tag.toUpperCase(),
+        const querySeason = req.query.season && req.query.season.toString() || void 0,
+            tag = req.params.tag.toUpperCase(),
             pageTeam = await Team.getByNameOrTag(tag);
 
         if (pageTeam) {
             const seasonList = await Season.getSeasonNumbers(),
-                season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10),
+                season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10),
                 postseason = !!req.query.postseason,
                 matches = await Team.getGameLog(pageTeam, season, postseason),
                 teams = new Teams();

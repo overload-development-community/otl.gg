@@ -36,14 +36,17 @@ class Records {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const seasonList = await Season.getSeasonNumbers(),
+        const queryGameType = req.query.gameType && req.query.gameType.toString() || void 0,
+            queryRecordType = req.query.recordType && req.query.recordType.toString() || void 0,
+            querySeason = req.query.season && req.query.season.toString() || void 0,
+            seasonList = await Season.getSeasonNumbers(),
             postseason = !!req.query.postseason,
-            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toString().toUpperCase()) === -1 ? "TA" : req.query.gameType.toString().toUpperCase(),
-            recordType = !req.query.recordType || ["team", "player"].indexOf(req.query.recordType.toString().toLowerCase()) === -1 ? "team" : req.query.recordType.toString().toLowerCase(),
+            gameType = !queryGameType || ["TA", "CTF"].indexOf(queryGameType.toUpperCase()) === -1 ? "TA" : queryGameType.toUpperCase(),
+            recordType = !queryRecordType || ["team", "player"].indexOf(queryRecordType.toLowerCase()) === -1 ? "team" : queryRecordType.toLowerCase(),
             validSeasonNumbers = await Season.getSeasonNumbers(),
             teams = new Teams();
 
-        let season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10);
+        let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
 
         validSeasonNumbers.push(0);
         if (validSeasonNumbers.indexOf(season) === -1) {

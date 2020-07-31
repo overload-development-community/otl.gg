@@ -38,9 +38,12 @@ class Standings {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
+        const queryRecords = req.query.records && req.query.records.toString() || void 0,
+            querySeason = req.query.season && req.query.season.toString() || void 0,
+            queryMap = req.query.map && req.query.map.toString() || void 0;
         let recordsTitle, records1, records2, records3;
 
-        switch (req.query.records) {
+        switch (queryRecords) {
             case "size":
                 recordsTitle = "Team Size Records";
                 records1 = "2v2";
@@ -62,13 +65,13 @@ class Standings {
         }
 
         const seasonList = await Season.getSeasonNumbers(),
-            season = Number.parseInt(req.query.season.toString(), 10) || void 0,
+            season = Number.parseInt(querySeason, 10) || void 0,
             maps = await Map.getPlayedBySeason(season),
             teams = new Teams();
 
         let map;
-        if (maps.indexOf(req.query.map.toString()) !== -1) {
-            map = req.query.map.toString();
+        if (maps.indexOf(queryMap) !== -1) {
+            map = queryMap;
         }
 
         const standings = await Team.getSeasonStandings(isNaN(season) ? void 0 : season, recordsTitle, map);
@@ -81,7 +84,7 @@ class Standings {
                 maps,
                 standings,
                 season,
-                records: req.query.records.toString(),
+                records: queryRecords,
                 recordsTitle,
                 records1,
                 records2,

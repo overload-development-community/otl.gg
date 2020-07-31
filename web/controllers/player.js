@@ -38,12 +38,14 @@ class Player {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
+        const queryGameType = req.query.gameType && req.query.gameType.toString() || void 0,
+            querySeason = req.query.season && req.query.season.toString() || void 0,
+            playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             postseason = !!req.query.postseason,
-            gameType = !req.query.gameType || ["TA", "CTF"].indexOf(req.query.gameType.toString().toUpperCase()) === -1 ? "TA" : req.query.gameType.toString().toUpperCase(),
+            gameType = !queryGameType || ["TA", "CTF"].indexOf(queryGameType.toUpperCase()) === -1 ? "TA" : queryGameType.toUpperCase(),
             validSeasonNumbers = await Season.getSeasonNumbers();
 
-        let season = isNaN(+req.query.season.toString()) ? void 0 : Number.parseInt(req.query.season.toString(), 10);
+        let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
 
         validSeasonNumbers.push(0);
         if (validSeasonNumbers.indexOf(season) === -1) {

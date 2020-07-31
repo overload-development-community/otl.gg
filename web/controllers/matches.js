@@ -34,7 +34,8 @@ class Matches {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const season = Number.parseInt(req.query.season.toString(), 10) || void 0,
+        const querySeason = req.query.season && req.query.season.toString() || void 0,
+            season = Number.parseInt(querySeason, 10) || void 0,
             seasonList = await Season.getSeasonNumbers(),
             {matches: pending, completed: totalCompleted} = await Match.getUpcomingAndCompletedCount(isNaN(season) ? void 0 : season),
             completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
