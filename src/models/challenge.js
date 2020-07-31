@@ -130,7 +130,7 @@ class Challenge {
                     }
                 ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
-                if (Discord.challengesCategory.children.keys.length >= 40) {
+                if (Discord.challengesCategory.children.size >= 40) {
                     const oldPosition = Discord.challengesCategory.position;
                     await Discord.challengesCategory.setName("Old Challenges", "Exceeded 40 challenges.");
                     Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", "category", [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
