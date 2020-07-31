@@ -1100,17 +1100,15 @@ class Team {
                     await member.roles.remove(Discord.captainRole, `${member.displayName} left the team.`);
                     await member.roles.remove(this.role, `${member.displayName} left the team.`);
 
-                    await captainsChannel.updateOverwrite(
-                        member,
-                        {"VIEW_CHANNEL": null},
-                        `${member.displayName} left the team.`
-                    );
+                    let permissions = captainsChannel.permissionOverwrites.get(member.id);
+                    if (permissions && permissions.id) {
+                        await permissions.delete(`${member.displayName} left the team.`);
+                    }
 
-                    await captainsVoiceChannel.updateOverwrite(
-                        member,
-                        {"VIEW_CHANNEL": null},
-                        `${member.displayName} left the team.`
-                    );
+                    permissions = captainsVoiceChannel.permissionOverwrites.get(member.id);
+                    if (permissions && permissions.id) {
+                        await permissions.delete(`${member.displayName} left the team.`);
+                    }
                 }
 
                 await Discord.queue(`${member.displayName} has left the team.`, captainsChannel);
@@ -1208,17 +1206,15 @@ class Team {
 
             await captain.roles.remove(Discord.captainRole, `${member.displayName} removed ${captain.displayName} as a captain.`);
 
-            await captainsChannel.updateOverwrite(
-                captain,
-                {"VIEW_CHANNEL": null},
-                `${member.displayName} removed ${captain.displayName} as a captain.`
-            );
+            let permissions = captainsChannel.permissionOverwrites.get(captain.id);
+            if (permissions && permissions.id) {
+                await permissions.delete(`${member.displayName} removed ${captain.displayName} as a captain.`);
+            }
 
-            await captainsVoiceChannel.updateOverwrite(
-                captain,
-                {"VIEW_CHANNEL": null},
-                `${member.displayName} removed ${captain.displayName} as a captain.`
-            );
+            permissions = captainsVoiceChannel.permissionOverwrites.get(captain.id);
+            if (permissions && permissions.id) {
+                await permissions.delete(`${member.displayName} removed ${captain.displayName} as a captain.`);
+            }
 
             await this.updateChannels();
 
@@ -1277,11 +1273,8 @@ class Team {
             if (this.role.members.find((m) => m.id === pilot.id)) {
                 await pilot.roles.remove(Discord.captainRole, `${member.displayName} removed ${pilot.displayName} from the team.`);
 
-                await captainsChannel.updateOverwrite(
-                    pilot,
-                    {"VIEW_CHANNEL": null},
-                    `${member.displayName} removed ${pilot.displayName} from the team.`
-                );
+                await Discord.queue(`${member.displayName} removed ${pilot.displayName} from the team.`, captainsChannel);
+                await Discord.queue(`${member.displayName} removed ${pilot.displayName} from the team.`, teamChannel);
 
                 await pilot.roles.remove(this.role, `${member.displayName} removed ${pilot.displayName} from the team.`);
 
