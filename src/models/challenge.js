@@ -9,6 +9,7 @@
  * @typedef {import("../../types/challengeTypes").PlayersByTeam} ChallengeTypes.PlayersByTeam
  * @typedef {import("../../types/challengeTypes").StreamerData} ChallengeTypes.StreamerData
  * @typedef {import("../../types/challengeTypes").TeamDetailsData} ChallengeTypes.TeamDetailsData
+ * @typedef {import("discord.js").CategoryChannel} DiscordJs.CategoryChannel
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").User} DiscordJs.User
@@ -128,6 +129,13 @@ class Challenge {
                         allow: ["VIEW_CHANNEL"]
                     }
                 ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
+
+                if (Discord.challengesCategory.children.keys.length >= 40) {
+                    const oldPosition = Discord.challengesCategory.position;
+                    await Discord.challengesCategory.setName("Old Challenges", "Exceeded 40 challenges.");
+                    Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", "category", [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
+                    await Discord.challengesCategory.setPosition(oldPosition + 1);
+                }
 
                 await challenge.channel.setParent(Discord.challengesCategory);
 

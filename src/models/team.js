@@ -1632,7 +1632,7 @@ class Team {
 
         await founder.roles.add(teamRole, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        const category = await Discord.createChannel(this.name, "category", [
+        const category = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel(this.name, "category", [ // eslint-disable-line no-extra-parens
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1640,25 +1640,7 @@ class Team {
                 id: teamRole.id,
                 allow: ["VIEW_CHANNEL"]
             }
-        ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
-
-        const teamChannel = await Discord.createChannel(this.teamChannelName, "text", [
-            {
-                id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
-            }, {
-                id: teamRole.id,
-                allow: ["VIEW_CHANNEL"]
-            }, {
-                id: Discord.founderRole,
-                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
-            }, {
-                id: Discord.captainRole,
-                allow: ["MENTION_EVERYONE"]
-            }
-        ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
-
-        await teamChannel.setParent(category);
+        ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`));
 
         const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, "text", [
             {
@@ -1677,6 +1659,24 @@ class Team {
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await announcementsChannel.setParent(category);
+
+        const teamChannel = await Discord.createChannel(this.teamChannelName, "text", [
+            {
+                id: Discord.id,
+                deny: ["VIEW_CHANNEL"]
+            }, {
+                id: teamRole.id,
+                allow: ["VIEW_CHANNEL"]
+            }, {
+                id: Discord.founderRole,
+                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
+            }, {
+                id: Discord.captainRole,
+                allow: ["MENTION_EVERYONE"]
+            }
+        ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
+
+        await teamChannel.setParent(category);
 
         const captainsChannel = await Discord.createChannel(this.captainsChannelName, "text", [
             {

@@ -121,6 +121,14 @@ class Discord {
         return challengesCategory;
     }
 
+    /**
+     * Sets the challenges category.
+     * @param {DiscordJs.CategoryChannel} category The challenges category.
+     */
+    static set challengesCategory(category) {
+        challengesCategory = category;
+    }
+
     //       #                             ##
     //       #                              #
     //  ##   ###    ###  ###   ###    ##    #     ###
