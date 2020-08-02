@@ -59,6 +59,12 @@ class Elo {
             return 1;
         }
 
+        // Enforce a minimum of 10 points for maximum rating change.
+        while (a < 10 && b < 10) {
+            a++;
+            b++;
+        }
+
         if (a > b) {
             b = (b + a) / 2;
         }
