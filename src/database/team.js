@@ -1179,36 +1179,6 @@ class TeamDb {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
     }
 
-    // #                   ##    #                #     #  #                    #  #
-    // #                  #  #   #                #     #  #                    ####
-    // ###    ###   ###    #    ###    ##    ##   # #   ####   ##   # #    ##   ####   ###  ###
-    // #  #  #  #  ##       #    #    #  #  #     ##    #  #  #  #  ####  # ##  #  #  #  #  #  #
-    // #  #  # ##    ##   #  #   #    #  #  #     # #   #  #  #  #  #  #  ##    #  #  # ##  #  #
-    // #  #   # #  ###     ##     ##   ##    ##   #  #  #  #   ##   #  #   ##   #  #   # #  ###
-    //                                                                                      #
-    /**
-     * Checks to see if a team has a stock home map.
-     * @param {Team} team The team to check.
-     * @param {number} [excludeNumber] Excludes a home map number from the check.
-     * @returns {Promise<boolean>} A promise that resolves with whether the team has a stock home map.
-     */
-    static async hasStockHomeMap(team, excludeNumber) {
-        /** @type {DbTypes.EmptyRecordsets} */
-        const data = await db.query(/* sql */`
-            SELECT TOP 1 1
-            FROM tblTeamHome th
-            INNER JOIN tblAllowedMap am ON th.Map = am.Map
-            WHERE th.TeamId = @teamId
-                AND (@excludeNumber IS NULL OR th.Number <> @excludeNumber)
-                AND am.Stock = 1
-        `, {
-            teamId: {type: Db.INT, value: team.id},
-            excludeNumber: {type: Db.INT, value: excludeNumber}
-        });
-
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0 || false;
-    }
-
     //  #                 #     #          ###    #    ##           #
     //                          #          #  #         #           #
     // ##    ###   # #   ##    ###    ##   #  #  ##     #     ##   ###

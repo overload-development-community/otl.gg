@@ -936,26 +936,6 @@ class Team {
         }
     }
 
-    // #                   ##    #                #     #  #                    #  #
-    // #                  #  #   #                #     #  #                    ####
-    // ###    ###   ###    #    ###    ##    ##   # #   ####   ##   # #    ##   ####   ###  ###
-    // #  #  #  #  ##       #    #    #  #  #     ##    #  #  #  #  ####  # ##  #  #  #  #  #  #
-    // #  #  # ##    ##   #  #   #    #  #  #     # #   #  #  #  #  #  #  ##    #  #  # ##  #  #
-    // #  #   # #  ###     ##     ##   ##    ##   #  #  #  #   ##   #  #   ##   #  #   # #  ###
-    //                                                                                      #
-    /**
-     * Checks to see if a team has a stock home map.
-     * @param {number} [excludeNumber] Excludes a home map number from the check.
-     * @returns {Promise<boolean>} A promise that resolves with whether the team has a stock home map.
-     */
-    async hasStockHomeMap(excludeNumber) {
-        try {
-            return await Db.hasStockHomeMap(this, excludeNumber);
-        } catch (err) {
-            throw new Exception("There was a database error checking whether a team has a stock home map.", err);
-        }
-    }
-
     //  #                 #     #          ###    #    ##           #
     //                          #          #  #         #           #
     // ##    ###   # #   ##    ###    ##   #  #  ##     #     ##   ###

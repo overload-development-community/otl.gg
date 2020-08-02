@@ -1902,13 +1902,6 @@ class Commands {
             throw new Warning("Team already has this home map set.");
         }
 
-        if (gameTypeUpper === "TA" && !map.stock) {
-            if (!await team.hasStockHomeMap(+number)) {
-                await Discord.queue(`Sorry, ${member}, but your team must have at least one stock map in your home list.`, channel);
-                throw new Warning("Team does not have a stock map.");
-            }
-        }
-
         try {
             await team.applyHomeMap(member, gameTypeUpper, +number, map.map);
         } catch (err) {
