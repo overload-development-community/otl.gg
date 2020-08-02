@@ -23,7 +23,7 @@ class Elo {
      * @return {number} The expected result.
      */
     static expected(a, b) {
-        return 1 / (1 + Math.pow(10, (b - a) / 400));
+        return 1 / (1 + 10 ** ((b - a) / 400));
     }
 
     //              #                ##     ##   ###   ####
