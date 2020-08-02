@@ -39,7 +39,14 @@ class Elo {
      * @returns {number} The actual result.
      */
     static actualCTF(a, b) {
-        if (a <= 0 && b <= 0) {
+        // Enforce a minimum of 10 points for maximum rating change.
+        while (a < 10 && b < 10) {
+            a++;
+            b++;
+        }
+
+        // Handle cases when there are negative scores.
+        if (a <= 0 || b <= 0) {
             if (a > b) {
                 return 1;
             }
@@ -51,20 +58,7 @@ class Elo {
             return 0.5;
         }
 
-        if (a <= 0) {
-            return 0;
-        }
-
-        if (b <= 0) {
-            return 1;
-        }
-
-        // Enforce a minimum of 10 points for maximum rating change.
-        while (a < 10 && b < 10) {
-            a++;
-            b++;
-        }
-
+        // Reduce margin of victory by half for ELO.
         if (a > b) {
             b = (b + a) / 2;
         }
@@ -89,7 +83,8 @@ class Elo {
      * @returns {number} The actual result.
      */
     static actualTA(a, b) {
-        if (a <= 0 && b <= 0) {
+        // Handle cases when there are negative scores.
+        if (a <= 0 || b <= 0) {
             if (a > b) {
                 return 1;
             }
@@ -99,14 +94,6 @@ class Elo {
             }
 
             return 0.5;
-        }
-
-        if (a <= 0) {
-            return 0;
-        }
-
-        if (b <= 0) {
-            return 1;
         }
 
         return (Math.log2(Math.max(Math.min(a / b, 2), 0.5)) + 1) / 2;
