@@ -3,6 +3,7 @@
  * @typedef {import("../../types/challengeDbTypes").ClockRecordsets} ChallengeDbTypes.ClockRecordsets
  * @typedef {import("../../types/challengeDbTypes").CloseRecordsets} ChallengeDbTypes.CloseRecordsets
  * @typedef {import("../../types/challengeDbTypes").ConfirmGameTypeRecordsets} ChallengeDbTypes.ConfirmGameTypeRecordsets
+ * @typedef {import("../../types/challengeDbTypes").ConfirmTeamSizeRecordsets} ChallengeDbTypes.ConfirmTeamSizeRecordsets
  * @typedef {import("../../types/challengeDbTypes").CreateRecordsets} ChallengeDbTypes.CreateRecordsets
  * @typedef {import("../../types/challengeDbTypes").ExtendRecordsets} ChallengeDbTypes.ExtendRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAllByTeamRecordsets} ChallengeDbTypes.GetAllByTeamRecordsets
@@ -22,6 +23,7 @@
  * @typedef {import("../../types/challengeDbTypes").SetConfirmedRecordsets} ChallengeDbTypes.SetConfirmedRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetHomeMapTeamRecordsets} ChallengeDbTypes.SetHomeMapTeamRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetScoreRecordsets} ChallengeDbTypes.SetScoreRecordsets
+ * @typedef {import("../../types/challengeDbTypes").SetTeamSizeRecordsets} ChallengeDbTypes.SetTeamSizeRecordsets
  * @typedef {import("../../types/challengeDbTypes").UnvoidRecordsets} ChallengeDbTypes.UnvoidRecordsets
  * @typedef {import("../../types/challengeDbTypes").VoidRecordsets} ChallengeDbTypes.VoidRecordsets
  * @typedef {import("../../types/challengeDbTypes").VoidWithPenaltiesRecordsets} ChallengeDbTypes.VoidWithPenaltiesRecordsets
@@ -319,7 +321,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -361,9 +363,34 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the suggested team size has been confirmed.
      */
     static async confirmTeamSize(challenge) {
-        await db.query(/* sql */`
+        /** @type {ChallengeDbTypes.ConfirmTeamSizeRecordsets} */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
+
+            IF NOT EXISTS(
+                SELECT Map
+                FROM tblChallengeHome ch
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+                WHERE c.ChallengeId = @challengeId
+                    AND Map = @map
+            )
+            BEGIN
+                UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
+            END
+
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            map: {type: Db.VARCHAR(100), value: challenge.details.map}
+        });
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //                     #    #                ###    #
@@ -503,7 +530,7 @@ class ChallengeDb {
         `, {
             team1Id: {type: Db.INT, value: team1.id},
             team2Id: {type: Db.INT, value: team2.id},
-            gameType: {type: Db.VARCHAR(3), value: gameType},
+            gameType: {type: Db.VARCHAR(5), value: gameType},
             colorSeed: {type: Db.FLOAT, value: Math.random()},
             mapSeed: {type: Db.FLOAT, value: Math.random()},
             adminCreated: {type: Db.BIT, value: adminCreated},
@@ -682,7 +709,7 @@ class ChallengeDb {
         /** @type {ChallengeDbTypes.GetCastDataRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @season INT
-            DECLARE @gameType VARCHAR(3)
+            DECLARE @gameType VARCHAR(5)
             DECLARE @postseason BIT
 
             SELECT @season = Season FROM vwCompletedChallenge WHERE ChallengeId = @challengeId
@@ -1038,7 +1065,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Number
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -1171,7 +1198,7 @@ class ChallengeDb {
             ORDER BY Id
         `, {
             id: {type: Db.INT, value: challenge.id},
-            type: {type: Db.VARCHAR(3), value: challenge.details.gameType}
+            type: {type: Db.VARCHAR(5), value: challenge.details.gameType === "CTF" ? "CTF" : challenge.details.teamSize === 2 ? "2v2" : challenge.details.teamsize === 3 ? "3v3" : challenge.details.teamsize === 4 ? "4v4+" : ""}
         });
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
@@ -1375,7 +1402,7 @@ class ChallengeDb {
             SET Map = ch.Map,
                 UsingHomeMapTeam = 1
             FROM tblChallenge c
-            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND c.GameType = ch.GameType
+            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE c.ChallengeId = @challengeId
                 AND ch.Number = @number
 
@@ -1622,7 +1649,7 @@ class ChallengeDb {
             UPDATE tblChallenge SET GameType = @gameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
-            gameType: {type: Db.VARCHAR(3), value: gameType}
+            gameType: {type: Db.VARCHAR(5), value: gameType}
         });
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
@@ -1655,7 +1682,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = c.GameType
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Number
         `, {
@@ -1890,12 +1917,35 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the team size has been set.
      */
     static async setTeamSize(challenge, size) {
-        await db.query(/* sql */`
+        /** @type {ChallengeDbTypes.SetTeamSizeRecordsets} */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
+
+            IF NOT EXISTS(
+                SELECT Map
+                FROM tblChallengeHome ch
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+                WHERE c.ChallengeId = @challengeId
+                    AND Map = @map
+            )
+            BEGIN
+                UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
+            END
+
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Number
         `, {
             size: {type: Db.INT, value: size},
-            challengeId: {type: Db.INT, value: challenge.id}
+            challengeId: {type: Db.INT, value: challenge.id},
+            map: {type: Db.VARCHAR(100), value: challenge.details.map}
         });
+
+        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //               #    ###    #
@@ -1985,7 +2035,7 @@ class ChallengeDb {
         await db.query(/* sql */`
             UPDATE tblChallenge SET SuggestedGameType = @gameType, SuggestedGameTypeTeamId = @teamId WHERE ChallengeId = @challengeId
         `, {
-            gameType: {type: Db.VARCHAR(3), value: gameType},
+            gameType: {type: Db.VARCHAR(5), value: gameType},
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
         });

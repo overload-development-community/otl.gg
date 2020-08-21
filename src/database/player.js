@@ -414,7 +414,7 @@ class PlayerDb {
             playerId: {type: Db.INT, value: playerId},
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason},
-            gameType: {type: Db.VARCHAR(3), value: gameType}
+            gameType: {type: Db.VARCHAR(5), value: gameType}
         });
         cache = data && data.recordsets && data.recordsets.length === 7 && data.recordsets[0].length > 0 && {
             player: {
@@ -1937,7 +1937,7 @@ class PlayerDb {
         `, {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason},
-            gameType: {type: Db.VARCHAR(3), value: gameType}
+            gameType: {type: Db.VARCHAR(5), value: gameType}
         });
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             playerId: row.PlayerId,

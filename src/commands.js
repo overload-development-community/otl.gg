@@ -37,7 +37,7 @@ const tz = require("timezone-js"),
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
-    mapParse = /^(?<gameType>(?:CTF|TA)) (?<number>[1-5]) (?<mapToCheck>.+)$/i,
+    mapParse = /^(?<gameType>(?:CTF|2|3|4|2v2|3v3|4v4|4v4+)) (?<mapToCheck>.+)$/i,
     nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
     numberParse = /^[1-9][0-9]*$/,
     numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
@@ -1865,29 +1865,60 @@ class Commands {
      * Sets a team's home map.
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
-     * @param {string} message The text of the command.
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
-    async home(member, channel, message) {
+    async home(member, channel) {
         if (!Commands.checkChannelIsOnServer(channel)) {
             return false;
         }
 
+        await Discord.queue(`Sorry, ${member}, but this command has been retired.  Please use \`!addhome\` or \`!removehome\``, channel);
+        return true;
+    }
+
+    //          #     #  #
+    //          #     #  #
+    //  ###   ###   ###  ###    ##   # #    ##
+    // #  #  #  #  #  #  #  #  #  #  ####  # ##
+    // # ##  #  #  #  #  #  #  #  #  #  #  ##
+    //  # #   ###   ###  #  #   ##   #  #   ##
+    /**
+     * Adds a team's home map.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async addhome(member, channel, message) {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!await Commands.checkHasParameters(message, member, "To set one of your three home maps, you must include the home number you wish to set, followed by the name of the map.  For instance, to set your second home map to Vault, enter the following command: `!home 2 Vault`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To add a home map, you must include the game type followed by the name of the map.  For instance, to add Vault as a 2v2 Team Anarchy home map, enter the following command: `!addhome 2v2 Vault`.  To add Halcyon as a CTF home map, enter the following command: `!addhome CTF Halcyon`.", channel)) {
             return false;
         }
 
         if (!mapParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you must include the game type, the home number you wish to set, and the name of the map, such as \`!home TA 2 Vault\`, or \`!home CTF 4 Halcyon\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you must include the game type and the name of the map, such as \`!addhome 2v2 Vault\`, or \`!addhome CTF Halcyon\`.`, channel);
             return false;
         }
 
-        const {groups: {gameType, number, mapToCheck}} = mapParse.exec(message),
-            map = await Commands.checkMapIsValid(mapToCheck, gameType, member, channel),
-            team = await Commands.checkMemberOnTeam(member, channel),
-            gameTypeUpper = gameType.toUpperCase();
+        const {groups: {gameType, mapToCheck}} = mapParse.exec(message);
+        let gameTypeUpper = gameType.toUpperCase();
+
+        switch (gameTypeUpper) {
+            case "2":
+                gameTypeUpper = "2v2";
+                break;
+            case "3":
+                gameTypeUpper = "3v3";
+                break;
+            case "4":
+            case "4v4":
+                gameTypeUpper = "4v4+";
+                break;
+        }
+
+        const map = await Commands.checkMapIsValid(mapToCheck, gameTypeUpper === "CTF" ? "CTF" : "TA", member, channel),
+            team = await Commands.checkMemberOnTeam(member, channel);
 
         let homes;
         try {
@@ -1897,19 +1928,92 @@ class Commands {
             throw err;
         }
 
+        if (homes.length >= 5) {
+            await Discord.queue(`Sorry, ${member}, but you already have 5 ${gameTypeUpper} home maps.`, channel);
+            throw new Warning("Team already has this home map set.");
+        }
+
         if (homes.indexOf(map.map) !== -1) {
             await Discord.queue(`Sorry, ${member}, but you already have this map set as your home.`, channel);
             throw new Warning("Team already has this home map set.");
         }
 
         try {
-            await team.applyHomeMap(member, gameTypeUpper, +number, map.map);
+            await team.addHomeMap(member, gameTypeUpper, map.map);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
         await Discord.queue(`${member}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
+        return true;
+    }
+
+    //                                     #  #
+    //                                     #  #
+    // ###    ##   # #    ##   # #    ##   ####   ##   # #    ##
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  ####  # ##
+    // #     ##    #  #  #  #  # #   ##    #  #  #  #  #  #  ##
+    // #      ##   #  #   ##    #     ##   #  #   ##   #  #   ##
+    /**
+     * Removes a team's home map.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async removeHome(member, channel, message) {
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To remove a home map, you must include the game type followed by the name of the map.  For instance, to remove Vault as a 2v2 Team Anarchy home map, enter the following command: `!removehome 2v2 Vault`.  To remove Halcyon as a CTF home map, enter the following command: `!removehome CTF Halcyon`.", channel)) {
+            return false;
+        }
+
+        if (!mapParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must include the game type and the name of the map, such as \`!removehome 2v2 Vault\`, or \`!removehome CTF Halcyon\`.`, channel);
+            return false;
+        }
+
+        const {groups: {gameType, mapToCheck}} = mapParse.exec(message);
+        let gameTypeUpper = gameType.toUpperCase();
+
+        switch (gameTypeUpper) {
+            case "2":
+                gameTypeUpper = "2v2";
+                break;
+            case "3":
+                gameTypeUpper = "3v3";
+                break;
+            case "4":
+            case "4v4":
+                gameTypeUpper = "4v4+";
+                break;
+        }
+
+        const map = await Commands.checkMapIsValid(mapToCheck, gameTypeUpper === "CTF" ? "CTF" : "TA", member, channel),
+            team = await Commands.checkMemberOnTeam(member, channel);
+
+        let homes;
+        try {
+            homes = await team.getHomeMaps(gameTypeUpper);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (homes.indexOf(map.map) === -1) {
+            await Discord.queue(`Sorry, ${member}, but you do not have this map set as your home.`, channel);
+            throw new Warning("Team does not have this home map set.");
+        }
+
+        try {
+            await team.removeHomeMap(member, gameTypeUpper, map.map);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your home map has been removed.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.  Also note that you will not be able to send or receive challenges until you once again have 5 maps in this category.  Use the \`!addhome\` command to do this.`, channel);
         return true;
     }
 
@@ -2471,13 +2575,13 @@ class Commands {
 
         let homeMaps;
         try {
-            homeMaps = await team.getHomeMaps();
+            homeMaps = await team.getHomeMapsByType();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (homeMaps.length !== 10) {
+        if (homeMaps.CTF.length !== 5 || homeMaps["2v2"].length !== 5 || pilotCount >= 3 && homeMaps["3v3"].length !== 5 || pilotCount >= 4 && homeMaps["4v4+"].length !== 5) {
             await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set for each game type before you challenge another team.  Use the \`!home <gameType> <number> <map>\` command to set your team's home maps.`, channel);
             throw new Warning("Team does not have 5 home maps set for each game type.");
         }
@@ -2507,13 +2611,13 @@ class Commands {
 
         let opponentHomeMaps;
         try {
-            opponentHomeMaps = await opponent.getHomeMaps();
+            opponentHomeMaps = await opponent.getHomeMapsByType();
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
         }
 
-        if (opponentHomeMaps.length !== 10) {
+        if (opponentHomeMaps.CTF.length !== 5 || opponentHomeMaps["2v2"].length !== 5 || pilotCount >= 3 && opponentHomeMaps["3v3"].length !== 5 || pilotCount >= 4 && opponentHomeMaps["4v4+"].length !== 5) {
             await Discord.queue(`Sorry, ${member}, but your opponents must have 5 home maps set for each game type before you can challenge them.`, channel);
             throw new Warning("Opponent does not have 5 home maps set for each game type.");
         }
@@ -2591,6 +2695,11 @@ class Commands {
             throw new Warning("Missing map selection.");
         }
 
+        if (challenge.details.gameType === "TA" && !challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but you must agree to a team size before selecting a map.  Use \`!suggestteamsize\` to suggest a team size for this challenge.`, channel);
+            throw new Warning("Team size not set.");
+        }
+
         try {
             await challenge.pickMap(message.toLowerCase().charCodeAt(0) - 96);
         } catch (err) {
@@ -2639,6 +2748,11 @@ class Commands {
         await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
         await Commands.checkChallengeIsNotLocked(challenge, member, channel);
         await Commands.checkChallengeIsNotPenalized(challenge, member, channel);
+
+        if (challenge.details.gameType === "TA" && !challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but you must agree to a team size before suggesting a map.  Use \`!suggestteamsize\` to suggest a team size for this challenge.`, channel);
+            throw new Warning("Team size not set.");
+        }
 
         const map = await Commands.checkMapIsValid(message, challenge.details.gameType, member, channel);
 
@@ -2695,6 +2809,11 @@ class Commands {
         if (!suggestRandomMapParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but to suggest a random map, either use \`!suggestrandommap\` by itself to suggest a map from the full map pool, or \`suggestrandommap top 10\` or \`suggestrandommap bottom 20\` to pick from the most or least popular maps.`, channel);
             throw new Warning("Invalid syntax.");
+        }
+
+        if (challenge.details.gameType === "TA" && !challenge.details.teamSize) {
+            await Discord.queue(`Sorry, ${member}, but you must agree to a team size before suggesting a map.  Use \`!suggestteamsize\` to suggest a team size for this challenge.`, channel);
+            throw new Warning("Team size not set.");
         }
 
         const {groups: {direction, count}} = suggestRandomMapParse.exec(message);

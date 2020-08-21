@@ -536,6 +536,41 @@ class Team {
         }
     }
 
+    //          #     #  #  #                    #  #
+    //          #     #  #  #                    ####
+    //  ###   ###   ###  ####   ##   # #    ##   ####   ###  ###
+    // #  #  #  #  #  #  #  #  #  #  ####  # ##  #  #  #  #  #  #
+    // # ##  #  #  #  #  #  #  #  #  #  #  ##    #  #  # ##  #  #
+    //  # #   ###   ###  #  #   ##   #  #   ##   #  #   # #  ###
+    //                                                       #
+    /**
+     * Adds a home map for a team.
+     * @param {DiscordJs.GuildMember} member The pilot adding the home map.
+     * @param {string} gameType The game type.
+     * @param {string} map The new home map.
+     * @returns {Promise} A promise that resolves when the home map has been added.
+     */
+    async addHomeMap(member, gameType, map) {
+        try {
+            await Db.addHomeMap(this, gameType, map);
+        } catch (err) {
+            throw new Exception("There was a database error adding a home map.", err);
+        }
+
+        try {
+            const teamChannel = this.teamChannel;
+            if (!teamChannel) {
+                throw new Error("Guild channel does not exist for the team.");
+            }
+
+            await this.updateChannels();
+
+            await Discord.queue(`${member} has added ${gameType} home map **${map}**.`, teamChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a home map.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //          #     #  ###    #    ##           #
     //          #     #  #  #         #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###
@@ -588,42 +623,6 @@ class Team {
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a pilot to a team.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                   ##          #  #                    #  #
-    //                    #          #  #                    ####
-    //  ###  ###   ###    #    #  #  ####   ##   # #    ##   ####   ###  ###
-    // #  #  #  #  #  #   #    #  #  #  #  #  #  ####  # ##  #  #  #  #  #  #
-    // # ##  #  #  #  #   #     # #  #  #  #  #  #  #  ##    #  #  # ##  #  #
-    //  # #  ###   ###   ###     #   #  #   ##   #  #   ##   #  #   # #  ###
-    //       #     #            #                                        #
-    /**
-     * Applies a home map for a team.
-     * @param {DiscordJs.GuildMember} member The pilot updating the home map.
-     * @param {string} gameType The game type.
-     * @param {number} number The number of the home map.
-     * @param {string} map The new home map.
-     * @returns {Promise} A promise that resolves when the home map has been updated.
-     */
-    async applyHomeMap(member, gameType, number, map) {
-        try {
-            await Db.updateHomeMap(this, gameType, number, map);
-        } catch (err) {
-            throw new Exception("There was a database error setting a home map.", err);
-        }
-
-        try {
-            const teamChannel = this.teamChannel;
-            if (!teamChannel) {
-                throw new Error("Guild channel does not exist for the team.");
-            }
-
-            await this.updateChannels();
-
-            await Discord.queue(`${member} has changed home ${gameType} map number ${number} to ${map}.`, teamChannel);
-        } catch (err) {
-            throw new Exception("There was a critical Discord error setting a home map.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -781,7 +780,7 @@ class Team {
     //  ###                                                  #
     /**
      * Gets the list of home maps for the team.
-     * @param {string} [gameType] The game type to get home maps for.
+     * @param {string} gameType The game type to get home maps for.
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
     async getHomeMaps(gameType) {
@@ -1217,6 +1216,41 @@ class Team {
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a captain.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                     #  #                    #  #
+    //                                     #  #                    ####
+    // ###    ##   # #    ##   # #    ##   ####   ##   # #    ##   ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  ####  # ##  #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  #  #  #  #  ##    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   ##   #  #   ##   #  #   # #  ###
+    //                                                                         #
+    /**
+     * Removes a home map for a team.
+     * @param {DiscordJs.GuildMember} member The pilot adding the home map.
+     * @param {string} gameType The game type.
+     * @param {string} map The new home map.
+     * @returns {Promise} A promise that resolves when the home map has been added.
+     */
+    async removeHomeMap(member, gameType, map) {
+        try {
+            await Db.removeHomeMap(this, gameType, map);
+        } catch (err) {
+            throw new Exception("There was a database error removing a home map.", err);
+        }
+
+        try {
+            const teamChannel = this.teamChannel;
+            if (!teamChannel) {
+                throw new Error("Guild channel does not exist for the team.");
+            }
+
+            await this.updateChannels();
+
+            await Discord.queue(`${member} has removed ${gameType} home map **${map}**.`, teamChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a home map.  Please resolve this manually as soon as possible.", err);
         }
     }
 

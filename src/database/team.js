@@ -83,6 +83,31 @@ class TeamDb {
         });
     }
 
+    //          #     #  #  #                    #  #
+    //          #     #  #  #                    ####
+    //  ###   ###   ###  ####   ##   # #    ##   ####   ###  ###
+    // #  #  #  #  #  #  #  #  #  #  ####  # ##  #  #  #  #  #  #
+    // # ##  #  #  #  #  #  #  #  #  #  #  ##    #  #  # ##  #  #
+    //  # #   ###   ###  #  #   ##   #  #   ##   #  #   # #  ###
+    //                                                       #
+    /**
+     * Adds a home map for a team.
+     * @param {Team} team The team adding the home map.
+     * @param {string} gameType The game type.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the home map has been added.
+     */
+    static async addHomeMap(team, gameType, map) {
+        await db.query(/* sql */`
+            INSERT INTO tblTeamHome (TeamId, Map, GameType)
+            VALUES (@teamId, @map, @gameType)
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
+    }
+
     //          #     #  ###    #    ##           #
     //          #     #  #  #         #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###
@@ -855,20 +880,16 @@ class TeamDb {
     /**
      * Gets all of the team's home maps.
      * @param {Team} team The team to get maps for.
-     * @param {string} [gameType] The game type to get home maps for.
+     * @param {string} gameType The game type to get home maps for.
      * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
      */
     static async getHomeMaps(team, gameType) {
         /** @type {TeamDbTypes.GetHomeMapsRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT Map
-            FROM tblTeamHome
-            WHERE TeamId = @teamId
-                AND (@gameType IS NULL OR GameType = @gameType)
-            ORDER BY Number, GameType
+            SELECT Map FROM tblTeamHome WHERE TeamId = @teamId AND GameType = @gameType ORDER BY Map
         `, {
             teamId: {type: Db.INT, value: team.id},
-            gameType: {type: Db.VARCHAR(3), value: gameType}
+            gameType: {type: Db.VARCHAR(5), value: gameType}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -888,7 +909,7 @@ class TeamDb {
     static async getHomeMapsByType(team) {
         /** @type {TeamDbTypes.GetHomeMapsByTypeRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number, GameType
+            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Map, GameType
         `, {teamId: {type: Db.INT, value: team.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
             map: row.Map,
@@ -911,7 +932,7 @@ class TeamDb {
     static async getInfo(team) {
         /** @type {TeamDbTypes.GetInfoRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Number
+            SELECT Map, GameType FROM tblTeamHome WHERE TeamId = @teamId ORDER BY Map
 
             SELECT p.PlayerId, p.Name, r.Captain, r.Founder
             FROM tblRoster r
@@ -1312,6 +1333,30 @@ class TeamDb {
         });
     }
 
+    //                                     #  #                    #  #
+    //                                     #  #                    ####
+    // ###    ##   # #    ##   # #    ##   ####   ##   # #    ##   ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  ####  # ##  #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    #  #  #  #  #  #  ##    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   ##   #  #   ##   #  #   # #  ###
+    //                                                                         #
+    /**
+     * Removes a home map for a team.
+     * @param {Team} team The team removing the home map.
+     * @param {string} gameType The game type.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the home map has been removed.
+     */
+    static async removeHomeMap(team, gameType, map) {
+        await db.query(/* sql */`
+            DELETE FROM tblTeamHome WHERE TeamId = @teamId AND Map = @map AND GameType = @gameType
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
+    }
+
     //                                     ###    #    ##           #
     //                                     #  #         #           #
     // ###    ##   # #    ##   # #    ##   #  #  ##     #     ##   ###
@@ -1462,38 +1507,6 @@ class TeamDb {
         `, {
             teamId: {type: Db.INT, value: team.id},
             timezone: {type: Db.VARCHAR(50), value: timezone}
-        });
-    }
-
-    //                #         #          #  #                    #  #
-    //                #         #          #  #                    ####
-    // #  #  ###    ###   ###  ###    ##   ####   ##   # #    ##   ####   ###  ###
-    // #  #  #  #  #  #  #  #   #    # ##  #  #  #  #  ####  # ##  #  #  #  #  #  #
-    // #  #  #  #  #  #  # ##   #    ##    #  #  #  #  #  #  ##    #  #  # ##  #  #
-    //  ###  ###    ###   # #    ##   ##   #  #   ##   #  #   ##   #  #   # #  ###
-    //       #                                                                 #
-    /**
-     * Applies a home map for a team.
-     * @param {Team} team The team applying the home map.
-     * @param {string} gameType The game type.
-     * @param {number} number The map number.
-     * @param {string} map The name of the map.
-     * @returns {Promise} A promise that resolves when the home map has been applied.
-     */
-    static async updateHomeMap(team, gameType, number, map) {
-        await db.query(/* sql */`
-            MERGE tblTeamHome th
-                USING (VALUES (@teamId, @number, @map, @gameType)) AS v (TeamId, Number, Map, GameType)
-                ON th.TeamId = v.TeamId AND th.Number = v.Number AND th.GameType = v.GameType
-            WHEN MATCHED THEN
-                UPDATE SET Map = v.Map
-            WHEN NOT MATCHED THEN
-                INSERT (TeamId, Number, Map, GameType) VALUES (v.TeamId, v.Number, v.Map, v.GameType);
-        `, {
-            teamId: {type: Db.INT, value: team.id},
-            number: {type: Db.INT, value: number},
-            map: {type: Db.VARCHAR(100), value: map},
-            gameType: {type: Db.VARCHAR(3), value: gameType}
         });
     }
 

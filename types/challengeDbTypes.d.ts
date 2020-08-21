@@ -40,6 +40,14 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type ConfirmTeamSizeRecordsets = {
+        recordsets: [
+            {
+                Map: string
+            }[]
+        ]
+    }
+
     type CreateRecordsets = {
         recordsets: [
             {
@@ -294,6 +302,14 @@ declare namespace ChallengeDbTypes {
         recordsets: [
             {
                 DateConfirmed: Date
+            }[]
+        ]
+    }
+
+    type SetTeamSizeRecordsets = {
+        recordsets: [
+            {
+                Map: string
             }[]
         ]
     }

@@ -139,36 +139,6 @@ class Challenge {
 
                 await challenge.channel.setParent(Discord.challengesCategory);
 
-                const mapEmbed = Discord.messageEmbed({
-                    title: "Challenge commands - Map",
-                    description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
-                    color: data.homeMapTeam.role.color,
-                    fields: [
-                        {
-                            name: "!pickmap <a|b|c|d|e>",
-                            value: "Pick the map to play.  Locks the map for the match."
-                        }
-                    ]
-                });
-
-                if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
-                    mapEmbed.fields.push({
-                        name: "!suggestmap <map>",
-                        value: "Suggest a neutral map to play.",
-                        inline: false
-                    }, {
-                        name: "!confirmmap",
-                        value: "Confirms a neutral map suggested by the other team.  Locks the map for the match.",
-                        inline: false
-                    });
-                }
-
-                const mapMsg = await Discord.richQueue(mapEmbed, challenge.channel);
-
-                if (mapMsg) {
-                    await mapMsg.pin();
-                }
-
                 const optionsEmbed = Discord.messageEmbed({
                     title: "Challenge commands - Options",
                     description: "Challenges must also have a team size and scheduled time to play.",
@@ -278,6 +248,47 @@ class Challenge {
                 if (otherMsg) {
                     await otherMsg.pin();
                 }
+
+                let mapEmbed;
+
+                if (challenge.details.gameType === "TA") {
+                    mapEmbed = Discord.messageEmbed({
+                        title: "Challenge commands - Map",
+                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`,
+                        color: data.homeMapTeam.role.color,
+                        fields: []
+                    });
+                } else {
+                    mapEmbed = Discord.messageEmbed({
+                        title: "Challenge commands - Map",
+                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
+                        color: data.homeMapTeam.role.color,
+                        fields: [
+                            {
+                                name: "!pickmap <a|b|c|d|e>",
+                                value: "Pick the map to play."
+                            }
+                        ]
+                    });
+
+                    if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
+                        mapEmbed.fields.push({
+                            name: "!suggestmap <map>",
+                            value: "Suggest a neutral map to play.",
+                            inline: false
+                        }, {
+                            name: "!confirmmap",
+                            value: "Confirms a neutral map suggested by the other team.",
+                            inline: false
+                        }, {
+                            name: "!suggestrandommap [(top|bottom) <number>]",
+                            value: "Suggest a random map from the top or bottom number of maps that have been played in the OTL.",
+                            inline: false
+                        });
+                    }
+                }
+
+                await Discord.richQueue(mapEmbed, challenge.channel);
 
                 if (data.team1Penalized && data.team2Penalized) {
                     await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map selection is disabled.", challenge.channel);
@@ -1225,7 +1236,11 @@ class Challenge {
         this.details.suggestedGameTypeTeam = void 0;
 
         try {
-            await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            if (homes.length === 0) {
+                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
+            } else {
+                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            }
 
             await this.updateTopic();
         } catch (err) {
@@ -1345,8 +1360,9 @@ class Challenge {
             await this.loadDetails();
         }
 
+        let homes;
         try {
-            await Db.confirmTeamSize(this);
+            homes = await Db.confirmTeamSize(this);
         } catch (err) {
             throw new Exception("There was a database error confirming a suggested team size for a challenge.", err);
         }
@@ -1356,7 +1372,11 @@ class Challenge {
         this.details.suggestedTeamSizeTeam = void 0;
 
         try {
-            await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
+            if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
+                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            } else {
+                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
+            }
 
             await this.updateTopic();
         } catch (err) {
@@ -2109,7 +2129,11 @@ class Challenge {
         this.details.map = void 0;
 
         try {
-            await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            if (homes.length === 0) {
+                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(team.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
+            } else {
+                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            }
 
             await this.updateTopic();
         } catch (err) {
@@ -2378,8 +2402,9 @@ class Challenge {
             await this.loadDetails();
         }
 
+        let homes;
         try {
-            await Db.setTeamSize(this, size);
+            homes = await Db.setTeamSize(this, size);
         } catch (err) {
             throw new Exception("There was a database error setting the team size for a challenge.", err);
         }
@@ -2389,7 +2414,11 @@ class Challenge {
         this.details.suggestedTeamSizeTeam = void 0;
 
         try {
-            await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.`, this.channel);
+            if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
+                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+            } else {
+                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
+            }
 
             await this.updateTopic();
         } catch (err) {
