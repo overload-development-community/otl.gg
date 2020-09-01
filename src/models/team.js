@@ -571,6 +571,41 @@ class Team {
         }
     }
 
+    //          #     #  #  #               #                ##    #  #
+    //          #     #  ## #               #                 #    ####
+    //  ###   ###   ###  ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###
+    // #  #  #  #  #  #  # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #
+    // # ##  #  #  #  #  # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #
+    //  # #   ###   ###  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###
+    //                                                                         #
+    /**
+     * Adds a neutral map for a team.
+     * @param {DiscordJs.GuildMember} member The pilot adding the neutral map.
+     * @param {string} gameType The game type.
+     * @param {string} map The new neutral map.
+     * @returns {Promise} A promise that resolves when the neutral map has been added.
+     */
+    async addNeutralMap(member, gameType, map) {
+        try {
+            await Db.addNeutralMap(this, gameType, map);
+        } catch (err) {
+            throw new Exception("There was a database error adding a neutral map.", err);
+        }
+
+        try {
+            const teamChannel = this.teamChannel;
+            if (!teamChannel) {
+                throw new Error("Guild channel does not exist for the team.");
+            }
+
+            await this.updateChannels();
+
+            await Discord.queue(`${member} has added ${gameType} neutral map **${map}**.`, teamChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a neutral map.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
     //          #     #  ###    #    ##           #
     //          #     #  #  #         #           #
     //  ###   ###   ###  #  #  ##     #     ##   ###
@@ -838,6 +873,56 @@ class Team {
         } catch (err) {
             throw new Exception("There was a database error getting the team info.", err);
         }
+    }
+
+    //              #    #  #               #                ##    #  #
+    //              #    ## #               #                 #    ####
+    //  ###   ##   ###   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###    ###
+    // #  #  # ##   #    # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #  ##
+    //  ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #    ##
+    // #      ##     ##  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###   ###
+    //  ###                                                                    #
+    /**
+     * Gets the list of neutral maps for the team.
+     * @param {string} gameType The game type to get neutral maps for.
+     * @returns {Promise<string[]>} A promise that resolves with a list of the team's neutral maps.
+     */
+    async getNeutralMaps(gameType) {
+        try {
+            return await Db.getNeutralMaps(this, gameType);
+        } catch (err) {
+            throw new Exception("There was a database error getting the neutral maps for the team the pilot is on.", err);
+        }
+    }
+
+    //              #    #  #               #                ##    #  #                     ###         ###
+    //              #    ## #               #                 #    ####                     #  #         #
+    //  ###   ##   ###   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###    ###   ###   #  #   #    #  #  ###    ##
+    // #  #  # ##   #    # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #  ##     #  #  #  #   #    #  #  #  #  # ##
+    //  ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #    ##   #  #   # #   #     # #  #  #  ##
+    // #      ##     ##  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###   ###    ###     #    #      #   ###    ##
+    //  ###                                                                    #                   #           #    #
+    /**
+     * Gets the list of neutral maps for the team, divided by type.
+     * @returns {Promise<Object<string, string[]>>} A promise that resolves with a list of the team's neutral maps, divided by type.
+     */
+    async getNeutralMapsByType() {
+        let maps;
+        try {
+            maps = await Db.getNeutralMapsByType(this);
+        } catch (err) {
+            throw new Exception("There was a database error getting the neutral maps by type for the team the pilot is on.", err);
+        }
+
+        return maps.reduce((prev, cur) => {
+            if (!prev[cur.gameType]) {
+                prev[cur.gameType] = [];
+            }
+
+            prev[cur.gameType].push(cur.map);
+
+            return prev;
+        }, {});
     }
 
     //              #    #  #               #     ##   ##                #     ###          #
@@ -1251,6 +1336,41 @@ class Team {
             await Discord.queue(`${member} has removed ${gameType} home map **${map}**.`, teamChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a home map.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                     #  #               #                ##    #  #
+    //                                     ## #               #                 #    ####
+    // ###    ##   # #    ##   # #    ##   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###
+    //                                                                                           #
+    /**
+     * Removes a neutral map for a team.
+     * @param {DiscordJs.GuildMember} member The pilot adding the neutral map.
+     * @param {string} gameType The game type.
+     * @param {string} map The new neutral map.
+     * @returns {Promise} A promise that resolves when the neutral map has been added.
+     */
+    async removeNeutralMap(member, gameType, map) {
+        try {
+            await Db.removeNeutralMap(this, gameType, map);
+        } catch (err) {
+            throw new Exception("There was a database error removing a neutral map.", err);
+        }
+
+        try {
+            const teamChannel = this.teamChannel;
+            if (!teamChannel) {
+                throw new Error("Guild channel does not exist for the team.");
+            }
+
+            await this.updateChannels();
+
+            await Discord.queue(`${member} has removed ${gameType} neutral map **${map}**.`, teamChannel);
+        } catch (err) {
+            throw new Exception("There was a critical Discord error adding a neutral map.  Please resolve this manually as soon as possible.", err);
         }
     }
 

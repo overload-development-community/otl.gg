@@ -41,7 +41,7 @@ class Minify {
      * @returns {Promise<void>} A promise that resolves when the handler has been run.
      */
     static async cssHandler(req, res, next) {
-        if (!req.query.files || req.query.files === "") {
+        if (!req.query.files || req.query.files === "" || typeof req.query.files !== "string") {
             return next();
         }
 
@@ -110,7 +110,7 @@ class Minify {
      * @returns {Promise<void>} A promise that resolves when the handler has been run.
      */
     static async jsHandler(req, res, next) {
-        if (!req.query.files || req.query.files === "") {
+        if (!req.query.files || req.query.files === "" || typeof req.query.files !== "string") {
             return next();
         }
 
@@ -158,7 +158,7 @@ class Minify {
             const output = terser.minify(code, {nameCache});
 
             if (output.error) {
-                Log.exception("An uglify-js error occurred.", output.error);
+                Log.exception("A terser error occurred.", output.error);
 
                 next(output.error);
                 return void 0;

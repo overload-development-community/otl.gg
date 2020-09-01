@@ -13,6 +13,7 @@
  * @typedef {import("../../types/challengeDbTypes").GetCastDataRecordsets} ChallengeDbTypes.GetCastDataRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetDamageRecordsets} ChallengeDbTypes.GetDamageRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetDetailsRecordsets} ChallengeDbTypes.GetDetailsRecordsets
+ * @typedef {import("../../types/challengeDbTypes").GetMatchingNeutralsForChallengeRecordsets} ChallengeDbTypes.GetMatchingNeutralsForChallengeRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetNotificationsRecordsets} ChallengeDbTypes.GetNotificationsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetRandomMapRecordsets} ChallengeDbTypes.GetRandomMapRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetStatsForTeamRecordsets} ChallengeDbTypes.GetStatsForTeamRecordsets
@@ -1115,6 +1116,32 @@ class ChallengeDb {
             suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
+    }
+
+    //              #    #  #         #          #      #                #  #               #                ##           ####               ##   #           ##    ##
+    //              #    ####         #          #                       ## #               #                 #           #                 #  #  #            #     #
+    //  ###   ##   ###   ####   ###  ###    ##   ###   ##    ###    ###  ## #   ##   #  #  ###   ###    ###   #     ###   ###    ##   ###   #     ###    ###   #     #     ##   ###    ###   ##
+    // #  #  # ##   #    #  #  #  #   #    #     #  #   #    #  #  #  #  # ##  # ##  #  #   #    #  #  #  #   #    ##     #     #  #  #  #  #     #  #  #  #   #     #    # ##  #  #  #  #  # ##
+    //  ##   ##     #    #  #  # ##   #    #     #  #   #    #  #   ##   # ##  ##    #  #   #    #     # ##   #      ##   #     #  #  #     #  #  #  #  # ##   #     #    ##    #  #   ##   ##
+    // #      ##     ##  #  #   # #    ##   ##   #  #  ###   #  #  #     #  #   ##    ###    ##  #      # #  ###   ###    #      ##   #      ##   #  #   # #  ###   ###    ##   #  #  #      ##
+    //  ###                                                         ###                                                                                                                ###
+    /**
+     * Gets matching neutral maps between teams in a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<string[]>} A promise that resolves with the list of matching neutral maps.
+     */
+    static async getMatchingNeutralsForChallenge(challenge) {
+        /** @type {ChallengeDbTypes.GetMatchingNeutralsForChallengeRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT tn1.Map
+            FROM tblChallenge c
+            INNER JOIN tblTeamNeutral tn1 ON c.ChallengingTeamId = tn1.TeamId AND c.GameType = tn1.GameType
+            INNER JOIN tblTeamNeutral tn2 ON c.ChallengedTeamId = tn2.TeamId AND c.GameType = tn2.GameType AND tn1.Map = tn2.Map
+            WHERE c.ChallengeId = @id
+            ORDER BY tn1.Map
+        `, {id: {type: Db.type, value: challenge.id}});
+
+        return data && data.recordsets && data.recordsets.length === 1 && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //              #    #  #         #     #      #    #                 #     #

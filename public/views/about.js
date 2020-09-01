@@ -59,10 +59,6 @@ class AboutView {
                     <div>Get a link to the map list.</div>
                     <div class="example">!maplist</div>
 
-                    <div class="command">!maplist</div>
-                    <div>Get a link to the map list.</div>
-                    <div class="example">!maplist</div>
-
                     <div class="command">!testing</div>
                     <div>Adds you to the publicly mentionable Testing Discord role.</div>
                     <div class="example">!testing</div>
@@ -86,6 +82,10 @@ class AboutView {
                     <div class="command">!homes [team]</div>
                     <div>Gets the current list of home levels for either your team or the specified team.</div>
                     <div class="example">!homes<br />!homes CF<br />!homes Cronus Frontier</div>
+
+                    <div class="command">!neutrals [team]</div>
+                    <div>Gets the current list of preferred neutral levels for either your team or the specified team.</div>
+                    <div class="example">!neutrals<br />!neutrals CF<br />!neutrals Cronus Frontier</div>
 
                     <div class="command">!next [time]</div>
                     <div>List the upcoming scheduled matches.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
@@ -159,9 +159,21 @@ class AboutView {
                     <div>Changes your team's time zone.  See #timezone-faq on the Discord server for details.</div>
                     <div class="example">!teamtimezone America/Los_Angeles<br />!teamtimezone Europe/Berlin</div>
 
-                    <div class="command">!home (CTF|<wbr />TA) (1|<wbr />2|<wbr />3|<wbr />4|<wbr />5) &lt;map></div>
-                    <div>Founder only.  Sets a home map for your team.  You must have 5 home maps set for each game type before you can issue a challenge.</div>
-                    <div class="example">!home TA 1 Vault<br />!home CTF 3 Halcyon<br />!home TA 5 Terminal</div>
+                    <div class="command">!addhome (CTF|<wbr />2v2|<wbr />3v3|<wbr />4v4+) &lt;map></div>
+                    <div>Founder or Captain only.  Adds a home map for your team.  You must have 5 home maps set for each game type before you can issue a challenge.  You can have no more than 5 maps.</div>
+                    <div class="example">!addhome 2v2 Vault<br />!addhome 4v4+ Syrinx<br />!addhome CTF Halcyon</div>
+
+                    <div class="command">!removehome (CTF|<wbr />2v2|<wbr />3v3|<wbr />4v4+) &lt;map></div>
+                    <div>Founder or Captain only.  Removes a home map for your team.  You must have 5 home maps set for each game type before you can issue a challenge.</div>
+                    <div class="example">!removehome 2v2 Vault<br />!removehome 4v4+ Syrinx<br />!removehome CTF Halcyon</div>
+
+                    <div class="command">!addneutral (CTF|<wbr />2v2|<wbr />3v3|<wbr />4v4+) &lt;map></div>
+                    <div>Founder or Captain only.  Adds a neutral map for your team.  Having a neutral map list is optional.</div>
+                    <div class="example">!addneutral 2v2 Vault<br />!addneutral 4v4+ Syrinx<br />!addneutral CTF Halcyon</div>
+
+                    <div class="command">!removeneutral (CTF|<wbr />2v2|<wbr />3v3|<wbr />4v4+) &lt;map></div>
+                    <div>Founder or Captain only.  Removes a neutral map for your team.</div>
+                    <div class="example">!removeneutral 2v2 Vault<br />!removeneutral 4v4+ Syrinx<br />!removeneutral CTF Halcyon</div>
 
                     <div class="command">!invite &lt;pilot></div>
                     <div>Founder or Captain only.  Invites a pilot to your team.  You must have 2 pilots on your team before you can issue a challenge.</div>

@@ -19,6 +19,8 @@
  * @typedef {import("../../types/teamDbTypes").GetHomeMapsRecordsets} TeamDbTypes.GetHomeMapsRecordsets
  * @typedef {import("../../types/teamDbTypes").GetHomeMapsByTypeRecordsets} TeamDbTypes.GetHomeMapsByTypeRecordsets
  * @typedef {import("../../types/teamDbTypes").GetInfoRecordsets} TeamDbTypes.GetInfoRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetNeutralMapsRecordsets} TeamDbTypes.GetNeutralMapsRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetNeutralMapsByTypeRecordsets} TeamDbTypes.GetNeutralMapsByTypeRecordsets
  * @typedef {import("../../types/teamDbTypes").GetNextClockDateRecordsets} TeamDbTypes.GetNextClockDateRecordsets
  * @typedef {import("../../types/teamDbTypes").GetPilotAndInvitedCountRecordsets} TeamDbTypes.GetPilotAndInvitedCountRecordsets
  * @typedef {import("../../types/teamDbTypes").GetPilotCountRecordsets} TeamDbTypes.GetPilotCountRecordsets
@@ -100,6 +102,31 @@ class TeamDb {
     static async addHomeMap(team, gameType, map) {
         await db.query(/* sql */`
             INSERT INTO tblTeamHome (TeamId, Map, GameType)
+            VALUES (@teamId, @map, @gameType)
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
+    }
+
+    //          #     #  #  #               #                ##    #  #
+    //          #     #  ## #               #                 #    ####
+    //  ###   ###   ###  ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###
+    // #  #  #  #  #  #  # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #
+    // # ##  #  #  #  #  # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #
+    //  # #   ###   ###  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###
+    //                                                                         #
+    /**
+     * Adds a neutral map for a team.
+     * @param {Team} team The team adding the neutral map.
+     * @param {string} gameType The game type.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the neutral map has been added.
+     */
+    static async addNeutralMap(team, gameType, map) {
+        await db.query(/* sql */`
+            INSERT INTO tblTeamNeutral (TeamId, Map, GameType)
             VALUES (@teamId, @map, @gameType)
         `, {
             teamId: {type: Db.INT, value: team.id},
@@ -977,6 +1004,53 @@ class TeamDb {
         };
     }
 
+    //              #    #  #               #                ##    #  #
+    //              #    ## #               #                 #    ####
+    //  ###   ##   ###   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###    ###
+    // #  #  # ##   #    # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #  ##
+    //  ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #    ##
+    // #      ##     ##  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###   ###
+    //  ###                                                                    #
+    /**
+     * Gets all of the team's neutral maps.
+     * @param {Team} team The team to get maps for.
+     * @param {string} gameType The game type to get neutral maps for.
+     * @returns {Promise<string[]>} A promise that resolves with a list of the team's neutral maps.
+     */
+    static async getNeutralMaps(team, gameType) {
+        /** @type {TeamDbTypes.GetNeutralMapsRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT Map FROM tblTeamNeutral WHERE TeamId = @teamId AND GameType = @gameType ORDER BY Map
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
+    }
+
+    //              #    #  #               #                ##    #  #                     ###         ###
+    //              #    ## #               #                 #    ####                     #  #         #
+    //  ###   ##   ###   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###    ###   ###   #  #   #    #  #  ###    ##
+    // #  #  # ##   #    # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #  ##     #  #  #  #   #    #  #  #  #  # ##
+    //  ##   ##     #    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #    ##   #  #   # #   #     # #  #  #  ##
+    // #      ##     ##  #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###   ###    ###     #    #      #   ###    ##
+    //  ###                                                                    #                   #           #    #
+    /**
+     * Gets the list of neutral maps for the team, divided by type.
+     * @param {Team} team The team to get maps for.
+     * @returns {Promise<MapTypes.MapGameType[]>} A promise that resolves with a list of the team's neutral maps, divided by type.
+     */
+    static async getNeutralMapsByType(team) {
+        /** @type {TeamDbTypes.GetNeutralMapsByTypeRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT Map, GameType FROM tblTeamNeutral WHERE TeamId = @teamId ORDER BY Map, GameType
+        `, {teamId: {type: Db.INT, value: team.id}});
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            map: row.Map,
+            gameType: row.GameType
+        }));
+    }
+
     //              #    #  #               #     ##   ##                #     ###          #
     //              #    ## #               #    #  #   #                #     #  #         #
     //  ###   ##   ###   ## #   ##   #  #  ###   #      #     ##    ##   # #   #  #   ###  ###    ##
@@ -1350,6 +1424,30 @@ class TeamDb {
     static async removeHomeMap(team, gameType, map) {
         await db.query(/* sql */`
             DELETE FROM tblTeamHome WHERE TeamId = @teamId AND Map = @map AND GameType = @gameType
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
+    }
+
+    //                                     #  #               #                ##    #  #
+    //                                     ## #               #                 #    ####
+    // ###    ##   # #    ##   # #    ##   ## #   ##   #  #  ###   ###    ###   #    ####   ###  ###
+    // #  #  # ##  ####  #  #  # #   # ##  # ##  # ##  #  #   #    #  #  #  #   #    #  #  #  #  #  #
+    // #     ##    #  #  #  #  # #   ##    # ##  ##    #  #   #    #     # ##   #    #  #  # ##  #  #
+    // #      ##   #  #   ##    #     ##   #  #   ##    ###    ##  #      # #  ###   #  #   # #  ###
+    //                                                                                           #
+    /**
+     * Removes a neutral map for a team.
+     * @param {Team} team The team removing the neutral map.
+     * @param {string} gameType The game type.
+     * @param {string} map The name of the map.
+     * @returns {Promise} A promise that resolves when the neutral map has been removed.
+     */
+    static async removeNeutralMap(team, gameType, map) {
+        await db.query(/* sql */`
+            DELETE FROM tblTeamNeutral WHERE TeamId = @teamId AND Map = @map AND GameType = @gameType
         `, {
             teamId: {type: Db.INT, value: team.id},
             map: {type: Db.VARCHAR(100), value: map},

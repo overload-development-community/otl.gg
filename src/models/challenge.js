@@ -296,6 +296,12 @@ class Challenge {
                     await Discord.queue(`A penalty has been applied to **${challengingTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
                 } else if (data.team2Penalized) {
                     await Discord.queue(`A penalty has been applied to **${challengedTeam.tag}** for this match.  Neutral map selection is disabled.`, challenge.channel);
+                } else if (!adminCreated) {
+                    const matches = await Db.getMatchingNeutralsForChallenge(challenge);
+
+                    if (matches && matches.length > 0) {
+                        await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}}`, challenge.channel);
+                    }
                 }
 
                 await challenge.updateTopic();
@@ -2092,6 +2098,14 @@ class Challenge {
 
         try {
             await Discord.queue(`${member} has set the game type for this match to **${Challenge.getGameTypeName(this.details.gameType)}**.`, this.channel);
+
+            if (!this.details.challengingTeamPenalized && !this.details.challengedTeamPenalized && !this.details.adminCreated) {
+                const matches = await Db.getMatchingNeutralsForChallenge(this);
+
+                if (matches && matches.length > 0) {
+                    await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}}`, this.channel);
+                }
+            }
 
             await this.updateTopic();
         } catch (err) {

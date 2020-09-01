@@ -39,6 +39,7 @@ const tz = require("timezone-js"),
     idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
     mapParse = /^(?<gameType>(?:CTF|2|3|4|2v2|3v3|4v4|4v4+)) (?<mapToCheck>.+)$/i,
     nameConfirmParse = /^@?(?<name>.+?)(?: (?<confirmed>confirm))?$/,
+    neutralMapParse = /^(?<gameType>(?:CTF|TA)) (?<mapToCheck>.+)$/i,
     numberParse = /^[1-9][0-9]*$/,
     numberOrZeroParse = /^(?:0|[1-9][0-9]*)$/,
     scoreParse = /^(?:(?<scoreStr1>(?:0|-?[1-9][0-9]*)) (?<scoreStr2>(?:0|-?[1-9][0-9]*))|(?:https:\/\/(?:tracker|olproxy).otl.gg\/archive\/(?<gameId>[1-9][0-9]*)))$/,
@@ -1949,9 +1950,9 @@ class Commands {
         return true;
     }
 
-    //                                     #  #
-    //                                     #  #
-    // ###    ##   # #    ##   # #    ##   ####   ##   # #    ##
+    //                                     #
+    //                                     #
+    // ###    ##   # #    ##   # #    ##   ###    ##   # #    ##
     // #  #  # ##  ####  #  #  # #   # ##  #  #  #  #  ####  # ##
     // #     ##    #  #  #  #  # #   ##    #  #  #  #  #  #  ##
     // #      ##   #  #   ##    #     ##   #  #   ##   #  #   ##
@@ -1962,7 +1963,7 @@ class Commands {
      * @param {string} message The text of the command.
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
-    async removeHome(member, channel, message) {
+    async removehome(member, channel, message) {
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
         if (!await Commands.checkHasParameters(message, member, "To remove a home map, you must include the game type followed by the name of the map.  For instance, to remove Vault as a 2v2 Team Anarchy home map, enter the following command: `!removehome 2v2 Vault`.  To remove Halcyon as a CTF home map, enter the following command: `!removehome CTF Halcyon`.", channel)) {
@@ -2047,6 +2048,152 @@ class Commands {
             msg.fields.push({
                 name: Challenge.getGameTypeName(gameType),
                 value: homes[gameType].join("\n"),
+                inline: false
+            });
+        });
+
+        await Discord.richQueue(msg, channel);
+        return true;
+    }
+
+    //          #     #                     #                ##
+    //          #     #                     #                 #
+    //  ###   ###   ###  ###    ##   #  #  ###   ###    ###   #
+    // #  #  #  #  #  #  #  #  # ##  #  #   #    #  #  #  #   #
+    // # ##  #  #  #  #  #  #  ##    #  #   #    #     # ##   #
+    //  # #   ###   ###  #  #   ##    ###    ##  #      # #  ###
+    /**
+     * Adds a team's neutral map.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async addneutral(member, channel, message) {
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To add a preferred neutral map, you must include the game type followed by the name of the map.  For instance, to add Vault as a Team Anarchy neutral map, enter the following command: `!addneutral TA Vault`.  To add Halcyon as a CTF neutral map, enter the following command: `!addneutral CTF Halcyon`.", channel)) {
+            return false;
+        }
+
+        if (!neutralMapParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must include the game type and the name of the map, such as \`!addneutral TA Vault\`, or \`!addneutral CTF Halcyon\`.`, channel);
+            return false;
+        }
+
+        const {groups: {gameType, mapToCheck}} = mapParse.exec(message),
+            gameTypeUpper = gameType.toUpperCase(),
+            map = await Commands.checkMapIsValid(mapToCheck, gameTypeUpper === "CTF" ? "CTF" : "TA", member, channel),
+            team = await Commands.checkMemberOnTeam(member, channel);
+
+        let neutrals;
+        try {
+            neutrals = await team.getNeutralMaps(gameTypeUpper);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (neutrals.indexOf(map.map) !== -1) {
+            await Discord.queue(`Sorry, ${member}, but you already have this map set as a preferred neutral map.`, channel);
+            throw new Warning("Team already has this neutral map set.");
+        }
+
+        try {
+            await team.addNeutralMap(member, gameTypeUpper, map.map);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your preferred neutral map has been set.`, channel);
+        return true;
+    }
+
+    //                                                        #                ##
+    //                                                        #                 #
+    // ###    ##   # #    ##   # #    ##   ###    ##   #  #  ###   ###    ###   #
+    // #  #  # ##  ####  #  #  # #   # ##  #  #  # ##  #  #   #    #  #  #  #   #
+    // #     ##    #  #  #  #  # #   ##    #  #  ##    #  #   #    #     # ##   #
+    // #      ##   #  #   ##    #     ##   #  #   ##    ###    ##  #      # #  ###
+    /**
+     * Removes a team's neutral map.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async removeneutral(member, channel, message) {
+        await Commands.checkMemberIsCaptainOrFounder(member, channel);
+
+        if (!await Commands.checkHasParameters(message, member, "To remove a preferred neutral map, you must include the game type followed by the name of the map.  For instance, to remove Vault as a Team Anarchy neutral map, enter the following command: `!removeneutral TA Vault`.  To remove Halcyon as a CTF neutral map, enter the following command: `!removeneutral CTF Halcyon`.", channel)) {
+            return false;
+        }
+
+        if (!mapParse.test(message)) {
+            await Discord.queue(`Sorry, ${member}, but you must include the game type and the name of the map, such as \`!removeneutral TA Vault\`, or \`!removeneutral CTF Halcyon\`.`, channel);
+            return false;
+        }
+
+        const {groups: {gameType, mapToCheck}} = neutralMapParse.exec(message),
+            gameTypeUpper = gameType.toUpperCase(),
+            map = await Commands.checkMapIsValid(mapToCheck, gameTypeUpper === "CTF" ? "CTF" : "TA", member, channel),
+            team = await Commands.checkMemberOnTeam(member, channel);
+
+        let neutrals;
+        try {
+            neutrals = await team.getNeutralMaps(gameTypeUpper);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (neutrals.indexOf(map.map) === -1) {
+            await Discord.queue(`Sorry, ${member}, but you do not have this map set as your preferred neutral map.`, channel);
+            throw new Warning("Team does not have this neutral map set.");
+        }
+
+        try {
+            await team.removeNeutralMap(member, gameTypeUpper, map.map);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        await Discord.queue(`${member}, your preferred neutral map has been removed.`, channel);
+        return true;
+    }
+
+    //                    #                ##
+    //                    #                 #
+    // ###    ##   #  #  ###   ###    ###   #     ###
+    // #  #  # ##  #  #   #    #  #  #  #   #    ##
+    // #  #  ##    #  #   #    #     # ##   #      ##
+    // #  #   ##    ###    ##  #      # #  ###   ###
+    /**
+     * Gets a team's neutral maps.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async neutrals(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
+            neutrals = await team.getNeutralMapsByType();
+
+        const msg = Discord.messageEmbed({
+            title: `Neutral maps for **${team.name}**`,
+            fields: []
+        });
+
+        Object.keys(neutrals).forEach((gameType) => {
+            msg.fields.push({
+                name: Challenge.getGameTypeName(gameType),
+                value: neutrals[gameType].join("\n"),
                 inline: false
             });
         });

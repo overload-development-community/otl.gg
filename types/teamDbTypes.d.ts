@@ -252,6 +252,23 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type GetNeutralMapsRecordsets = {
+        recordsets: [
+            {
+                Map: string
+            }[]
+        ]
+    }
+
+    type GetNeutralMapsByTypeRecordsets = {
+        recordsets: [
+            {
+                Map: string
+                GameType: string
+            }[]
+        ]
+    }
+
     type GetNextClockDateRecordsets = {
         recordsets: [
             {
