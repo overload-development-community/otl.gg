@@ -4,12 +4,25 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.4 - 9/3/2020
+
+* Home maps have been overhauled.  Team anarchy is now split into 3 categories, 2v2, 3v3, and 4v4+, and the set of commands to manage home maps has changed.  See https://otl.gg/about for the new list of commands.
+* Website will now show the home maps for each cateogry.
+* New neutral maps feature.  Similar to home maps, but does not get divided into categories for Team Anarchy.  See https://otl.gg/about for the new list of commands.
+* When challenging a team, if both teams have matching maps in their neutral map lists, those maps are displayed when the challenge is created.
+* Teams are no longer required to have a stock map in their home map list.
+* New ELO algorithm for CTF games.  Internally, when games finish with the winner under 10 points, the algorithm will add 1 point to each team until one team is at 10 points, and then calculate CTF ELO like before.
+* Update game settings for olmod.
+* Fix a number of bugs with malformed website requests.
+
 ## v4.0.3 - 7/30/2020
+
 * Captains will no longer be left in a team's captains channel after they've left the team.
 * Due to league growth and Discord category channel limits, the Challenges channel category will now cap at 40 challenges.  If any challenges go in that would put it above the cap, it will rename the Challenges channel to "Old Challenges" and create a brand new "Challenges" channel.
 * `!pickmap` is now case insensitive.
 
 ## v4.0.2 - 7/23/2020
+
 * Maps are now categorized into game types.  You cannot fly a map in game modes other than Team Anarchy if they were not intended for that game mode.  However, any map can be flown in team anarchy.
 * `!report` now accepts a tracker URL instead of the score.  You can `!report` multiple games this way to combine stats from multiple games in the event of disconnections.
 * `!report` using the score, the old way of reporting games, still works but will now wipe out any stats accumulated up to that point.  Use this as a workaround if you're having trouble using `!report` with the tracker URL parameter.  `!report 0 0` will reset both the score and the stats for the game, so use that if you need to start over using `!report` with the tracker URL parameter.
