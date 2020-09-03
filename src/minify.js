@@ -4,7 +4,6 @@ const csso = require("csso"),
     terser = require("terser"),
 
     Cache = require("./cache"),
-    Log = require("./logging/log"),
     settings = require("../settings");
 
 const nameCache = {};
@@ -155,14 +154,7 @@ class Minify {
                 return next(err);
             }
 
-            const output = terser.minify(code, {nameCache});
-
-            if (output.error) {
-                Log.exception("A terser error occurred.", output.error);
-
-                next(output.error);
-                return void 0;
-            }
+            const output = await terser.minify(code, {nameCache});
 
             if (settings.minify.cache) {
                 Cache.add(key, output.code, new Date(new Date().getTime() + 86400000));

@@ -411,6 +411,10 @@ class Discord {
      * @returns {Promise} A promise that resolves when the message is parsed.
      */
     static async message(user, message, channel) {
+        if (settings.testing && (channel.type === "dm" || !channel.guild || channel.guild.id !== otlGuild.id)) {
+            return;
+        }
+
         const member = otlGuild.members.cache.find((m) => m.id === user.id);
 
         for (const text of message.split("\n")) {
