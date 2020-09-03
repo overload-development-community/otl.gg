@@ -1974,12 +1974,28 @@ class Team {
                 captainsChannelTopic = topic;
 
             if (teamInfo.homes) {
-                const taHomes = teamInfo.homes.filter((h) => h.gameType === "TA"),
+                const ta2v2Homes = teamInfo.homes.filter((h) => h.gameType === "2v2"),
+                    ta3v3Homes = teamInfo.homes.filter((h) => h.gameType === "3v3"),
+                    ta4v4Homes = teamInfo.homes.filter((h) => h.gameType === "4v4+"),
                     ctfHomes = teamInfo.homes.filter((h) => h.gameType === "CTF");
 
-                if (taHomes && taHomes.length > 0) {
-                    channelTopic += "\n\nHome Team Anarchy Maps:";
-                    taHomes.forEach((home) => {
+                if (ta2v2Homes && ta2v2Homes.length > 0) {
+                    channelTopic += "\n\nHome Team Anarchy 2v2 Maps:";
+                    ta2v2Homes.forEach((home) => {
+                        channelTopic += `\n${home.map}`;
+                    });
+                }
+
+                if (ta3v3Homes && ta3v3Homes.length > 0) {
+                    channelTopic += "\n\nHome Team Anarchy 3v3 Maps:";
+                    ta3v3Homes.forEach((home) => {
+                        channelTopic += `\n${home.map}`;
+                    });
+                }
+
+                if (ta4v4Homes && ta4v4Homes.length > 0) {
+                    channelTopic += "\n\nHome Team Anarchy 4v4+ Maps:";
+                    ta4v4Homes.forEach((home) => {
                         channelTopic += `\n${home.map}`;
                     });
                 }

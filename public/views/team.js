@@ -41,9 +41,25 @@ class TeamView {
                         <div class="member"><a href="/player/${m.playerId}/${encodeURIComponent(TeamView.Common.normalizeName(m.name, pageTeam.tag))}">${TeamView.Common.htmlEncode(TeamView.Common.normalizeName(m.name, pageTeam.tag))}</a><span class="grey">${m.role ? ` - ${m.role}` : ""}</span></div>
                     `).join("")}
                 </div>
-                <div id="homes-ta">
-                    <div class="section">Team Anarchy<br />Home Maps</div>
-                    ${teamInfo.homes.filter((h) => h.gameType === "TA").map((h) => /* html */`
+                <div id="timezone">
+                    <div class="section">Primary Time Zone</div>
+                    <div>${timezone}</div>
+                </div>
+                <div id="homes-2v2">
+                    <div class="section">Team Anarchy 2v2<br />Home Maps</div>
+                    ${teamInfo.homes.filter((h) => h.gameType === "2v2").map((h) => /* html */`
+                        <div>${h.map}</div>
+                    `).join("")}
+                </div>
+                <div id="homes-3v3">
+                    <div class="section">Team Anarchy 3v3<br />Home Maps</div>
+                    ${teamInfo.homes.filter((h) => h.gameType === "3v3").map((h) => /* html */`
+                        <div>${h.map}</div>
+                    `).join("")}
+                </div>
+                <div id="homes-4v4">
+                    <div class="section">Team Anarchy 4v4+<br />Home Maps</div>
+                    ${teamInfo.homes.filter((h) => h.gameType === "4v4+").map((h) => /* html */`
                         <div>${h.map}</div>
                     `).join("")}
                 </div>
@@ -52,10 +68,6 @@ class TeamView {
                     ${teamInfo.homes.filter((h) => h.gameType === "CTF").map((h) => /* html */`
                         <div>${h.map}</div>
                     `).join("")}
-                </div>
-                <div id="timezone">
-                    <div class="section">Primary Time Zone</div>
-                    <div>${timezone}</div>
                 </div>
             </div>
             <div class="options">

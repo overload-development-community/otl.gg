@@ -106,17 +106,21 @@ span.grey {
 }
 
 #team #roster {
-    font-size: 16px;
-    color: white;
-}
-
-#team #homes-ta,
-#team #homes-ctf {
+    grid-column-end: span 2;
     font-size: 16px;
     color: white;
 }
 
 #team #timezone {
+    grid-column-end: span 2;
+    font-size: 16px;
+    color: white;
+}
+
+#team #homes-2v2,
+#team #homes-3v3,
+#team #homes-4v4,
+#team #homes-ctf {
     font-size: 16px;
     color: white;
 }
