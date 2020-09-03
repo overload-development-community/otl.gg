@@ -87,7 +87,7 @@ class NewTeam {
             ], `${member.displayName} has started the process of creating a team.`);
 
             newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`).catch((err) => {
-                Log.exception(`There was an error updating the topic in ${newTeam.channel}.`, err);
+                Log.exception(`There was an error updating the topic in ${newTeam.channelName}.`, err);
             });
 
             const msg = await Discord.richQueue(Discord.messageEmbed({
@@ -282,7 +282,7 @@ class NewTeam {
         const topic = `Team Name: ${this.name || "(unset)"}\r\nTeam Tag: ${this.tag || "(unset)"}`;
 
         this.channel.setTopic(topic, `${this.member.displayName} updated the team info.`).catch((err) => {
-            Log.exception(`There was an error updating the topic in ${this.channel}.`, err);
+            Log.exception(`There was an error updating the topic in ${this.channelName}.`, err);
         });
     }
 }

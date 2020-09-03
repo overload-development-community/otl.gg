@@ -251,7 +251,7 @@ class Challenge {
 
                 let mapEmbed;
 
-                if (challenge.details.gameType === "TA") {
+                if (gameType === "TA") {
                     mapEmbed = Discord.messageEmbed({
                         title: "Challenge commands - Map",
                         description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`,
@@ -261,7 +261,7 @@ class Challenge {
                 } else {
                     mapEmbed = Discord.messageEmbed({
                         title: "Challenge commands - Map",
-                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
+                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
                         color: data.homeMapTeam.role.color,
                         fields: [
                             {
@@ -300,7 +300,7 @@ class Challenge {
                     const matches = await Db.getMatchingNeutralsForChallenge(challenge);
 
                     if (matches && matches.length > 0) {
-                        await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}}`, challenge.channel);
+                        await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}`, challenge.channel);
                     }
                 }
 
@@ -477,7 +477,7 @@ class Challenge {
      * @returns {string} The game type name.
      */
     static getGameTypeName(gameType) {
-        return {"TA": "Team Anarchy", "CTF": "Capture the Flag", "MB": "Monsterball"}[gameType];
+        return {"2v2": "Team Anarchy 2v2", "3v3": "Team Anarchy 3v3", "4v4+": "Team Anarchy 4v4+", "TA": "Team Anarchy", "CTF": "Capture the Flag", "MB": "Monsterball"}[gameType];
     }
 
     //       #                             ##
@@ -1245,7 +1245,7 @@ class Challenge {
             if (homes.length === 0) {
                 await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
             } else {
-                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             }
 
             await this.updateTopic();
@@ -1379,7 +1379,7 @@ class Challenge {
 
         try {
             if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
-                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             } else {
                 await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
             }
@@ -2146,7 +2146,7 @@ class Challenge {
             if (homes.length === 0) {
                 await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(team.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
             } else {
-                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             }
 
             await this.updateTopic();
@@ -2429,7 +2429,7 @@ class Challenge {
 
         try {
             if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
-                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
+                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             } else {
                 await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
             }
@@ -3035,7 +3035,7 @@ class Challenge {
         }
 
         channel.setTopic(topic).catch((err) => {
-            Log.exception(`There was an error updating the topic in ${this.channel}.`, err);
+            Log.exception(`There was an error updating the topic in ${this.channelName}.`, err);
         });
     }
 

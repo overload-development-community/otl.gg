@@ -324,7 +324,7 @@ class ChallengeDb {
             FROM tblChallengeHome ch
             INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Number
+            ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
@@ -369,11 +369,9 @@ class ChallengeDb {
             UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
 
             IF NOT EXISTS(
-                SELECT Map
+                SELECT TOP 1 1
                 FROM tblChallengeHome ch
-                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
-                WHERE c.ChallengeId = @challengeId
-                    AND Map = @map
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END AND c.Map = ch.Map
             )
             BEGIN
                 UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
@@ -383,7 +381,7 @@ class ChallengeDb {
             FROM tblChallengeHome ch
             INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Number
+            ORDER BY ch.Map
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: challenge.details.map}
@@ -516,8 +514,8 @@ class ChallengeDb {
                 UPDATE tblChallenge SET MatchTime = @matchTime WHERE ChallengeId = @challengeId
             END
 
-            INSERT INTO tblChallengeHome (ChallengeId, Number, Map, GameType)
-            SELECT @challengeId, Number, Map, GameType
+            INSERT INTO tblChallengeHome (ChallengeId, Map, GameType)
+            SELECT @challengeId, Map, GameType
             FROM tblTeamHome
             WHERE TeamId = @homeMapTeamId
 
@@ -1068,7 +1066,7 @@ class ChallengeDb {
             FROM tblChallengeHome ch
             INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Number
+            ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             title: data.recordsets[0][0].Title,
@@ -1139,7 +1137,7 @@ class ChallengeDb {
             INNER JOIN tblTeamNeutral tn2 ON c.ChallengedTeamId = tn2.TeamId AND c.GameType = tn2.GameType AND tn1.Map = tn2.Map
             WHERE c.ChallengeId = @id
             ORDER BY tn1.Map
-        `, {id: {type: Db.type, value: challenge.id}});
+        `, {id: {type: Db.INT, value: challenge.id}});
 
         return data && data.recordsets && data.recordsets.length === 1 && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -1425,13 +1423,24 @@ class ChallengeDb {
     static async pickMap(challenge, number) {
         /** @type {ChallengeDbTypes.PickMapRecordsets} */
         const data = await db.query(/* sql */`
-            UPDATE c
-            SET Map = ch.Map,
-                UsingHomeMapTeam = 1
+            DECLARE @Homes TABLE (
+                Map VARCHAR(100) NOT NULL,
+                Number INT NOT NULL
+            )
+
+            INSERT INTO @Homes (Map, Number)
+            SELECT ch.Map, ROW_NUMBER() OVER (ORDER BY ch.Map)
             FROM tblChallenge c
             INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE c.ChallengeId = @challengeId
-                AND ch.Number = @number
+
+            UPDATE c
+            SET Map = h.Map,
+                UsingHomeMapTeam = 1
+            FROM tblChallenge c
+            CROSS JOIN @Homes h
+            WHERE c.ChallengeId = @challengeId
+                AND h.Number = @number
 
             SELECT Map FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {
@@ -1702,8 +1711,8 @@ class ChallengeDb {
 
             DELETE FROM tblChallengeHome WHERE ChallengeId = @challengeId
 
-            INSERT INTO tblChallengeHome (ChallengeId, Number, Map, GameType)
-            SELECT @challengeId, Number, Map, GameType
+            INSERT INTO tblChallengeHome (ChallengeId, Map, GameType)
+            SELECT @challengeId, Map, GameType
             FROM tblTeamHome
             WHERE TeamId = @teamId
 
@@ -1711,7 +1720,7 @@ class ChallengeDb {
             FROM tblChallengeHome ch
             INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Number
+            ORDER BY ch.Map
         `, {
             teamId: {type: Db.INT, value: team.id},
             challengeId: {type: Db.INT, value: challenge.id}
@@ -1949,11 +1958,10 @@ class ChallengeDb {
             UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
 
             IF NOT EXISTS(
-                SELECT Map
+                SELECT ch.Map
                 FROM tblChallengeHome ch
-                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END AND ch.Map = c.Map
                 WHERE c.ChallengeId = @challengeId
-                    AND Map = @map
             )
             BEGIN
                 UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
@@ -1963,7 +1971,7 @@ class ChallengeDb {
             FROM tblChallengeHome ch
             INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Number
+            ORDER BY ch.Map
         `, {
             size: {type: Db.INT, value: size},
             challengeId: {type: Db.INT, value: challenge.id},

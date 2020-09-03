@@ -1907,13 +1907,17 @@ class Commands {
 
         switch (gameTypeUpper) {
             case "2":
+            case "2V2":
                 gameTypeUpper = "2v2";
                 break;
             case "3":
+            case "3V3":
                 gameTypeUpper = "3v3";
                 break;
             case "4":
             case "4v4":
+            case "4V4":
+            case "4V4+":
                 gameTypeUpper = "4v4+";
                 break;
         }
@@ -1980,13 +1984,17 @@ class Commands {
 
         switch (gameTypeUpper) {
             case "2":
+            case "2V2":
                 gameTypeUpper = "2v2";
                 break;
             case "3":
+            case "3V3":
                 gameTypeUpper = "3v3";
                 break;
             case "4":
             case "4v4":
+            case "4V4":
+            case "4V4+":
                 gameTypeUpper = "4v4+";
                 break;
         }
@@ -2048,7 +2056,7 @@ class Commands {
             msg.fields.push({
                 name: Challenge.getGameTypeName(gameType),
                 value: homes[gameType].join("\n"),
-                inline: false
+                inline: true
             });
         });
 
@@ -2081,7 +2089,7 @@ class Commands {
             return false;
         }
 
-        const {groups: {gameType, mapToCheck}} = mapParse.exec(message),
+        const {groups: {gameType, mapToCheck}} = neutralMapParse.exec(message),
             gameTypeUpper = gameType.toUpperCase(),
             map = await Commands.checkMapIsValid(mapToCheck, gameTypeUpper === "CTF" ? "CTF" : "TA", member, channel),
             team = await Commands.checkMemberOnTeam(member, channel);
@@ -2130,7 +2138,7 @@ class Commands {
             return false;
         }
 
-        if (!mapParse.test(message)) {
+        if (!neutralMapParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must include the game type and the name of the map, such as \`!removeneutral TA Vault\`, or \`!removeneutral CTF Halcyon\`.`, channel);
             return false;
         }
@@ -2185,20 +2193,24 @@ class Commands {
         const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
             neutrals = await team.getNeutralMapsByType();
 
-        const msg = Discord.messageEmbed({
-            title: `Neutral maps for **${team.name}**`,
-            fields: []
-        });
-
-        Object.keys(neutrals).forEach((gameType) => {
-            msg.fields.push({
-                name: Challenge.getGameTypeName(gameType),
-                value: neutrals[gameType].join("\n"),
-                inline: false
+        if (Object.keys(neutrals).length === 0) {
+            await Discord.queue(`**${team.name}** does not have any neutral maps specified yet.`, channel);
+        } else {
+            const msg = Discord.messageEmbed({
+                title: `Neutral maps for **${team.name}**`,
+                fields: []
             });
-        });
 
-        await Discord.richQueue(msg, channel);
+            Object.keys(neutrals).forEach((gameType) => {
+                msg.fields.push({
+                    name: Challenge.getGameTypeName(gameType),
+                    value: neutrals[gameType].join("\n"),
+                    inline: false
+                });
+            });
+
+            await Discord.richQueue(msg, channel);
+        }
         return true;
     }
 

@@ -2027,10 +2027,10 @@ class Team {
             }
 
             teamChannel.setTopic(channelTopic, "Team topic update requested.").catch((err) => {
-                Log.exception(`There was an error updating the topic in ${teamChannel}.`, err);
+                Log.exception(`There was an error updating the topic in ${this.teamChannelName}.`, err);
             });
             captainsChannel.setTopic(captainsChannelTopic, "Team topic update requested.").catch((err) => {
-                Log.exception(`There was an error updating the topic in ${captainsChannel}.`, err);
+                Log.exception(`There was an error updating the topic in ${this.captainsChannelName}.`, err);
             });
         } catch (err) {
             Log.exception(`There was an error updating team information for ${this.name}.  Please update ${this.name} manually.`, err);
