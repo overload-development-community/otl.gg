@@ -1785,7 +1785,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        await announcementsChannel.setParent(category);
+        await announcementsChannel.setParent(category, {lockPermissions: false});
 
         const teamChannel = await Discord.createChannel(this.teamChannelName, "text", [
             {
@@ -1803,7 +1803,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        await teamChannel.setParent(category);
+        await teamChannel.setParent(category, {lockPermissions: false});
 
         const captainsChannel = await Discord.createChannel(this.captainsChannelName, "text", [
             {
@@ -1821,7 +1821,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        await captainsChannel.setParent(category);
+        await captainsChannel.setParent(category, {lockPermissions: false});
 
         const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, "voice", [
             {
@@ -1833,7 +1833,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        await teamVoiceChannel.setParent(category);
+        await teamVoiceChannel.setParent(category, {lockPermissions: false});
         await teamVoiceChannel.edit({bitrate: 64000});
 
         const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, "voice", [
@@ -1846,7 +1846,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        await captainsVoiceChannel.setParent(category);
+        await captainsVoiceChannel.setParent(category, {lockPermissions: false});
         await captainsVoiceChannel.edit({bitrate: 64000});
 
         await Discord.richQueue(Discord.messageEmbed({

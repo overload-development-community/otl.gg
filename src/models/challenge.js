@@ -137,7 +137,7 @@ class Challenge {
                     await Discord.challengesCategory.setPosition(oldPosition + 1);
                 }
 
-                await challenge.channel.setParent(Discord.challengesCategory);
+                await challenge.channel.setParent(Discord.challengesCategory, {lockPermissions: false});
 
                 const optionsEmbed = Discord.messageEmbed({
                     title: "Challenge commands - Options",
