@@ -546,7 +546,7 @@ class Discord {
      * Creates a new channel on the Discord server.
      * @param {string} name The name of the channel.
      * @param {"category" | "text" | "voice"} type The type of channel to create.
-     * @param {DiscordJs.PermissionOverwrites[]|DiscordJs.ChannelCreationOverwrites[]} [overwrites] The permissions that should overwrite the default permission set.
+     * @param {DiscordJs.OverwriteResolvable[]|DiscordJs.Collection<DiscordJs.Snowflake, DiscordJs.OverwriteResolvable>} [overwrites] The permissions that should overwrite the default permission set.
      * @param {string} [reason] The reason the channel is being created.
      * @returns {Promise<DiscordJs.TextChannel|DiscordJs.VoiceChannel|DiscordJs.CategoryChannel>} The created channel.
      */
