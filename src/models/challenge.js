@@ -251,7 +251,7 @@ class Challenge {
 
                 let mapEmbed;
 
-                if (gameType === "TA") {
+                if (gameType === "TA" && !teamSize) {
                     mapEmbed = Discord.messageEmbed({
                         title: "Challenge commands - Map",
                         description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`,
@@ -261,7 +261,7 @@ class Challenge {
                 } else {
                     mapEmbed = Discord.messageEmbed({
                         title: "Challenge commands - Map",
-                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
+                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType === "TA" ? `${Math.min(teamSize, 4)}v${Math.min(teamSize, 4)}${teamSize >= 4 ? "+" : ""}` : gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
                         color: data.homeMapTeam.role.color,
                         fields: [
                             {
