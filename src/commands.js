@@ -3626,6 +3626,65 @@ class Commands {
         return true;
     }
 
+    //                                #
+    //                                #
+    // # #   #  #  ###    ##   #  #  ###
+    // ####  #  #  #  #  # ##   ##    #
+    // #  #   # #  #  #  ##     ##    #
+    // #  #    #   #  #   ##   #  #    ##
+    //        #
+    /**
+     * Gets the list of pending matches and the time until each match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async mynext(member, channel, message) {
+        if (message && message.toLowerCase() !== "time") {
+            await Discord.queue(`Sorry, ${member ? `${member}, ` : ""}but this command does not take any parameters.  Use \`!mynext\` by itself to get the list of upcoming matches as a countdown, or use \`!mynext time\` to get the list with dates and times.`, channel);
+            return false;
+        }
+
+        const team = await Commands.checkMemberOnTeam(member, channel);
+
+        const matches = (await Match.getUpcoming()).filter((m) => m.challengingTeamTag === team.tag || m.challengedTeamTag === team.tag);
+
+        if (matches.length === 0) {
+            await Discord.queue("There are no matches currently scheduled for your team.", channel);
+            return true;
+        }
+
+        const msg = Discord.messageEmbed({
+            title: "Overload Teams League Schedule",
+            fields: []
+        });
+
+        if (message === "time") {
+            for (const [index, match] of matches.entries()) {
+                msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+            }
+        } else {
+            matches.forEach((match, index) => {
+                const difference = match.matchTime.getTime() - new Date().getTime(),
+                    days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
+                    hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
+                    minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
+                    seconds = Math.floor(Math.abs(difference) / 1000 % 60);
+
+                if (difference > 0) {
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                } else {
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                }
+            });
+        }
+
+        await Discord.richQueue(msg, channel);
+
+        return true;
+    }
+
     //              #          #      #     #
     //              #          #      #
     // # #    ###  ###    ##   ###   ###   ##    # #    ##
@@ -4035,7 +4094,7 @@ class Commands {
             if (uncastedMatches.length === 0) {
                 await Discord.queue("There are no matches without a caster currently scheduled.", channel);
             } else {
-                await Discord.queue(`The next match is **${uncastedMatches[0].challengingTeamName}** vs **${uncastedMatches[0].challengedTeamName}** at ${uncastedMatches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${uncastedMatches[0].challengeId}\`.  To see other upcoming matches, enter \`!next\`.`, channel);
+                await Discord.queue(`The next match is **${uncastedMatches[0].challengingTeamName}** vs **${uncastedMatches[0].challengedTeamName}** at ${uncastedMatches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${uncastedMatches[0].challengeId}\`.  To see other upcoming matches, enter \`!mynext\`.`, channel);
             }
 
             return true;

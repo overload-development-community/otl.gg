@@ -88,8 +88,12 @@ class AboutView {
                     <div class="example">!neutrals<br />!neutrals CF<br />!neutrals Cronus Frontier</div>
 
                     <div class="command">!next [time]</div>
-                    <div>List the upcoming scheduled matches.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
+                    <div>List the upcoming scheduled matches and events.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
                     <div class="example">!next<br />!next time</div>
+
+                    <div class="command">!mynext [time]</div>
+                    <div>List the upcoming scheduled matches for your team.  Displays a countdown by default, use the "time" parameter to display times in your local time zone instead.</div>
+                    <div class="example">!next<br />!mynext time</div>
 
                     <div class="command">!matchtime &lt;challengeId></div>
                     <div>Gets the match time in your local time zone.</div>
