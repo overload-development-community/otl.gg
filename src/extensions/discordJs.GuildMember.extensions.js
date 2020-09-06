@@ -367,6 +367,20 @@ DiscordJs.GuildMember.prototype.requestTeam = async function(team) {
     }
 };
 
+//               #     ##    #
+//               #    #  #   #
+//  ###    ##   ###    #    ###   ###    ##    ###  # #    ##   ###
+// ##     # ##   #      #    #    #  #  # ##  #  #  ####  # ##  #  #
+//   ##   ##     #    #  #   #    #     ##    # ##  #  #  ##    #
+// ###     ##     ##   ##     ##  #      ##    # #  #  #   ##   #
+DiscordJs.GuildMember.prototype.setStreamer = async function() {
+    try {
+        await Db.setStreamer(this);
+    } catch (err) {
+        throw new Exception("There was a database error setting a streamer to challenges.", err);
+    }
+};
+
 //               #    ###    #
 //               #     #
 //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##

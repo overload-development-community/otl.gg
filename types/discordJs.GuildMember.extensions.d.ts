@@ -132,6 +132,12 @@ declare module "discord.js" {
         requestTeam(team: OTLTeam): Promise<void>
 
         /**
+         * Sets the user as a streamer for any of their team's open challenges within a half hour of the challenge start time.
+         * @returns {Promise} A promise that resolves when the user has been set as a streamer in the appropriate challenges.
+         */
+        setStreamer(): Promise<void>
+
+        /**
          * Sets a pilot's time zone.
          * @param {string} timezone The time zone to set.
          * @returns {Promise} A promise that resolves when the time zone has been set.

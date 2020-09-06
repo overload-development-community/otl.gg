@@ -2355,6 +2355,37 @@ class PlayerDb {
         });
     }
 
+    //               #     ##    #
+    //               #    #  #   #
+    //  ###    ##   ###    #    ###   ###    ##    ###  # #    ##   ###
+    // ##     # ##   #      #    #    #  #  # ##  #  #  ####  # ##  #  #
+    //   ##   ##     #    #  #   #    #     ##    # ##  #  #  ##    #
+    // ###     ##     ##   ##     ##  #      ##    # #  #  #   ##   #
+    /**
+     * Sets the user as a streamer for any of their team's open challenges within a half hour of the challenge start time.
+     * @param {DiscordJs.GuildMember} member The guild member to set as a streamer.
+     * @returns {Promise} A promise that resolves when the user has been set as a streamer in the appropriate challenges.
+     */
+    static async setStreamer(member) {
+        await db.query(/* sql */`
+            MERGE INTO tblChallengeStreamer cs
+            USING (
+                SELECT c.ChallengeId, p.PlayerId
+                FROM tblPlayer p
+                INNER JOIN tblRoster r ON p.PlayerId = r.PlayerId
+                INNER JOIN tblChallenge c ON c.ChallengingTeamId = r.TeamId OR c.ChallengedTeamId = r.TeamId
+                WHERE p.DiscordId = @discordId
+                    AND c.DateReported IS NULL
+                    AND c.DateConfirmed IS NULL
+                    AND c.DateClosed IS NULL
+                    AND c.DateVoided IS NULL
+                    AND c.MatchTime < DATEADD(minute, 30, GETUTCDATE())
+            ) s ON cs.ChallengeId = s.ChallengeId AND cs.PlayerId = s.PlayerId
+            WHEN NOT MATCHED THEN
+            INSERT (ChallengeId, PlayerId) VALUES (s.ChallengeId, s.PlayerId);
+        `, {discordId: {type: Db.VARCHAR(24), value: member.id}});
+    }
+
     //               #    ###    #
     //               #     #
     //  ###    ##   ###    #    ##    # #    ##   ####   ##   ###    ##

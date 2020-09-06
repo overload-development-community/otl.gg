@@ -27,7 +27,8 @@ const Cache = require("../cache"),
     Tracker = require("../tracker"),
 
     channelParse = /^(?<challengingTeamTag>[0-9a-z]{1,5})-(?<challengedTeamTag>[0-9a-z]{1,5})-(?<id>[1-9][0-9]*)$/,
-    timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/;
+    timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/,
+    urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
 
 /** @type {Object.<number, schedule.Job>} */
 const clockExpiredJobs = {};
@@ -1848,6 +1849,23 @@ class Challenge {
         }
 
         await challenge.loadDetails();
+
+        for (const member of challenge.channel.members) {
+            const activity = member[1].presence.activities.find((p) => p.name === "Twitch");
+
+            if (activity && urlParse.test(activity.url)) {
+                const {groups: {user}} = urlParse.exec(activity.url);
+
+                await member[1].addTwitchName(user);
+
+                if (activity.state.toLowerCase() === "overload") {
+                    const team = await member[1].getTeam();
+                    if (team && (team.id === challenge.challengingTeam.id || team.id === challenge.challengedTeam.id)) {
+                        await member[1].setStreamer();
+                    }
+                }
+            }
+        }
 
         try {
             const msg = Discord.messageEmbed({

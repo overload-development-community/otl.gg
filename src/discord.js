@@ -9,7 +9,8 @@ const DiscordJs = require("discord.js"),
 
     commands = new Commands(),
     discord = new DiscordJs.Client(/** @type {DiscordJs.ClientOptions} */ (settings.discord.options)), // eslint-disable-line no-extra-parens
-    messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/;
+    messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/,
+    urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
 
 let readied = false;
 
@@ -349,6 +350,22 @@ class Discord {
                     await newMember.updateName(oldMember);
                 } catch (err) {
                     Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
+                }
+            }
+        });
+
+        discord.on("presenceUpdate", async (oldPresence, newPresence) => {
+            if (newPresence && newPresence.activities && newPresence.member && newPresence.guild && newPresence.guild.id === otlGuild.id) {
+                const activity = newPresence.activities.find((p) => p.name === "Twitch");
+
+                if (activity && urlParse.test(activity.url)) {
+                    const {groups: {user}} = urlParse.exec(activity.url);
+
+                    await newPresence.member.addTwitchName(user);
+
+                    if (activity.state.toLowerCase() === "overload") {
+                        await newPresence.member.setStreamer();
+                    }
                 }
             }
         });
