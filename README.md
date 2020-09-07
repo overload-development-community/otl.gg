@@ -4,6 +4,17 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.5 - 9/7/2020
+
+* Channel topics for challenges and new teams have been removed, and replaced with a pinned message.
+* Challenge channel pinned messages are now simplified, and will contain a checklist of things that are needed to do prior to the match.  Use https://otl.gg/about to see the full list of commands available.
+* Twitch names and streaming designations will now automatically pick up from your Discord presence.  As long as your Twitch streams are detected by Discord, you should not need to use the `!twitch` and `!streaming` commands.  For those that prefer to not use Discord presence for their Twitch streams, but still wish to mark themselves as streaming the match, the commands can still be used.  Note that this is aggressive - there is a 30 minute check, if you're streaming Overload within 30 minutes of your match you will be set as streaming your match.
+* New `!mynext` command that only shows the next matches for your team.
+* Player page damage breakdown section now respects the Postseason selector.
+* Fixed bug with rematch not showing available home maps to pick from.
+* Fixed bug with challenge channel permissions.
+* Fixed bug when adding stats from the wrong game.
+
 ## v4.0.4 - 9/3/2020
 
 * Home maps have been overhauled.  Team anarchy is now split into 3 categories, 2v2, 3v3, and 4v4+, and the set of commands to manage home maps has changed.  See https://otl.gg/about for the new list of commands.
