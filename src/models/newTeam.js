@@ -6,7 +6,6 @@
 
 const Db = require("../database/newTeam"),
     Exception = require("../logging/exception"),
-    Log = require("../logging/log"),
     Team = require("./team");
 
 /** @type {typeof import("../discord")} */
@@ -86,35 +85,9 @@ class NewTeam {
                 }
             ], `${member.displayName} has started the process of creating a team.`);
 
-            newTeam.channel.setTopic("Team Name: (unset)\r\nTeam Tag: (unset)", `${member.displayName} has started the process of creating a team.`).catch((err) => {
-                Log.exception(`There was an error updating the topic in ${newTeam.channelName}.`, err);
-            });
+            await newTeam.channel.setTopic("New Team Creation - View the pinned post for the current status of the new team.");
 
-            const msg = await Discord.richQueue(Discord.messageEmbed({
-                title: "Team creation commands",
-                fields: [
-                    {
-                        name: "!name <name>",
-                        value: "Set your team's name.  Required before you complete team creation."
-                    },
-                    {
-                        name: "!tag <tag>",
-                        value: "Sets your tame tag, which is up to five letters or numbers that is considered to be a short form of your team name.  Required before you complete team creation."
-                    },
-                    {
-                        name: "!cancel",
-                        value: "Cancels team creation."
-                    },
-                    {
-                        name: "!complete",
-                        value: "Completes the team creation process and creates your team on the OTL."
-                    }
-                ]
-            }), newTeam.channel);
-
-            if (msg) {
-                await msg.pin();
-            }
+            await newTeam.updateChannel();
 
             return newTeam;
         } catch (err) {
@@ -233,7 +206,7 @@ class NewTeam {
         this.name = name;
 
         try {
-            this.updateChannel();
+            await this.updateChannel();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a new team name.  Please resolve this manually as soon as possible.", err);
         }
@@ -261,7 +234,7 @@ class NewTeam {
         this.tag = tag;
 
         try {
-            this.updateChannel();
+            await this.updateChannel();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a new team tag.  Please resolve this manually as soon as possible.", err);
         }
@@ -275,15 +248,48 @@ class NewTeam {
     //  ###  ###    ###   # #    ##   ##    ##   #  #   # #  #  #  #  #   ##   ###
     //       #
     /**
-     * Updates a new team's channel topic.
-     * @returns {void}
+     * Updates a new team's channel.
+     * @returns {Promise} A promise that resolves when the channel is updated.
      */
-    updateChannel() {
-        const topic = `Team Name: ${this.name || "(unset)"}\r\nTeam Tag: ${this.tag || "(unset)"}`;
-
-        this.channel.setTopic(topic, `${this.member.displayName} updated the team info.`).catch((err) => {
-            Log.exception(`There was an error updating the topic in ${this.channelName}.`, err);
+    async updateChannel() {
+        const embed = Discord.messageEmbed({
+            title: "New Team Creation",
+            fields: [
+                {
+                    name: "Team Name:",
+                    value: this.name || "(unset)",
+                    inline: true
+                },
+                {
+                    name: "Team Tag:",
+                    value: this.tag || "(unset)",
+                    inline: true
+                }
+            ]
         });
+
+        const commands = [];
+
+        commands.push("`!name <name>` - Set your team's name.  Required before you complete team creation.");
+        commands.push("`!tag <tag>` - Sets your tame tag, which is up to five letters or numbers that is considered to be a short form of your team name.  Required before you complete team creation.");
+        commands.push("`!cancel` - Cancels team creation.");
+        commands.push("`!complete` - Completes the team creation process and creates your team on the OTL.");
+
+        embed.addField("Commands", commands.join("\n"));
+
+        const pinned = await this.channel.messages.fetchPinned(false);
+
+        if (pinned.size === 1) {
+            Discord.richEdit(pinned.first(), embed);
+        } else {
+            for (const message of pinned) {
+                await message[1].unpin();
+            }
+
+            const message = await Discord.richQueue(embed, this.channel);
+
+            await message.pin();
+        }
     }
 }
 

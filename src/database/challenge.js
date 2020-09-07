@@ -810,8 +810,7 @@ class ChallengeDb {
                                 SUM(d.Damage) Damage
                             FROM tblStat s2
                             INNER JOIN tblChallenge c2 ON s2.ChallengeId = c2.ChallengeId
-                            LEFT OUTER JOIN tblDamage d ON c2.ChallengeId = d.ChallengeId AND s2.PlayerId = d.PlayerId
-                            WHERE d.TeamId <> d.OpponentTeamId
+                            LEFT OUTER JOIN tblDamage d ON c2.ChallengeId = d.ChallengeId AND s2.PlayerId = d.PlayerId AND d.TeamId <> d.OpponentTeamId
                             GROUP BY
                                 s2.ChallengeId,
                                 s2.PlayerId,
@@ -1024,7 +1023,6 @@ class ChallengeDb {
                 c.Postseason,
                 c.HomeMapTeamId,
                 c.AdminCreated,
-                c.HomesLocked,
                 c.UsingHomeMapTeam,
                 c.ChallengingTeamPenalized,
                 c.ChallengedTeamPenalized,
@@ -1078,7 +1076,6 @@ class ChallengeDb {
             postseason: data.recordsets[0][0].Postseason,
             homeMapTeamId: data.recordsets[0][0].HomeMapTeamId,
             adminCreated: data.recordsets[0][0].AdminCreated,
-            homesLocked: data.recordsets[0][0].HomesLocked,
             usingHomeMapTeam: data.recordsets[0][0].UsingHomeMapTeam,
             challengingTeamPenalized: data.recordsets[0][0].ChallengingTeamPenalized,
             challengedTeamPenalized: data.recordsets[0][0].ChallengedTeamPenalized,
@@ -1248,10 +1245,9 @@ class ChallengeDb {
             SELECT p.DiscordId, p.Name, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, SUM(d.Damage) Damage
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            LEFT OUTER JOIN tblDamage d ON s.PlayerId = d.PlayerId AND s.ChallengeId = d.ChallengeId
+            LEFT OUTER JOIN tblDamage d ON s.PlayerId = d.PlayerId AND s.ChallengeId = d.ChallengeId AND d.TeamId <> d.OpponentTeamId
             WHERE s.ChallengeId = @challengeId
                 AND s.TeamId = @teamId
-                AND d.TeamId <> d.OpponentTeamId
             GROUP BY p.DiscordId, p.Name, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths
         `, {
             challengeId: {type: Db.INT, value: challenge.id},

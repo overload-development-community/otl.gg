@@ -636,11 +636,10 @@ class PlayerDb {
             INNER JOIN tblTeam o ON CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = o.TeamId
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
-            LEFT OUTER JOIN tblDamage d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+            LEFT OUTER JOIN tblDamage d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId AND d.TeamId <> d.OpponentTeamId
             WHERE s.PlayerId = @playerId
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
-                AND (d.TeamId IS NULL OR d.TeamId <> d.OpponentTeamId)
             GROUP BY c.ChallengeId, t1.Tag, t2.Tag, t.TeamId, t.Tag, t.Name, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, c.OvertimePeriods, o.TeamId, o.Tag, o.Name, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END, CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.ChallengedTeamScore ELSE c.ChallengingTeamScore END, CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = s.TeamId THEN c.RatingChange ELSE 0 - c.RatingChange END END, c.TeamSize, c.MatchTime, c.Map, c.GameType
             ORDER BY c.MatchTime
 

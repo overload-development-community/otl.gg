@@ -93,7 +93,6 @@ declare namespace ChallengeTypes {
         postseason: boolean
         homeMapTeamId: number
         adminCreated: boolean
-        homesLocked: boolean
         usingHomeMapTeam: boolean
         challengingTeamPenalized: boolean
         challengedTeamPenalized: boolean

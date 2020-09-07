@@ -1180,7 +1180,7 @@ class Team {
 
                 const challenges = await Challenge.getAllByTeam(this);
                 for (const challenge of challenges) {
-                    await challenge.updateTopic();
+                    await challenge.updatePinnedPost();
                 }
 
                 await Discord.richQueue(Discord.messageEmbed({
@@ -1472,7 +1472,7 @@ class Team {
             await this.updateChannels();
 
             for (const challenge of challenges) {
-                await challenge.updateTopic();
+                await challenge.updatePinnedPost();
                 await Discord.queue(`${member} has changed the name of **${oldName}** to **${name}**.`, challenge.channel);
             }
 
@@ -1626,7 +1626,7 @@ class Team {
                 if (channel) {
                     await channel.setName(challenge.channelName, "Team tag renamed by admin.");
 
-                    await challenge.updateTopic();
+                    await challenge.updatePinnedPost();
                     await Discord.queue(`${member} has changed the team tag of **${this.name}** from **${oldTag}** to **${tag}**.`, challenge.channel);
                 }
             }
@@ -1699,7 +1699,7 @@ class Team {
             await this.updateChannels();
 
             for (const challenge of challenges) {
-                await challenge.updateTopic();
+                await challenge.updatePinnedPost();
             }
 
             await Discord.queue(`Your team's time zone has been set to ${timezone}, where the current local time is ${new Date().toLocaleString("en-US", {timeZone: timezone, hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.teamChannel);

@@ -504,6 +504,38 @@ class Discord {
         return new DiscordJs.MessageEmbed(options);
     }
 
+    //        #          #     ####     #   #     #
+    //                   #     #        #         #
+    // ###   ##     ##   ###   ###    ###  ##    ###
+    // #  #   #    #     #  #  #     #  #   #     #
+    // #      #    #     #  #  #     #  #   #     #
+    // #     ###    ##   #  #  ####   ###  ###     ##
+    /**
+     * Edits a rich embed message.
+     * @param {DiscordJs.Message} message The posted message to edit.
+     * @param {DiscordJs.MessageEmbed} embed The message to change the posted message to.
+     * @returns {Promise} A promise that resolves when the message is edited.
+     */
+    static async richEdit(message, embed) {
+        embed.setFooter(embed.footer ? embed.footer.text : "", Discord.icon);
+
+        if (embed && embed.fields) {
+            embed.fields.forEach((field) => {
+                if (field.value && field.value.length > 1024) {
+                    field.value = field.value.substring(0, 1024);
+                }
+            });
+        }
+
+        embed.color = message.embeds[0].color;
+
+        if (!embed.timestamp) {
+            embed.setTimestamp(new Date());
+        }
+
+        await message.edit("", embed);
+    }
+
     //        #          #      ##
     //                   #     #  #
     // ###   ##     ##   ###   #  #  #  #   ##   #  #   ##

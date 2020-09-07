@@ -284,7 +284,7 @@ DiscordJs.GuildMember.prototype.leftDiscord = async function() {
         const challenge = await Challenge.getById(challengeId);
 
         await challenge.unsetCaster(this);
-        await challenge.updateTopic();
+        await challenge.updatePinnedPost();
     }
 
     if (!team) {
@@ -419,7 +419,7 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
     for (const challengeId of castedChallengeIds) {
         const challenge = await Challenge.getById(challengeId);
 
-        await challenge.updateTopic();
+        await challenge.updatePinnedPost();
     }
 
     const team = await Team.getByPilot(this);
@@ -459,7 +459,7 @@ DiscordJs.GuildMember.prototype.updateName = async function(oldMember) {
 
     const challenges = await Challenge.getAllByTeam(team);
     for (const challenge of challenges) {
-        await challenge.updateTopic();
+        await challenge.updatePinnedPost();
     }
 
     await team.updateChannels();

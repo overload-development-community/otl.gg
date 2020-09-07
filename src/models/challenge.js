@@ -139,157 +139,24 @@ class Challenge {
                 }
 
                 await challenge.channel.setParent(Discord.challengesCategory, {lockPermissions: false});
+                await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengingTeam.name} - View the pinned post for challenge information.`);
 
-                const optionsEmbed = Discord.messageEmbed({
-                    title: "Challenge commands - Options",
-                    description: "Challenges must also have a team size and scheduled time to play.",
-                    fields: []
-                });
+                await challenge.updatePinnedPost();
 
-                if (teamSize) {
-                    optionsEmbed.addField("Team size", `The team size has been set to be ${teamSize}v${teamSize}.`);
-                }
-
-                if (startNow) {
-                    optionsEmbed.addField("Match time", "The match time has been set to begin shortly.");
-                }
-
-                if (gameType) {
-                    optionsEmbed.addField("Game type", `The game type has been set to **${Challenge.getGameTypeName(gameType)}**.`);
-                }
-
-                optionsEmbed.addField("!suggestteamsize <2|3|4|5|6|7|8>", "Suggests a team size for the match.");
-                optionsEmbed.addField("!confirmteamsize", "Confirms a team size suggested by the other team.");
-                optionsEmbed.addField("!suggesttype <TA|CTF>", "Suggests a game type for the match.");
-                optionsEmbed.addField("!confirmtype", "Confirms a game type suggested by the other team.");
-
-                if (!adminCreated) {
-                    optionsEmbed.fields.push({
-                        name: "!suggesttime <month name> <day> <year>, <hh:mm> (AM|PM)",
-                        value: "Suggests the date and time to play the match.  Time zone is assumed to be Pacific Time, unless the issuing pilot has used the `!timezone` command.",
-                        inline: false
-                    }, {
-                        name: "!confirmtime",
-                        value: "Confirms the date and time to play the match as suggested by the other team.",
-                        inline: false
-                    }, {
-                        name: "!clock",
-                        value: `Put this challenge on the clock.  Teams will have 28 days to get this match scheduled.  Intended for use when the other team is not responding to a challenge.  Limits apply, see ${Discord.findChannelByName("challenges")} for details.`,
-                        inline: false
-                    });
-                }
-
-                optionsEmbed.fields.push({
-                    name: "!streaming",
-                    value: "Indicates that a pilot will be streaming the match live.",
-                    inline: false
-                }, {
-                    name: "!notstreaming",
-                    value: "Indicates that a pilot will not be streaming the match live, which is the default setting.",
-                    inline: false
-                });
-
-                const optionsMsg = await Discord.richQueue(optionsEmbed, challenge.channel);
-
-                if (optionsMsg) {
-                    await optionsMsg.pin();
-                }
-
-                const reportMsg = await Discord.richQueue(Discord.messageEmbed({
-                    title: "Challenge commands - Reporting",
-                    description: "Upon completion of the match, the losing team reports the game.",
-                    fields: [
-                        {
-                            name: "!report <score> <score>",
-                            value: "Reports the score for the match.  Losing team must report the match."
-                        }, {
-                            name: "!confirm",
-                            value: "Confirms the reported score by the other team."
-                        }, {
-                            name: "Tracker Required!",
-                            value: "The game must be reported on the tracker at https://tracker.otl.gg.  If it's not reported there, you may still report the game with a copy of the .ssl file from the server.  Games reported that aren't on the tracker or don't have aan .ssl file will not be counted."
-                        }
-                    ]
-                }), challenge.channel);
-
-                if (reportMsg) {
-                    await reportMsg.pin();
-                }
-
-                const otherMsg = await Discord.richQueue(Discord.messageEmbed({
-                    title: "Challenge commands - Other",
-                    fields: [
-                        {
-                            name: "!matchtime",
-                            value: "Get the match time in your local timezone."
-                        },
-                        {
-                            name: "!countdown",
-                            value: "Get the amount of time until the match begins."
-                        },
-                        {
-                            name: "!deadline",
-                            value: "Get the clock deadline time in your local timezone."
-                        },
-                        {
-                            name: "!deadlinecountdown",
-                            value: "Get the amount of time until the clock deadline."
-                        },
-                        {
-                            name: "!streaming",
-                            value: "Indicate that you will be streaming this match."
-                        },
-                        {
-                            name: "!notstreaming",
-                            value: "Use this command if you've previously indicated that you will be streaming this match but won't be."
-                        }
-                    ]
-                }), challenge.channel);
-
-                if (otherMsg) {
-                    await otherMsg.pin();
-                }
-
-                let mapEmbed;
+                let description;
 
                 if (gameType === "TA" && !teamSize) {
-                    mapEmbed = Discord.messageEmbed({
-                        title: "Challenge commands - Map",
-                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`,
-                        color: data.homeMapTeam.role.color,
-                        fields: []
-                    });
+                    description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`;
                 } else {
-                    mapEmbed = Discord.messageEmbed({
-                        title: "Challenge commands - Map",
-                        description: `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType === "TA" ? `${Math.min(teamSize, 4)}v${Math.min(teamSize, 4)}${teamSize >= 4 ? "+" : ""}` : gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`,
-                        color: data.homeMapTeam.role.color,
-                        fields: [
-                            {
-                                name: "!pickmap <a|b|c|d|e>",
-                                value: "Pick the map to play."
-                            }
-                        ]
-                    });
-
-                    if (!data.team1Penalized && !data.team2Penalized && !adminCreated) {
-                        mapEmbed.fields.push({
-                            name: "!suggestmap <map>",
-                            value: "Suggest a neutral map to play.",
-                            inline: false
-                        }, {
-                            name: "!confirmmap",
-                            value: "Confirms a neutral map suggested by the other team.",
-                            inline: false
-                        }, {
-                            name: "!suggestrandommap [(top|bottom) <number>]",
-                            value: "Suggest a random map from the top or bottom number of maps that have been played in the OTL.",
-                            inline: false
-                        });
-                    }
+                    description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType === "TA" ? `${Math.min(teamSize, 4)}v${Math.min(teamSize, 4)}${teamSize >= 4 ? "+" : ""}` : gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`;
                 }
 
-                await Discord.richQueue(mapEmbed, challenge.channel);
+                await Discord.richQueue(Discord.messageEmbed({
+                    title: "Challenge commands - Map",
+                    description,
+                    color: data.homeMapTeam.role.color,
+                    fields: []
+                }), challenge.channel);
 
                 if (data.team1Penalized && data.team2Penalized) {
                     await Discord.queue("Penalties have been applied to both teams for this match.  Neutral map selection is disabled.", challenge.channel);
@@ -304,8 +171,6 @@ class Challenge {
                         await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}`, challenge.channel);
                     }
                 }
-
-                await challenge.updateTopic();
             } catch (err) {
                 throw new Exception("There was a critical Discord error creating a challenge.  Please resolve this manually as soon as possible.", err);
             }
@@ -536,6 +401,8 @@ class Challenge {
         }
 
         await Discord.queue(`Added stats for ${pilot}: ${captures} C/${pickups} P, ${carrierKills} CK, ${returns} R, ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+
+        await this.updatePinnedPost();
     }
 
     //          #     #   ##    #           #    ###    ##
@@ -561,6 +428,8 @@ class Challenge {
         }
 
         await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
+
+        await this.updatePinnedPost();
     }
 
     //          #     #   ##    #           #
@@ -737,6 +606,8 @@ class Challenge {
                 timeChanged = true;
             }
 
+            await this.updatePinnedPost();
+
             return {challengingTeamStats, challengedTeamStats, scoreChanged, timeChanged};
         }
 
@@ -831,6 +702,8 @@ class Challenge {
             timeChanged = true;
         }
 
+        await this.updatePinnedPost();
+
         return {challengingTeamStats, challengedTeamStats, scoreChanged: true, timeChanged};
     }
 
@@ -856,7 +729,7 @@ class Challenge {
         try {
             await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -924,7 +797,7 @@ class Challenge {
                         await Discord.queue(`${member} has cleared the match time of this challenge, please schedule a new time to play.`, this.channel);
                     }
 
-                    await this.updateTopic();
+                    await this.updatePinnedPost();
                 } catch (err) {
                     throw new Exception("There was a critical Discord error extending a challenge.  Please resolve this manually as soon as possible.", err);
                 }
@@ -972,7 +845,7 @@ class Challenge {
             }
         }
 
-        await this.updateTopic();
+        await this.updatePinnedPost();
     }
 
     //       ##                       ##    #           #
@@ -1028,7 +901,7 @@ class Challenge {
         try {
             await Discord.queue(`${member} has cleared the match time for this match.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1066,7 +939,7 @@ class Challenge {
         try {
             await Discord.queue(`**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error clocking a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1249,7 +1122,7 @@ class Challenge {
                 await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested game type for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1285,7 +1158,7 @@ class Challenge {
         try {
             await Discord.queue(`The map for this match has been set to the neutral map of **${this.details.map}**.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1346,7 +1219,7 @@ class Challenge {
 
             await Discord.queue(`The match at ${this.channel} has been confirmed.  Please add stats and close the channel.`, Discord.alertsChannel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a reported match.  Please resolve this manually as soon as possible.", err);
         }
@@ -1385,7 +1258,7 @@ class Challenge {
                 await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1474,7 +1347,7 @@ class Challenge {
                 ]
             }), Discord.scheduledMatchesChannel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a suggested time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1640,7 +1513,6 @@ class Challenge {
             postseason: details.postseason,
             homeMapTeam: details.homeMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam,
             adminCreated: details.adminCreated,
-            homesLocked: details.homesLocked,
             usingHomeMapTeam: details.usingHomeMapTeam,
             challengingTeamPenalized: details.challengingTeamPenalized,
             challengedTeamPenalized: details.challengedTeamPenalized,
@@ -1705,7 +1577,7 @@ class Challenge {
         try {
             await Discord.queue(`This challenge has been locked by ${member}.  Match parameters can no longer be set.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error locking a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1878,7 +1750,7 @@ class Challenge {
             }
 
             if (!challenge.details.map) {
-                msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned messages in this channel to see what your options are.`);
+                msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned post in this channel to see what your options are.`);
             }
 
             if (!challenge.details.teamSize) {
@@ -1921,7 +1793,7 @@ class Challenge {
         try {
             await Discord.queue(`The map for this match has been set to **${this.details.map}**.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -1970,7 +1842,7 @@ class Challenge {
         try {
             await Discord.queue(`${member} is no longer streaming this match.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2017,7 +1889,7 @@ class Challenge {
                 }), this.channel);
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error reporting a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2077,7 +1949,7 @@ class Challenge {
                     `${member} is scheduled to cast this match.`
                 );
 
-                await this.updateTopic();
+                await this.updatePinnedPost();
 
                 await Discord.queue(`${member} is now scheduled to cast this match.  This match is scheduled to begin at ${this.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, this.channel);
             } catch (err) {
@@ -2125,7 +1997,7 @@ class Challenge {
                 }
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2167,7 +2039,7 @@ class Challenge {
                 await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2205,7 +2077,7 @@ class Challenge {
         try {
             await Discord.queue(`${member} has set the map for this match to **${this.details.map}**.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2319,7 +2191,7 @@ class Challenge {
         try {
             await Discord.queue("This challenge is now a postseason match.  All stats will count towards postseason stats for the previous season.", this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a challenge to be a postseason match.  Please resolve this manually as soon as possible.", err);
         }
@@ -2346,7 +2218,7 @@ class Challenge {
         try {
             await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a challenge to be a regular season match.  Please resolve this manually as soon as possible.", err);
         }
@@ -2412,7 +2284,7 @@ class Challenge {
 
             await Discord.richQueue(embed, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the score for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2452,7 +2324,7 @@ class Challenge {
                 await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
             }
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2545,7 +2417,7 @@ class Challenge {
                 ]
             }), Discord.scheduledMatchesChannel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2614,7 +2486,7 @@ class Challenge {
         try {
             await Discord.queue(`**${team.name}** is suggesting to play **${Challenge.getGameTypeName(gameType)}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtype\` to agree to this suggestion.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2651,7 +2523,7 @@ class Challenge {
         try {
             await Discord.queue(`**${team.name}** is suggesting to play a ${random ? "random" : "neutral"} map, **${map}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmmap\` to agree to this suggestion.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2687,7 +2559,7 @@ class Challenge {
         try {
             await Discord.queue(`**${team.name}** is suggesting to play a **${size}v${size}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmteamsize\` to agree to this suggestion.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2761,7 +2633,7 @@ class Challenge {
                 fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
             }), this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2792,7 +2664,7 @@ class Challenge {
         try {
             [this.details.blueTeam, this.details.orangeTeam] = [this.details.orangeTeam, this.details.blueTeam];
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error swapping colors for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2828,7 +2700,7 @@ class Challenge {
             } else {
                 await Discord.queue("The title of this match has been unset.", this.channel);
             }
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error changing the title for a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2861,7 +2733,7 @@ class Challenge {
         try {
             await Discord.queue(`This challenge has been unlocked by ${member}.  You may now use \`!suggestmap\` to suggest a neutral map and \`!suggesttime\` to suggest the match time.`, this.channel);
 
-            await this.updateTopic();
+            await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error unlocking a challenge.  Please resolve this manually as soon as possible.", err);
         }
@@ -2901,7 +2773,7 @@ class Challenge {
                     );
                 }
 
-                await this.updateTopic();
+                await this.updatePinnedPost();
 
                 await Discord.queue(`${member} is no longer scheduled to cast this match.`, this.channel);
             } catch (err) {
@@ -2947,7 +2819,7 @@ class Challenge {
             if (this.channel) {
                 await Discord.queue(`${member} has unvoided this challenge.`, this.channel);
 
-                await this.updateTopic();
+                await this.updatePinnedPost();
             }
 
             if (this.details.dateConfirmed && this.details.dateClosed) {
@@ -2962,18 +2834,18 @@ class Challenge {
         }
     }
 
-    //                #         #          ###                #
-    //                #         #           #
-    // #  #  ###    ###   ###  ###    ##    #     ##   ###   ##     ##
-    // #  #  #  #  #  #  #  #   #    # ##   #    #  #  #  #   #    #
-    // #  #  #  #  #  #  # ##   #    ##     #    #  #  #  #   #    #
-    //  ###  ###    ###   # #    ##   ##    #     ##   ###   ###    ##
-    //       #                                         #
+    //                #         #          ###    #                         #  ###                 #
+    //                #         #          #  #                             #  #  #                #
+    // #  #  ###    ###   ###  ###    ##   #  #  ##    ###   ###    ##    ###  #  #   ##    ###   ###
+    // #  #  #  #  #  #  #  #   #    # ##  ###    #    #  #  #  #  # ##  #  #  ###   #  #  ##      #
+    // #  #  #  #  #  #  # ##   #    ##    #      #    #  #  #  #  ##    #  #  #     #  #    ##    #
+    //  ###  ###    ###   # #    ##   ##   #     ###   #  #  #  #   ##    ###  #      ##   ###      ##
+    //       #
     /**
-     * Updates the topic of the channel with the latest challenge data.
-     * @returns {Promise} A promise that resolves when the topic is updated.
+     * Updates the pinned post in the channel.
+     * @returns {Promise} A promise that resolves when the pinned post is updated.
      */
-    async updateTopic() {
+    async updatePinnedPost() {
         const channel = this.channel;
 
         if (!channel) {
@@ -2984,77 +2856,235 @@ class Challenge {
             await this.loadDetails();
         }
 
-        /** @type {ChallengeTypes.StreamerData[]} */
-        let streamers;
-        try {
-            streamers = await Db.getStreamers(this);
-        } catch (err) {
-            streamers = [];
+        const embed = Discord.messageEmbed({
+            title: this.details.title || `**${this.challengingTeam.name}** vs **${this.challengedTeam.name}**`,
+            fields: []
+        });
+
+        const challengingTeamTimeZone = await this.challengingTeam.getTimezone(),
+            challengedTeamTimeZone = await this.challengedTeam.getTimezone(),
+            checklist = [];
+
+        if (this.details.dateClocked && !this.details.dateConfirmed) {
+            checklist.push(`- This match has been placed on the clock by **${this.details.clockTeam.tag}**.  Both teams must agree to all match parameters by ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`);
         }
 
-        const challengingTeamTimezone = await this.challengingTeam.getTimezone(),
-            challengedTeamTimezone = await this.challengedTeam.getTimezone();
+        if (this.details.suggestedGameType && !this.details.dateConfirmed) {
+            checklist.push(`- ${this.details.suggestedGameTypeTeam.tag} suggested **${Challenge.getGameTypeName(this.details.suggestedGameType)}**.  **${this.details.suggestedGameTypeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtype\`.`);
+        }
 
-        let topic = `${this.details.title || `${this.challengingTeam.name} vs ${this.challengedTeam.name}`}${this.details.postseason ? " (Postseason Match)" : ""}\n\nhttps://otl.gg/match/${this.id}/${this.challengingTeam.tag}/${this.challengedTeam.tag}\n\nGame Type: ${Challenge.getGameTypeName(this.details.gameType)}`;
+        if (!this.details.teamSize) {
+            checklist.push("- Agree to a team size.  Suggest a team size with `!suggestteamsize`.");
+        }
 
-        if (this.details.dateVoided) {
-            topic = `${topic}\n\nThis match has been voided.`;
-        } else {
-            if (this.details.dateClockDeadline) {
-                topic = `${topic}\n\nClock Deadline:\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}\nClocked by: ${this.details.clockTeam.tag}`;
-            }
+        if (this.details.suggestedTeamSize) {
+            checklist.push(`- ${this.details.suggestedTeamSizeTeam.tag} suggested **${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize}**.  **${this.details.suggestedTeamSizeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmteamsize\`.`);
+        }
 
-            if (this.details.suggestedGameType) {
-                topic = `${topic}\nSuggested Game Type: ${Challenge.getGameTypeName(this.details.suggestedGameType)} by ${this.details.suggestedGameTypeTeam.tag}`;
-            }
+        if (!this.details.map) {
+            if (this.details.gameType === "TA" && !this.details.teamSize) {
+                checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map after the team size is agreed to.`);
+            } else {
+                const maps = await this.details.homeMapTeam.getHomeMaps(this.details.gameType === "TA" ? `${Math.min(this.details.teamSize, 4)}v${Math.min(this.details.teamSize, 4)}${this.details.teamSize >= 4 ? "+" : ""}` : this.details.gameType);
 
-            topic = `${topic}\n\nBlue Team: ${this.details.blueTeam.tag}\nOrange Team: ${this.details.orangeTeam.tag}`;
+                checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map with \`!pickmap\` from the following maps:`);
+                maps.forEach((map, index) => {
+                    checklist.push(`  ${String.fromCharCode(97 + index)}) ${map}`);
+                });
 
-            topic = `${topic}\n\nHome Map Team: ${this.details.usingHomeMapTeam ? this.details.homeMapTeam.tag : "Neutral"}`;
-
-            if (this.details.map) {
-                topic = `${topic}\nChosen Map: ${this.details.map}`;
-            }
-
-            if (this.details.suggestedMap) {
-                topic = `${topic}\nSuggested Map: ${this.details.suggestedMap} by ${this.details.suggestedMapTeam.tag}`;
-            }
-
-            if (this.details.teamSize) {
-                topic = `${topic}\n\nTeam Size: ${this.details.teamSize}v${this.details.teamSize}`;
-            }
-
-            if (this.details.suggestedTeamSize) {
-                topic = `${topic}\n\nSuggested Team Size: ${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize} by ${this.details.suggestedTeamSizeTeam.tag}`;
-            }
-
-            if (this.details.matchTime) {
-                topic = `${topic}\n\nMatch Time:\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
-                if (this.details.suggestedTime) {
-                    topic = `${topic}\nSuggested Time:\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+                if (!this.details.dateConfirmed) {
+                    if (this.details.suggestedMap) {
+                        checklist.push(`- ${this.details.suggestedMapTeam.tag} suggested **${this.details.suggestedMap}**.  **${this.details.suggestedMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmmap\`.`);
+                    } else if (this.details.adminCreated) {
+                        checklist.push("- To play a neutral map, suggest a map with `!suggestmap`.");
+                    }
                 }
-            } else if (this.details.suggestedTime) {
-                topic = `${topic}\nSuggested Time:\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimezone === challengedTeamTimezone ? "" : `\n${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimezone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`;
+            }
+        }
+
+        if (!this.details.matchTime) {
+            checklist.push("- Agree to a match time.  Suggest a time with `!suggesttime`.");
+        }
+
+        if (this.details.suggestedTime && !this.details.dateConfirmed) {
+            checklist.push(`- ${this.details.suggestedTimeTeam.tag} suggested **${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**.  **${this.details.suggestedTimeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtime\`.`);
+        }
+
+        if (this.details.teamSize && this.details.map && this.details.matchTime && !this.details.dateConfirmed) {
+            if (!this.details.reportingTeam && !this.details.dateReported) {
+                checklist.push("- Report the match with `!report`.");
             }
 
             if (this.details.dateReported && !this.details.dateConfirmed) {
-                topic = `${topic}\n\nReported Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}, reported by ${this.details.reportingTeam.tag}`;
-            } else if (this.details.dateConfirmed) {
-                topic = `${topic}\n\nFinal Score: ${this.challengingTeam.tag} ${this.details.challengingTeamScore}, ${this.challengedTeam.tag} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`;
-            }
-
-            if (this.details.caster) {
-                topic = `${topic}\n\nCaster: ${this.details.caster.displayName}`;
-            }
-
-            if (streamers.length > 0) {
-                topic = `${topic}\n\nStreamers:\n${streamers.map((s) => `<@${s.discordId}> - https://twitch.tv/${s.twitchName}`).join("\n")}`;
+                checklist.push(`- ${this.details.reportingTeam.tag} reported the match with a score of **${this.challengingTeam.tag} ${this.details.challengingTeamScore}** to **${this.challengedTeam.tag} ${this.details.challengedTeamScore}**.  **${this.details.reportingTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirm\`.`);
             }
         }
 
-        channel.setTopic(topic).catch((err) => {
-            Log.exception(`There was an error updating the topic in ${this.channelName}.`, err);
-        });
+        if (this.details.dateConfirmed) {
+            const stats = await this.getStatsForTeam(this.challengingTeam);
+
+            if (stats) {
+                checklist.push("- Match complete!");
+            } else {
+                checklist.push("- Match complete!  Please post a link from https://tracker.otl.gg/gamelist of the archive page for this match.");
+            }
+        }
+
+        if (this.details.dateConfirmed && !this.details.dateRematched) {
+            if (this.details.dateRematchRequested) {
+                checklist.push(`- ${this.details.rematchTeam.tag} has requested a rematch, **${this.details.rematchTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!rematch\`.`);
+            } else {
+                checklist.push(`- Use \`!rematch\` to start a new ${this.details.teamSize}v${this.details.teamSize} ${Challenge.getGameTypeName(this.details.gameType)} game between the same teams.`);
+            }
+        }
+
+        embed.addField("Match Checklist:", checklist.join("\n"));
+
+        const parameters = [];
+
+        parameters.push(`Game Type: **${Challenge.getGameTypeName(this.details.gameType)}**`);
+
+        if (this.details.matchTime) {
+            parameters.push(`Match Time: **${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**`);
+        }
+
+        if (this.details.teamsize) {
+            parameters.push(`Team Size: **${this.details.teamSize}v${this.details.teamSize}**`);
+        }
+
+        if (this.details.map) {
+            parameters.push(`Map: **${this.details.map}**`);
+        }
+
+        if (this.details.overtimePeriods) {
+            parameters.push(`Overtime Periods: **${this.details.overtimePeriods}OT**`);
+        }
+
+        if (this.details.caster) {
+            parameters.push(`Caster: **${this.details.caster}** at **https://twitch.tv/${await this.details.caster.getTwitchName()}**`);
+        }
+
+        if (this.details.postseason) {
+            parameters.push("**Postseason Game**");
+        }
+
+        embed.addField("Match Parameters:", parameters.join("\n"));
+
+        const challengingTeam = [];
+
+        if (this.details.dateConfirmed) {
+            challengingTeam.push(`**${this.details.challengingTeamScore}**`);
+        }
+
+        if (this.challengingTeam.tag === this.details.blueTeam.tag) {
+            challengingTeam.push("Blue Team");
+        } else {
+            challengingTeam.push("Orange Team");
+        }
+
+        if (!this.details.usingHomeMapTeam) {
+            challengingTeam.push("Neutral");
+        } else if (this.challengingTeam.tag === this.details.homeMapTeam.tag) {
+            challengingTeam.push("Home");
+        } else {
+            challengingTeam.push("Away");
+        }
+
+        if (this.details.challengingTeamPenalized) {
+            challengingTeam.push("*Penalized*");
+        }
+
+        if (this.details.dateConfirmed) {
+            const stats = await this.getStatsForTeam(this.challengingTeam);
+
+            switch (this.details.gameType) {
+                case "CTF":
+                    stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name));
+                    break;
+                case "TA":
+                    stats.sort((a, b) => (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name));
+                    break;
+            }
+
+            stats.forEach((stat) => {
+                switch (this.details.gameType) {
+                    case "CTF":
+                        challengingTeam.push(`**${stat.pilot}**: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)${stat.damage ? ` ${stat.damage.toFixed(0)} Dmg` : ""}`);
+                        break;
+                    case "TA":
+                        challengingTeam.push(`**${stat.pilot}**: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)${stat.damage ? ` ${stat.damage.toFixed(0)} Dmg, ${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} Dmg/D` : ""}`);
+                        break;
+                }
+            });
+        }
+
+        embed.addField(`**${this.challengingTeam.name}**`, challengingTeam.join("\n"), true);
+
+        const challengedTeam = [];
+
+        if (this.details.dateConfirmed) {
+            challengedTeam.push(`**${this.details.challengedTeamScore}**`);
+        }
+
+        if (this.challengedTeam.tag === this.details.blueTeam.tag) {
+            challengedTeam.push("Blue Team");
+        } else {
+            challengedTeam.push("Orange Team");
+        }
+
+        if (!this.details.usingHomeMapTeam) {
+            challengedTeam.push("Neutral");
+        } else if (this.challengedTeam.tag === this.details.homeMapTeam.tag) {
+            challengedTeam.push("Home");
+        } else {
+            challengedTeam.push("Away");
+        }
+
+        if (this.details.challengedTeamPenalized) {
+            challengedTeam.push("*Penalized*");
+        }
+
+        if (this.details.dateConfirmed) {
+            const stats = await this.getStatsForTeam(this.challengedTeam);
+
+            switch (this.details.gameType) {
+                case "CTF":
+                    stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name));
+                    break;
+                case "TA":
+                    stats.sort((a, b) => (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name));
+                    break;
+            }
+
+            stats.forEach((stat) => {
+                switch (this.details.gameType) {
+                    case "CTF":
+                        challengedTeam.push(`**${stat.pilot}**: ${stat.captures} C/${stat.pickups} P, ${stat.carrierKills} CK, ${stat.returns} R, ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)${stat.damage ? ` ${stat.damage.toFixed(0)} Dmg` : ""}`);
+                        break;
+                    case "TA":
+                        challengedTeam.push(`**${stat.pilot}**: ${((stat.kills + stat.assists) / Math.max(stat.deaths, 1)).toFixed(3)} KDA (${stat.kills} K, ${stat.assists} A, ${stat.deaths} D)${stat.damage ? ` ${stat.damage.toFixed(0)} Dmg, ${(stat.damage / Math.max(stat.deaths, 1)).toFixed(2)} Dmg/D` : ""}`);
+                        break;
+                }
+            });
+        }
+
+        embed.addField(`**${this.challengedTeam.name}**`, challengedTeam.join("\n"), true);
+
+        embed.addField("Challenge Commands", "Visit https://otl.gg/about for a full list of available challenge commands.");
+
+        const pinned = await this.channel.messages.fetchPinned(false);
+
+        if (pinned.size === 1) {
+            Discord.richEdit(pinned.first(), embed);
+        } else {
+            for (const message of pinned) {
+                await message[1].unpin();
+            }
+
+            const message = await Discord.richQueue(embed, this.channel);
+
+            await message.pin();
+        }
     }
 
     //              #       #
@@ -3097,7 +3127,7 @@ class Challenge {
                 await Discord.queue(`The match at ${this.channel} has been voided.  Please close the channel.`, Discord.alertsChannel);
 
                 if (this.channel) {
-                    await this.updateTopic();
+                    await this.updatePinnedPost();
                 }
             }
 
