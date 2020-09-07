@@ -189,6 +189,14 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type GetHomeMapsRecordsets = {
+        recordsets: [
+            {
+                Map: string
+            }[]
+        ]
+    }
+
     type GetMatchingNeutralsForChallengeRecordsets = {
         recordsets: [
             {

@@ -148,7 +148,7 @@ class Challenge {
                 if (gameType === "TA" && !teamSize) {
                     description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose one of from one of **${data.homeMapTeam.tag}**'s home maps.  To view the home maps, you must first agree to a team size.`;
                 } else {
-                    description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(gameType === "TA" ? `${Math.min(teamSize, 4)}v${Math.min(teamSize, 4)}${teamSize >= 4 ? "+" : ""}` : gameType)).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`;
+                    description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(Challenge.getGameTypeForHomes(gameType, teamSize))).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`;
                 }
 
                 await Discord.richQueue(Discord.messageEmbed({
@@ -344,6 +344,23 @@ class Challenge {
      */
     static getGameTypeName(gameType) {
         return {"2v2": "Team Anarchy 2v2", "3v3": "Team Anarchy 3v3", "4v4+": "Team Anarchy 4v4+", "TA": "Team Anarchy", "CTF": "Capture the Flag", "MB": "Monsterball"}[gameType];
+    }
+
+    //              #     ##                     ###                     ####              #  #
+    //              #    #  #                     #                      #                 #  #
+    //  ###   ##   ###   #      ###  # #    ##    #    #  #  ###    ##   ###    ##   ###   ####   ##   # #    ##    ###
+    // #  #  # ##   #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##  #     #  #  #  #  #  #  #  #  ####  # ##  ##
+    //  ##   ##     #    #  #  # ##  #  #  ##     #     # #  #  #  ##    #     #  #  #     #  #  #  #  #  #  ##      ##
+    // #      ##     ##   ###   # #  #  #   ##    #      #   ###    ##   #      ##   #     #  #   ##   #  #   ##   ###
+    //  ###                                             #    #
+    /**
+     * Gets the game type for home maps.
+     * @param {string} gameType The game type.
+     * @param {number} teamSize The team size.
+     * @returns {string} A string representing the game type for usage with home maps.
+     */
+    static getGameTypeForHomes(gameType, teamSize) {
+        return gameType === "TA" ? `${teamSize}v${teamSize}${teamSize >= 4 ? "+" : ""}` : gameType;
     }
 
     //       #                             ##
@@ -1408,6 +1425,29 @@ class Challenge {
         }
     }
 
+    //              #    #  #                    #  #
+    //              #    #  #                    ####
+    //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###
+    // #  #  # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #  ##
+    //  ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #    ##
+    // #      ##     ##  #  #   ##   #  #   ##   #  #   # #  ###   ###
+    //  ###                                                  #
+    /**
+     * Gets the home maps for the challenge.
+     * @param {string} gameType The game type to get the home maps for.
+     * @returns {Promise<string[]>} A promise that resolves with the home maps.
+     */
+    async getHomeMaps(gameType) {
+        let maps;
+        try {
+            maps = await Db.getHomeMaps(gameType, this);
+        } catch (err) {
+            throw new Exception("There was a database error getting home maps for a challenge.", err);
+        }
+
+        return maps;
+    }
+
     //              #    ###                  #              #  #
     //              #    #  #                 #              ####
     //  ###   ##   ###   #  #   ###  ###    ###   ##   # #   ####   ###  ###
@@ -1976,6 +2016,12 @@ class Challenge {
             await this.loadDetails();
         }
 
+        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(gameType, this.details.teamSize));
+        if (!homes || homes.length < 5) {
+            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this game type and team size.  Try lowering the team size with \`!forceteamsize\` and try again.`, this.channel);
+            return;
+        }
+
         try {
             await Db.setGameType(this, gameType);
         } catch (err) {
@@ -2306,7 +2352,12 @@ class Challenge {
             await this.loadDetails();
         }
 
-        let homes;
+        let homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, size));
+        if (!homes || homes.length < 5) {
+            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this team size.`, this.channel);
+            return;
+        }
+
         try {
             homes = await Db.setTeamSize(this, size);
         } catch (err) {
@@ -2474,6 +2525,12 @@ class Challenge {
             await this.loadDetails();
         }
 
+        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(gameType, this.details.teamSize));
+        if (!homes || homes.length < 5) {
+            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this game type and team size.  Try lowering the team size with \`!suggestteamsize\` and try again.`, this.channel);
+            return;
+        }
+
         try {
             await Db.suggestGameType(this, team, gameType);
         } catch (err) {
@@ -2545,6 +2602,12 @@ class Challenge {
     async suggestTeamSize(team, size) {
         if (!this.details) {
             await this.loadDetails();
+        }
+
+        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, size));
+        if (!homes || homes.length < 5) {
+            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this team size.`, this.channel);
+            return;
         }
 
         try {
@@ -2885,7 +2948,7 @@ class Challenge {
             if (this.details.gameType === "TA" && !this.details.teamSize) {
                 checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map after the team size is agreed to.`);
             } else {
-                const maps = await this.details.homeMapTeam.getHomeMaps(this.details.gameType === "TA" ? `${Math.min(this.details.teamSize, 4)}v${Math.min(this.details.teamSize, 4)}${this.details.teamSize >= 4 ? "+" : ""}` : this.details.gameType);
+                const maps = await this.details.homeMapTeam.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, this.details.teamSize));
 
                 checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map with \`!pickmap\` from the following maps:`);
                 maps.forEach((map, index) => {

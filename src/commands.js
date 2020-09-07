@@ -2740,7 +2740,7 @@ class Commands {
             throw err;
         }
 
-        if (homeMaps.CTF.length !== 5 || homeMaps["2v2"].length !== 5 || pilotCount >= 3 && homeMaps["3v3"].length !== 5 || pilotCount >= 4 && homeMaps["4v4+"].length !== 5) {
+        if (!homeMaps.CTF || !homeMaps["2v2"] || pilotCount >= 3 && !homeMaps["3v3"] || pilotCount >= 4 && !homeMaps["4v4+"] || homeMaps.CTF.length !== 5 || homeMaps["2v2"].length !== 5 || pilotCount >= 3 && homeMaps["3v3"].length !== 5 || pilotCount >= 4 && homeMaps["4v4+"].length !== 5) {
             await Discord.queue(`Sorry, ${member}, but your team must have 5 home maps set for each game type before you challenge another team.  Use the \`!home <gameType> <number> <map>\` command to set your team's home maps.`, channel);
             throw new Warning("Team does not have 5 home maps set for each game type.");
         }
@@ -2776,7 +2776,7 @@ class Commands {
             throw err;
         }
 
-        if (opponentHomeMaps.CTF.length !== 5 || opponentHomeMaps["2v2"].length !== 5 || pilotCount >= 3 && opponentHomeMaps["3v3"].length !== 5 || pilotCount >= 4 && opponentHomeMaps["4v4+"].length !== 5) {
+        if (!opponentHomeMaps.CTF || !opponentHomeMaps["2v2"] || opponentPilotCount >= 3 && !opponentHomeMaps["3v3"] || opponentPilotCount >= 4 || !opponentHomeMaps["4v4+"] || opponentHomeMaps.CTF.length !== 5 || opponentHomeMaps["2v2"].length !== 5 || pilotCount >= 3 && opponentHomeMaps["3v3"].length !== 5 || pilotCount >= 4 && opponentHomeMaps["4v4+"].length !== 5) {
             await Discord.queue(`Sorry, ${member}, but your opponents must have 5 home maps set for each game type before you can challenge them.`, channel);
             throw new Warning("Opponent does not have 5 home maps set for each game type.");
         }

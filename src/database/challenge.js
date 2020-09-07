@@ -13,6 +13,7 @@
  * @typedef {import("../../types/challengeDbTypes").GetCastDataRecordsets} ChallengeDbTypes.GetCastDataRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetDamageRecordsets} ChallengeDbTypes.GetDamageRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetDetailsRecordsets} ChallengeDbTypes.GetDetailsRecordsets
+ * @typedef {import("../../types/challengeDbTypes").GetHomeMapsRecordsets} ChallengeDbTypes.GetHomeMapsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetMatchingNeutralsForChallengeRecordsets} ChallengeDbTypes.GetMatchingNeutralsForChallengeRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetNotificationsRecordsets} ChallengeDbTypes.GetNotificationsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetRandomMapRecordsets} ChallengeDbTypes.GetRandomMapRecordsets
@@ -322,7 +323,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -361,7 +362,7 @@ class ChallengeDb {
     /**
      * Confirms a suggested team size for a challenge.
      * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the suggested team size has been confirmed.
+     * @returns {Promise<string[]>} A promise that resolves when the suggested team size has been confirmed.
      */
     static async confirmTeamSize(challenge) {
         /** @type {ChallengeDbTypes.ConfirmTeamSizeRecordsets} */
@@ -1111,6 +1112,30 @@ class ChallengeDb {
             suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
+    }
+
+    //              #    #  #                    #  #
+    //              #    #  #                    ####
+    //  ###   ##   ###   ####   ##   # #    ##   ####   ###  ###    ###
+    // #  #  # ##   #    #  #  #  #  ####  # ##  #  #  #  #  #  #  ##
+    //  ##   ##     #    #  #  #  #  #  #  ##    #  #  # ##  #  #    ##
+    // #      ##     ##  #  #   ##   #  #   ##   #  #   # #  ###   ###
+    //  ###                                                  #
+    /**
+     * Gets all of the team's home maps for a challenge.
+     * @param {string} gameType The game type to get home maps for.
+     * @param {Challenge} challenge The challenge to get home maps for.
+     * @returns {Promise<string[]>} A promise that resolves with a list of the team's home maps.
+     */
+    static async getHomeMaps(gameType, challenge) {
+        /** @type {ChallengeDbTypes.GetHomeMapsRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT Map FROM tblChallengeHome WHERE GameType = @gameType AND ChallengeId = @challengeId ORDER BY Map
+        `, {
+            gameType: {type: Db.VARCHAR(5), value: gameType},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //              #    #  #         #          #      #                #  #               #                ##           ####               ##   #           ##    ##
