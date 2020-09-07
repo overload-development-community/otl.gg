@@ -405,6 +405,7 @@ class PlayerDb {
             FROM tblDamage d
             INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
             WHERE (@season IS NULL OR c.Season = @season)
+                AND c.Postseason = @postseason
                 AND d.TeamId <> d.OpponentTeamId
                 AND d.PlayerId = @playerId
             GROUP BY d.Weapon
