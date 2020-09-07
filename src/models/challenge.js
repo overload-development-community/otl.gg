@@ -631,7 +631,7 @@ class Challenge {
         // Check that all the players exist.
         for (const player of game.players) {
             if (!challengingTeamStats.find((s) => s.pilot.id === map[player.name]) && !challengedTeamStats.find((s) => s.pilot.id === map[player.name])) {
-                throw new Error(`${player} does not appear to have played in this match previously.  Please check that the pilots from all games are the same between every game.`);
+                throw new Error(`${player.name} does not appear to have played in this match previously.  Please check that the pilots from all games are the same between every game.`);
             }
         }
 
