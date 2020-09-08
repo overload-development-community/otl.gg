@@ -2929,7 +2929,7 @@ class Challenge {
             checklist = [];
 
         if (this.details.dateClocked && !this.details.dateConfirmed) {
-            checklist.push(`- This match has been placed on the clock by **${this.details.clockTeam.tag}**.  Both teams must agree to all match parameters by ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`);
+            checklist.push(`- This match has been placed on the clock by **${this.details.clockTeam.tag}**.  Both teams must agree to all match parameters by ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `, ${this.details.dateClockDeadline.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}`);
         }
 
         if (this.details.suggestedGameType && !this.details.dateConfirmed) {
@@ -2970,7 +2970,7 @@ class Challenge {
         }
 
         if (this.details.suggestedTime && !this.details.dateConfirmed) {
-            checklist.push(`- ${this.details.suggestedTimeTeam.tag} suggested **${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**.  **${this.details.suggestedTimeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtime\`.`);
+            checklist.push(`- ${this.details.suggestedTimeTeam.tag} suggested **${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `, ${this.details.suggestedTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**.  **${this.details.suggestedTimeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtime\`.`);
         }
 
         if (this.details.teamSize && this.details.map && this.details.matchTime && !this.details.dateConfirmed) {
@@ -3008,7 +3008,7 @@ class Challenge {
         parameters.push(`Game Type: **${Challenge.getGameTypeName(this.details.gameType)}**`);
 
         if (this.details.matchTime) {
-            parameters.push(`Match Time: **${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `/${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**`);
+            parameters.push(`Match Time: **${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `, ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**`);
         }
 
         if (this.details.teamsize) {
