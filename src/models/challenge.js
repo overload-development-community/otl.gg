@@ -1216,7 +1216,7 @@ class Challenge {
                     },
                     {
                         name: "This channel is now closed",
-                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be closed once the stats have been posted."
+                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be removed once the stats have been posted."
                     }
                 ]
             });

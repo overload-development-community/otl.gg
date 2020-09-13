@@ -3718,6 +3718,7 @@ class Commands {
 
         await Commands.checkChallengeDetails(challenge, member, channel);
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
+        await Commands.checkChallengeIsNotConfirmed(challenge, member, channel);
 
         if (challenge.details.matchTime) {
             if (message) {
