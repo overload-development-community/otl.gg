@@ -1381,7 +1381,7 @@ class PlayerDb {
 
             SELECT s.TeamSize, s.DamagePerDeath, t.TeamId, t.Tag, t.Name TeamName, p.PlayerId, p.Name, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
-                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / s.Deaths DESC) Rank,
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
                     c.TeamSize,
                     d.ChallengeId,
                     d.TeamId,
