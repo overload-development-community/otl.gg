@@ -1386,7 +1386,7 @@ class PlayerDb {
                     d.ChallengeId,
                     d.TeamId,
                     d.PlayerId,
-                    SUM(d.Damage) / s.Deaths DamagePerDeath
+                    SUM(d.Damage) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DamagePerDeath
                 FROM tblDamage d
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 INNER JOIN tblStat s ON c.ChallengeId = s.ChallengeId AND d.PlayerId = s.PlayerId
@@ -1655,11 +1655,11 @@ class PlayerDb {
 
             SELECT s.TeamSize, s.DamagePerDeath, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
-                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / s.Deaths DESC) Rank,
+                SELECT RANK() OVER(PARTITION BY c.TeamSize ORDER BY SUM(d.Damage) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DESC) Rank,
                     c.TeamSize,
                     d.ChallengeId,
                     d.TeamId,
-                    SUM(d.Damage) / s.Deaths DamagePerDeath
+                    SUM(d.Damage) / CAST(CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END AS FLOAT) DamagePerDeath
                 FROM tblDamage d
                 INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
                 INNER JOIN (
