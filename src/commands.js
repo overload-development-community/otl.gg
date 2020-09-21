@@ -2052,7 +2052,7 @@ class Commands {
             fields: []
         });
 
-        Object.keys(homes).forEach((gameType) => {
+        Object.keys(homes).sort().forEach((gameType) => {
             msg.fields.push({
                 name: Challenge.getGameTypeName(gameType),
                 value: homes[gameType].join("\n"),
