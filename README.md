@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v4.0.6 - 9/21/2020
+
+* Fax various bugs introduced with home maps in v4.0.4.
+* Fix divide by zero errors for damage per death.
+
 ## v4.0.5 - 9/7/2020
 
 * Channel topics for challenges and new teams have been removed, and replaced with a pinned message.
