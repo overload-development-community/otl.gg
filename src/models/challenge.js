@@ -139,7 +139,7 @@ class Challenge {
                 }
 
                 await challenge.channel.setParent(Discord.challengesCategory, {lockPermissions: false});
-                await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengingTeam.name} - View the pinned post for challenge information.`);
+                await challenge.channel.setTopic(`${challengingTeam.name} vs ${challengedTeam.name} - View the pinned post for challenge information.`);
 
                 await challenge.updatePinnedPost();
 
