@@ -323,7 +323,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -372,7 +372,7 @@ class ChallengeDb {
             IF NOT EXISTS(
                 SELECT TOP 1 1
                 FROM tblChallengeHome ch
-                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END AND c.Map = ch.Map
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END AND c.Map = ch.Map
             )
             BEGIN
                 UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
@@ -380,7 +380,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {
@@ -1063,7 +1063,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
@@ -1245,7 +1245,7 @@ class ChallengeDb {
             ORDER BY Id
         `, {
             id: {type: Db.INT, value: challenge.id},
-            type: {type: Db.VARCHAR(5), value: challenge.details.gameType === "CTF" ? "CTF" : challenge.details.teamSize === 2 ? "2v2" : challenge.details.teamsize === 3 ? "3v3" : challenge.details.teamsize === 4 ? "4v4+" : ""}
+            type: {type: Db.VARCHAR(5), value: challenge.details.gameType === "CTF" ? "CTF" : challenge.details.teamSize === 2 ? "2v2" : challenge.details.teamsize === 3 ? "3v3" : challenge.details.teamsize >= 4 ? "4v4+" : ""}
         });
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
@@ -1452,7 +1452,7 @@ class ChallengeDb {
             INSERT INTO @Homes (Map, Number)
             SELECT ch.Map, ROW_NUMBER() OVER (ORDER BY ch.Map)
             FROM tblChallenge c
-            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallengeHome ch ON c.ChallengeId = ch.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE c.ChallengeId = @challengeId
 
             UPDATE c
@@ -1739,7 +1739,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {
@@ -1981,7 +1981,7 @@ class ChallengeDb {
             IF NOT EXISTS(
                 SELECT ch.Map
                 FROM tblChallengeHome ch
-                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END AND ch.Map = c.Map
+                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END AND ch.Map = c.Map
                 WHERE c.ChallengeId = @challengeId
             )
             BEGIN
@@ -1990,7 +1990,7 @@ class ChallengeDb {
 
             SELECT ch.Map
             FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize = 4 THEN '4v4+' ELSE '' END
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
             WHERE ch.ChallengeId = @challengeId
             ORDER BY ch.Map
         `, {
