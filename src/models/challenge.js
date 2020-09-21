@@ -360,7 +360,7 @@ class Challenge {
      * @returns {string} A string representing the game type for usage with home maps.
      */
     static getGameTypeForHomes(gameType, teamSize) {
-        teamSize = Math.max(teamSize, 4);
+        teamSize = Math.min(teamSize, 4);
         return gameType === "TA" ? `${teamSize}v${teamSize}${teamSize >= 4 ? "+" : ""}` : gameType;
     }
 
