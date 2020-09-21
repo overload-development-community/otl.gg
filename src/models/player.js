@@ -137,7 +137,7 @@ class Player {
     //  ###
     /**
      * Gets player stats for the specified season.
-     * @param {number} [season] The season number, or void for the latest season.
+     * @param {number | undefined} season The season number, or void for the latest season.
      * @param {boolean} postseason Whether to get stats for the postseason.
      * @param {string} gameType The game type to get season stats for.
      * @param {boolean} all Whether to show all players, or just players over 10% games played.
