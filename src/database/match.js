@@ -40,10 +40,14 @@ class MatchDb {
      * Gets the confirmed matches for the specified season by page number.
      * @param {number} [season] The season number, or void for the latest season.
      * @param {number} [page] The page number, or void for the first page.
-     * @param {number} matchesPerPage The number of matches per page.
+     * @param {number} [matchesPerPage] The number of matches per page.
      * @returns {Promise<MatchTypes.ConfirmedMatchesData>} A promise that resolves with the season's matches for the specified page.
      */
     static async getConfirmed(season, page, matchesPerPage) {
+        if (!matchesPerPage) {
+            matchesPerPage = 10;
+        }
+
         const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
 
         /** @type {MatchTypes.ConfirmedMatchesData} */
