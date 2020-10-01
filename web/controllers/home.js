@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const DiscordMarkdown = require("discord-markdown"),
 
     Common = require("../includes/common"),
@@ -8,11 +13,6 @@ const DiscordMarkdown = require("discord-markdown"),
     Match = require("../../src/models/match"),
     Player = require("../../src/models/player"),
     Team = require("../../src/models/team");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
 
 //   #   #
 //   #   #
