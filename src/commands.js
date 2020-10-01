@@ -4863,7 +4863,12 @@ class Commands {
             throw err;
         }
 
-        if (!team1HomeMaps[gameTypeUpper] || team1HomeMaps[gameTypeUpper].length < 5) {
+        if (gameTypeUpper === "TA") {
+            if (!team1HomeMaps.CTF || !team1HomeMaps["2v2"] || team1PilotCount >= 3 && !team1HomeMaps["3v3"] || team1PilotCount >= 4 && !team1HomeMaps["4v4+"] || team1HomeMaps["2v2"].length !== 5 || team1PilotCount >= 3 && team1HomeMaps["3v3"].length !== 5 || team1PilotCount >= 4 && team1HomeMaps["4v4+"].length !== 5) {
+                await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set for each category in the specified game type to be in a match.`, channel);
+                throw new Warning("Team does not have 5 home maps set for specified game type.");
+            }
+        } else if (!team1HomeMaps[gameTypeUpper] || team1HomeMaps[gameTypeUpper].length < 5) {
             await Discord.queue(`Sorry, ${member}, but **${team1.name}** must have 5 home maps set for the specified game type to be in a match.`, channel);
             throw new Warning("Team does not have 5 home maps set for specified game type.");
         }
@@ -4896,7 +4901,12 @@ class Commands {
             throw err;
         }
 
-        if (!team2HomeMaps[gameTypeUpper] || team2HomeMaps[gameTypeUpper].length < 5) {
+        if (gameTypeUpper === "TA") {
+            if (!team2HomeMaps.CTF || !team2HomeMaps["2v2"] || team2PilotCount >= 3 && !team2HomeMaps["3v3"] || team2PilotCount >= 4 && !team2HomeMaps["4v4+"] || team2HomeMaps["2v2"].length !== 5 || team2PilotCount >= 3 && team2HomeMaps["3v3"].length !== 5 || team2PilotCount >= 4 && team2HomeMaps["4v4+"].length !== 5) {
+                await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set for each category in the specified game type to be in a match.`, channel);
+                throw new Warning("Team does not have 5 home maps set for specified game type.");
+            }
+        } else if (!team2HomeMaps[gameTypeUpper] || team2HomeMaps[gameTypeUpper].length < 5) {
             await Discord.queue(`Sorry, ${member}, but **${team2.name}** must have 5 home maps set for the specified game type to be in a match.`, channel);
             throw new Warning("Team does not have 5 home maps set for specified game type.");
         }
