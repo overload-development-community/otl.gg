@@ -8,7 +8,7 @@ const DiscordJs = require("discord.js"),
     Warning = require("./logging/warning"),
 
     commands = new Commands(),
-    discord = new DiscordJs.Client(/** @type {DiscordJs.ClientOptions} */ (settings.discord.options)), // eslint-disable-line no-extra-parens
+    discord = new DiscordJs.Client({ws: {intents: ["DIRECT_MESSAGES", "GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_PRESENCES"]}}),
     messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/,
     urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
 
