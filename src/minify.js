@@ -84,7 +84,7 @@ class Minify {
             const output = csso.minify(str);
 
             if (settings.minify.cache) {
-                Cache.add(key, output.css, new Date(new Date().getTime() + 86400000));
+                await Cache.add(key, output.css, new Date(new Date().getTime() + 86400000));
             }
 
             res.status(200).send(output.css);
@@ -157,7 +157,7 @@ class Minify {
             const output = await terser.minify(code, {nameCache});
 
             if (settings.minify.cache) {
-                Cache.add(key, output.code, new Date(new Date().getTime() + 86400000));
+                await Cache.add(key, output.code, new Date(new Date().getTime() + 86400000));
             }
 
             res.status(200).send(output.code);

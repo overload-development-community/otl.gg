@@ -49,7 +49,7 @@ class SeasonDb {
         `);
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Season) || [];
 
-        Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:season:added`]);
+        await Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:season:added`]);
 
         return cache;
     }

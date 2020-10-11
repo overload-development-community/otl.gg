@@ -114,7 +114,7 @@ class MapDb {
         `, {season: {type: Db.INT, value: season}});
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || void 0;
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return cache;
     }

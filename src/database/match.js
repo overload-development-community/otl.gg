@@ -209,7 +209,7 @@ class MatchDb {
             }))
         } || {completed: [], stats: [], standings: []};
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return cache;
     }
@@ -373,7 +373,7 @@ class MatchDb {
             }))
         } || {matches: void 0, standings: void 0, previousStandings: void 0};
 
-        Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        await Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return cache;
     }
@@ -523,7 +523,7 @@ class MatchDb {
             completed: data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].Completed || 0
         } || {matches: [], standings: [], previousStandings: [], completed: 0};
 
-        Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return cache;
     }
