@@ -51,7 +51,7 @@ class Minify {
             cache = await Cache.get(key);
 
             if (cache) {
-                res.status(200).send(cache);
+                res.status(200).type("css").send(cache);
                 return void 0;
             }
         }
@@ -87,7 +87,7 @@ class Minify {
                 await Cache.add(key, output.css, new Date(new Date().getTime() + 86400000));
             }
 
-            res.status(200).send(output.css);
+            res.status(200).type("css").send(output.css);
             return void 0;
         } catch (err) {
             return next(err);
@@ -120,7 +120,7 @@ class Minify {
             cache = await Cache.get(key);
 
             if (cache) {
-                res.status(200).send(cache);
+                res.status(200).type("js").send(cache);
                 return void 0;
             }
         }
@@ -160,7 +160,7 @@ class Minify {
                 await Cache.add(key, output.code, new Date(new Date().getTime() + 86400000));
             }
 
-            res.status(200).send(output.code);
+            res.status(200).type("js").send(output.code);
             return void 0;
         } catch (err) {
             return next(err);
@@ -183,9 +183,9 @@ class Minify {
         if (settings.minify.enabled) {
             switch (type) {
                 case "js":
-                    return `<script src="/js?files=${files.join(",")}"></script>`;
+                    return `<script src="/js/?files=${files.join(",")}"></script>`;
                 case "css":
-                    return `<link rel="stylesheet" href="/css?files=${files.join(",")}" />`;
+                    return `<link rel="stylesheet" href="/css/?files=${files.join(",")}" />`;
                 default:
                     return "";
             }
