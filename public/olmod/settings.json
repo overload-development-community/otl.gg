@@ -1,6 +1,6 @@
 [
     {
-        "title": "OTL Season 4 TA",
+        "title": "OTL Season 4 Championships",
         "matchMode": 1,
         "maxPlayers": 16,
         "friendlyFire": 0,
@@ -38,10 +38,55 @@
             1,
             1
         ],
-        "jipEnabled": 0
+        "jipEnabled": 0,
+        "classicspawnsenabled": false,
+        "ctfcarrierboostenabled": true
     },
     {
-        "title": "OTL Season 4 CTF",
+        "title": "OTL Season 5 TA",
+        "matchMode": 1,
+        "maxPlayers": 16,
+        "friendlyFire": 0,
+        "timeLimit": 6,
+        "scoreLimit": 0,
+        "respawnTime": 2,
+        "respawnInvuln": 2,
+        "showNames": 1,
+        "turnSpeedLimit": 2,
+        "forceLoadout": 0,
+        "forcePrimary1": 0,
+        "forcePrimary2": 8,
+        "forceSecondary1": 0,
+        "forceSecondary2": 8,
+        "forceModifier1": 4,
+        "forceModifier2": 4,
+        "powerupSpawn": 2,
+        "powerupInitial": 2,
+        "powerupBigSpawn": 1,
+        "powerupFilter": [
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1,
+            1
+        ],
+        "jipEnabled": 0,
+        "classicspawnsenabled": false,
+        "ctfcarrierboostenabled": false
+    },
+    {
+        "title": "OTL Season 5 CTF",
         "matchMode": 3,
         "maxPlayers": 16,
         "friendlyFire": 0,
@@ -79,7 +124,9 @@
             1,
             1
         ],
-        "jipEnabled": 0
+        "jipEnabled": 0,
+        "classicspawnsenabled": true,
+        "ctfcarrierboostenabled": false
     },
     {
         "title": "Oops! All Devs",
