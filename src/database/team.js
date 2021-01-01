@@ -1149,6 +1149,11 @@ class TeamDb {
                 ORDER BY Season DESC
             END
 
+            IF @season IS NULL
+            BEGIN
+                SET @season = (SELECT MAX(Season) FROM tblSeason)
+            END
+
             DECLARE @maxSeason BIT = 0
             IF @season = (SELECT MAX(Season) FROM tblSeason)
             BEGIN
