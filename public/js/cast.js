@@ -46,10 +46,14 @@ class Cast {
                     document.getElementById("left-name").innerText = Cast.leftStreamers[Cast.leftIndex].name;
                     document.getElementById("left-twitch").innerText = Cast.leftStreamers[Cast.leftIndex].twitch;
 
-                    new Twitch.Player("left-player", {
+                    new Twitch.Embed("left-player", {
                         width: 768,
                         height: 432,
-                        channel: Cast.leftStreamers[Cast.leftIndex].twitch
+                        channel: Cast.leftStreamers[Cast.leftIndex].twitch,
+                        allowfullscreen: true,
+                        autoplay: true,
+                        muted: true,
+                        layout: "video"
                     });
                 }
                 break;
@@ -70,10 +74,14 @@ class Cast {
                     document.getElementById("right-name").innerText = Cast.rightStreamers[Cast.rightIndex].name;
                     document.getElementById("right-twitch").innerText = Cast.rightStreamers[Cast.rightIndex].twitch;
 
-                    new Twitch.Player("right-player", {
+                    new Twitch.Embed("right-player", {
                         width: 768,
                         height: 432,
-                        channel: Cast.rightStreamers[Cast.rightIndex].twitch
+                        channel: Cast.rightStreamers[Cast.rightIndex].twitch,
+                        allowfullscreen: true,
+                        autoplay: true,
+                        muted: true,
+                        layout: "video"
                     });
                 }
                 break;

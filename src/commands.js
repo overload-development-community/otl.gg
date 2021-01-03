@@ -3333,6 +3333,11 @@ class Commands {
                 }
             }
 
+            if (!date || isNaN(date.valueOf())) {
+                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                throw new Warning("Invalid date.");
+            }
+
             if (date < new Date()) {
                 await Discord.queue(`Sorry, ${member}, but that date is in the past.`, channel);
                 throw new Warning("Date is in the past.");

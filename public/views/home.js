@@ -110,7 +110,7 @@ class HomeView {
                 <div class="section">News</div>
                 <div id="articles">
                     ${news.map((n) => /* html */`
-                        <div class="author">Posted by ${HomeView.Common.htmlEncode(n.member.displayName)}, <span><script>document.write(Common.formatDate(new Date(${n.createdTimestamp})));</script></span></div>
+                        <div class="author">Posted ${n.member ? `by ${HomeView.Common.htmlEncode(n.member.displayName)}, ` : ""}<span><script>document.write(Common.formatDate(new Date(${n.createdTimestamp})));</script></span></div>
                         <div class="body">${n.content}</div>
                     `).join("")}
                 </div>

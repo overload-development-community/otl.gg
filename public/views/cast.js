@@ -34,7 +34,7 @@ class CastView {
             <html>
                 <head>
                     <title>${challenge.challengingTeam.name} vs ${challenge.challengedTeam.name}</title>
-                    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
+                    <script src="https://embed.twitch.tv/embed/v1.js"></script>
                     <script src="/js/common.js"></script>
                     <script src="/js/cast.js"></script>
                     ${CastView.Common.favIcon()}

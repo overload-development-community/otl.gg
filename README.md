@@ -4,6 +4,10 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v5.0.0 - 12/31/2020
+
+Support for Season 5 of the OTL.
+
 ## v4.0.6 - 9/21/2020
 
 * Fax various bugs introduced with home maps in v4.0.4.

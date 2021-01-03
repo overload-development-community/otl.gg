@@ -38,10 +38,11 @@ class Standings {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        const queryRecords = req.query.records && req.query.records.toString() || void 0,
-            querySeason = req.query.season && req.query.season.toString() || void 0,
+        const querySeason = req.query.season && req.query.season.toString() || void 0,
             queryMap = req.query.map && req.query.map.toString() || void 0;
-        let recordsTitle, records1, records2, records3;
+
+        let queryRecords = req.query.records && req.query.records.toString() || void 0,
+            recordsTitle, records1, records2, records3;
 
         switch (queryRecords) {
             case "size":
@@ -57,6 +58,7 @@ class Standings {
                 records3 = "Monsterball";
                 break;
             default:
+                queryRecords = "map";
                 recordsTitle = "Map Records";
                 records1 = "Home";
                 records2 = "Away";
@@ -65,9 +67,16 @@ class Standings {
         }
 
         const seasonList = await Season.getSeasonNumbers(),
-            season = Number.parseInt(querySeason, 10) || void 0,
-            maps = await Map.getPlayedBySeason(season),
             teams = new Teams();
+
+        let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
+
+        seasonList.push(0);
+        if (seasonList.indexOf(season) === -1) {
+            season = void 0;
+        }
+
+        const maps = await Map.getPlayedBySeason(season);
 
         let map;
         if (maps.indexOf(queryMap) !== -1) {
