@@ -92,7 +92,7 @@
         "friendlyFire": 0,
         "timeLimit": 6,
         "scoreLimit": 0,
-        "respawnTime": 5,
+        "respawnTime": 2,
         "respawnInvuln": 2,
         "showNames": 1,
         "turnSpeedLimit": 2,
