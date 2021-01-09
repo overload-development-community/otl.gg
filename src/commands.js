@@ -2850,7 +2850,7 @@ class Commands {
         }
 
         if (!message || ["a", "b", "c", "d", "e"].indexOf(message.toLowerCase()) === -1) {
-            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the three home maps, use \`!pickmap a\`, \`!pickmap b\`, or \`!pickmap c\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To pick from one of the five home maps, use \`!pickmap a\`, \`!pickmap b\`, \`!pickmap c\`, \`!pickmap d\`, or \`!pickmap e\`.`, channel);
             throw new Warning("Missing map selection.");
         }
 
