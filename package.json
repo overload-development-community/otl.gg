@@ -32,7 +32,7 @@
         "node-schedule": "2.0.0",
         "terser": "5.6.1",
         "timezone-js": "0.4.13",
-        "tzdata": "1.0.24"
+        "tzdata": "1.0.25"
     },
     "devDependencies": {
         "@babel/core": "7.13.10",
