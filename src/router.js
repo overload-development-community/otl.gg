@@ -44,7 +44,7 @@ class Router {
 
         const stats = await promisify(fs.stat)(require.resolve(classInfo.file));
 
-        if (!classInfo.lastModified || classInfo.lastModified !== stats.mtime) {
+        if (!classInfo.lastModified || classInfo.lastModified.getTime() !== stats.mtime.getTime()) {
             delete require.cache[require.resolve(classInfo.file)];
             classInfo.class = require(classInfo.file);
             classInfo.lastModified = stats.mtime;
