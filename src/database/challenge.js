@@ -1236,14 +1236,15 @@ class ChallengeDb {
                 SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} WITH TIES ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
                 FROM vwCompletedChallenge
                 WHERE GameType = @type
-                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = @id AND GameType = @type)
+                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = @id AND GameType = @homeType)
                 GROUP BY Map
                 ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "top" ? "DESC" : "ASC"} ` : ""}
             ) a
             ORDER BY Id
         `, {
             id: {type: Db.INT, value: challenge.id},
-            type: {type: Db.VARCHAR(5), value: challenge.details.gameType === "CTF" ? "CTF" : challenge.details.teamSize === 2 ? "2v2" : challenge.details.teamsize === 3 ? "3v3" : challenge.details.teamsize >= 4 ? "4v4+" : ""}
+            type: {type: Db.VARCHAR(5), value: challenge.details.gameType},
+            homeType: {type: Db.VARCHAR(5), value: challenge.details.gameType === "CTF" ? "CTF" : challenge.details.teamSize === 2 ? "2v2" : challenge.details.teamsize === 3 ? "3v3" : challenge.details.teamsize >= 4 ? "4v4+" : ""}
         });
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
