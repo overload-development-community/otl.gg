@@ -13,7 +13,7 @@
 
 const Exception = require("./logging/exception");
 
-const tz = require("timezone-js"),
+const tc = require("timezonecomplete"),
     tzdata = require("tzdata"),
 
     Challenge = require("./models/challenge"),
@@ -3314,8 +3314,10 @@ class Commands {
             date = new Date();
             date = new Date(date.getTime() + (300000 - date.getTime() % 300000));
         } else {
+            const tz = tc.TimeZone.zone(await member.getTimezone());
+
             try {
-                date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
+                date = new Date(new tc.DateTime(new Date(`${message} UTC`).toISOString(), tz).toIsoString());
             } catch (err) {
                 await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                 throw new Warning("Invalid date.");
@@ -3327,9 +3329,9 @@ class Commands {
             }
 
             if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
-                date = new Date(new tz.Date(`${message} ${new Date().getFullYear()}`, await member.getTimezone()).getTime());
+                date.setFullYear(new Date().getFullYear());
                 if (date < new Date()) {
-                    date = new Date(new tz.Date(`${message} ${new Date().getFullYear() + 1}`, await member.getTimezone()).getTime());
+                    date.setFullYear(new Date().getFullYear() + 1);
                 }
             }
 
@@ -5234,8 +5236,10 @@ class Commands {
             date = new Date();
             date = new Date(date.getTime() + (300000 - date.getTime() % 300000));
         } else {
+            const tz = tc.TimeZone.zone(await member.getTimezone());
+
             try {
-                date = new Date(new tz.Date(message, await member.getTimezone()).getTime());
+                date = new Date(new tc.DateTime(new Date(`${message} UTC`).toISOString(), tz).toIsoString());
             } catch (err) {
                 await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                 throw new Warning("Invalid date.");
@@ -5247,9 +5251,9 @@ class Commands {
             }
 
             if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
-                date = new Date(new tz.Date(`${message} ${new Date().getFullYear()}`, await member.getTimezone()).getTime());
+                date.setFullYear(new Date().getFullYear());
                 if (date < new Date()) {
-                    date = new Date(new tz.Date(`${message} ${new Date().getFullYear() + 1}`, await member.getTimezone()).getTime());
+                    date.setFullYear(new Date().getFullYear() + 1);
                 }
             }
 
@@ -6253,11 +6257,12 @@ class Commands {
             return false;
         }
 
-        const {groups: {title, dateStartStr, dateEndStr}} = eventParse.exec(message);
+        const {groups: {title, dateStartStr, dateEndStr}} = eventParse.exec(message),
+            tz = tc.TimeZone.zone(await member.getTimezone());
 
         let dateStart;
         try {
-            dateStart = new Date(new tz.Date(dateStartStr, await member.getTimezone()).getTime());
+            dateStart = new Date(new tc.DateTime(new Date(`${dateStartStr} UTC`).toISOString(), tz).toIsoString());
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but I couldn't parse the start date and time.`, channel);
             throw new Warning("Invalid start date.");
@@ -6270,7 +6275,7 @@ class Commands {
 
         let dateEnd;
         try {
-            dateEnd = new Date(new tz.Date(dateEndStr, await member.getTimezone()).getTime());
+            dateEnd = new Date(new tc.DateTime(new Date(`${dateEndStr} UTC`).toISOString(), tz).toIsoString());
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
             throw new Warning("Invalid end date.");

@@ -7,8 +7,6 @@ const compression = require("compression"),
     minify = require("./src/minify"),
     morgan = require("morgan"),
     morganExtensions = require("./src/extensions/morgan.extensions"),
-    tz = require("timezone-js"),
-    tzdata = require("tzdata"),
 
     Discord = require("./src/discord"),
     Log = require("./src/logging/log"),
@@ -47,9 +45,6 @@ const compression = require("compression"),
         console.log(err);
         return;
     }
-
-    tz.timezone.loadingScheme = tz.timezone.loadingSchemes.MANUAL_LOAD;
-    tz.timezone.loadZoneDataFromObject(tzdata);
 
     // Startup Discord.
     Discord.startup();
