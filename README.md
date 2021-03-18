@@ -4,6 +4,30 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v5.0.1 - 3/17/2021
+
+New Features:
+
+* New date time zone conversion library is being used.  Please report any new bugs with `!suggesttime` or `!convert`.
+* Date parsing now allows just a time in most places.  It will use the first date in the future when that time will be.  Good for scheduling matches for later in the day.
+* New `!convert` command for challenge rooms, which lets you arbitrarily convert dates and times to the timezone of everyone in the channel.
+* Net damage is now displayed as a statistic on the matches and match pages.
+* Self-damage is now calculated as part of the total damage taken on the match page.
+* `!addstats` now includes a timestamp parameter that will allow an administrator to remove all events that happened in a game after a certain point in time.
+
+Bug Fixes:
+
+* `!suggestrandommap` works again.
+* Various issues with the cast pages have been resolved.
+* Fixed unhandled exception when an invalid date without a year is given (ie: February 29).
+* Hardened querystring handling on the standings page.
+* `!pickmap` error message now correctly states there are five home maps.
+* Fix `4v4+` as a valid home map type.
+* Fixed confirmed team size not showing in the pinned post for challenges.
+* Fixed a pretty bad memory leak with the website.
+* Removed team rating from the team page when viewing all seasons.
+* Removed a number of redundent messages when dealing with maps or captains.
+
 ## v5.0.0 - 12/31/2020
 
 Support for Season 5 of the OTL.
