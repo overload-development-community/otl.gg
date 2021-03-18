@@ -3096,7 +3096,7 @@ class Challenge {
             parameters.push(`Match Time: **${this.details.matchTime.toLocaleString("en-US", {timeZone: challengingTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}${challengingTeamTimeZone === challengedTeamTimeZone ? "" : `, ${this.details.matchTime.toLocaleString("en-US", {timeZone: challengedTeamTimeZone, month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`}**`);
         }
 
-        if (this.details.teamsize) {
+        if (this.details.teamSize) {
             parameters.push(`Team Size: **${this.details.teamSize}v${this.details.teamSize}**`);
         }
 
