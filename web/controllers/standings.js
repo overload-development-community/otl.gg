@@ -71,7 +71,6 @@ class Standings {
 
         let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
 
-        seasonList.push(0);
         if (seasonList.indexOf(season) === -1) {
             season = void 0;
         }
