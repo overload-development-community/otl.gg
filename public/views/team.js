@@ -83,7 +83,7 @@ class TeamView {
                 <div id="records">
                     <div class="overall">Overall: <span class="numeric">${teamData.records.wins}-${teamData.records.losses}${teamData.records.ties ? `-${teamData.records.ties}` : ""}</span></div>
                     <div class="overall">
-                        ${postseason ? "" : /* html */`
+                        ${postseason || season === 0 ? "" : /* html */`
                             Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span>
                         `}
                     </div>
