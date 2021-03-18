@@ -213,6 +213,10 @@ class AboutView {
 
                     <div class="section">Challenges (Only allowed in challenge channels)</div>
 
+                    <div class="command">!convert (&lt;date and time&gt;|<wbr />now)</div>
+                    <div>Converts a date and time to everyone's time zone in the challenge room.  If you omit the date or year, it will use what the date or year will be the next time it is the entered time.  Uses your personal time zone.</div>
+                    <div class="example">!convert 3/14 3:00 PM<br />!convert Mar 14 15:00<br />!convert 3:00 PM<br />!convert now</div>
+
                     <div class="command">!matchtime</div>
                     <div>Gets the match time in your local time zone.</div>
                     <div class="example">!matchtime</div>
@@ -270,8 +274,8 @@ class AboutView {
                     <div class="example">!confirmtype</div>
 
                     <div class="command">!suggesttime (&lt;date and time&gt;|<wbr />now)</div>
-                    <div>Founder or Captain only.  Suggests a date and time for the challenge.  Uses your personal time zone.</div>
-                    <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00<br />!suggesttime now</div>
+                    <div>Founder or Captain only.  Suggests a date and time for the challenge.  If you omit the date or year, it will use what the date or year will be the next time it is the entered time.  Uses your personal time zone.</div>
+                    <div class="example">!suggesttime 3/14 3:00 PM<br />!suggesttime Mar 14 15:00<br />!suggesttime 3:00 PM<br />!suggesttime now</div>
 
                     <div class="command">!confirmtime</div>
                     <div>Founder or Captain only.  Confirms a match time suggestion from the other team.</div>

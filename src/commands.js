@@ -50,6 +50,7 @@ const tc = require("timezonecomplete"),
     teamPilotParse = /^(?<teamName>.{1,25}) (?<id><@!?[0-9]+>)$/,
     teamTagParse = /^[0-9A-Za-z]{1,5}$/,
     teamTagteamNameParse = /^(?<teamTag>[^ ]{1,5}) (?<teamName>.{6,25})$/,
+    timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/,
     twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
     vodParse = /^(?<challengeId>[1-9][0-9]*) (?<vod>https?:\/\/.+)$/;
 
@@ -3296,7 +3297,7 @@ class Commands {
 
         await Commands.checkMemberIsCaptainOrFounder(member, channel);
 
-        if (!await Commands.checkHasParameters(message, member, "To suggest a time, use `!suggesttime` along with the date and time.  Time zone defaults to your team's selected time zone, or Pacific Time if not set.  Use the `!timezone` command to set your own time zone.  Founders may use the `!teamtimezone` command to set the default time zone for their team.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "To suggest a time, use `!suggesttime` along with the date and time.  If not set, time zone defaults to your team's selected time zone, or Pacific Time.  Use the `!timezone` command to set your own time zone.  Founders may use the `!teamtimezone` command to set the default time zone for their team.", channel)) {
             return false;
         }
 
@@ -3318,9 +3319,17 @@ class Commands {
 
             try {
                 date = new Date(new tc.DateTime(new Date(`${message} UTC`).toISOString(), tz).toIsoString());
-            } catch (err) {
-                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
-                throw new Warning("Invalid date.");
+            } catch (_) {
+                try {
+                    date = new Date(new tc.DateTime(new Date(`${new Date().toDateString()} ${message} UTC`).toISOString(), tz).toIsoString());
+                    if (date < new Date()) {
+                        date.setDate(date.getDate() + 1);
+                    }
+                } catch (err) {
+                    console.log(err);
+                    await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                    throw new Warning("Invalid date.");
+                }
             }
 
             if (!date || isNaN(date.valueOf())) {
@@ -5240,9 +5249,17 @@ class Commands {
 
             try {
                 date = new Date(new tc.DateTime(new Date(`${message} UTC`).toISOString(), tz).toIsoString());
-            } catch (err) {
-                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
-                throw new Warning("Invalid date.");
+            } catch (_) {
+                try {
+                    date = new Date(new tc.DateTime(new Date(`${new Date().toDateString()} ${message} UTC`).toISOString(), tz).toIsoString());
+                    if (date < new Date()) {
+                        date.setDate(date.getDate() + 1);
+                    }
+                } catch (err) {
+                    console.log(err);
+                    await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                    throw new Warning("Invalid date.");
+                }
             }
 
             if (!date || isNaN(date.valueOf())) {
@@ -6610,6 +6627,123 @@ class Commands {
         await member.roles.remove(Discord.testersRole);
 
         await Discord.queue(`${member}, you have been remove from the ${Discord.testersRole} role.  Use \`!testing\` to add yourself back to this role.`, channel);
+
+        return true;
+    }
+
+    //                                      #
+    //                                      #
+    //  ##    ##   ###   # #    ##   ###   ###
+    // #     #  #  #  #  # #   # ##  #  #   #
+    // #     #  #  #  #  # #   ##    #      #
+    //  ##    ##   #  #   #     ##   #       ##
+    /**
+     * Converts a time from the user's time zone to everyone's time zone in the channel.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async convert(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        if (!await Commands.checkHasParameters(message, member, "To convert a time, use `!convert` along with the date and time.  If not set, time zone defaults to your team's selected time zone, or Pacific Time.  Use the `!timezone` command to set your own time zone.  Founders may use the `!teamtimezone` command to set the default time zone for their team.", channel)) {
+            return false;
+        }
+
+        message = message.replace(/-/g, "/");
+
+        let date;
+        if (message.toLowerCase() === "now") {
+            date = new Date();
+            date = new Date(date.getTime() + (300000 - date.getTime() % 300000));
+        } else {
+            const tz = tc.TimeZone.zone(await member.getTimezone());
+
+            try {
+                date = new Date(new tc.DateTime(new Date(`${message} UTC`).toISOString(), tz).toIsoString());
+            } catch (_) {
+                try {
+                    date = new Date(new tc.DateTime(new Date(`${new Date().toDateString()} ${message} UTC`).toISOString(), tz).toIsoString());
+                    if (date < new Date()) {
+                        date.setDate(date.getDate() + 1);
+                    }
+                } catch (err) {
+                    console.log(err);
+                    await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                    throw new Warning("Invalid date.");
+                }
+            }
+
+            if (!date || isNaN(date.valueOf())) {
+                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                throw new Warning("Invalid date.");
+            }
+
+            if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date.setFullYear(new Date().getFullYear());
+                if (date < new Date()) {
+                    date.setFullYear(new Date().getFullYear() + 1);
+                }
+            }
+
+            if (!date || isNaN(date.valueOf())) {
+                await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
+                throw new Warning("Invalid date.");
+            }
+        }
+
+        try {
+            const times = {};
+            for (const channelMember of channel.members.values()) {
+                const timezone = await channelMember.getTimezone(),
+                    yearWithTimezone = date.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = date.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            for (const challengeTeam of [challenge.challengingTeam, challenge.challengedTeam]) {
+                const timezone = await challengeTeam.getTimezone(),
+                    yearWithTimezone = date.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
+
+                if (timezoneParse.test(yearWithTimezone)) {
+                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
+
+                    if (timezoneName) {
+                        times[timezoneName] = date.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
+                    }
+                }
+            }
+
+            const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
+                if (a.value.getTime() !== b.value.getTime()) {
+                    return b.value.getTime() - a.value.getTime();
+                }
+
+                return a.timezone.localeCompare(b.timezone);
+            });
+
+            await Discord.richQueue(Discord.messageEmbed({
+                description: "**Converted Times**",
+                fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
+            }), channel);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
 
         return true;
     }
