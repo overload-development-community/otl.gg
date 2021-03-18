@@ -841,7 +841,7 @@ class ChallengeDb {
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season AND cc.GameType = @gameType
             ) ON r.PlayerId = s.PlayerId
             LEFT OUTER JOIN (
-                SELECT c2.GameType, c2.Season, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                SELECT c2.GameType, c2.Season, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
@@ -850,14 +850,13 @@ class ChallengeDb {
                     GROUP BY PlayerId, ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
-                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    SELECT PlayerId, ChallengeId, SUM(Deaths) Deaths
                     FROM tblStat
-                    GROUP BY TeamId, PlayerId, ChallengeId
+                    GROUP BY PlayerId, ChallengeId
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.Season = @season
-                    AND c2.Postseason = @postseason
-                GROUP BY c2.GameType, c2.Season, s2.TeamId, s2.PlayerId
-            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
+                GROUP BY c2.GameType, c2.Season, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
@@ -872,7 +871,7 @@ class ChallengeDb {
                 INNER JOIN vwCompletedChallenge cc ON s.ChallengeId = cc.ChallengeId AND cc.Season = @season AND cc.GameType = @gameType
             ) ON r.PlayerId = s.PlayerId
             LEFT OUTER JOIN (
-                SELECT c2.GameType, c2.Season, s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                SELECT c2.GameType, c2.Season, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
@@ -881,14 +880,13 @@ class ChallengeDb {
                     GROUP BY PlayerId, ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
-                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    SELECT PlayerId, ChallengeId, SUM(Deaths) Deaths
                     FROM tblStat
-                    GROUP BY TeamId, PlayerId, ChallengeId
+                    GROUP BY PlayerId, ChallengeId
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.Season = @season
-                    AND c2.Postseason = @postseason
-                GROUP BY c2.GameType, c2.Season, s2.TeamId, s2.PlayerId
-            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType AND s.TeamId = d.TeamId
+                GROUP BY c2.GameType, c2.Season, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND c.GameType = d.GameType
             WHERE c.ChallengeId = @challengeId
             GROUP BY s.PlayerId, p.Name, d.Damage, d.Games, d.Deaths, cs.StreamerId, p.TwitchName
             ORDER BY p.Name
