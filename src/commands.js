@@ -1621,7 +1621,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, ${captain.displayName} is now a team captain!`, channel);
+        if (channel.id !== team.teamChannel.id && channel.id !== team.captainsChannel.id) {
+            await Discord.queue(`${member}, ${captain.displayName} is now a team captain!`, channel);
+        }
         return true;
     }
 
@@ -1677,7 +1679,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, ${captain.displayName} is no longer a team captain.`, channel);
+        if (channel.id !== team.teamChannel.id && channel.id !== team.captainsChannel.id) {
+            await Discord.queue(`${member}, ${captain.displayName} is no longer a team captain.`, channel);
+        }
         return true;
     }
 
@@ -1951,7 +1955,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
+        if (channel.id !== team.teamChannel.id) {
+            await Discord.queue(`${member}, your home map has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`, channel);
+        }
         return true;
     }
 
@@ -2023,7 +2029,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, your home map has been removed.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.  Also note that you will not be able to send or receive challenges until you once again have 5 maps in this category.  Use the \`!addhome\` command to do this.`, channel);
+        if (channel.id !== team.teamChannel.id) {
+            await Discord.queue(`${member}, your home map has been removed.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.  Also note that you will not be able to send or receive challenges until you once again have 5 maps in this category.  Use the \`!addhome\` command to do this.`, channel);
+        }
         return true;
     }
 
@@ -2115,7 +2123,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, your preferred neutral map has been set.`, channel);
+        if (channel.id !== team.teamChannel.id) {
+            await Discord.queue(`${member}, your preferred neutral map has been set.`, channel);
+        }
         return true;
     }
 
@@ -2169,7 +2179,9 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member}, your preferred neutral map has been removed.`, channel);
+        if (channel.id !== team.teamChannel.id) {
+            await Discord.queue(`${member}, your preferred neutral map has been removed.`, channel);
+        }
         return true;
     }
 
