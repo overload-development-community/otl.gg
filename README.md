@@ -26,7 +26,7 @@ Bug Fixes:
 * Fixed confirmed team size not showing in the pinned post for challenges.
 * Fixed a pretty bad memory leak with the website.
 * Removed team rating from the team page when viewing all seasons.
-* Removed a number of redundent messages when dealing with maps or captains.
+* Removed a number of redundant messages when dealing with maps or captains.
 
 ## v5.0.0 - 12/31/2020
 
