@@ -112,7 +112,8 @@ class Match {
                     pickups: stat.pickups,
                     carrierKills: stat.carrierKills,
                     returns: stat.returns,
-                    damage: stat.damage
+                    damage: stat.damage,
+                    netDamage: stat.netDamage
                 }))
             };
         });

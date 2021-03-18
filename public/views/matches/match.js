@@ -79,23 +79,24 @@ class MatchView {
                         </div>
                     ` : ""}
                 </div>
-                <div class="stats" style="grid-template-columns: repeat(${6 + (stats.length > 0 && stats[0].damage ? 1 : 0)}, auto)">
+                <div class="stats" style="grid-template-columns: repeat(${6 + (stats.length > 0 && stats[0].damage ? 2 : 0)}, auto)">
                     ${stats.length === 0 ? "" : /* html */`
                         <div class="header">Team</div>
                         <div class="header">Name</div>
                         ${match.gameType === "CTF" ? /* html */`
-                            <div class="header">Caps</div>
-                            <div class="header">Pickups</div>
-                            <div class="header">CKs</div>
-                            <div class="header">Returns</div>
+                            <div class="header">C</div>
+                            <div class="header">P</div>
+                            <div class="header">CK</div>
+                            <div class="header">R</div>
                         ` : /* html */`
                             <div class="header">KDA</div>
-                            <div class="header">Kills</div>
-                            <div class="header">Assists</div>
-                            <div class="header">Deaths</div>
+                            <div class="header">K</div>
+                            <div class="header">A</div>
+                            <div class="header">D</div>
                         `}
                         ${stats.length > 0 && stats[0].damage ? /* html */`
-                            <div class="header">Damage</div>
+                            <div class="header">Dmg</div>
+                            <div class="header">Net</div>
                         ` : ""}
                         ${stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name)).map((s) => /* html */ `
                             <div class="tag">${(team = match.challengingTeam.teamId === s.teamId ? match.challengingTeam : match.challengedTeam) === null ? "" : /* html */`
@@ -115,6 +116,7 @@ class MatchView {
                             `}
                             ${stats[0].damage ? /* html */`
                                 <div class="numeric damage">${Math.floor(s.damage)}</div>
+                                <div class="numeric damage">${s.netDamage === void 0 ? "" : `${s.netDamage > 0 ? "+" : s.netDamage < 0 ? "-" : ""}${Math.abs(Math.floor(s.netDamage))}`}</div>
                             ` : ""}
                         `).join("")}
                     `}

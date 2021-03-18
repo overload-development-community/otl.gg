@@ -269,6 +269,7 @@ declare namespace ChallengeDbTypes {
                 PlayerId: number
                 Name: string
                 TeamId: number
+                OpponentPlayerId: number
                 OpponentName: string
                 OpponentTeamId: number
                 Weapon: string

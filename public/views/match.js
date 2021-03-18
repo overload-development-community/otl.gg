@@ -122,6 +122,8 @@ class MatchView {
                         <div class="header">K</div>
                         <div class="header">A</div>
                         <div class="header">D</div>
+                        <div class="header">Dmg</div>
+                        <div class="header">Net</div>
                         ${details.stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name)).map((s) => /* html */ `
                             <div class="tag">${(team = challenge.challengingTeam.id === s.teamId ? challenge.challengingTeam : challenge.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
@@ -140,6 +142,8 @@ class MatchView {
                             <div class="numeric">${s.kills}</div>
                             <div class="numeric">${s.assists}</div>
                             <div class="numeric">${s.deaths}</div>
+                            <div class="numeric">${s.damage === void 0 ? "" : Math.floor(s.damage)}</div>
+                            <div class="numeric">${s.netDamage === void 0 ? "" : `${s.netDamage > 0 ? "+" : s.netDamage < 0 ? "-" : ""}${Math.abs(Math.floor(s.netDamage))}`}</div>
                         `).join("")}
                     </div>
                 ` : ""}
@@ -166,7 +170,7 @@ class MatchView {
                                         <div id="damage-${index}-${opponentIndex}" class="numeric right ${index === opponentIndex || player.teamId && player.teamId === opponent.teamId ? "friendly" : ""}"></div>
                                     `).join("")}
                                     <div id="damage-${index}-total" class="numeric right"></div>
-                                    <div class="numeric right">${details.damage.filter((d) => d.name === player.name && d.name !== d.opponentName && details.stats.find((p) => p.name === d.name).teamId !== details.stats.find((p) => p.name === d.opponentName).teamId).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
+                                    <div class="numeric right">${details.damage.filter((d) => d.name === player.name && (d.name !== d.opponentName || details.stats.find((p) => p.name === d.name).teamId !== details.stats.find((p) => p.name === d.opponentName).teamId)).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
                                 `).join("")}
                                 <div class="header">Total</div>
                                 ${details.stats.map((player, index) => /* html */`
@@ -176,7 +180,7 @@ class MatchView {
                                 <div class="empty"></div>
                                 <div class="header">All Weapons</div>
                                 ${details.stats.map((player) => /* html */`
-                                    <div class="numeric right">${details.damage.filter((d) => d.opponentName === player.name && d.name !== d.opponentName && (!details.stats.find((p) => p.name === d.opponentName).teamId || details.stats.find((p) => p.name === d.name) && details.stats.find((p) => p.name === d.opponentName).teamId !== details.stats.find((p) => p.name === d.name).teamId)).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
+                                    <div class="numeric right">${details.damage.filter((d) => d.opponentName === player.name && (d.name === d.opponentName || (!details.stats.find((p) => p.name === d.opponentName).teamId || details.stats.find((p) => p.name === d.name) && details.stats.find((p) => p.name === d.opponentName).teamId !== details.stats.find((p) => p.name === d.name).teamId))).map((d) => d.damage).reduce((a, b) => a + b, 0).toFixed(0)}</div>
                                 `).join("")}
                                 <div class="empty"></div>
                                 <div class="empty"></div>

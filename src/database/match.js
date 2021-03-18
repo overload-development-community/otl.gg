@@ -106,7 +106,8 @@ class MatchDb {
                 s.Pickups,
                 s.CarrierKills,
                 s.Returns,
-                ISNULL(SUM(d.Damage), 0) Damage
+                ISNULL(SUM(d.Damage), 0) Damage,
+                ISNULL(SUM(d.Damage), 0) - ISNULL(SUM(d2.Damage), 0) NetDamage
             FROM tblStat s
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
@@ -118,7 +119,18 @@ class MatchDb {
                     AND DateVoided IS NULL
                     AND DateConfirmed IS NOT NULL
             ) c ON s.ChallengeId = c.ChallengeId
-            LEFT OUTER JOIN tblDamage d ON c.ChallengeId = d.ChallengeId AND d.PlayerId = s.PlayerId AND d.TeamId <> d.OpponentTeamId
+            LEFT OUTER JOIN (
+                SELECT ChallengeId, PlayerId, SUM(Damage) Damage
+                FROM tblDamage
+                WHERE TeamId <> OpponentTeamId
+                GROUP BY ChallengeId, PlayerId
+            ) d ON c.ChallengeId = d.ChallengeId AND d.PlayerId = s.PlayerId
+            LEFT OUTER JOIN (
+                SELECT ChallengeId, OpponentPlayerId, SUM(Damage) Damage
+                FROM tblDamage
+                WHERE TeamId <> OpponentTeamId OR PlayerId = OpponentPlayerId
+                GROUP BY ChallengeId, OpponentPlayerId
+            ) d2 ON c.ChallengeId = d2.ChallengeId AND d2.OpponentPlayerId = s.PlayerId
             WHERE Row >= @page * @matchesPerPage - (@matchesPerPage - 1)
                 AND Row <= @page * @matchesPerPage
             GROUP BY
@@ -194,7 +206,8 @@ class MatchDb {
                 captures: row.Captures,
                 pickups: row.Pickups,
                 carrierKills: row.CarrierKills,
-                returns: row.Returns
+                returns: row.Returns,
+                netDamage: row.NetDamage
             })),
             standings: data.recordsets[2].map((row) => ({
                 teamId: row.TeamId,

@@ -28,6 +28,7 @@ declare namespace MatchDbTypes {
                 TeamName: string
                 PlayerId: number
                 Name: string
+                NetDamage: number
             })[],
             TeamDbTypes.TeamData[],
             {

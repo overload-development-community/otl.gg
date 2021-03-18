@@ -201,6 +201,8 @@ declare namespace ChallengeTypes {
             name: string
             teamId: number
             twitchName: string
+            damage: number
+            netDamage: number
         })[]
         damage: (PlayerTypes.WeaponStats & {
             playerId: number

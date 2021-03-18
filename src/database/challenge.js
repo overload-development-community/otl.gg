@@ -1383,7 +1383,7 @@ class ChallengeDb {
             LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
             WHERE s.ChallengeId = @challengeId
 
-            SELECT d.PlayerId, p.Name, d.TeamId, op.Name OpponentName, d.OpponentTeamId, d.Weapon, d.Damage
+            SELECT d.PlayerId, p.Name, d.TeamId, d.OpponentPlayerId, op.Name OpponentName, d.OpponentTeamId, d.Weapon, d.Damage
             FROM tblDamage d
             INNER JOIN tblPlayer p ON d.PlayerId = p.PlayerId
             INNER JOIN tblPlayer op ON d.OpponentPlayerId = op.PlayerId
@@ -1413,7 +1413,9 @@ class ChallengeDb {
                 kills: row.Kills,
                 assists: row.Assists,
                 deaths: row.Deaths,
-                twitchName: row.TwitchName
+                twitchName: row.TwitchName,
+                damage: data.recordsets[2].filter((r) => r.PlayerId === row.PlayerId && r.TeamId !== r.OpponentTeamId).reduce((acc, val) => acc + val.Damage, 0),
+                netDamage: data.recordsets[2].filter((r) => r.PlayerId === row.PlayerId && r.TeamId !== r.OpponentTeamId).reduce((acc, val) => acc + val.Damage, 0) - data.recordsets[2].filter((r) => r.OpponentPlayerId === row.PlayerId && (r.TeamId !== r.OpponentTeamId || r.PlayerId === r.OpponentPlayerId)).reduce((acc, val) => acc + val.Damage, 0)
             })),
             damage: data.recordsets[2].map((row) => ({
                 playerId: row.PlayerId,

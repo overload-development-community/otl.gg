@@ -140,6 +140,7 @@ declare namespace PlayerTypes {
 
     type GameStats = KDAStats & {
         damage: number
+        netDamage?: number
     }
 
     type KDAStats = {
