@@ -28,7 +28,7 @@ const tc = require("timezonecomplete"),
 
     adjudicateParse = /^(?<decision>cancel|extend|penalize)(?: (?<teamTag>[^ ]{1,5}))?$/,
     addMapParse = /^(?<gameType>TA|CTF|MB) (?<map>.*)$/i,
-    addStatsParse = /^(?<gameId>[0-9]+)(?:(?<minutes>[1-9][0-9]):(?<seconds>[0-9]{2}(?:\.[0-9]{3})?))?(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
+    addStatsParse = /^(?<gameId>[0-9]+)(?: (?<minutes>[1-9]?[0-9]):(?<seconds>[0-9]{2}(?:\.[0-9]{3})?))?(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
