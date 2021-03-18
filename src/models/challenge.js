@@ -461,9 +461,10 @@ class Challenge {
      * @param {number} gameId The game ID from the tracker.
      * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
      * @param {boolean} [requireConfirmation] Whether to require confirmation of the report.
+     * @param {number} [timestamp] The timestamp to discard data after.
      * @returns {Promise<ChallengeTypes.GameBoxScore>} A promise that returns data about the game's stats and score.
      */
-    async addStats(gameId, nameMap, requireConfirmation) {
+    async addStats(gameId, nameMap, requireConfirmation, timestamp) {
         let game;
         try {
             game = (await Tracker.getMatch(gameId)).body;
@@ -519,6 +520,89 @@ class Challenge {
 
         if (notFound.length > 0) {
             throw new Error(`Please add mappings for the following players: **${notFound.join("**, **")}**`);
+        }
+
+        // Remove events that happened after the timestamp.
+        if (timestamp && game.kills) {
+            for (const kill of game.kills.filter((k) => k.time >= timestamp)) {
+                if (kill.attacker === kill.defender) {
+                    if (this.details.gameType === "TA") {
+                        game.teamScore[kill.attackerTeam]++;
+                    }
+
+                    const player = game.players.find((p) => p.name === kill.attacker && p.team === kill.attackerTeam);
+                    if (player) {
+                        player.kills++;
+                        player.deaths--;
+                    }
+                } else {
+                    if (this.details.gameType === "TA") {
+                        game.teamScore[kill.attackerTeam]--;
+                    }
+
+                    const killer = game.players.find((p) => p.name === kill.attacker && p.team === kill.attackerTeam),
+                        killed = game.players.find((p) => p.name === kill.defender && p.team === kill.defenderTeam),
+                        assist = game.players.find((p) => p.name === kill.assisted && p.team === kill.assistedTeam);
+                    if (killer) {
+                        killer.kills--;
+                    }
+                    if (killed) {
+                        killed.deaths--;
+                    }
+                    if (assist) {
+                        assist.assists--;
+                    }
+                }
+            }
+        }
+
+        if (timestamp && game.goals) {
+            for (const goal of game.goals.filter((k) => k.time >= timestamp)) {
+                const scorer = game.players.find((p) => p.name === goal.scorer && p.team === goal.scorerTeam),
+                    assist = game.players.find((p) => p.name === goal.assisted && p.team === goal.scorerTeam);
+                if (goal.blunder) {
+                    game.teamScore[Object.keys(game.teamScore).find((t) => t !== goal.scorerTeam)]--;
+
+                    if (scorer) {
+                        scorer.blunders--;
+                    }
+                } else {
+                    game.teamScore[goal.scorerTeam]--;
+
+                    if (scorer) {
+                        scorer.goals--;
+                    }
+                    if (assist) {
+                        assist.goalAssists--;
+                    }
+                }
+            }
+        }
+
+        if (timestamp && game.flagStats) {
+            for (const stat of game.flagStats.filter((k) => k.time >= timestamp)) {
+                const player = game.players.find((p) => p.name === stat.scorer && p.team === stat.scorerTeam);
+
+                if (stat.event === "Capture") {
+                    game.teamScore[stat.scorerTeam]--;
+                }
+
+                if (player) {
+                    switch (stat.event) {
+                        case "Capture":
+                            player.captures--;
+                            break;
+                        case "Pickup":
+                            player.pickups--;
+                            break;
+                        case "CarrierKill":
+                            player.carrierKills--;
+                            break;
+                        case "Return":
+                            player.returns--;
+                    }
+                }
+            }
         }
 
         await Cache.add(`${settings.redisPrefix}:nameMap`, map);
