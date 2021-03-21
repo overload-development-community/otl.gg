@@ -472,7 +472,7 @@ class Challenge {
             throw new Error("That is not a valid game ID.");
         }
 
-        if (!game) {
+        if (!game && !game.settings) {
             throw new Error("That is not a valid game ID.");
         }
 
