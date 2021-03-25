@@ -26,7 +26,7 @@
         "express": "4.17.1",
         "express-minify": "1.0.0",
         "html-minifier": "4.0.0",
-        "ioredis": "4.24.2",
+        "ioredis": "4.24.4",
         "morgan": "1.10.0",
         "node-database": "roncli/node-database#v1.2.4",
         "node-schedule": "2.0.0",
