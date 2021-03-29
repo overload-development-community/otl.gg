@@ -290,6 +290,14 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type PlayerRecordsets = {
+        recordsets: [
+            {
+                PlayerId: number
+            }[]
+        ]
+    }
+
     type ReportRecordsets = {
         recordsets: [
             {

@@ -21,6 +21,7 @@
  * @typedef {import("../../types/challengeDbTypes").GetStreamersRecordsets} ChallengeDbTypes.GetStreamersRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetTeamDetailsRecordsets} ChallengeDbTypes.GetTeamDetailsRecordsets
  * @typedef {import("../../types/challengeDbTypes").PickMapRecordsets} ChallengeDbTypes.PickMapRecordsets
+ * @typedef {import("../../types/challengeDbTypes").PlayerRecordsets} ChallengeDbTypes.PlayerRecordsets
  * @typedef {import("../../types/challengeDbTypes").ReportRecordsets} ChallengeDbTypes.ReportRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetConfirmedRecordsets} ChallengeDbTypes.SetConfirmedRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetHomeMapTeamRecordsets} ChallengeDbTypes.SetHomeMapTeamRecordsets
@@ -1236,7 +1237,7 @@ class ChallengeDb {
                 SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} WITH TIES ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
                 FROM vwCompletedChallenge
                 WHERE GameType = @type
-                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeID = @id AND GameType = @homeType)
+                    AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeId = @id AND GameType = @homeType)
                 GROUP BY Map
                 ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "top" ? "DESC" : "ASC"} ` : ""}
             ) a
@@ -1379,7 +1380,7 @@ class ChallengeDb {
             SELECT s.PlayerId, p.Name, s.TeamId, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeID = cs.ChallengeID AND p.PlayerID = cs.PlayerID
+            LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             WHERE s.ChallengeId = @challengeId
 
             SELECT d.PlayerId, p.Name, d.TeamId, d.OpponentPlayerId, op.Name OpponentName, d.OpponentTeamId, d.Weapon, d.Damage
@@ -1648,8 +1649,35 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the damage stats have been set.
      */
     static async setDamage(challenge, damage) {
+        const playerIds = {};
+
         let sql = /* sql */`
+            SELECT PlayerId FROM tblPlayer WHERE DiscordId = @id
+        `;
+
+        for (const stat of damage) {
+            if (!playerIds[stat.discordId]) {
+                /** @type {ChallengeDbTypes.PlayerRecordsets} */
+                const player = await db.query(sql, {id: {type: Db.VARCHAR(24), value: stat.discordId}});
+
+                if (player.recordsets && player.recordsets[0] && player.recordsets[0][0] && player.recordsets[0][0].PlayerId) {
+                    playerIds[stat.discordId] = player.recordsets[0][0].PlayerId;
+                }
+            }
+
+            if (!playerIds[stat.opponentDiscordId]) {
+                const player = await db.query(sql, {id: {type: Db.VARCHAR(24), value: stat.opponentDiscordId}});
+
+                if (player.recordsets && player.recordsets[0] && player.recordsets[0][0] && player.recordsets[0][0].PlayerId) {
+                    playerIds[stat.opponentDiscordId] = player.recordsets[0][0].PlayerId;
+                }
+            }
+        }
+
+        sql = /* sql */`
             DELETE FROM tblDamage WHERE ChallengeId = @id
+
+            INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentTeamId, OpponentPlayerId, Weapon, Damage) VALUES
         `;
 
         /** @type {DbTypes.Parameters} */
@@ -1657,32 +1685,31 @@ class ChallengeDb {
             id: {type: Db.INT, value: challenge.id}
         };
 
+        let sqlTerms = [];
+
         for (const stat of damage) {
             const index = damage.indexOf(stat);
 
-            sql = /* sql */`
-                ${sql}
-                INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentTeamId, OpponentPlayerId, Weapon, Damage)
-                SELECT @id, @team${index}Id, p.PlayerId, @opponentTeam${index}Id, op.PlayerId, @weapon${index}, @damage${index}
-                FROM tblPlayer p
-                CROSS JOIN tblPlayer op
-                WHERE p.DiscordId = @discord${index}Id
-                    AND op.DiscordId = @opponentDiscord${index}Id
-            `;
+            sqlTerms.push(/* sql */`
+                 (@id, @team${index}Id, @player${index}Id, @opponentTeam${index}Id, @opponentPlayer${index}Id, @weapon${index}, @damage${index})
+            `);
 
             params[`team${index}Id`] = {type: Db.INT, value: stat.team.id};
-            params[`discord${index}Id`] = {type: Db.VARCHAR(24), value: stat.discordId};
+            params[`player${index}Id`] = {type: Db.INT, value: playerIds[stat.discordId]};
             params[`opponentTeam${index}Id`] = {type: Db.INT, value: stat.opponentTeam.id};
-            params[`opponentDiscord${index}Id`] = {type: Db.VARCHAR(24), value: stat.opponentDiscordId};
+            params[`opponentPlayer${index}Id`] = {type: Db.INT, value: playerIds[stat.opponentDiscordId]};
             params[`weapon${index}`] = {type: Db.VARCHAR(50), value: stat.weapon};
             params[`damage${index}`] = {type: Db.FLOAT, value: stat.damage};
 
             if (Object.keys(params).length > 2000) {
-                await db.query(sql, params);
-                sql = "";
+                await db.query(`${sql} ${sqlTerms.join(",")}`, params);
+                sql = /* sql */`
+                    INSERT INTO tblDamage (ChallengeId, TeamId, PlayerId, OpponentTeamId, OpponentPlayerId, Weapon, Damage) VALUES
+                `;
                 params = {
                     id: {type: Db.INT, value: challenge.id}
                 };
+                sqlTerms = [];
             }
         }
 
