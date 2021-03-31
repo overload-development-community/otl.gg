@@ -3350,7 +3350,9 @@ class Commands {
             }
 
             if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date = new Date(`${message} UTC`);
                 date.setFullYear(new Date().getFullYear());
+                date = new Date(new tc.DateTime(date.toISOString(), tz).toIsoString());
                 if (date < new Date()) {
                     date.setFullYear(new Date().getFullYear() + 1);
                 }
@@ -5280,7 +5282,9 @@ class Commands {
             }
 
             if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date = new Date(`${message} UTC`);
                 date.setFullYear(new Date().getFullYear());
+                date = new Date(new tc.DateTime(date.toISOString(), tz).toIsoString());
                 if (date < new Date()) {
                     date.setFullYear(new Date().getFullYear() + 1);
                 }
@@ -6700,7 +6704,9 @@ class Commands {
             }
 
             if (date.getFullYear() === 2001 && message.indexOf("2001") === -1) {
+                date = new Date(`${message} UTC`);
                 date.setFullYear(new Date().getFullYear());
+                date = new Date(new tc.DateTime(date.toISOString(), tz).toIsoString());
                 if (date < new Date()) {
                     date.setFullYear(new Date().getFullYear() + 1);
                 }
