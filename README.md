@@ -4,6 +4,13 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v5.0.2 - 3/31/2021
+
+* Records page now filters by team.
+* Fix bug with standings page.
+* Fix bug with adding stats with a timestamp to ignore events after.
+* Improve handling of timezones when a year isn't specified in a date.
+
 ## v5.0.1 - 3/17/2021
 
 New Features:
