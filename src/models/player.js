@@ -100,27 +100,28 @@ class Player {
      * @param {boolean} postseason Whether to get postseason records.
      * @param {string} gameType The game type to get records for.
      * @param {string} recordType The record type to get records for.
+     * @param {number} [teamId] The ID of the team to get records for.
      * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecords(season, postseason, gameType, recordType) {
+    static async getRecords(season, postseason, gameType, recordType, teamId) {
         try {
             switch (gameType) {
                 case "CTF":
                     switch (recordType) {
                         case "player":
-                            return await Db.getRecordsCTFPlayer(season, postseason);
+                            return await Db.getRecordsCTFPlayer(season, postseason, teamId);
                         case "team":
                         default:
-                            return await Db.getRecordsCTFTeam(season, postseason);
+                            return await Db.getRecordsCTFTeam(season, postseason, teamId);
                     }
                 case "TA":
                 default:
                     switch (recordType) {
                         case "player":
-                            return await Db.getRecordsTAPlayer(season, postseason);
+                            return await Db.getRecordsTAPlayer(season, postseason, teamId);
                         case "team":
                         default:
-                            return await Db.getRecordsTATeam(season, postseason);
+                            return await Db.getRecordsTATeam(season, postseason, teamId);
                     }
             }
         } catch (err) {

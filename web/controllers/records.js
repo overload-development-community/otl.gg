@@ -4,7 +4,8 @@ const Common = require("../includes/common"),
     Challenge = require("../../src/models/challenge"),
     Player = require("../../src/models/player"),
     RecordsView = require("../../public/views/records"),
-    Season = require("../../src/models/season");
+    Season = require("../../src/models/season"),
+    Team = require("../../src/models/team");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -39,21 +40,36 @@ class Records {
         const queryGameType = req.query.gameType && req.query.gameType.toString() || void 0,
             queryRecordType = req.query.recordType && req.query.recordType.toString() || void 0,
             querySeason = req.query.season && req.query.season.toString() || void 0,
+            queryTeamId = req.query.teamId && req.query.teamId.toString() || void 0,
             seasonList = await Season.getSeasonNumbers(),
             postseason = !!req.query.postseason,
             gameType = !queryGameType || ["TA", "CTF"].indexOf(queryGameType.toUpperCase()) === -1 ? "TA" : queryGameType.toUpperCase(),
             recordType = !queryRecordType || ["team", "player"].indexOf(queryRecordType.toLowerCase()) === -1 ? "team" : queryRecordType.toLowerCase(),
             validSeasonNumbers = await Season.getSeasonNumbers(),
+            teamList = await Team.getSeasonStandings(),
             teams = new Teams();
 
-        let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
+        let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10),
+            teamId = isNaN(+queryTeamId) ? void 0 : Number.parseInt(queryTeamId, 10);
 
         validSeasonNumbers.push(0);
         if (validSeasonNumbers.indexOf(season) === -1) {
             season = void 0;
         }
 
-        const records = await Player.getRecords(season, postseason, gameType, recordType);
+        for (const teamData of teamList) {
+            const team = teams.getTeam(teamData.teamId, teamData.name, teamData.tag);
+            teamData.color = team.role && team.role.hexColor || "";
+        }
+
+        if (teamId !== void 0) {
+            const team = await Team.getById(teamId);
+            if (team === void 0) {
+                teamId = void 0;
+            }
+        }
+
+        const records = await Player.getRecords(season, postseason, gameType, recordType, teamId);
 
         res.status(200).send(Common.page(
             "",
@@ -66,7 +82,9 @@ class Records {
                 gameType,
                 gameTypeName: Challenge.getGameTypeName(gameType),
                 recordType,
-                teams
+                teamId,
+                teams,
+                teamList
             }),
             req
         ));

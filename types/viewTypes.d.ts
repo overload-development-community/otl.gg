@@ -102,7 +102,9 @@ declare namespace ViewTypes {
         gameType: string
         recordType: string
         gameTypeName: string
+        teamId: number
         teams: Teams
+        teamList: TeamTypes.Standing[]
     }
 
     type StandingsViewParameters = {

@@ -710,10 +710,11 @@ class PlayerDb {
      * Gets the league player records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
+     * @param {number} [teamId] The ID of the team to get records for.
      * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecordsCTFPlayer(season, postseason) {
-        const key = `${settings.redisPrefix}:db:player:getRecords:CTF:player:${season === void 0 ? "null" : season}:${!!postseason}`;
+    static async getRecordsCTFPlayer(season, postseason, teamId) {
+        const key = `${settings.redisPrefix}:db:player:getRecords:CTF:player:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
@@ -745,6 +746,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -767,6 +769,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -789,6 +792,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -811,6 +815,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -834,6 +839,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY
                     c.TeamSize,
                     d.ChallengeId,
@@ -861,6 +867,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -872,7 +879,8 @@ class PlayerDb {
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
-            postseason: {type: Db.BIT, value: postseason}
+            postseason: {type: Db.BIT, value: postseason},
+            teamId: {type: Db.INT, value: teamId}
         });
         cache = data && data.recordsets && data.recordsets.length === 7 && {
             captures: data.recordsets[0].map((row) => ({
@@ -989,10 +997,11 @@ class PlayerDb {
      * Gets the league team records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
+     * @param {number} [teamId] The ID of the team to get records for.
      * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecordsCTFTeam(season, postseason) {
-        const key = `${settings.redisPrefix}:db:player:getRecords:CTF:team:${season === void 0 ? "null" : season}:${!!postseason}`;
+    static async getRecordsCTFTeam(season, postseason, teamId) {
+        const key = `${settings.redisPrefix}:db:player:getRecords:CTF:team:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
@@ -1012,19 +1021,28 @@ class PlayerDb {
 
             SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
-                SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END DESC) Rank,
+                SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY c.Score DESC) Rank,
                     c.TeamSize,
                     c.ChallengeId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END TeamId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END Score
-                FROM vwCompletedChallenge c
-                WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Season >= 3
-                    AND c.Postseason = @postseason
-                    AND c.GameType = 'CTF'
-                GROUP BY c.TeamSize, c.ChallengeId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END
+                    c.TeamId,
+                    c.Score
+                FROM (
+                    SELECT ChallengeId, TeamSize, ChallengingTeamId TeamId, ChallengingTeamScore Score
+                    FROM vwCompletedChallenge
+                    WHERE (@season = 0 OR Season = @season)
+                        AND Season >= 3
+                        AND Postseason = @postseason
+                        AND GameType = 'CTF'
+                        ${teamId ? "AND ChallengingTeamId = @teamId" : ""}
+                    UNION SELECT ChallengeId, TeamSize, ChallengedTeamId TeamId, ChallengedTeamScore Score
+                    FROM vwCompletedChallenge
+                    WHERE (@season = 0 OR Season = @season)
+                        AND Season >= 3
+                        AND Postseason = @postseason
+                        AND GameType = 'CTF'
+                        ${teamId ? "AND ChallengedTeamId = @teamId" : ""}
+                ) c
+                GROUP BY c.TeamSize, c.ChallengeId, c.TeamId, c.Score
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1045,6 +1063,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1066,6 +1085,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1087,6 +1107,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1109,6 +1130,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY d.ChallengeId, c.TeamSize, d.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1130,6 +1152,7 @@ class PlayerDb {
                     AND c.Season >= 3
                     AND c.Postseason = @postseason
                     AND c.GameType = 'CTF'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY c.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1141,7 +1164,8 @@ class PlayerDb {
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
-            postseason: {type: Db.BIT, value: postseason}
+            postseason: {type: Db.BIT, value: postseason},
+            teamId: {type: Db.INT, value: teamId}
         });
         cache = data && data.recordsets && data.recordsets.length === 7 && {
             teamScore: data.recordsets[0].map((row) => ({
@@ -1246,10 +1270,11 @@ class PlayerDb {
      * Gets the league player records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
+     * @param {number} [teamId] The ID of the team to get records for.
      * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecordsTAPlayer(season, postseason) {
-        const key = `${settings.redisPrefix}:db:player:getRecords:TA:player:${season === void 0 ? "null" : season}:${!!postseason}`;
+    static async getRecordsTAPlayer(season, postseason, teamId) {
+        const key = `${settings.redisPrefix}:db:player:getRecords:TA:player:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
@@ -1280,6 +1305,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1301,6 +1327,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1322,6 +1349,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1343,6 +1371,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1366,6 +1395,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY
                     c.TeamSize,
                     d.ChallengeId,
@@ -1395,6 +1425,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY
                     c.TeamSize,
                     d.ChallengeId,
@@ -1412,7 +1443,8 @@ class PlayerDb {
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
-            postseason: {type: Db.BIT, value: postseason}
+            postseason: {type: Db.BIT, value: postseason},
+            teamId: {type: Db.INT, value: teamId}
         });
         cache = data && data.recordsets && data.recordsets.length === 7 && {
             kda: data.recordsets[0].map((row) => ({
@@ -1529,10 +1561,11 @@ class PlayerDb {
      * Gets the league team records for team anarchy.
      * @param {number} season The season to get the records for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
+     * @param {number} [teamId] The ID of the team to get records for.
      * @returns {Promise<Object<string, PlayerTypes.GameRecord[]>>} A promise that resolves with the league records.
      */
-    static async getRecordsTATeam(season, postseason) {
-        const key = `${settings.redisPrefix}:db:player:getRecords:TA:team:${season === void 0 ? "null" : season}:${!!postseason}`;
+    static async getRecordsTATeam(season, postseason, teamId) {
+        const key = `${settings.redisPrefix}:db:player:getRecords:TA:team:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
         let cache = await Cache.get(key);
@@ -1562,6 +1595,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY c.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1572,18 +1606,26 @@ class PlayerDb {
 
             SELECT s.TeamSize, s.Score, t.TeamId, t.Tag, t.Name TeamName, o.TeamId OpponentTeamId, o.Tag OpponentTag, o.Name OpponentTeamName, c.ChallengeId, c.MatchTime, c.Map, c.OvertimePeriods
             FROM (
-                SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END DESC) Rank,
+                SELECT RANK() OVER (PARTITION BY c.TeamSize ORDER BY Score DESC) Rank,
                     c.TeamSize,
                     c.ChallengeId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END TeamId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END Score
-                FROM vwCompletedChallenge c
-                WHERE (@season = 0 OR c.Season = @season)
-                    AND c.Postseason = @postseason
-                    AND c.GameType = 'TA'
-                GROUP BY c.TeamSize, c.ChallengeId,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END,
-                    CASE WHEN c.ChallengingTeamScore > c.ChallengedTeamScore THEN c.ChallengingTeamScore ELSE c.ChallengedTeamScore END
+                    c.TeamId,
+                    c.Score
+                FROM (
+                    SELECT ChallengeId, TeamSize, ChallengingTeamId TeamId, ChallengingTeamScore Score
+                    FROM vwCompletedChallenge
+                    WHERE (@season = 0 OR Season = @season)
+                        AND Postseason = @postseason
+                        AND GameType = 'TA'
+                        ${teamId ? "AND ChallengingTeamId = @teamId" : ""}
+                    UNION SELECT ChallengeId, TeamSize, ChallengedTeamId TeamId, ChallengedTeamScore Score
+                    FROM vwCompletedChallenge
+                    WHERE (@season = 0 OR Season = @season)
+                        AND Postseason = @postseason
+                        AND GameType = 'TA'
+                        ${teamId ? "AND ChallengedTeamId = @teamId" : ""}
+                ) c
+                GROUP BY c.TeamSize, c.ChallengeId, c.TeamId, c.Score
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
@@ -1603,6 +1645,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1623,6 +1666,7 @@ class PlayerDb {
                 WHERE (@season = 0 OR c.Season = @season)
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
+                    ${teamId ? "AND s.TeamId = @teamId" : ""}
                 GROUP BY s.ChallengeId, c.TeamSize, s.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1645,6 +1689,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY d.ChallengeId, c.TeamSize, d.TeamId
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1672,6 +1717,7 @@ class PlayerDb {
                     AND c.Postseason = @postseason
                     AND c.GameType = 'TA'
                     AND d.TeamId <> d.OpponentTeamId
+                    ${teamId ? "AND d.TeamId = @teamId" : ""}
                 GROUP BY d.ChallengeId, c.TeamSize, d.TeamId, s.Deaths
             ) s
             INNER JOIN tblChallenge c ON s.ChallengeId = c.ChallengeId
@@ -1683,7 +1729,8 @@ class PlayerDb {
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `, {
             season: {type: Db.INT, value: season},
-            postseason: {type: Db.BIT, value: postseason}
+            postseason: {type: Db.BIT, value: postseason},
+            teamId: {type: Db.INT, value: teamId}
         });
         cache = data && data.recordsets && data.recordsets.length === 7 && {
             teamKda: data.recordsets[0].map((row) => ({

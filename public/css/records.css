@@ -104,7 +104,8 @@
     }
 }
 
-#records .diamond {
+#records .diamond,
+#options .diamond {
     display: inline-block;
     width: 8px;
     height: 8px;
@@ -121,7 +122,8 @@
     transform-origin: 0 100%;
 }
 
-#records .diamond-empty {
+#records .diamond-empty,
+#options .diamond-empty {
     display: inline-block;
     width: 6px;
     height: 6px;
