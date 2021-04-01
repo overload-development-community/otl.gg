@@ -1685,7 +1685,8 @@ class ChallengeDb {
             id: {type: Db.INT, value: challenge.id}
         };
 
-        let sqlTerms = [];
+        let hasData = false,
+            sqlTerms = [];
 
         for (const stat of damage) {
             const index = damage.indexOf(stat);
@@ -1700,6 +1701,7 @@ class ChallengeDb {
             params[`opponentPlayer${index}Id`] = {type: Db.INT, value: playerIds[stat.opponentDiscordId]};
             params[`weapon${index}`] = {type: Db.VARCHAR(50), value: stat.weapon};
             params[`damage${index}`] = {type: Db.FLOAT, value: stat.damage};
+            hasData = true;
 
             if (Object.keys(params).length > 2000) {
                 await db.query(`${sql} ${sqlTerms.join(",")}`, params);
@@ -1710,10 +1712,13 @@ class ChallengeDb {
                     id: {type: Db.INT, value: challenge.id}
                 };
                 sqlTerms = [];
+                hasData = false;
             }
         }
 
-        await db.query(sql, params);
+        if (hasData) {
+            await db.query(sql, params);
+        }
     }
 
     //               #     ##                     ###

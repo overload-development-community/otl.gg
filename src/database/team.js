@@ -1663,6 +1663,8 @@ class TeamDb {
             params[`rating${index}`] = {type: Db.FLOAT, value: rating};
         }
 
+        let hasData = false;
+
         for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: +r, challengeRating: challengeRatings[+r], index: i}))) {
             sql = /* sql */`
                 ${sql}
@@ -1678,15 +1680,19 @@ class TeamDb {
             params[`challengedTeamRating${index}`] = {type: Db.FLOAT, value: challengeRating.challengedTeamRating};
             params[`ratingChange${index}`] = {type: Db.FLOAT, value: challengeRating.change};
             params[`challenge${index}Id`] = {type: Db.INT, value: challengeId};
+            hasData = true;
 
             if (Object.keys(params).length > 2000) {
                 await db.query(sql, params);
                 sql = "";
                 params = {};
+                hasData = false;
             }
         }
 
-        await db.query(sql, params);
+        if (hasData) {
+            await db.query(sql, params);
+        }
 
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
     }
