@@ -1717,7 +1717,7 @@ class ChallengeDb {
         }
 
         if (hasData) {
-            await db.query(sql, params);
+            await db.query(`${sql} ${sqlTerms.join(",")}`, params);
         }
     }
 
