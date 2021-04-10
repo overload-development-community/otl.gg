@@ -3,7 +3,7 @@ const Common = require("../includes/common"),
 
     NotFoundView = require("../../public/views/404"),
     PlayerGameLogView = require("../../public/views/playergamelog"),
-    PlayerModel = require("../../src/models/player");
+    Player = require("../../src/models/player");
 
 /**
  * @typedef {import("express").Request} Express.Request
@@ -22,7 +22,7 @@ const Common = require("../includes/common"),
 /**
  * A class that represents the player game log page.
  */
-class Player {
+class PlayerGameLog {
     //              #
     //              #
     //  ###   ##   ###
@@ -41,7 +41,7 @@ class Player {
             playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10),
             postseason = !!req.query.postseason,
-            gameLog = await PlayerModel.getGameLog(playerId, season, postseason);
+            gameLog = await Player.getGameLog(playerId, season, postseason);
 
         if (gameLog) {
             const seasonList = gameLog.seasons,
@@ -79,8 +79,8 @@ class Player {
     }
 }
 
-Player.route = {
+PlayerGameLog.route = {
     path: "/player/:id/:name/gamelog"
 };
 
-module.exports = Player;
+module.exports = PlayerGameLog;
