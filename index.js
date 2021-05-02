@@ -62,7 +62,7 @@ const compression = require("compression"),
 
     // Setup Discord redirect.
     app.get("/discord", (req, res) => {
-        res.redirect("http://ronc.li/otl-discord");
+        res.redirect("https://ronc.li/otl-discord");
     });
 
     // Setup JS/CSS handlers.
