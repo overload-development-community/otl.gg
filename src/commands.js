@@ -6577,12 +6577,8 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async shenanigans(member, channel, message) {
-        if (message) {
-            await Discord.queue(`Come on, ${member}, shenanigans speaks for itself.  Try \`!shenanigans\` by itself.`, channel);
-            return false;
-        }
-
-        return this.challenge(member, channel, "DC");
+        await Discord.queue("This command has been retired. You may use the `!challenge` command to challenge a team directly.", channel);
+        return true;
     }
 
     //  #                  #     #

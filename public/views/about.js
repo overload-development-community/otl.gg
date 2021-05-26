@@ -209,7 +209,7 @@ class AboutView {
 
                     <div class="command">!challenge &lt;team> (TA|<wbr />CTF)</div>
                     <div>Founder or Captain only.  Challenges another team to a match.  Creates a challenge channel where you can negotiate the match parameters with the other team.  You can optionally include the game type.</div>
-                    <div class="example">!challenge CF<br />!challenge Cronus Frontier TA<br />!shenanigans</div>
+                    <div class="example">!challenge CF<br />!challenge Cronus Frontier TA</div>
 
                     <div class="section">Challenges (Only allowed in challenge channels)</div>
 
