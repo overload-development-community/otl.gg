@@ -124,7 +124,8 @@
             1,
             1
         ],
-        "jipEnabled": 1
+        "jipEnabled": 1,
+        "assistScoring": false
     },
     {
         "title": "ORL Time Trial",
