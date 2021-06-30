@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v6.0.0 - 6/30/2021
+
+* `!report` now shows the secondary notice immediately instead of after updating the pinned message.
+* `!shenanigans` has been removed to avoid confusion.
+
 ## v5.0.2 - 3/31/2021
 
 * Records page now filters by team.
