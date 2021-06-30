@@ -1985,9 +1985,10 @@ class Challenge {
      * @param {Team} losingTeam The losing team.
      * @param {number} winningScore The winning score.
      * @param {number} losingScore The losing score.
+     * @param {boolean} displayNotice Display a notice about multiple games.
      * @returns {Promise} A promise that resolves when the match has been reported.
      */
-    async reportMatch(losingTeam, winningScore, losingScore) {
+    async reportMatch(losingTeam, winningScore, losingScore, displayNotice) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2012,6 +2013,10 @@ class Challenge {
                     description: `This match has been reported as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  If this is correct, **${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
                     color: winningTeam.role.color
                 }), this.channel);
+            }
+
+            if (displayNotice) {
+                await Discord.queue("If there are multiple games to include in this report, continue to `!report` more tracker URLs.  You may `!report 0 0` in order to reset the stats and restart the reporting process.", this.channel);
             }
 
             await this.updatePinnedPost();

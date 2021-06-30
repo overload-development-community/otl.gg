@@ -4361,14 +4361,10 @@ class Commands {
         }
 
         try {
-            await challenge.reportMatch(team, score1, score2);
+            await challenge.reportMatch(team, score1, score2, !!gameId);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
             throw err;
-        }
-
-        if (gameId) {
-            await Discord.queue("If there are multiple games to include in this report, continue to `!report` more tracker URLs.  You may `!report 0 0` in order to reset the stats and restart the reporting process.", channel);
         }
 
         return true;
