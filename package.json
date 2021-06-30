@@ -31,7 +31,7 @@
         "node-database": "roncli/node-database#v1.2.4",
         "node-schedule": "2.0.0",
         "terser": "5.7.1",
-        "timezonecomplete": "5.12.2",
+        "timezonecomplete": "5.12.4",
         "tzdata": "1.0.25"
     },
     "devDependencies": {
