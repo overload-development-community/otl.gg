@@ -40,7 +40,8 @@
         ],
         "jipEnabled": 0,
         "classicspawnsenabled": false,
-        "ctfcarrierboostenabled": false
+        "ctfcarrierboostenabled": false,
+        "assistScoring": true
     },
     {
         "title": "OTL Season 5 CTF",
@@ -83,7 +84,8 @@
         ],
         "jipEnabled": 0,
         "classicspawnsenabled": true,
-        "ctfcarrierboostenabled": false
+        "ctfcarrierboostenabled": false,
+        "assistScoring": true
     },
     {
         "title": "Descent Rangers",
@@ -208,7 +210,8 @@
             0,
             0
         ],
-        "jipEnabled": 1
+        "jipEnabled": 1,
+        "assistScoring": true
     },
     {
         "title": "Smashmouth Overload",
@@ -252,6 +255,7 @@
         "jipEnabled": 1,
         "classicspawnsenabled": false,
         "ctfcarrierboostenabled": false,
-        "allowSmash": true
+        "allowSmash": true,
+        "assistScoring": true
     }
 ]
