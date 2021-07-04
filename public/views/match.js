@@ -189,7 +189,7 @@ class MatchView {
                     </div>
                 ` : ""}
                 <div id="details">
-                    <div>Blue team:</div>
+                    <div>Blue/Team 1:</div>
                     <div class="tag">${(team = challenge.details.blueTeam) === null ? "" : /* html */`
                         <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
                     `}</div>
@@ -197,7 +197,7 @@ class MatchView {
                     <div>${gameTypeName}</div>
                     <div>Caster:</div>
                     <div>${challenge.details.caster ? MatchView.Common.htmlEncode(challenge.details.caster.displayName) : "None"}</div>
-                    <div>Orange team:</div>
+                    <div>Orange/Team 2:</div>
                     <div class="tag">
                         ${(team = challenge.details.orangeTeam) === null ? "" : /* html */`
                             <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>

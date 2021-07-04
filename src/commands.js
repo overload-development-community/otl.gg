@@ -6142,7 +6142,7 @@ class Commands {
             throw err;
         }
 
-        await Discord.queue(`${member} has swapped the colors for this match.  **${challenge.details.blueTeam.tag}** is now the blue team, and **${challenge.details.orangeTeam.tag}** is now the orange team.`, challenge.channel);
+        await Discord.queue(`${member} has swapped the colors for this match.  **${challenge.details.blueTeam.tag}** is now blue/team 1, and **${challenge.details.orangeTeam.tag}** is now orange/team 2.`, challenge.channel);
 
         return true;
     }

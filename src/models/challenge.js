@@ -3130,9 +3130,9 @@ class Challenge {
         }
 
         if (this.challengingTeam.tag === this.details.blueTeam.tag) {
-            challengingTeam.push("Blue Team");
+            challengingTeam.push("Blue/Team 1");
         } else {
-            challengingTeam.push("Orange Team");
+            challengingTeam.push("Orange/Team 2");
         }
 
         if (!this.details.usingHomeMapTeam) {
@@ -3180,9 +3180,9 @@ class Challenge {
         }
 
         if (this.challengedTeam.tag === this.details.blueTeam.tag) {
-            challengedTeam.push("Blue Team");
+            challengedTeam.push("Blue/Team 1");
         } else {
-            challengedTeam.push("Orange Team");
+            challengedTeam.push("Orange/Team 2");
         }
 
         if (!this.details.usingHomeMapTeam) {
