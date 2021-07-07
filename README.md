@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v6.0.1 - 7/7/2021
+
+* Teams are now called "Blue/Team 1" and "Orange/Team 2" to match updates in olmod 0.4.2.
+* `!regen` command for admin to regenerate a pinned post for a challenge.
+
 ## v6.0.0 - 6/30/2021
 
 * `!report` now shows the secondary notice immediately instead of after updating the pinned message.
