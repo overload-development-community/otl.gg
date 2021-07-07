@@ -6569,10 +6569,9 @@ class Commands {
      * Alias for `!challenge DC`.  Added as an April Fools joke for 2020.
      * @param {DiscordJs.GuildMember} member The user initiating the command.
      * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
-     * @param {string} message The text of the command.
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
-    async shenanigans(member, channel, message) {
+    async shenanigans(member, channel) {
         await Discord.queue("This command has been retired. You may use the `!challenge` command to challenge a team directly.", channel);
         return true;
     }
