@@ -4,6 +4,10 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v6.0.2 - 8/30/2021
+
+* Package updates.
+
 ## v6.0.1 - 7/7/2021
 
 * Teams are now called "Blue/Team 1" and "Orange/Team 2" to match updates in olmod 0.4.2.
