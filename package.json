@@ -28,7 +28,7 @@
         "html-minifier": "4.0.0",
         "ioredis": "4.27.9",
         "morgan": "1.10.0",
-        "node-database": "roncli/node-database#v1.2.4",
+        "node-database": "roncli/node-database#v1.2.5",
         "node-schedule": "2.0.0",
         "terser": "5.7.2",
         "timezonecomplete": "5.12.4",
