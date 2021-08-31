@@ -84,7 +84,7 @@ class Standings {
 
         const standings = await Team.getSeasonStandings(isNaN(season) ? void 0 : season, recordsTitle, map);
 
-        res.status(200).send(Common.page(
+        res.status(200).send(await Common.page(
             "",
             {css: ["/css/standings.css"]},
             StandingsView.get({

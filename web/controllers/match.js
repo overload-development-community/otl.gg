@@ -50,7 +50,7 @@ class Match {
                     weapons = details.damage.map((d) => d.weapon).filter((w, index, arr) => arr.indexOf(w) === index).sort((a, b) => Weapon.orderedWeapons.indexOf(a) - Weapon.orderedWeapons.indexOf(b));
                 }
 
-                res.status(200).send(Common.page(
+                res.status(200).send(await Common.page(
                     "",
                     {css: ["/css/match.css"], js: ["/js/match.js"]},
                     MatchView.get({
@@ -66,7 +66,7 @@ class Match {
             }
         }
 
-        res.status(404).send(Common.page(
+        res.status(404).send(await Common.page(
             "",
             {css: ["/css/error.css"]},
             NotFoundView.get({message: "This match does not exist."}),

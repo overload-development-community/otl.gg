@@ -65,7 +65,7 @@ class Home {
             teams.getTeam(stat.teamId, stat.name, stat.tag, stat.disbanded, stat.locked);
         });
 
-        res.status(200).send(Common.page(
+        res.status(200).send(await Common.page(
             "",
             {css: ["/css/home.css"]},
             HomeView.get({

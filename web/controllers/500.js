@@ -28,10 +28,10 @@ class ServerError {
      * Processes the request.
      * @param {Express.Request} req The request.
      * @param {Express.Response} res The response.
-     * @returns {void}
+     * @returns {Promise} A promise that resolves when the request is processed.
      */
-    static get(req, res) {
-        res.status(500).send(Common.page(
+    static async get(req, res) {
+        res.status(500).send(await Common.page(
             "",
             {css: ["/css/error.css"]},
             ServerErrorView.get(),

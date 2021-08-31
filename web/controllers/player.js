@@ -94,7 +94,7 @@ class Player {
                 totalDamage: Object.keys(career.damage).reduce((sum, weapon) => sum + career.damage[weapon], 0)
             };
 
-            res.status(200).send(Common.page(
+            res.status(200).send(await Common.page(
                 "",
                 {css: ["/css/player.css"]},
                 PlayerView.get({
@@ -115,7 +115,7 @@ class Player {
                 req
             ));
         } else {
-            res.status(404).send(Common.page(
+            res.status(404).send(await Common.page(
                 "",
                 {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This player does not exist."}),

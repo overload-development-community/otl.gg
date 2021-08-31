@@ -62,14 +62,14 @@ class TeamPage {
 
             const timezone = await pageTeam.getTimezone();
 
-            res.status(200).send(Common.page(
+            res.status(200).send(await Common.page(
                 "",
                 {css: ["/css/team.css"]},
                 TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
                 req
             ));
         } else {
-            res.status(404).send(Common.page(
+            res.status(404).send(await Common.page(
                 "",
                 {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This team does not exist."}),

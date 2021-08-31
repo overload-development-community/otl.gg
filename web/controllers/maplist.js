@@ -36,7 +36,7 @@ class MapList {
     static async get(req, res) {
         const maplist = await Map.getAllAllowed();
 
-        res.status(200).send(Common.page(
+        res.status(200).send(await Common.page(
             "",
             {css: ["/css/maplist.css"]},
             MapListView.get(maplist),

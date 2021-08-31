@@ -62,7 +62,7 @@ class Players {
             },
             teams = new Teams();
 
-        res.status(200).send(Common.page(
+        res.status(200).send(await Common.page(
             "",
             {css: ["/css/players.css"]},
             PlayersView.get({

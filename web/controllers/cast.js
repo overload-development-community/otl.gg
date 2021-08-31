@@ -54,7 +54,7 @@ class Cast {
                 castData: data.data
             }), settings.htmlMinifier));
         } else {
-            res.status(404).send(Common.page(
+            res.status(404).send(await Common.page(
                 "",
                 {css: ["/css/error.css"]},
                 NotFoundView.get({message: "There is no scheduled match with this Match ID."}),

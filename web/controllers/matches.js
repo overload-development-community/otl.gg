@@ -40,7 +40,7 @@ class Matches {
             {matches: pending, completed: totalCompleted} = await Match.getUpcomingAndCompletedCount(isNaN(season) ? void 0 : season),
             completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
 
-        res.status(200).send(Common.page(
+        res.status(200).send(await Common.page(
             "",
             {css: ["/css/matches.css"], js: ["/views/matches/match.js", "/js/countdown.js", "/js/matches.js"]},
             MatchesView.get({

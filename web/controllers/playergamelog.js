@@ -54,7 +54,7 @@ class PlayerGameLog {
                 teams.getTeam(match.opponentTeamId, match.opponentName, match.opponentTag);
             });
 
-            res.status(200).send(Common.page(
+            res.status(200).send(await Common.page(
                 "",
                 {css: ["/css/player.css"]},
                 PlayerGameLogView.get({
@@ -69,7 +69,7 @@ class PlayerGameLog {
                 req
             ));
         } else {
-            res.status(404).send(Common.page(
+            res.status(404).send(await Common.page(
                 "",
                 {css: ["/css/error.css"]},
                 NotFoundView.get({message: "This player does not exist."}),

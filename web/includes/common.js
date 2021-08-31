@@ -3,7 +3,7 @@
  * @typedef {import("express").Request} Express.Request
  */
 
-const HtmlMinifier = require("html-minifier"),
+const HtmlMinifierTerser = require("html-minifier-terser"),
     Minify = require("../../src/minify"),
     pjson = require("../../package.json"),
     settings = require("../../settings"),
@@ -40,7 +40,7 @@ class Common {
      * @param {CommonTypes.Files} files The files to combine and minify.
      * @param {string} html The HTML to make a full web page from.
      * @param {Express.Request} req The request of the page.
-     * @returns {string} The HTML of the full web page.
+     * @returns {Promise<string>} The HTML of the full web page.
      */
     static page(head, files, html, req) {
         if (!IndexView) {
@@ -65,7 +65,7 @@ class Common {
 
         head = `${head}${Minify.combine(files.js, "js")}${Minify.combine(files.css, "css")}`;
 
-        return HtmlMinifier.minify(
+        return HtmlMinifierTerser.minify(
             IndexView.get({
                 head,
                 html,
