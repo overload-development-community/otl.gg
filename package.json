@@ -18,6 +18,7 @@
         "url": "https://github.com/overload-development-community/otl-bot.git"
     },
     "dependencies": {
+        "@roncli/node-database": "roncli/node-database#v1.2.5",
         "@root/request": "1.7.0",
         "compression": "1.7.4",
         "csso": "4.2.0",
@@ -28,7 +29,6 @@
         "html-minifier-terser": "6.0.2",
         "ioredis": "4.27.11",
         "morgan": "1.10.0",
-        "node-database": "roncli/node-database#v1.2.5",
         "node-schedule": "2.0.0",
         "terser": "5.9.0",
         "timezonecomplete": "5.12.4",
