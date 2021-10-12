@@ -12,7 +12,7 @@
  * @typedef {import("../../types/matchTypes").UpcomingMatch} MatchTypes.UpcomingMatch
  */
 
-const Db = require("node-database"),
+const Db = require("@roncli/node-database"),
 
     Cache = require("../cache"),
     db = require("./index"),

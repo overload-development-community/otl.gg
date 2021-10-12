@@ -6,7 +6,7 @@
  * @typedef {import("../../types/mapTypes").MapGameType} MapTypes.MapGameType
  */
 
-const Db = require("node-database"),
+const Db = require("@roncli/node-database"),
 
     Cache = require("../cache"),
     db = require("./index"),

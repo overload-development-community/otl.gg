@@ -3,7 +3,7 @@
  * @typedef {import("../../types/eventTypes").EventData} EventTypes.EventData
  */
 
-const Db = require("node-database"),
+const Db = require("@roncli/node-database"),
 
     db = require("./index");
 

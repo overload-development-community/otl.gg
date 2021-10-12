@@ -48,7 +48,7 @@
  * @typedef {import("../models/team")} Team
  */
 
-const Db = require("node-database"),
+const Db = require("@roncli/node-database"),
 
     Cache = require("../cache"),
     db = require("./index"),

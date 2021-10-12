@@ -36,7 +36,7 @@
  * @typedef {import("../../types/teamTypes").TeamStats} TeamTypes.TeamStats
  */
 
-const Db = require("node-database"),
+const Db = require("@roncli/node-database"),
 
     Cache = require("../cache"),
     db = require("./index"),
