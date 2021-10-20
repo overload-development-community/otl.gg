@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@roncli/node-database": "roncli/node-database#v1.2.5",
-        "@root/request": "1.7.0",
+        "@root/request": "1.8.0",
         "compression": "1.7.4",
         "csso": "4.2.0",
         "discord-markdown": "2.5.1",
