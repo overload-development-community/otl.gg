@@ -30,7 +30,7 @@
         "ioredis": "4.28.0",
         "morgan": "1.10.0",
         "node-schedule": "2.0.0",
-        "terser": "5.9.0",
+        "terser": "5.10.0",
         "timezonecomplete": "5.12.4",
         "tzdata": "1.0.29"
     },
