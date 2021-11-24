@@ -18,7 +18,7 @@
         "url": "https://github.com/overload-development-community/otl-bot.git"
     },
     "dependencies": {
-        "@roncli/node-database": "roncli/node-database#v1.2.5",
+        "@roncli/node-database": "roncli/node-database#v1.2.6",
         "@root/request": "1.8.0",
         "compression": "1.7.4",
         "csso": "4.2.0",
