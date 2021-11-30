@@ -1,6 +1,6 @@
 [
     {
-        "title": "OTL Season 5 TA",
+        "title": "OTL Team Anarchy",
         "teamCount": 2,
         "matchMode": 1,
         "maxPlayers": 16,
@@ -8,7 +8,7 @@
         "timeLimit": 6,
         "scoreLimit": 0,
         "respawnTime": 2,
-        "respawnInvuln": 2,
+        "respawnInvuln": 4,
         "showNames": 1,
         "turnSpeedLimit": 2,
         "forceLoadout": 0,
@@ -45,7 +45,7 @@
         "assistScoring": true
     },
     {
-        "title": "OTL Season 5 CTF",
+        "title": "OTL Capture the Flag",
         "teamCount": 2,
         "matchMode": 3,
         "maxPlayers": 16,
@@ -53,7 +53,7 @@
         "timeLimit": 6,
         "scoreLimit": 0,
         "respawnTime": 2,
-        "respawnInvuln": 2,
+        "respawnInvuln": 4,
         "showNames": 1,
         "turnSpeedLimit": 2,
         "forceLoadout": 0,
