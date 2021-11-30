@@ -29,7 +29,7 @@
         "html-minifier-terser": "6.1.0",
         "ioredis": "4.28.1",
         "morgan": "1.10.0",
-        "node-schedule": "2.0.0",
+        "node-schedule": "2.1.0",
         "terser": "5.10.0",
         "timezonecomplete": "5.12.4",
         "tzdata": "1.0.29"
