@@ -6538,7 +6538,7 @@ class Commands {
         }
 
         if (!map) {
-            await Discord.queue(`Sorry, ${member}, but ${map.map} is not currently allowed.`, channel);
+            await Discord.queue(`Sorry, ${member}, but ${message} is not currently allowed.`, channel);
             throw new Warning("Map not currently allowed.");
         }
 
