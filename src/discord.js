@@ -443,9 +443,13 @@ class Discord {
                 command = cmd.toLocaleLowerCase();
 
             if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
-                let success;
+                let success = false;
                 try {
-                    success = await commands[command](member, channel, args);
+                    if (channel.type === "text" && Commands.isDuplicateCommand(member, channel, text)) {
+                        Log.warning(`${channel} ${member}: ${text}\nDuplicate command thrown out.`);
+                    } else {
+                        success = await commands[command](member, channel, args);
+                    }
                 } catch (err) {
                     if (err instanceof Warning) {
                         Log.warning(`${channel} ${member}: ${text}\n${err}`);

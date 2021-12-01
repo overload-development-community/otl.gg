@@ -39,6 +39,9 @@ const upcomingMatchJobs = {};
 /** @type {Object.<number, schedule.Job>} */
 const missedMatchJobs = {};
 
+/** @type {Object.<string, string>} */
+const lastCommand = {};
+
 /** @type {typeof import("../discord")} */
 let Discord;
 
@@ -1071,6 +1074,8 @@ class Challenge {
         }
 
         try {
+            delete lastCommand[this.channelName];
+
             await this.channel.delete(`${member} closed the challenge.`);
 
             if (this.details.dateConfirmed && !this.details.dateVoided) {
@@ -1608,6 +1613,29 @@ class Challenge {
         });
 
         return details;
+    }
+
+    //  #           ###               ##     #                 #           ##                                    #
+    //              #  #               #                       #          #  #                                   #
+    // ##     ###   #  #  #  #  ###    #    ##     ##    ###  ###    ##   #      ##   # #   # #    ###  ###    ###
+    //  #    ##     #  #  #  #  #  #   #     #    #     #  #   #    # ##  #     #  #  ####  ####  #  #  #  #  #  #
+    //  #      ##   #  #  #  #  #  #   #     #    #     # ##   #    ##    #  #  #  #  #  #  #  #  # ##  #  #  #  #
+    // ###   ###    ###    ###  ###   ###   ###    ##    # #    ##   ##    ##    ##   #  #  #  #   # #  #  #   ###
+    //                          #
+    /**
+     * Check to see if this was the last command issued in the channel.
+     * @param {DiscordJs.GuildMember} member The guild member initiating the command.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command is a duplicate.
+     */
+    async isDuplicateCommand(member, message) {
+        if (lastCommand[this.channelName] === message) {
+            await Discord.queue(`Sorry, ${member}, but this command is a duplicate of the last command issued in this channel.`, this.channel);
+            return true;
+        }
+
+        lastCommand[this.channelName] = message;
+        return false;
     }
 
     // ##                   #  ###          #           #    ##

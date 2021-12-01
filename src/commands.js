@@ -1051,6 +1051,29 @@ class Commands {
         return pilot;
     }
 
+    //  #           ###               ##     #                 #           ##                                    #
+    //              #  #               #                       #          #  #                                   #
+    // ##     ###   #  #  #  #  ###    #    ##     ##    ###  ###    ##   #      ##   # #   # #    ###  ###    ###
+    //  #    ##     #  #  #  #  #  #   #     #    #     #  #   #    # ##  #     #  #  ####  ####  #  #  #  #  #  #
+    //  #      ##   #  #  #  #  #  #   #     #    #     # ##   #    ##    #  #  #  #  #  #  #  #  # ##  #  #  #  #
+    // ###   ###    ###    ###  ###   ###   ###    ##    # #    ##   ##    ##    ##   #  #  #  #   # #  #  #   ###
+    //                          #
+    /**
+     * Detects whether a duplicate command was made in a challenge channel.
+     * @param {DiscordJs.GuildMember} member The guild member initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command is a duplicate.
+     */
+    static async isDuplicateCommand(member, channel, message) {
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        return challenge.isDuplicateCommand(member, message);
+    }
+
     //         #                ##           #
     //                           #           #
     //  ###   ##    # #   #  #   #     ###  ###    ##
