@@ -6798,6 +6798,8 @@ class Commands {
         await challenge.updatePinnedPost();
 
         await Discord.queue("This challenge's pinned post has been updated.", channel);
+
+        return true;
     }
 }
 
