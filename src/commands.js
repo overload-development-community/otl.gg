@@ -4411,6 +4411,16 @@ class Commands {
             throw new Warning("Match not reported.");
         }
 
+        if (!challenge.details.reportingTeam) {
+            if (!challenge.details.dateConfirmed) {
+                await Discord.queue(`Sorry, ${member}, but this match has already been confirmed.`, channel);
+                throw new Warning("Match was already confirmed.");
+            }
+
+            await Discord.queue(`Sorry, ${member}, but there was a conflict while reporting this match.`, channel);
+            throw new Warning("Conflict while reporting match.");
+        }
+
         if (team.id === challenge.details.reportingTeam.id) {
             await Discord.queue(`Sorry, ${member}, but you can't confirm your own team's report.`, channel);
             throw new Warning("Can't confirm own report.");
