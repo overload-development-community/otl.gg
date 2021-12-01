@@ -27,7 +27,7 @@
         "express": "4.17.1",
         "express-minify": "1.0.0",
         "html-minifier-terser": "6.1.0",
-        "ioredis": "4.28.1",
+        "ioredis": "4.28.2",
         "morgan": "1.10.0",
         "node-schedule": "2.1.0",
         "terser": "5.10.0",
