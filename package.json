@@ -24,7 +24,7 @@
         "csso": "5.0.1",
         "discord-markdown": "2.5.1",
         "discord.js": "13.3.1",
-        "express": "4.17.1",
+        "express": "4.17.2",
         "express-minify": "1.0.0",
         "html-minifier-terser": "6.1.0",
         "ioredis": "4.28.2",
