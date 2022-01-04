@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@roncli/node-database": "roncli/node-database#v1.2.6",
+        "@roncli/node-redis": "roncli/node-redis#v0.1.11",
         "@root/request": "1.8.0",
         "compression": "1.7.4",
         "csso": "5.0.2",
@@ -27,7 +28,6 @@
         "express": "4.17.2",
         "express-minify": "1.0.0",
         "html-minifier-terser": "6.1.0",
-        "ioredis": "4.28.2",
         "morgan": "1.10.0",
         "node-schedule": "2.1.0",
         "terser": "5.10.0",

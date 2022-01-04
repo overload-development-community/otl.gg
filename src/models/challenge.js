@@ -16,7 +16,7 @@
  * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
-const Cache = require("../cache"),
+const Cache = require("@roncli/node-redis").Cache,
     Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
     Exception = require("../logging/exception"),

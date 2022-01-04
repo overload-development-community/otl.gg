@@ -6,9 +6,9 @@
  * @typedef {import("../../types/mapTypes").MapGameType} MapTypes.MapGameType
  */
 
-const Db = require("@roncli/node-database"),
+const Cache = require("@roncli/node-redis").Cache,
+    Db = require("@roncli/node-database"),
 
-    Cache = require("../cache"),
     db = require("./index"),
     settings = require("../../settings");
 

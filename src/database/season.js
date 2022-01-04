@@ -2,7 +2,7 @@
  * @typedef {import("../../types/seasonDbTypes").GetSeasonNumbersRecordset} SeasonDbTypes.GetSeasonNumbersRecordset
  */
 
-const Cache = require("../cache"),
+const Cache = require("@roncli/node-redis").Cache,
     db = require("./index"),
     settings = require("../../settings");
 
