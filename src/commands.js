@@ -1156,7 +1156,7 @@ class Commands {
             return false;
         }
 
-        await Discord.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}.  Project is open source, visit https://github.com/overload-development-community/otl-bot.`, channel);
+        await Discord.queue(`We are The Fourth Sovereign, we are trillions.  By roncli, Version ${pjson.version}.  Project is open source, visit https://github.com/overload-development-community/otl.gg.`, channel);
         return true;
     }
 

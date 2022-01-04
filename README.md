@@ -1,4 +1,4 @@
-# otl-bot
+# otl.gg
 
 The Discord bot and website used for the Overload Teams League.  Visit the OTL at https://otl.gg.
 
