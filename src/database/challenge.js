@@ -299,7 +299,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
+            await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         } else {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
@@ -2245,7 +2245,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
+            await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
     }
 
@@ -2281,7 +2281,7 @@ class ChallengeDb {
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
         if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate(data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
+            await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
     }
 
@@ -2354,7 +2354,7 @@ class ChallengeDb {
         const data = await db.query(sql, params);
 
         if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {
-            await Cache.invalidate(data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`).concat(`${settings.redisPrefix}:invalidate:challenge:closed`));
+            await Cache.invalidate([...data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, first: row.First})) || [];
