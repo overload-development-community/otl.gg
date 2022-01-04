@@ -148,6 +148,7 @@ declare namespace MatchTypes {
         map: string
         twitchName: string
         gameType: string
+        discordEventId: string
     }
 }
 

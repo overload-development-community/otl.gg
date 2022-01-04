@@ -810,6 +810,25 @@ class Discord {
         return user instanceof DiscordJs.GuildMember ? user.displayName : user.username;
     }
 
+    //              #    #  #                           #                ####                     #
+    //              #    #  #                                            #                        #
+    //  ###   ##   ###   #  #  ###    ##    ##   # #   ##    ###    ###  ###   # #    ##   ###   ###    ###
+    // #  #  # ##   #    #  #  #  #  #     #  #  ####   #    #  #  #  #  #     # #   # ##  #  #   #    ##
+    //  ##   ##     #    #  #  #  #  #     #  #  #  #   #    #  #   ##   #     # #   ##    #  #   #      ##
+    // #      ##     ##   ##   ###    ##    ##   #  #  ###   #  #  #     ####   #     ##   #  #    ##  ###
+    //  ###                    #                                    ###
+    /**
+     * Gets upcoming Discord events.
+     * @returns {Promise<DiscordJs.GuildScheduledEvent[]>} A promise that returns the events.
+     */
+    static async getUpcomingEvents() {
+        if (!otlGuild) {
+            return [];
+        }
+
+        return Array.from(await otlGuild.scheduledEvents.fetch()).filter((e) => !e[1].isCompleted() && !e[1].isCanceled()).map((e) => e[1]);
+    }
+
     //  #            ##
     //              #  #
     // ##     ###   #  #  #  #  ###    ##   ###

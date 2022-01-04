@@ -18,7 +18,6 @@ const tc = require("timezonecomplete"),
 
     Challenge = require("./models/challenge"),
     Common = require("../web/includes/common"),
-    Event = require("./models/event"),
     Map = require("./models/map"),
     Match = require("./models/match"),
     pjson = require("../package.json"),
@@ -33,7 +32,6 @@ const tc = require("timezonecomplete"),
     challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
     colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
     createMatchParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})(?: (?<gameType>(?:CTF|TA)))?(?: (?<number>(?:[1-9][0-9]*)))?$/i,
-    eventParse = /^(?<title>.+) (?<dateStartStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?) (?<dateEndStr>(?:[1-9]|1[0-2])\/(?:[1-9]|[12][0-9]|3[01])\/[1-9][0-9]{3}(?: (?:[1-9]|1[0-2]):[0-5][0-9] [AP]M)?)$/,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
     idMessageParse = /^<@!?(?<id>[0-9]+)> (?<command>[^ ]+)(?: (?<newMessage>.+))?$/,
@@ -3606,7 +3604,8 @@ class Commands {
         }
 
         const matches = await Match.getUpcoming(),
-            events = await Event.getUpcoming();
+            eventIds = matches.filter((m) => m.discordEventId).map((m) => m.discordEventId),
+            events = (await Discord.getUpcomingEvents()).filter((e) => eventIds.indexOf(e.id) === -1);
 
         if (matches.length === 0 && events.length === 0) {
             await Discord.queue("There are no matches or events currently scheduled.", channel);
@@ -3627,12 +3626,12 @@ class Commands {
 
             if (events.length !== 0) {
                 for (const [index, event] of events.entries()) {
-                    if (event.dateStart >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins <t:${Math.floor(event.dateStart.getTime() / 1000)}:F>.`);
-                    } else if (event.dateEnd >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing until <t:${Math.floor(event.dateEnd.getTime() / 1000)}:F>.`);
+                    if (event.scheduledStartAt >= new Date()) {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Begins <t:${Math.floor(event.scheduledStartAt.getTime() / 1000)}:F>.`);
+                    } else if (event.scheduledEndAt >= new Date()) {
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Currently ongoing until <t:${Math.floor(event.scheduledEndAt.getTime() / 1000)}:F>.`);
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, "Just recently completed.");
                     }
                 }
             }
@@ -3655,24 +3654,24 @@ class Commands {
 
             if (events.length !== 0) {
                 events.forEach((event, index) => {
-                    if (event.dateStart >= new Date()) {
-                        const difference = event.dateStart.getTime() - new Date().getTime(),
+                    if (event.scheduledStartAt >= new Date()) {
+                        const difference = event.scheduledStartAt.getTime() - new Date().getTime(),
                             days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
                             hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
                             minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                             seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
-                    } else if (event.dateEnd >= new Date()) {
-                        const difference = event.dateEnd.getTime() - new Date().getTime(),
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                    } else if (event.scheduledEndAt >= new Date()) {
+                        const difference = event.scheduledEndAt.getTime() - new Date().getTime(),
                             days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
                             hours = Math.floor(Math.abs(difference) / (60 * 60 * 1000) % 24),
                             minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                             seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, "Just recently completed.");
                     }
                 });
             }
@@ -6319,121 +6318,6 @@ class Commands {
             throw err;
         }
 
-        return true;
-    }
-
-    //          #     #                           #
-    //          #     #                           #
-    //  ###   ###   ###   ##   # #    ##   ###   ###
-    // #  #  #  #  #  #  # ##  # #   # ##  #  #   #
-    // # ##  #  #  #  #  ##    # #   ##    #  #   #
-    //  # #   ###   ###   ##    #     ##   #  #    ##
-    /**
-     * Adds an event for the !next command.
-     * @param {DiscordJs.GuildMember} member The user initiating the command.
-     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
-     * @param {string} message The text of the command.
-     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
-     */
-    async addevent(member, channel, message) {
-        if (!Commands.checkChannelIsOnServer(channel)) {
-            return false;
-        }
-
-        await Commands.checkMemberIsOwner(member);
-
-        if (!eventParse.test(message)) {
-            return false;
-        }
-
-        const {groups: {title, dateStartStr, dateEndStr}} = eventParse.exec(message),
-            tz = tc.TimeZone.zone(await member.getTimezone());
-
-        let dateStart;
-        try {
-            dateStart = new Date(new tc.DateTime(new Date(`${dateStartStr} UTC`).toISOString(), tz).toIsoString());
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse the start date and time.`, channel);
-            throw new Warning("Invalid start date.");
-        }
-
-        if (!dateStart || isNaN(dateStart.valueOf())) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse the start date and time.`, channel);
-            throw new Warning("Invalid start date.");
-        }
-
-        let dateEnd;
-        try {
-            dateEnd = new Date(new tc.DateTime(new Date(`${dateEndStr} UTC`).toISOString(), tz).toIsoString());
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
-            throw new Warning("Invalid end date.");
-        }
-
-        if (!dateEnd || isNaN(dateEnd.valueOf())) {
-            await Discord.queue(`Sorry, ${member}, but I couldn't parse the end date and time.`, channel);
-            throw new Warning("Invalid end date.");
-        }
-
-        if (dateStart.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
-            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
-            throw new Warning("Date too far into the past.");
-        }
-
-        if (dateEnd.getTime() - new Date().getTime() < -180 * 24 * 60 * 60 * 1000) {
-            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the past.`, channel);
-            throw new Warning("Date too far into the past.");
-        }
-
-        if (dateStart.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
-            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
-            throw new Warning("Date too far into the future.");
-        }
-
-        if (dateEnd.getTime() - new Date().getTime() > 180 * 24 * 60 * 60 * 1000) {
-            await Discord.queue(`Sorry, ${member}, but you cannot schedule an event that far into the future.`, channel);
-            throw new Warning("Date too far into the future.");
-        }
-
-        try {
-            await Event.create(title, dateStart, dateEnd);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
-            throw err;
-        }
-
-        await Discord.queue(`${member}, the event **${title}** has been added.  Use the \`!next\` command to see upcoming events.`, channel);
-        return true;
-    }
-
-    //                                                              #
-    //                                                              #
-    // ###    ##   # #    ##   # #    ##    ##   # #    ##   ###   ###
-    // #  #  # ##  ####  #  #  # #   # ##  # ##  # #   # ##  #  #   #
-    // #     ##    #  #  #  #  # #   ##    ##    # #   ##    #  #   #
-    // #      ##   #  #   ##    #     ##    ##    #     ##   #  #    ##
-    /**
-     * Removes an event for the !next command.
-     * @param {DiscordJs.GuildMember} member The user initiating the command.
-     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
-     * @param {string} message The text of the command.
-     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
-     */
-    async removeevent(member, channel, message) {
-        if (!Commands.checkChannelIsOnServer(channel)) {
-            return false;
-        }
-
-        await Commands.checkMemberIsOwner(member);
-
-        try {
-            await Event.remove(message);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
-            throw err;
-        }
-
-        await Discord.queue(`${member}, the event **${message}** has been removed.  Use the \`!next\` command to see upcoming events.`, channel);
         return true;
     }
 

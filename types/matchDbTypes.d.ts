@@ -111,6 +111,7 @@ declare namespace MatchDbTypes {
                 Map: string
                 TwitchName: string
                 GameType: string
+                DiscordEventId: string
             }[]
         ]
     }

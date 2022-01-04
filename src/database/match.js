@@ -642,7 +642,8 @@ class MatchDb {
                 c.MatchTime,
                 c.Map,
                 p.TwitchName,
-                c.GameType
+                c.GameType,
+                c.DiscordEventId
             FROM tblChallenge c
             INNER JOIN tblTeam t1 ON c.ChallengingTeamId = t1.TeamId
             INNER JOIN tblTeam t2 ON c.ChallengedTeamId = t2.TeamId
@@ -662,7 +663,8 @@ class MatchDb {
             matchTime: row.MatchTime,
             map: row.Map,
             twitchName: row.TwitchName,
-            gameType: row.GameType
+            gameType: row.GameType,
+            discordEventId: row.DiscordEventId
         })) || [];
     }
 }
