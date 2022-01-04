@@ -36,7 +36,7 @@ class Cache {
 
             if (expiration) {
                 const time = Math.max(expiration.getTime() - new Date().getTime(), 1);
-                await client.set(key, JSON.stringify(obj), "EX", time);
+                await client.set(key, JSON.stringify(obj), "PX", time);
             } else {
                 await client.set(key, JSON.stringify(obj));
             }
