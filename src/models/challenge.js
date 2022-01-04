@@ -960,7 +960,7 @@ class Challenge {
     //  ##   ###    ##    # #  #      ##     ##   # #    ##  ###
     /**
      * Clears all stats from a challenge.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
+     * @param {DiscordJs.GuildMember} [member] The pilot issuing the command.
      * @returns {Promise} A promise that returns when the stats have been cleared.
      */
     async clearStats(member) {
@@ -970,7 +970,9 @@ class Challenge {
             throw new Exception("There was a database error clearing the stats for a challenge.", err);
         }
 
-        await Discord.queue(`${member}, all stats have been cleared for this match.`, this.channel);
+        if (member) {
+            await Discord.queue(`${member}, all stats have been cleared for this match.`, this.channel);
+        }
     }
 
     //       ##                      ###    #

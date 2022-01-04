@@ -4367,6 +4367,18 @@ class Commands {
 
             score1 = challenge.details.challengingTeamScore;
             score2 = challenge.details.challengedTeamScore;
+
+            if (score1 > score2 && team.id === challenge.details.challengingTeamScore || score2 > score1 && team.id === challenge.details.challengedTeamScore) {
+                try {
+                    await challenge.clearStats();
+                } catch (err) {
+                    await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
+                    throw new Exception(err.message, err);
+                }
+
+                await Discord.queue(`Sorry, ${member}, but you can't report a win.  Have the other team use this command instead.`, channel);
+                return false;
+            }
         } else {
             const details = await challenge.getTeamDetails();
 
