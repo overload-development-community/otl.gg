@@ -3504,6 +3504,19 @@ class Commands {
             throw new Warning("Match already scheduled.");
         }
 
+        let alreadyClocked;
+        try {
+            alreadyClocked = await team.hasClockedThisSeason(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+            throw err;
+        }
+
+        if (alreadyClocked) {
+            await Discord.queue(`Sorry, ${member}, but your team has already put **${(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam).name}** on the clock this season.`, channel);
+            throw new Warning("Team already clocked this season.");
+        }
+
         if (challenge.challengingTeam.locked || challenge.challengedTeam.locked) {
             await Discord.queue(`Sorry, ${member}, but due to tournament participation, this match cannot be clocked.`, channel);
             throw new Warning("A team is in a tournament.");
@@ -3546,19 +3559,6 @@ class Commands {
         if (challengedTeamClockCount >= 2) {
             await Discord.queue(`Sorry, ${member}, but **${challenge.challengedTeam.name}** already has two challenges on the clock.`, channel);
             throw new Warning("Challenged team has the maximum number of clocked challenges.");
-        }
-
-        let alreadyClocked;
-        try {
-            alreadyClocked = await team.hasClockedThisSeason(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
-
-        if (alreadyClocked) {
-            await Discord.queue(`Sorry, ${member}, but your team has already put **${(team.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam).name}** on the clock this season.`, channel);
-            throw new Warning("Team already clocked this season.");
         }
 
         if (!message) {
