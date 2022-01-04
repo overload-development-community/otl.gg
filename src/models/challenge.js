@@ -16,13 +16,12 @@
  * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
-const Cache = require("@roncli/node-redis").Cache,
-    Common = require("../../web/includes/common"),
+const Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
+    NameMapDb = require("../database/nameMap"),
     schedule = require("node-schedule"),
-    settings = require("../../settings"),
     Team = require("./team"),
     Tracker = require("../tracker"),
 
@@ -488,8 +487,7 @@ class Challenge {
             throw new Error("The specified match on the tracker is not a capture the flag match.");
         }
 
-        /** @type {Object<string, string>} */
-        let map = await Cache.get(`${settings.redisPrefix}:nameMap`);
+        let map = await NameMapDb.getAll();
 
         if (!map) {
             map = {};
@@ -497,9 +495,12 @@ class Challenge {
 
         const notFound = [];
 
-        Object.keys(nameMap).forEach((alias) => {
+        for (const alias of Object.keys(nameMap)) {
+            if (!nameMap[alias]) {
+                await NameMapDb.add(alias, nameMap[alias]);
+            }
             map[alias] = nameMap[alias];
-        });
+        }
 
         for (const player of game.players) {
             if (!map[player.name]) {
@@ -508,6 +509,8 @@ class Challenge {
                 // We guess at the name.
                 for (const [id, member] of this.channel.members) {
                     if (member.displayName.toUpperCase().indexOf(player.name.toUpperCase()) !== -1 || player.name.toUpperCase().indexOf(member.displayName.toUpperCase()) !== -1) {
+                        await NameMapDb.add(player.name, id);
+
                         map[player.name] = id;
                         found = true;
                         break;
@@ -606,8 +609,6 @@ class Challenge {
                 }
             }
         }
-
-        await Cache.add(`${settings.redisPrefix}:nameMap`, map);
 
         let challengingTeamMembers = 0,
             challengedTeamMembers = 0;
