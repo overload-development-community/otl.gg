@@ -5146,6 +5146,7 @@ class Commands {
         }
 
         await Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeTeamSizeIsSet(challenge, member, channel);
 
         if (["a", "b", "c", "d", "e"].indexOf(message.toLowerCase()) !== -1) {
             try {

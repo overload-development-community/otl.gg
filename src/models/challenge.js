@@ -2936,9 +2936,7 @@ class Challenge {
             fields: []
         });
 
-        const challengingTeamTimeZone = await this.challengingTeam.getTimezone(),
-            challengedTeamTimeZone = await this.challengedTeam.getTimezone(),
-            checklist = [];
+        const checklist = [];
 
         if (this.details.dateClocked && !this.details.dateConfirmed) {
             checklist.push(`- This match has been placed on the clock by **${this.details.clockTeam.tag}**.  Both teams must agree to all match parameters by <t:${Math.floor(this.details.dateClockDeadline.getTime() / 1000)}:F>`);
