@@ -4366,8 +4366,13 @@ class Commands {
             try {
                 await challenge.addStats(+gameId, {}, true);
             } catch (err) {
-                await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
-                throw new Exception(err.message, err);
+                if (err.constructor.name === "Error") {
+                    await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
+                    throw new Warning(err.message);
+                } else {
+                    await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
+                    throw err;
+                }
             }
 
             score1 = challenge.details.challengingTeamScore;
