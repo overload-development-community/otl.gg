@@ -50,7 +50,6 @@ const tc = require("timezonecomplete"),
     teamPilotParse = /^(?<teamName>.{1,25}) (?<id><@!?[0-9]+>)$/,
     teamTagParse = /^[0-9A-Za-z]{1,5}$/,
     teamTagteamNameParse = /^(?<teamTag>[^ ]{1,5}) (?<teamName>.{6,25})$/,
-    timezoneParse = /^[1-9][0-9]*, (?<timezoneName>.*)$/,
     twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
     vodParse = /^(?<challengeId>[1-9][0-9]*) (?<vod>https?:\/\/.+)$/;
 
@@ -509,7 +508,7 @@ class Commands {
         }
 
         if (deniedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have accepted an invitation in the past 28 days.  You cannot use this command until ${deniedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have accepted a team's invitation in the past 28 days.  You cannot use this command until <t:${Math.floor(deniedUntil.getTime() / 1000)}:F>.`, channel);
             throw new Warning("Pilot already accepted an invitation within 28 days.");
         }
     }
@@ -623,7 +622,7 @@ class Commands {
         }
 
         if (bannedUntil) {
-            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You cannot use this command until ${bannedUntil.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`, channel);
+            await Discord.queue(`Sorry, ${member}, but you have left this team within the past 28 days.  You cannot use this command until <t:${Math.floor(bannedUntil.getTime() / 1000)}:F>.`, channel);
             throw new Warning("Pilot not allowed to accept an invite from this team.");
         }
     }
@@ -3519,7 +3518,7 @@ class Commands {
         }
 
         if (nextClockDate && nextClockDate > new Date()) {
-            await Discord.queue(`Sorry, ${member}, but your team cannot put another challenge on the clock until ${nextClockDate.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            await Discord.queue(`Sorry, ${member}, but your team cannot put another challenge on the clock until <t:${Math.floor(nextClockDate.getTime() / 1000)}:F>.`, channel);
             throw new Warning("Team has clocked a challenge in the last 28 days.");
         }
 
@@ -3617,16 +3616,16 @@ class Commands {
         if (message === "time") {
             if (matches.length !== 0) {
                 for (const [index, match] of matches.entries()) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
                 }
             }
 
             if (events.length !== 0) {
                 for (const [index, event] of events.entries()) {
                     if (event.dateStart >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins at ${event.dateStart.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`);
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Begins <t:${Math.floor(event.dateStart.getTime() / 1000)}:F>.`);
                     } else if (event.dateEnd >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing until ${event.dateEnd.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`);
+                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, `Currently ongoing until <t:${Math.floor(event.dateEnd.getTime() / 1000)}:F>.`);
                     } else {
                         msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.title}`, "Just recently completed.");
                     }
@@ -3715,7 +3714,7 @@ class Commands {
 
         if (message === "time") {
             for (const [index, match] of matches.entries()) {
-                msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins at ${match.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
             }
         } else {
             matches.forEach((match, index) => {
@@ -3775,9 +3774,9 @@ class Commands {
 
         if (challenge.details.matchTime) {
             if (message) {
-                await Discord.queue(`${member}, the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}** ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+                await Discord.queue(`${member}, the match between **${challenge.challengingTeam.name}** and **${challenge.challengedTeam.name}** ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place <t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>.`, channel);
             } else {
-                await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+                await Discord.queue(`${member}, this match ${challenge.details.matchTime > new Date() ? "is" : "was"} scheduled to take place <t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>.`, channel);
             }
         } else {
             await Discord.queue(`${member}, this match has not yet been scheduled.`, channel);
@@ -3876,7 +3875,7 @@ class Commands {
         await Commands.checkChallengeIsNotVoided(challenge, member, channel);
 
         if (challenge.details.dateClockDeadline) {
-            await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            await Discord.queue(`${member}, the clock deadline ${challenge.details.dateClockDeadline > new Date() ? "expires" : "expired"} <t:${Math.floor(challenge.details.dateClockDeadline.getTime() / 1000)}:F>.`, channel);
         } else {
             await Discord.queue(`${member}, this match has not yet been put on the clock.`, channel);
         }
@@ -4148,7 +4147,7 @@ class Commands {
             if (uncastedMatches.length === 0) {
                 await Discord.queue("There are no matches without a caster currently scheduled.", channel);
             } else {
-                await Discord.queue(`The next match is **${uncastedMatches[0].challengingTeamName}** vs **${uncastedMatches[0].challengedTeamName}** at ${uncastedMatches[0].matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.  If you wish to cast this match, enter \`!cast ${uncastedMatches[0].challengeId}\`.  To see other upcoming matches, enter \`!mynext\`.`, channel);
+                await Discord.queue(`The next match is **${uncastedMatches[0].challengingTeamName}** vs **${uncastedMatches[0].challengedTeamName}** at <t:${Math.floor(uncastedMatches[0].matchTime.getTime() / 1000)}:F>.  If you wish to cast this match, enter \`!cast ${uncastedMatches[0].challengeId}\`.  To see other upcoming matches, enter \`!mynext\`.`, channel);
             }
 
             return true;
@@ -5490,7 +5489,7 @@ class Commands {
         }
 
         if (challenge.details.dateClockDeadline && challenge.details.dateClockDeadline > new Date()) {
-            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate a match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is ${challenge.details.dateClockDeadline.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you cannot adjudicate a match that's on the clock when the deadline hasn't passed yet.  The current clock deadline is <t:${Math.floor(challenge.details.dateClockDeadline.getTime() / 1000)}:F>.`, channel);
             throw new Warning("Match clock deadline not passed yet.");
         }
 
@@ -5759,7 +5758,7 @@ class Commands {
         if (timeChanged) {
             msg.fields.push({
                 name: "Match Time Updated",
-                value: `The match time for this match has been updated to **${challenge.details.matchTime.toLocaleString("en-US", {timeZone: settings.defaultTimezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"})}**`,
+                value: `The match time for this match has been updated to **<t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>**`,
                 inline: false
             });
         }
@@ -6008,9 +6007,9 @@ class Commands {
                     await Commands.checkChallengeDetails(challenge, member, channel);
 
                     if (challenge.details.dateConfirmed) {
-                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} ${challenge.details.challengingTeamScore}, ${challenge.challengedTeam.tag} ${challenge.details.challengedTeamScore}, ${challenge.details.map}, ${challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"})}`);
+                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} ${challenge.details.challengingTeamScore}, ${challenge.challengedTeam.tag} ${challenge.details.challengedTeamScore}, ${challenge.details.map}, <t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>`);
                     } else {
-                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} vs ${challenge.challengedTeam.tag}, ${challenge.details.map || "Map not set"}, ${challenge.details.matchTime ? challenge.details.matchTime.toLocaleString("en-US", {timeZone: await member.getTimezone(), month: "numeric", day: "numeric", year: "numeric", hour12: true, hour: "numeric", minute: "2-digit", timeZoneName: "short"}) : "Time not set"}`);
+                        results.push(`${challenge.id}) ${challenge.challengingTeam.tag} vs ${challenge.challengedTeam.tag}, ${challenge.details.map || "Map not set"}, ${challenge.details.matchTime ? `<t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>` : "Time not set"}`);
                     }
                 }
 
@@ -6742,50 +6741,10 @@ class Commands {
             }
         }
 
-        try {
-            const times = {};
-            for (const channelMember of channel.members.values()) {
-                const timezone = await channelMember.getTimezone(),
-                    yearWithTimezone = date.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
-
-                if (timezoneParse.test(yearWithTimezone)) {
-                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
-
-                    if (timezoneName) {
-                        times[timezoneName] = date.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
-                    }
-                }
-            }
-
-            for (const challengeTeam of [challenge.challengingTeam, challenge.challengedTeam]) {
-                const timezone = await challengeTeam.getTimezone(),
-                    yearWithTimezone = date.toLocaleString("en-US", {timeZone: timezone, year: "numeric", timeZoneName: "long"});
-
-                if (timezoneParse.test(yearWithTimezone)) {
-                    const {groups: {timezoneName}} = timezoneParse.exec(yearWithTimezone);
-
-                    if (timezoneName) {
-                        times[timezoneName] = date.toLocaleString("en-US", {timeZone: timezone, weekday: "short", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"});
-                    }
-                }
-            }
-
-            const sortedTimes = Object.keys(times).map((tz) => ({timezone: tz, displayTime: times[tz], value: new Date(times[tz])})).sort((a, b) => {
-                if (a.value.getTime() !== b.value.getTime()) {
-                    return b.value.getTime() - a.value.getTime();
-                }
-
-                return a.timezone.localeCompare(b.timezone);
-            });
-
-            await Discord.richQueue(Discord.messageEmbed({
-                description: "**Converted Times**",
-                fields: sortedTimes.map((t) => ({name: t.timezone, value: t.displayTime}))
-            }), channel);
-        } catch (err) {
-            await Discord.queue(`Sorry, ${member}, but there was a server error.  An admin will be notified about this.`, channel);
-            throw err;
-        }
+        await Discord.richQueue(Discord.messageEmbed({
+            description: "**Converted Time**",
+            fields: [{name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`}]
+        }), channel);
 
         return true;
     }
