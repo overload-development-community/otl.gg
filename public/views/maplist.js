@@ -29,7 +29,8 @@ class MapListView {
      */
     static get(maplist) {
         const taMaps = maplist.filter((m) => m.gameType === "TA"),
-            ctfMaps = maplist.filter((m) => m.gameType === "CTF");
+            ctfMaps = maplist.filter((m) => m.gameType === "CTF"),
+            mbMaps = maplist.filter((m) => m.gameType === "MB");
 
         return /* html */`
             <div id="maplist">
@@ -38,14 +39,20 @@ class MapListView {
                     The following is a list of available maps for play on the OTL:
                 </div>
                 <div class="section">Team Anarchy</div>
-                <div id="maps" style="grid-template-rows: repeat(${Math.floor((taMaps.length + 3) / 4)}, auto);">
+                <div class="maps" style="grid-template-rows: repeat(${Math.floor((taMaps.length + 3) / 4)}, auto);">
                     ${taMaps.map((map) => /* html */`
                         <div>${MapListView.Common.htmlEncode(map.map)}</div>
                     `).join("")}
                 </div>
                 <div class="section">Capture the Flag</div>
-                <div id="maps" style="grid-template-rows: repeat(${Math.floor((ctfMaps.length + 3) / 4)}, auto);">
+                <div class="maps" style="grid-template-rows: repeat(${Math.floor((ctfMaps.length + 3) / 4)}, auto);">
                     ${ctfMaps.map((map) => /* html */`
+                        <div>${MapListView.Common.htmlEncode(map.map)}</div>
+                    `).join("")}
+                </div>
+                <div class="section">Monsterball</div>
+                <div class="maps" style="grid-template-rows: repeat(${Math.floor((mbMaps.length + 3) / 4)}, auto);">
+                    ${mbMaps.map((map) => /* html */`
                         <div>${MapListView.Common.htmlEncode(map.map)}</div>
                     `).join("")}
                 </div>
