@@ -164,7 +164,7 @@ declare namespace ChallengeDbTypes {
                 DateAdded: Date
                 DateClocked: Date
                 ClockTeamId: number
-                DiscordId: string
+                CasterDiscordId: string
                 DateClockDeadline: Date
                 DateClockDeadlineNotified: Date
                 DateReported: Date
@@ -182,6 +182,7 @@ declare namespace ChallengeDbTypes {
                 GameType: string
                 SuggestedGameType: string
                 SuggestedGameTypeTeamId: number
+                DiscordEventId: string
             }[],
             {
                 Map: string

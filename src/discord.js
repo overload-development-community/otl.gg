@@ -620,7 +620,7 @@ class Discord {
     //  ##   #      ##    # #    ##   ##   #  #   ##   ###    ##
     /**
      * Creates a new role on the Discord server.
-     * @param {DiscordJs.CreateRoleOptions} [data] The role data.
+     * @param {DiscordJs.CreateRoleOptions} data The role data.
      * @returns {Promise<DiscordJs.Role>} A promise that resolves with the created role.
      */
     static createRole(data) {
@@ -628,6 +628,24 @@ class Discord {
             return void 0;
         }
         return otlGuild.roles.create(data);
+    }
+
+    //                          #          ####                     #
+    //                          #          #                        #
+    //  ##   ###    ##    ###  ###    ##   ###   # #    ##   ###   ###
+    // #     #  #  # ##  #  #   #    # ##  #     # #   # ##  #  #   #
+    // #     #     ##    # ##   #    ##    #     # #   ##    #  #   #
+    //  ##   #      ##    # #    ##   ##   ####   #     ##   #  #    ##
+    /**
+     * Creates a new event on the Discord server.
+     * @param {DiscordJs.GuildScheduledEventCreateOptions} data The event data.
+     * @returns {Promise<DiscordJs.GuildScheduledEvent>} A promise that returns the event.
+     */
+    static createEvent(data) {
+        if (!otlGuild) {
+            return void 0;
+        }
+        return otlGuild.scheduledEvents.create(data);
     }
 
     //   #    #             #   ##   #                             ##    ###         ###      #
@@ -758,6 +776,22 @@ class Discord {
      */
     static findUserById(id) {
         return discord.users.fetch(id, {cache: false});
+    }
+
+    //   #    #             #  ####                     #    ###         ###      #
+    //  # #                 #  #                        #    #  #         #       #
+    //  #    ##    ###    ###  ###   # #    ##   ###   ###   ###   #  #   #     ###
+    // ###    #    #  #  #  #  #     # #   # ##  #  #   #    #  #  #  #   #    #  #
+    //  #     #    #  #  #  #  #     # #   ##    #  #   #    #  #   # #   #    #  #
+    //  #    ###   #  #   ###  ####   #     ##   #  #    ##  ###     #   ###    ###
+    //                                                              #
+    /**
+     * Finds a Discord event by event ID.
+     * @param {string} id The event ID.
+     * @returns {Promise<DiscordJs.GuildScheduledEvent>} A promise that returns the event.
+     */
+    static findEventById(id) {
+        return otlGuild.scheduledEvents.fetch(id);
     }
 
     //              #    #  #

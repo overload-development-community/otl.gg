@@ -1037,7 +1037,7 @@ class ChallengeDb {
                 c.ChallengedTeamScore,
                 c.DateAdded,
                 c.ClockTeamId,
-                p.DiscordId,
+                p.DiscordId CasterDiscordId,
                 c.DateClocked,
                 c.DateClockDeadline,
                 c.DateClockDeadlineNotified,
@@ -1055,7 +1055,8 @@ class ChallengeDb {
                 c.ChallengedTeamRating,
                 c.GameType,
                 c.SuggestedGameType,
-                c.SuggestedGameTypeTeamId
+                c.SuggestedGameTypeTeamId,
+                c.DiscordEventId
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -1091,7 +1092,7 @@ class ChallengeDb {
             dateAdded: data.recordsets[0][0].DateAdded,
             dateClocked: data.recordsets[0][0].DateClocked,
             clockTeamId: data.recordsets[0][0].ClockTeamId,
-            casterDiscordId: data.recordsets[0][0].DiscordId,
+            casterDiscordId: data.recordsets[0][0].CasterDiscordId,
             dateClockDeadline: data.recordsets[0][0].DateClockDeadline,
             dateClockDeadlineNotified: data.recordsets[0][0].DateClockDeadlineNotified,
             dateReported: data.recordsets[0][0].DateReported,
@@ -1109,6 +1110,7 @@ class ChallengeDb {
             gameType: data.recordsets[0][0].GameType,
             suggestedGameType: data.recordsets[0][0].SuggestedGameType,
             suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
+            discordEventId: data.recordsets[0][0].DiscordEventId,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -1719,6 +1721,26 @@ class ChallengeDb {
         if (hasData) {
             await db.query(`${sql} ${sqlTerms.join(",")}`, params);
         }
+    }
+
+    //               #    ####                     #
+    //               #    #                        #
+    //  ###    ##   ###   ###   # #    ##   ###   ###
+    // ##     # ##   #    #     # #   # ##  #  #   #
+    //   ##   ##     #    #     # #   ##    #  #   #
+    // ###     ##     ##  ####   #     ##   #  #    ##
+    /**
+     * Sets the event for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resolves when the event has been set.
+     */
+    static async setEvent(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET DiscordEventId = @discordEventId WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            discordEventId: {type: Db.VARCHAR(24), value: challenge.details.event.id}
+        });
     }
 
     //               #     ##                     ###
