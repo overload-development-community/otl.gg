@@ -75,7 +75,7 @@ class NewTeam {
                 throw new Error("Channel already exists.");
             }
 
-            await Discord.createChannel(newTeam.channelName, "text", [
+            await Discord.createChannel(newTeam.channelName, "GUILD_TEXT", [
                 {
                     id: Discord.id,
                     deny: ["VIEW_CHANNEL"]

@@ -121,7 +121,7 @@ class Challenge {
                     throw new Error("Channel already exists.");
                 }
 
-                await Discord.createChannel(challenge.channelName, "text", [
+                await Discord.createChannel(challenge.channelName, "GUILD_TEXT", [
                     {
                         id: Discord.id,
                         deny: ["VIEW_CHANNEL"]
@@ -137,7 +137,7 @@ class Challenge {
                 if (Discord.challengesCategory.children.size >= 40) {
                     const oldPosition = Discord.challengesCategory.position;
                     await Discord.challengesCategory.setName("Old Challenges", "Exceeded 40 challenges.");
-                    Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", "category", [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
+                    Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", "GUILD_CATEGORY", [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
                     await Discord.challengesCategory.setPosition(oldPosition + 1);
                 }
 
@@ -2101,10 +2101,10 @@ class Challenge {
 
         if (this.channel) {
             try {
-                await this.channel.updateOverwrite(
+                await this.channel.permissionOverwrites.edit(
                     member,
                     {"VIEW_CHANNEL": true},
-                    `${member} is scheduled to cast this match.`
+                    {reason: `${member} is scheduled to cast this match.`}
                 );
 
                 await this.updatePinnedPost();
@@ -2947,10 +2947,10 @@ class Challenge {
         if (this.channel) {
             try {
                 if (Discord.findGuildMemberById(member.id)) {
-                    await this.channel.updateOverwrite(
+                    await this.channel.permissionOverwrites.edit(
                         member,
                         {"VIEW_CHANNEL": null},
-                        `${member} is no longer scheduled to cast this match.`
+                        {reason: `${member} is no longer scheduled to cast this match.`}
                     );
                 }
 

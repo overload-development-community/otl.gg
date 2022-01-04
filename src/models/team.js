@@ -498,16 +498,16 @@ class Team {
 
             await captain.roles.add(Discord.captainRole, `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`);
 
-            await captainsChannel.updateOverwrite(
+            await captainsChannel.permissionOverwrites.edit(
                 captain,
                 {"VIEW_CHANNEL": true},
-                `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`
+                {reason: `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`}
             );
 
-            await captainsVoiceChannel.updateOverwrite(
+            await captainsVoiceChannel.permissionOverwrites.edit(
                 captain,
                 {"VIEW_CHANNEL": true},
-                `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`
+                {reason: `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`}
             );
 
             await this.updateChannels();
@@ -1088,10 +1088,10 @@ class Team {
             await pilot.roles.add(Discord.founderRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
             await pilot.roles.remove(Discord.captainRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
 
-            await captainsChannel.updateOverwrite(
+            await captainsChannel.permissionOverwrites.edit(
                 pilot,
                 {"VIEW_CHANNEL": true},
-                `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`
+                {reason: `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`}
             );
 
             await this.updateChannels();
@@ -1164,12 +1164,12 @@ class Team {
                     await member.roles.remove(Discord.captainRole, `${member.displayName} left the team.`);
                     await member.roles.remove(this.role, `${member.displayName} left the team.`);
 
-                    let permissions = captainsChannel.permissionOverwrites.get(member.id);
+                    let permissions = captainsChannel.permissionOverwrites.cache.get(member.id);
                     if (permissions && permissions.id) {
                         await permissions.delete(`${member.displayName} left the team.`);
                     }
 
-                    permissions = captainsVoiceChannel.permissionOverwrites.get(member.id);
+                    permissions = captainsVoiceChannel.permissionOverwrites.cache.get(member.id);
                     if (permissions && permissions.id) {
                         await permissions.delete(`${member.displayName} left the team.`);
                     }
@@ -1270,12 +1270,12 @@ class Team {
 
             await captain.roles.remove(Discord.captainRole, `${member.displayName} removed ${captain.displayName} as a captain.`);
 
-            let permissions = captainsChannel.permissionOverwrites.get(captain.id);
+            let permissions = captainsChannel.permissionOverwrites.cache.get(captain.id);
             if (permissions && permissions.id) {
                 await permissions.delete(`${member.displayName} removed ${captain.displayName} as a captain.`);
             }
 
-            permissions = captainsVoiceChannel.permissionOverwrites.get(captain.id);
+            permissions = captainsVoiceChannel.permissionOverwrites.cache.get(captain.id);
             if (permissions && permissions.id) {
                 await permissions.delete(`${member.displayName} removed ${captain.displayName} as a captain.`);
             }
@@ -1546,10 +1546,10 @@ class Team {
             await pilot.roles.add(Discord.founderRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
             await pilot.roles.remove(Discord.captainRole, `${member.displayName} transferred founder of team ${this.name} to ${pilot.displayName}.`);
 
-            await captainsChannel.updateOverwrite(
+            await captainsChannel.permissionOverwrites.edit(
                 pilot,
                 {"VIEW_CHANNEL": true},
-                `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`
+                {reason: `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`}
             );
 
             await this.updateChannels();
@@ -1752,14 +1752,15 @@ class Team {
 
         const teamRole = await Discord.createRole({
             name: this.roleName,
-            mentionable: false
-        }, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
+            mentionable: false,
+            reason: `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`
+        });
 
         await founder.roles.add(Discord.founderRole, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await founder.roles.add(teamRole, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        const category = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel(this.name, "category", [ // eslint-disable-line no-extra-parens
+        const category = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel(this.name, "GUILD_CATEGORY", [ // eslint-disable-line no-extra-parens
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1769,7 +1770,7 @@ class Team {
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`));
 
-        const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, "text", [
+        const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, "GUILD_TEXT", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL", "SEND_MESSAGES"]
@@ -1787,7 +1788,7 @@ class Team {
 
         await announcementsChannel.setParent(category, {lockPermissions: false});
 
-        const teamChannel = await Discord.createChannel(this.teamChannelName, "text", [
+        const teamChannel = await Discord.createChannel(this.teamChannelName, "GUILD_TEXT", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1805,7 +1806,7 @@ class Team {
 
         await teamChannel.setParent(category, {lockPermissions: false});
 
-        const captainsChannel = await Discord.createChannel(this.captainsChannelName, "text", [
+        const captainsChannel = await Discord.createChannel(this.captainsChannelName, "GUILD_TEXT", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1823,7 +1824,7 @@ class Team {
 
         await captainsChannel.setParent(category, {lockPermissions: false});
 
-        const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, "voice", [
+        const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, "GUILD_VOICE", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]
@@ -1836,7 +1837,7 @@ class Team {
         await teamVoiceChannel.setParent(category, {lockPermissions: false});
         await teamVoiceChannel.edit({bitrate: 64000});
 
-        const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, "voice", [
+        const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, "GUILD_VOICE", [
             {
                 id: Discord.id,
                 deny: ["VIEW_CHANNEL"]

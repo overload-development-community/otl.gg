@@ -8,7 +8,9 @@ const DiscordJs = require("discord.js"),
     Warning = require("./logging/warning"),
 
     commands = new Commands(),
-    discord = new DiscordJs.Client({ws: {intents: ["DIRECT_MESSAGES", "GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_PRESENCES"]}}),
+    discord = new DiscordJs.Client({
+        intents: ["DIRECT_MESSAGES", "GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_PRESENCES"]
+    }),
     messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/,
     urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
 
@@ -138,7 +140,7 @@ class Discord {
     //  ##   #  #   # #  #  #  #  #   ##   ###   ###
     /**
      * Returns the channels on the server.
-     * @returns {DiscordJs.Collection<string, DiscordJs.GuildChannel>} The channels.
+     * @returns {DiscordJs.Collection<string, DiscordJs.GuildChannel | DiscordJs.ThreadChannel>} The channels.
      */
     static get channels() {
         if (otlGuild) {
@@ -424,11 +426,11 @@ class Discord {
      * Parses a message.
      * @param {DiscordJs.User} user The user who sent the message.
      * @param {string} message The text of the message.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.NewsChannel} channel The channel the message was sent on.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.NewsChannel|DiscordJs.PartialDMChannel|DiscordJs.ThreadChannel} channel The channel the message was sent on.
      * @returns {Promise} A promise that resolves when the message is parsed.
      */
     static async message(user, message, channel) {
-        if (settings.testing && (channel.type === "dm" || !channel.guild || channel.guild.id !== otlGuild.id)) {
+        if (settings.testing && (channel.type === "DM" || !channel.guild || channel.guild.id !== otlGuild.id)) {
             return;
         }
 
@@ -445,7 +447,7 @@ class Discord {
             if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
                 let success = false;
                 try {
-                    if (channel.type === "text" && Commands.isDuplicateCommand(member, channel, text)) {
+                    if (channel.type === "GUILD_TEXT" && Commands.isDuplicateCommand(member, channel, text)) {
                         Log.warning(`${channel} ${member}: ${text}\nDuplicate command thrown out.`);
                     } else {
                         success = await commands[command](member, channel, args);
@@ -537,7 +539,7 @@ class Discord {
             embed.setTimestamp(new Date());
         }
 
-        await message.edit("", embed);
+        await message.edit({embeds: [embed]});
     }
 
     //        #          #      ##
@@ -578,7 +580,7 @@ class Discord {
 
         let msg;
         try {
-            const msgSend = await channel.send("", embed);
+            const msgSend = await channel.send({embeds: [embed]});
 
             if (msgSend instanceof Array) {
                 msg = msgSend[0];
@@ -598,10 +600,10 @@ class Discord {
     /**
      * Creates a new channel on the Discord server.
      * @param {string} name The name of the channel.
-     * @param {"category" | "text" | "voice"} type The type of channel to create.
+     * @param {"GUILD_CATEGORY" | "GUILD_TEXT" | "GUILD_VOICE"} type The type of channel to create.
      * @param {DiscordJs.OverwriteResolvable[]|DiscordJs.Collection<DiscordJs.Snowflake, DiscordJs.OverwriteResolvable>} [overwrites] The permissions that should overwrite the default permission set.
      * @param {string} [reason] The reason the channel is being created.
-     * @returns {Promise<DiscordJs.TextChannel|DiscordJs.VoiceChannel|DiscordJs.CategoryChannel>} The created channel.
+     * @returns {Promise<DiscordJs.TextChannel | DiscordJs.NewsChannel | DiscordJs.VoiceChannel | DiscordJs.CategoryChannel | DiscordJs.StoreChannel | DiscordJs.StageChannel>} The created channel.
      */
     static createChannel(name, type, overwrites, reason) {
         if (!otlGuild) {
@@ -618,15 +620,14 @@ class Discord {
     //  ##   #      ##    # #    ##   ##   #  #   ##   ###    ##
     /**
      * Creates a new role on the Discord server.
-     * @param {DiscordJs.RoleData} [data] The role data.
-     * @param {string} [reason] The reason the role is being created.
+     * @param {DiscordJs.CreateRoleOptions} [data] The role data.
      * @returns {Promise<DiscordJs.Role>} A promise that resolves with the created role.
      */
-    static createRole(data, reason) {
+    static createRole(data) {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.roles.create({data, reason});
+        return otlGuild.roles.create(data);
     }
 
     //   #    #             #   ##   #                             ##    ###         ###      #
@@ -639,7 +640,7 @@ class Discord {
     /**
      * Finds a Discord channel by its ID.
      * @param {string} id The ID of the channel.
-     * @returns {DiscordJs.GuildChannel} The Discord channel.
+     * @returns {DiscordJs.GuildChannel | DiscordJs.ThreadChannel} The Discord channel.
      */
     static findChannelById(id) {
         if (!otlGuild) {
@@ -658,7 +659,7 @@ class Discord {
     /**
      * Finds a Discord channel by its name.
      * @param {string} name The name of the channel.
-     * @returns {DiscordJs.GuildChannel} The Discord channel.
+     * @returns {DiscordJs.GuildChannel | DiscordJs.ThreadChannel} The Discord channel.
      */
     static findChannelByName(name) {
         if (!otlGuild) {
@@ -756,7 +757,7 @@ class Discord {
      * @returns {Promise<DiscordJs.User>} A promise that resolves with the user.
      */
     static findUserById(id) {
-        return discord.users.fetch(id, false);
+        return discord.users.fetch(id, {cache: false});
     }
 
     //              #    #  #

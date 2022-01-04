@@ -401,7 +401,7 @@ class Commands {
      * @returns {boolean} Whether the channel is on the correct server.
      */
     static checkChannelIsOnServer(channel) {
-        return channel.type === "text" && channel.guild.name === settings.guild;
+        return channel.type === "GUILD_TEXT" && channel.guild.name === settings.guild;
     }
 
     //       #                 #     #  #               ###                                  #
