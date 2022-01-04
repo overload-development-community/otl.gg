@@ -5213,9 +5213,14 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
-        if (!message || ["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
+        if (!message) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To force a team size, use the \`!forceteamsize <size>\` command, for example, \`!forceteamsize 3\`.`, channel);
             throw new Warning("Missing team size.");
+        }
+
+        if (["2", "3", "4", "5", "6", "7", "8", "2v2", "3v3", "4v4", "5v5", "6v6", "7v7", "8v8"].indexOf(message.toLowerCase()) === -1) {
+            await Discord.queue(`Sorry, ${member}, but that is an invalid team size.  To force a team size, use the \`!forceteamsize <size>\` command, for example, \`!forceteamsize 3\`.`, channel);
+            throw new Warning("Invalid team size.");
         }
 
         try {
