@@ -1324,7 +1324,7 @@ class Challenge {
 
             await Discord.richQueue(embed, this.channel);
 
-            await Discord.queue(`The match at ${this.channel} has been confirmed.  Please add stats and close the channel.`, Discord.alertsChannel);
+            await Discord.queue(`The match at ${this.channel} has been confirmed with the final score **${this.challengingTeam.name}** ${this.details.challengingTeamScore} to **${this.challengedTeam.name}** ${this.details.challengedTeamScore}.  Please add stats and close the channel.`, Discord.alertsChannel);
 
             await this.updatePinnedPost();
         } catch (err) {
