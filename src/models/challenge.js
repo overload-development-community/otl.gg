@@ -16,7 +16,8 @@
  * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
-const Common = require("../../web/includes/common"),
+const Calendar = require("../calendar"),
+    Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
@@ -1667,13 +1668,14 @@ class Challenge {
             gameType: details.gameType,
             suggestedGameType: details.suggestedGameType,
             suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
-            event: await Discord.findEventById(details.discordEventId)
+            discordEvent: await Discord.findEventById(details.discordEventId),
+            googleEvent: await Calendar.get(details.googleEventId)
         };
     }
 
     // ##                #
     //  #                #
-    //  #     ##    ##   # #
+    //  #     ##    ##   # #9
     //  #    #  #  #     ##
     //  #    #  #  #     # #
     // ###    ##    ##   #  #
@@ -3038,13 +3040,16 @@ class Challenge {
 
         const parameters = [];
         const eventParameters = [];
+        const htmlParameters = [];
 
         if (this.details.dateConfirmed) {
             eventParameters.push(`Final Score: **${this.challengingTeam.tag}** ${this.details.challengingTeamScore}, **${this.challengedTeam.tag}** ${this.details.challengedTeamScore}${this.details.overtimePeriods ? `, ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`);
+            htmlParameters.push(`Final Score: <b>${this.challengingTeam.tag}</b> ${this.details.challengingTeamScore}, <b>${this.challengedTeam.tag}</b> ${this.details.challengedTeamScore}${this.details.overtimePeriods ? `, ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`);
         }
 
         parameters.push(`Game Type: **${Challenge.getGameTypeName(this.details.gameType)}**`);
         eventParameters.push(`Game Type: **${Challenge.getGameTypeName(this.details.gameType)}**`);
+        htmlParameters.push(`Game Type: <b>${Challenge.getGameTypeName(this.details.gameType)}</b>`);
 
         if (this.details.matchTime) {
             parameters.push(`Match Time: **<t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>**`);
@@ -3053,11 +3058,13 @@ class Challenge {
         if (this.details.teamSize) {
             parameters.push(`Team Size: **${this.details.teamSize}v${this.details.teamSize}**`);
             eventParameters.push(`Team Size: **${this.details.teamSize}v${this.details.teamSize}**`);
+            htmlParameters.push(`Team Size: <b>${this.details.teamSize}v${this.details.teamSize}</b>`);
         }
 
         if (this.details.map) {
             parameters.push(`Map: **${this.details.map}**`);
             eventParameters.push(`Map: **${this.details.map}**`);
+            htmlParameters.push(`Map: <b>${this.details.map}</b>`);
         }
 
         if (this.details.overtimePeriods) {
@@ -3068,12 +3075,14 @@ class Challenge {
             parameters.push(`Caster: **${this.details.caster}** at **https://twitch.tv/${await this.details.caster.getTwitchName()}**`);
             if (!this.details.dateConfirmed) {
                 eventParameters.push(`Caster: **${this.details.caster}** at **https://twitch.tv/${await this.details.caster.getTwitchName()}**`);
+                htmlParameters.push(`Caster: <b>${this.details.caster}</b> at <a target="_blank" href="https://twitch.tv/${await this.details.caster.getTwitchName()}">https://twitch.tv/${await this.details.caster.getTwitchName()}</a>`);
             }
         }
 
         if (this.details.postseason) {
             parameters.push("**Postseason Game**");
             eventParameters.push("**Postseason Game**");
+            htmlParameters.push("<b>Postseason Game</b>");
         }
 
         embed.addField("Match Parameters:", parameters.join("\n"));
@@ -3194,20 +3203,19 @@ class Challenge {
             await message.pin();
         }
 
-        if (this.details.event.isCompleted()) {
-            this.details.event = void 0;
+        // Set Discord event.
+        if (this.details.discordEvent.isCompleted()) {
+            this.details.discordEvent = void 0;
         }
 
         try {
-            if (this.details.event) {
+            if (this.details.discordEvent) {
                 if (!this.details.matchTime) {
-                    await this.details.event.delete();
+                    await this.details.discordEvent.delete();
 
-                    this.details.event = void 0;
-
-                    await this.setEvent();
+                    this.details.discordEvent = void 0;
                 } else if (matchTimeUpdate) {
-                    await this.details.event.edit({
+                    await this.details.discordEvent.edit({
                         name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                         scheduledStartTime: this.details.matchTime,
                         scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
@@ -3215,14 +3223,14 @@ class Challenge {
                         reason: "Match update."
                     });
                 } else {
-                    await this.details.event.edit({
+                    await this.details.discordEvent.edit({
                         name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                         description: eventParameters.join("\n"),
                         reason: "Match update."
                     });
                 }
             } else if (this.details.matchTime) {
-                this.details.event = await Discord.createEvent({
+                this.details.discordEvent = await Discord.createEvent({
                     name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                     scheduledStartTime: this.details.matchTime,
                     scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
@@ -3232,11 +3240,50 @@ class Challenge {
                     entityMetadata: {location: "OTL"},
                     reason: "Match update."
                 });
-
-                await this.setEvent();
             }
         } catch (err) {
-            Log.exception("There was an error while trying to update a challenge's guild event.", err);
+            Log.exception("There was an error while trying to update a challenge's Discord event.", err);
+        }
+
+        // Set Google event.
+        try {
+            if (this.details.googleEvent) {
+                if (this.details.matchTime) {
+                    await Calendar.update(this.details.googleEvent.id, {
+                        summary: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                        start: {
+                            dateTime: this.details.matchTime.toISOString()
+                        },
+                        end: {
+                            dateTime: new Date(this.details.matchTime.getTime() + 20 * 60 * 1000).toISOString()
+                        },
+                        description: htmlParameters.join("<br />")
+                    });
+                } else {
+                    await Calendar.delete(this.details.googleEvent);
+
+                    this.details.googleEvent = void 0;
+                }
+            } else if (this.details.matchTime) {
+                this.details.googleEvent = await Calendar.add({
+                    summary: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                    start: {
+                        dateTime: this.details.matchTime.toISOString()
+                    },
+                    end: {
+                        dateTime: new Date(this.details.matchTime.getTime() + 20 * 60 * 1000).toISOString()
+                    },
+                    description: htmlParameters.join("<br />")
+                });
+            }
+        } catch (err) {
+            Log.exception("There was an error while trying to update a challenge's Google event.", err);
+        }
+
+        try {
+            await this.setEvent();
+        } catch (err) {
+            Log.exception("There was a critical database error setting the events.  Please clean up the events in the database, Discord, and Google calendar.", err);
         }
     }
 

@@ -1056,7 +1056,8 @@ class ChallengeDb {
                 c.GameType,
                 c.SuggestedGameType,
                 c.SuggestedGameTypeTeamId,
-                c.DiscordEventId
+                c.DiscordEventId,
+                c.GoogleEventId
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -1111,6 +1112,7 @@ class ChallengeDb {
             suggestedGameType: data.recordsets[0][0].SuggestedGameType,
             suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             discordEventId: data.recordsets[0][0].DiscordEventId,
+            googleEventId: data.recordsets[0][0].GoogleEventId,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -1736,10 +1738,11 @@ class ChallengeDb {
      */
     static async setEvent(challenge) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET DiscordEventId = @discordEventId WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET DiscordEventId = @discordEventId, GoogleEventId = @googleEventId WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
-            discordEventId: {type: Db.VARCHAR(24), value: challenge.details.event.id}
+            discordEventId: {type: Db.VARCHAR(24), value: challenge.details.discordEvent.id},
+            googleEventId: {type: Db.VARCHAR(1024), value: challenge.details.googleEvent.id}
         });
     }
 
