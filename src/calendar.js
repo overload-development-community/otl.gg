@@ -36,7 +36,6 @@ class Calendar {
     static async add(event) {
         try {
             const res = await calendar.events.insert({
-                auth: "",
                 calendarId: settings.calendarId,
                 requestBody: event
             });
@@ -67,7 +66,6 @@ class Calendar {
     static async delete(event) {
         try {
             const res = await calendar.events.delete({
-                auth: "",
                 calendarId: settings.calendarId,
                 eventId: event.id
             });
@@ -127,7 +125,6 @@ class Calendar {
     static async update(id, event) {
         try {
             const res = await calendar.events.patch({
-                auth: "",
                 calendarId: settings.calendarId,
                 eventId: id,
                 requestBody: event
