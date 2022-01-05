@@ -323,6 +323,13 @@
     border: none;
 }
 
+#server {
+    color: white;
+    font-size: 14px;
+    margin-top: 5px;
+    text-align: center;
+}
+
 #details {
     display: grid;
     grid-template-columns: repeat(6, auto);

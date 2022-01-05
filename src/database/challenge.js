@@ -209,6 +209,7 @@ class ChallengeDb {
         await db.query(/* sql */`
             DELETE FROM tblStat WHERE ChallengeId = @id
             DELETE FROM tblDamage WHERE ChallengeId = @id
+            UPDATE tblChallenge SET Server = NULL WHERE ChallengeId = @id
         `, {id: {type: Db.INT, value: challenge.id}});
     }
 
@@ -1057,7 +1058,8 @@ class ChallengeDb {
                 c.SuggestedGameType,
                 c.SuggestedGameTypeTeamId,
                 c.DiscordEventId,
-                c.GoogleEventId
+                c.GoogleEventId,
+                c.Server
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -1113,6 +1115,7 @@ class ChallengeDb {
             suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             discordEventId: data.recordsets[0][0].DiscordEventId,
             googleEventId: data.recordsets[0][0].GoogleEventId,
+            server: data.recordsets[0][0].Server,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -2017,6 +2020,26 @@ class ChallengeDb {
         await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
+    }
+
+    //               #     ##
+    //               #    #  #
+    //  ###    ##   ###    #     ##   ###   # #    ##   ###
+    // ##     # ##   #      #   # ##  #  #  # #   # ##  #  #
+    //   ##   ##     #    #  #  ##    #     # #   ##    #
+    // ###     ##     ##   ##    ##   #      #     ##   #
+    /**
+     * Sets the server for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise} A promise that resovles when the server is set.
+     */
+    static async setServer(challenge) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Server = @server WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            server: {type: Db.VARCHAR(100), value: challenge.details.server}
+        });
     }
 
     //               #    ###                      ##    #

@@ -184,6 +184,7 @@ declare namespace ChallengeDbTypes {
                 SuggestedGameTypeTeamId: number
                 DiscordEventId: string
                 GoogleEventId: string
+                Server: string
             }[],
             {
                 Map: string

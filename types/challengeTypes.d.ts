@@ -128,6 +128,7 @@ declare namespace ChallengeTypes {
         suggestedGameTypeTeamId: number
         discordEventId: string
         googleEventId: string
+        server: string
         homeMaps: string[]
     }
 

@@ -528,6 +528,16 @@ class Challenge {
             throw new Error(`Please add mappings for the following players: **${notFound.join("**, **")}**`);
         }
 
+        const server = game.settings.server ? game.settings.server.name : void 0;
+
+        if (this.details.server && this.details.server !== server) {
+            this.details.server = "Multiple servers";
+        } else {
+            this.details.server = server;
+        }
+
+        this.setServer();
+
         // Remove events that happened after the timestamp.
         if (timestamp && game.kills) {
             for (const kill of game.kills.filter((k) => k.time >= timestamp)) {
@@ -1669,7 +1679,8 @@ class Challenge {
             suggestedGameType: details.suggestedGameType,
             suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             discordEvent: await Discord.findEventById(details.discordEventId),
-            googleEvent: await Calendar.get(details.googleEventId)
+            googleEvent: await Calendar.get(details.googleEventId),
+            server: details.server
         };
     }
 
@@ -2439,6 +2450,24 @@ class Challenge {
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the score for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //               #     ##
+    //               #    #  #
+    //  ###    ##   ###    #     ##   ###   # #    ##   ###
+    // ##     # ##   #      #   # ##  #  #  # #   # ##  #  #
+    //   ##   ##     #    #  #  ##    #     # #   ##    #
+    // ###     ##     ##   ##    ##   #      #     ##   #
+    /**
+     * Sets the server for the match.
+     * @returns {Promise} A promise that resolves when the server has been set.
+     */
+    async setServer() {
+        try {
+            await Db.setServer(this);
+        } catch (err) {
+            throw new Exception("There was a database error setting the server for a challenge.", err);
         }
     }
 

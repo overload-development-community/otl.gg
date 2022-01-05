@@ -188,6 +188,9 @@ class MatchView {
                         </div>
                     </div>
                 ` : ""}
+                ${challenge.details.server ? /* html */`
+                    <div id="server">Server: ${challenge.details.server}</div>
+                ` : ""}
                 <div id="details">
                     <div>Blue/Team 1:</div>
                     <div class="tag">${(team = challenge.details.blueTeam) === null ? "" : /* html */`
