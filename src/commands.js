@@ -6595,11 +6595,6 @@ class Commands {
             return false;
         }
 
-        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
-        if (!challenge) {
-            return false;
-        }
-
         if (!await Commands.checkHasParameters(message, member, "To convert a time, use `!convert` along with the date and time.  If not set, time zone defaults to your team's selected time zone, or Pacific Time.  Use the `!timezone` command to set your own time zone.  Founders may use the `!teamtimezone` command to set the default time zone for their team.", channel)) {
             return false;
         }
@@ -6650,7 +6645,10 @@ class Commands {
 
         await Discord.richQueue(Discord.messageEmbed({
             description: "**Converted Time**",
-            fields: [{name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`}]
+            fields: [
+                {name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`},
+                {name: "Discord Markdown", value: `\`<t:${Math.floor(date.getTime() / 1000)}:F>\``}
+            ]
         }), channel);
 
         return true;
