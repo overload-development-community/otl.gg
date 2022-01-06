@@ -6646,8 +6646,8 @@ class Commands {
         await Discord.richQueue(Discord.messageEmbed({
             description: "**Converted Time**",
             fields: [
-                {name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`},
-                {name: "Discord Markdown", value: `\`<t:${Math.floor(date.getTime() / 1000)}:F>\``}
+                {name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`, inline: true},
+                {name: "Discord Markdown", value: `\`<t:${Math.floor(date.getTime() / 1000)}:F>\``, inline: true}
             ]
         }), channel);
 
