@@ -57,10 +57,10 @@ class PlayerGameLogView {
                     <div class="tag"><div class="diamond${(team = teams.getTeam(m.opponentTeamId, m.opponentName, m.opponentTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                     <div>${m.teamScore > m.opponentScore ? "W" : m.teamScore < m.opponentScore ? "L" : "T"} <span class="numeric">${m.teamScore}</span>-<span class="numeric">${m.opponentScore}</span></div>
-                    <div>${typeof m.ratingChange === "number" ? /* html */`
+                    <div>${!season || season < 7 ? "" : /* html */`${typeof m.ratingChange === "number" ? /* html */`
                         ${Math.round(m.ratingChange) > 0 ? /* html */`
                             <span class="plus">+</span>` : ""}<span class="numeric">${Math.round(m.ratingChange)}</span>
-                    ` : ""}</div>
+                    ` : ""}`}</div>
                     <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
                     <div class="map">${m.gameType} ${m.map}</div>
                     <div class="stats">

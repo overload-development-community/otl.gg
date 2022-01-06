@@ -58,10 +58,10 @@ class TeamGameLogView {
                     <div class="tag"><div class="diamond${(team = m.challengingTeamTag === pageTeam.tag ? teams.getTeam(m.challengedTeamId, m.challengedTeamName, m.challengedTeamTag) : teams.getTeam(m.challengingTeamId, m.challengingTeamName, m.challengingTeamTag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                     <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
                     <div>${m.challengingTeamTag === pageTeam.tag ? m.challengingTeamScore > m.challengedTeamScore ? "W" : m.challengingTeamScore < m.challengedTeamScore ? "L" : "T" : m.challengedTeamScore > m.challengingTeamScore ? "W" : m.challengedTeamScore < m.challengingTeamScore ? "L" : "T"} <span class="numeric">${m.challengingTeamTag === pageTeam.tag ? m.challengingTeamScore : m.challengedTeamScore}-${m.challengingTeamTag === pageTeam.tag ? m.challengedTeamScore : m.challengingTeamScore}</span></div>
-                    <div>${typeof m.ratingChange === "number" ? /* html */`
+                    <div>${!season || season < 7 ? "" : /* html */`${typeof m.ratingChange === "number" ? /* html */`
                         ${Math.round(m.ratingChange) > 0 ? /* html */`
                             <span class="plus">+</span>` : ""}<span class="numeric">${Math.round(m.ratingChange)}</span>
-                    ` : ""}</div>
+                    ` : ""}`}</div>
                     <div>${m.gameType} ${m.map}</div>
                     <div class="date"><a href="/match/${m.challengeId}/${m.challengingTeamTag}/${m.challengedTeamTag}"><script>document.write(Common.formatDate(new Date("${m.matchTime}")));</script></a></div>
                     <div class="tag player">${m.playerId ? /* html */`
