@@ -137,6 +137,12 @@ declare namespace TeamTypes {
             ties: number
             gameType: string
         }[]
+        ratings: {
+            teamId: number
+            name: string
+            tag: string
+            rating: number
+        }[]
         maps: {
             map: string
             wins: number

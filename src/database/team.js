@@ -508,6 +508,19 @@ class TeamDb {
             ORDER BY t.Name
 
             SELECT
+                CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END TeamId,
+                t.Name,
+                t.Tag,
+                CASE WHEN COUNT(c.ChallengeId) > 3 THEN 3 ELSE COUNT(c.ChallengeId) END * (1000 + 1000 * ((1.0 * SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore > c.ChallengingTeamScore)) THEN 1 ELSE 0 END) + 0.5 * SUM(CASE WHEN c.ChallengingTeamScore = c.ChallengedTeamScore THEN 1 ELSE 0 END)) / COUNT(c.ChallengeId))) / 3.0 Rating
+            FROM vwCompletedChallenge c
+            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = t.TeamId
+            WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+            GROUP BY CASE WHEN ChallengingTeamId = @teamId THEN ChallengedTeamId ELSE ChallengingTeamId END, t.Name, t.Tag
+            ORDER BY t.Name
+
+            SELECT
                 Map,
                 SUM(CASE WHEN ((ChallengingTeamId = @teamId AND ChallengingTeamScore > ChallengedTeamScore) OR (ChallengedTeamId = @teamId AND ChallengedTeamScore > ChallengingTeamScore)) THEN 1 ELSE 0 END) Wins,
                 SUM(CASE WHEN ((ChallengingTeamId = @teamId AND ChallengingTeamScore < ChallengedTeamScore) OR (ChallengedTeamId = @teamId AND ChallengedTeamScore < ChallengingTeamScore)) THEN 1 ELSE 0 END) Losses,
@@ -630,7 +643,7 @@ class TeamDb {
             season: {type: Db.INT, value: season},
             postseason: {type: Db.BIT, value: postseason}
         });
-        cache = data && data.recordsets && data.recordsets.length >= 5 && {
+        cache = data && data.recordsets && data.recordsets.length >= 6 && {
             records: data.recordsets[0][0] && {
                 teamId: data.recordsets[0][0].TeamId,
                 name: data.recordsets[0][0].Name,
@@ -693,14 +706,20 @@ class TeamDb {
                 ties: row.Ties,
                 gameType: row.GameType
             })),
-            maps: data.recordsets[2].map((row) => ({
+            ratings: data.recordsets[2].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                rating: row.Rating
+            })),
+            maps: data.recordsets[3].map((row) => ({
                 map: row.Map,
                 wins: row.Wins,
                 losses: row.Losses,
                 ties: row.Ties,
                 gameType: row.GameType
             })),
-            statsTA: data.recordsets[3].map((row) => ({
+            statsTA: data.recordsets[4].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,
                 games: row.Games,
@@ -724,7 +743,7 @@ class TeamDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             })),
-            statsCTF: data.recordsets[4].map((row) => ({
+            statsCTF: data.recordsets[5].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,
                 games: row.Games,
@@ -754,9 +773,9 @@ class TeamDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             }))
-        } || {records: void 0, opponents: void 0, maps: void 0, statsTA: void 0, statsCTF: void 0};
+        } || {records: void 0, opponents: void 0, ratings: void 0, maps: void 0, statsTA: void 0, statsCTF: void 0};
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[5] && data.recordsets[5][0] && data.recordsets[5][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
 
         return cache;
     }

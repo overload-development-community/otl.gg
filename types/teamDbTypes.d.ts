@@ -126,6 +126,11 @@ declare namespace TeamDbTypes {
                 Ties: number
                 GameType: string
             }[],
+            {   TeamId: number
+                Name: string
+                Tag: string
+                Rating: number
+            }[],
             {
                 Map: string
                 Wins: number
