@@ -2617,11 +2617,6 @@ class Commands {
 
         const team = await Commands.checkMemberOnTeam(member, channel);
 
-        if (team.locked) {
-            await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
-            throw new Warning("Team rosters are locked.");
-        }
-
         if (!await Commands.checkHasParameters(message, member, "To remove a pilot, you must mention them as part of the `!remove` command.", channel)) {
             return false;
         }
