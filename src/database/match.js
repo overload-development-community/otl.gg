@@ -150,7 +150,7 @@ class MatchDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (
@@ -310,7 +310,7 @@ class MatchDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (
@@ -330,7 +330,7 @@ class MatchDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (
@@ -453,7 +453,7 @@ class MatchDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (
@@ -473,7 +473,7 @@ class MatchDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (

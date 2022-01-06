@@ -735,9 +735,9 @@ class ChallengeDb {
 
             SELECT
                 ChallengingTeamWins, ChallengingTeamLosses, ChallengingTeamTies,
-                CASE WHEN ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies < 10 THEN (ChallengingTeamWins + ChallengingTeamLosses + ChallengingTeamTies) * ChallengingTeamRating / 10 ELSE ChallengingTeamRating END ChallengingTeamRating,
+                ChallengingTeamRating,
                 ChallengedTeamWins, ChallengedTeamLosses, ChallengedTeamTies,
-                CASE WHEN ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies < 10 THEN (ChallengedTeamWins + ChallengedTeamLosses + ChallengedTeamTies) * ChallengedTeamRating / 10 ELSE ChallengedTeamRating END ChallengedTeamRating,
+                ChallengedTeamRating,
                 ChallengingTeamHeadToHeadWins, ChallengedTeamHeadToHeadWins, HeadToHeadTies, ChallengingTeamId, ChallengingTeamScore, ChallengedTeamId, ChallengedTeamScore, Map, GameType, MatchTime, OvertimePeriods, Name, TeamId, Captures, Pickups, CarrierKills, Returns, Kills, Assists, Deaths, Damage
             FROM (
                 SELECT
@@ -1367,7 +1367,7 @@ class ChallengeDb {
 
             SELECT
                 TeamId, Name, Tag,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties
             FROM
             (

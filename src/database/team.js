@@ -430,7 +430,7 @@ class TeamDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties, WinsTA, LossesTA, TiesTA, WinsCTF, LossesCTF, TiesCTF, WinsHomeTA, LossesHomeTA, TiesHomeTA, WinsAwayTA, LossesAwayTA, TiesAwayTA, WinsNeutralTA, LossesNeutralTA, TiesNeutralTA, WinsHomeCTF, LossesHomeCTF, TiesHomeCTF, WinsAwayCTF, LossesAwayCTF, TiesAwayCTF, WinsNeutralCTF, LossesNeutralCTF, TiesNeutralCTF, Wins2v2TA, Losses2v2TA, Ties2v2TA, Wins3v3TA, Losses3v3TA, Ties3v3TA, Wins4v4TA, Losses4v4TA, Ties4v4TA, Wins2v2CTF, Losses2v2CTF, Ties2v2CTF, Wins3v3CTF, Losses3v3CTF, Ties3v3CTF, Wins4v4CTF, Losses4v4CTF, Ties4v4CTF
             FROM
             (
@@ -1181,7 +1181,7 @@ class TeamDb {
 
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
-                CASE WHEN Wins + Losses + Ties >= 10 THEN Rating WHEN Wins + Losses + Ties = 0 THEN NULL ELSE (Wins + Losses + Ties) * Rating / 10 END Rating,
+                Rating,
                 Wins, Losses, Ties, Wins1, Losses1, Ties1, Wins2, Losses2, Ties2, Wins3, Losses3, Ties3${map ? ", WinsMap, LossesMap, TiesMap" : ""}
             FROM
             (
