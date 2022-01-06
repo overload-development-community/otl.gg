@@ -148,7 +148,7 @@ declare namespace ChallengeTypes {
     }
 
     type GamesByChallengeId = {
-        [x: number]: {
+        [x: string]: {
             challengingTeamRating: number
             challengedTeamRating: number
             change: number

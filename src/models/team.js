@@ -2062,35 +2062,91 @@ class Team {
             return;
         }
 
-        /** @type {Object<number, number>} */
+        /** @type {Object<string, number>} */
         const ratings = {};
 
         /** @type {ChallengeTypes.GamesByChallengeId} */
         const challengeRatings = {};
 
-        data.matches.forEach((match) => {
-            const fx = match.gameType === "CTF" && match.season >= 3 ? Elo.actualCTF : Elo.actualTA;
+        if (data.season < 7) {
+            data.matches.forEach((match) => {
+                const fx = match.gameType === "CTF" && match.season >= 3 ? Elo.actualCTF : Elo.actualTA;
 
-            if (!ratings[match.challengingTeamId]) {
-                ratings[match.challengingTeamId] = 1500;
-            }
+                if (!ratings[match.challengingTeamId]) {
+                    ratings[match.challengingTeamId] = 1500;
+                }
 
-            if (!ratings[match.challengedTeamId]) {
-                ratings[match.challengedTeamId] = 1500;
-            }
+                if (!ratings[match.challengedTeamId]) {
+                    ratings[match.challengedTeamId] = 1500;
+                }
 
-            const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), fx(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
-                challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), fx(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
+                const challengingTeamNewRating = Elo.update(Elo.expected(ratings[match.challengingTeamId], ratings[match.challengedTeamId]), fx(match.challengingTeamScore, match.challengedTeamScore), ratings[match.challengingTeamId], data.k),
+                    challengedTeamNewRating = Elo.update(Elo.expected(ratings[match.challengedTeamId], ratings[match.challengingTeamId]), fx(match.challengedTeamScore, match.challengingTeamScore), ratings[match.challengedTeamId], data.k);
 
-            challengeRatings[match.id] = {
-                challengingTeamRating: challengingTeamNewRating,
-                challengedTeamRating: challengedTeamNewRating,
-                change: challengingTeamNewRating - ratings[match.challengingTeamId]
-            };
+                challengeRatings[match.id] = {
+                    challengingTeamRating: challengingTeamNewRating,
+                    challengedTeamRating: challengedTeamNewRating,
+                    change: challengingTeamNewRating - ratings[match.challengingTeamId]
+                };
 
-            ratings[match.challengingTeamId] = challengingTeamNewRating;
-            ratings[match.challengedTeamId] = challengedTeamNewRating;
-        });
+                ratings[match.challengingTeamId] = challengingTeamNewRating;
+                ratings[match.challengedTeamId] = challengedTeamNewRating;
+            });
+        } else {
+            /** @type {Object<string, Object<string, {w: number, l: number, t: number, rating: number}>>} */
+            const teamRecords = {};
+
+            data.matches.forEach((match) => {
+                if (data.teamIds.indexOf(match.challengingTeamId) === -1 || data.teamIds.indexOf(match.challengedTeamId) === -1) {
+                    return;
+                }
+
+                if (!teamRecords[match.challengingTeamId]) {
+                    teamRecords[match.challengingTeamId] = {};
+                }
+
+                if (!teamRecords[match.challengedTeamId]) {
+                    teamRecords[match.challengedTeamId] = {};
+                }
+
+                if (!teamRecords[match.challengingTeamId][match.challengedTeamId]) {
+                    teamRecords[match.challengingTeamId][match.challengedTeamId] = {w: 0, l: 0, t: 0, rating: 0};
+                }
+
+                if (!teamRecords[match.challengedTeamId][match.challengedTeamId]) {
+                    teamRecords[match.challengedTeamId][match.challengedTeamId] = {w: 0, l: 0, t: 0, rating: 0};
+                }
+
+                if (match.challengingTeamScore > match.challengedTeamScore) {
+                    teamRecords[match.challengingTeamId][match.challengedTeamId].w++;
+                    teamRecords[match.challengedTeamId][match.challengedTeamId].l++;
+                }
+
+                if (match.challengingTeamScore < match.challengedTeamScore) {
+                    teamRecords[match.challengingTeamId][match.challengedTeamId].l++;
+                    teamRecords[match.challengedTeamId][match.challengedTeamId].w++;
+                }
+
+                if (match.challengingTeamScore === match.challengedTeamScore) {
+                    teamRecords[match.challengingTeamId][match.challengedTeamId].t++;
+                    teamRecords[match.challengedTeamId][match.challengedTeamId].t++;
+                }
+            });
+
+            Object.keys(teamRecords).forEach((teamId) => {
+                let total = 0;
+
+                Object.keys(teamRecords[teamId]).forEach((opponentTeamId) => {
+                    const record = teamRecords[+teamId][+opponentTeamId];
+
+                    record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.l) / (record.w + record.l + record.t))) / 3);
+
+                    total += record.rating;
+                });
+
+                ratings[teamId] = total / data.teamIds.length;
+            });
+        }
 
         try {
             await Db.updateRatingsForSeasonFromChallenge(challenge, ratings, challengeRatings);

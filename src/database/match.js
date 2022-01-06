@@ -598,7 +598,9 @@ class MatchDb {
                     AND DateClosed IS NOT NULL
                 ORDER BY MatchTime, ChallengeId
 
-                SELECT @k K, @seasonAdded SeasonAdded
+                SELECT @k K, @seasonAdded SeasonAdded, @season Season
+
+                SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 1
             END
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
@@ -606,7 +608,7 @@ class MatchDb {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:season:added`]);
         }
 
-        return data && data.recordsets && data.recordsets.length === 2 && {
+        return data && data.recordsets && data.recordsets.length === 3 && {
             matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
                 id: row.ChallengeId,
                 season: row.Season,
@@ -616,7 +618,9 @@ class MatchDb {
                 challengedTeamScore: row.ChallengedTeamScore,
                 gameType: row.GameType
             })) || [],
-            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32
+            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32,
+            season: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].Season,
+            teamIds: data.recordsets[2] && data.recordsets[2].map((row) => row.TeamId) || []
         } || void 0;
     }
 

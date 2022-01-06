@@ -1642,7 +1642,7 @@ class TeamDb {
     /**
      * Updates the ratins for the season based on the challenge supplied.
      * @param {Challenge} challenge The challenge in the season to update ratings for.
-     * @param {Object<number, number>} ratings The ratings.
+     * @param {Object<string, number>} ratings The ratings.
      * @param {ChallengeTypes.GamesByChallengeId} challengeRatings The ratings after a challenge.
      * @returns {Promise} A promise that resolves when the ratings are updated.
      */
@@ -1668,7 +1668,7 @@ class TeamDb {
             challengeId: {type: Db.INT, value: challenge.id}
         };
 
-        for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: r, rating: ratings[r], index: i}))) {
+        for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: +r, rating: ratings[r], index: i}))) {
             sql = /* sql */`
                 ${sql}
 

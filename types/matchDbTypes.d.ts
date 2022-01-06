@@ -95,6 +95,10 @@ declare namespace MatchDbTypes {
             {
                 K: number
                 SeasonAdded: boolean
+                Season: number
+            }[],
+            {
+                TeamId: number
             }[]
         ]
     }

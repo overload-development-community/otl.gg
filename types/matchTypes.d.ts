@@ -136,6 +136,8 @@ declare namespace MatchTypes {
             gameType: string
         }[]
         k: number
+        season: number
+        teamIds: number[]
     }
 
     type UpcomingMatch = {
