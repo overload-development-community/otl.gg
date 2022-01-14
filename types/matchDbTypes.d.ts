@@ -81,6 +81,26 @@ declare namespace MatchDbTypes {
         ]
     }
 
+    type GetSeasonDataRecordsets = {
+        recordsets: [
+            {
+                ChallengeId: number
+                Season: number
+                ChallengingTeamId: number
+                ChallengedTeamId: number
+                ChallengingTeamScore: number
+                ChallengedTeamScore: number
+                GameType: string
+            }[],
+            {
+                K: number
+            }[],
+            {
+                TeamId: number
+            }[]
+        ]
+    }
+
     type GetSeasonDataFromChallengeRecordsets = {
         recordsets: [
             {

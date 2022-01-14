@@ -7,6 +7,7 @@
  * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./challenge.js")} Challenge
+ * @typedef {import("../../types/matchTypes").SeasonData} MatchTypes.SeasonData
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
  * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
@@ -20,6 +21,7 @@ const Db = require("../database/team"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
     MatchDb = require("../database/match"),
+    SeasonDb = require("../database/season"),
     settings = require("../../settings");
 
 /** @type {typeof import("./challenge")} */
@@ -1205,6 +1207,32 @@ class Team {
         }
     }
 
+    //                   ##     #      #
+    //                    #           # #
+    //  ###  #  #   ###   #    ##     #    #  #
+    // #  #  #  #  #  #   #     #    ###   #  #
+    // #  #  #  #  # ##   #     #     #     # #
+    //  ###   ###   # #  ###   ###    #      #
+    //    #                                 #
+    /**
+     * Sets whetner the team is qualified to affect other teams' ratings, and adjusts the ratings accordingly.
+     * @param {boolean} qualified Whether the team is qualified to affect other teams' ratings.
+     * @returns {Promise} A promise that resolves when the team's qualification is set and the other teams' ratings have been adjusted.
+     */
+    async qualify(qualified) {
+        let season;
+        try {
+            season = await SeasonDb.getCurrentSeason();
+            await Db.qualify(this, season, qualified);
+        } catch (err) {
+            throw new Exception("There was a database error setting a team's qualification.", err);
+        }
+
+        if (season) {
+            await Team.updateRatingsForSeason(season);
+        }
+    }
+
     //              #                  #           #
     //                                 #           #
     // ###    ##   ##    ###    ###   ###    ###  ###    ##
@@ -2038,6 +2066,33 @@ class Team {
         }
     }
 
+    //                #         #          ###          #     #                       ####               ##
+    //                #         #          #  #         #                             #                 #  #
+    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###
+    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #    #   # ##  #  #  ##     #  #  #  #
+    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #  #  #     #  #  ##    # ##    ##   #  #  #  #
+    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #
+    //       #                                                            ###
+    /**
+     * Updates ratings for a season.
+     * @param {number} season The season.
+     * @returns {Promise} A promise that resolves when the ratings are updated.
+     */
+    static async updateRatingsForSeason(season) {
+        let data;
+        try {
+            data = await MatchDb.getSeasonData(season);
+        } catch (err) {
+            throw new Exception("There was a database error getting the season's matches.", err);
+        }
+
+        if (!data) {
+            return;
+        }
+
+        await Team.updateRatingsFromSeasonData(data);
+    }
+
     //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##
     //                #         #          #  #         #                             #                 #  #                                 #                       #  #  #            #     #
     // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###    ##   ###    #     ##    ###   ###    ##   ###   ###   ###    ##   # #   #     ###    ###   #     #     ##   ###    ###   ##
@@ -2062,6 +2117,22 @@ class Team {
             return;
         }
 
+        await Team.updateRatingsFromSeasonData(data);
+    }
+
+    //                #         #          ###          #     #                       ####                     ##                                  ###          #
+    //                #         #          #  #         #                             #                       #  #                                 #  #         #
+    // #  #  ###    ###   ###  ###    ##   #  #   ###  ###   ##    ###    ###   ###   ###   ###    ##   # #    #     ##    ###   ###    ##   ###   #  #   ###  ###    ###
+    // #  #  #  #  #  #  #  #   #    # ##  ###   #  #   #     #    #  #  #  #  ##     #     #  #  #  #  ####    #   # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #  #
+    // #  #  #  #  #  #  # ##   #    ##    # #   # ##   #     #    #  #   ##     ##   #     #     #  #  #  #  #  #  ##    # ##    ##   #  #  #  #  #  #  # ##   #    # ##
+    //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #     #      ##   #  #   ##    ##    # #  ###     ##   #  #  ###    # #    ##   # #
+    //       #                                                            ###
+    /**
+     * Updates ratings for a season from the given data.
+     * @param {MatchTypes.SeasonData} data The season data.
+     * @returns {Promise} A promise that resolves when the ratings are updated.
+     */
+    static async updateRatingsFromSeasonData(data) {
         /** @type {Object<string, number>} */
         const ratings = {};
 
@@ -2149,7 +2220,7 @@ class Team {
         }
 
         try {
-            await Db.updateRatingsForSeasonFromChallenge(challenge, ratings, challengeRatings);
+            await Db.updateRatingsForSeason(data.season, ratings, challengeRatings);
         } catch (err) {
             throw new Exception("There was a database error updating season ratings.", err);
         }

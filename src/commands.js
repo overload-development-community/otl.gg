@@ -6688,6 +6688,66 @@ class Commands {
 
         return true;
     }
+
+    //                   ##     #      #    #             #
+    //                    #           # #                 #
+    //  ###  #  #   ###   #    ##     #    ##     ##    ###
+    // #  #  #  #  #  #   #     #    ###    #    # ##  #  #
+    // #  #  #  #  # ##   #     #     #     #    ##    #  #
+    //  ###   ###   # #  ###   ###    #    ###    ##    ###
+    //    #
+    /**
+     * Marks a team as qualified to affect other teams' ratings.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async qualified(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        const team = await Commands.checkTeamExists(message, member, channel);
+
+        await team.qualify(true);
+
+        await Discord.queue(`**${team.name}** is set as being qualified to affect other teams' ratings.`, channel);
+
+        return true;
+    }
+
+    //              #                      ##     #      #    #             #
+    //              #                       #           # #                 #
+    // ###    ##   ###    ###  #  #   ###   #    ##     #    ##     ##    ###
+    // #  #  #  #   #    #  #  #  #  #  #   #     #    ###    #    # ##  #  #
+    // #  #  #  #   #    #  #  #  #  # ##   #     #     #     #    ##    #  #
+    // #  #   ##     ##   ###   ###   # #  ###   ###    #    ###    ##    ###
+    //                      #
+    /**
+     * Marks a team as not qualified to affect other teams' ratings.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async notqualified(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        const team = await Commands.checkTeamExists(message, member, channel);
+
+        await team.qualify(false);
+
+        await Discord.queue(`**${team.name}** is set as no longer being qualified to affect other teams' ratings.`, channel);
+
+        return true;
+    }
 }
 
 module.exports = Commands;

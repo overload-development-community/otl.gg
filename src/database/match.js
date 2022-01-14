@@ -3,6 +3,7 @@
  * @typedef {import("../../types/matchDbTypes").GetConfirmedRecordsets} MatchDbTypes.GetConfirmedRecordsets
  * @typedef {import("../../types/matchDbTypes").GetCurrentRecordsets} MatchDbTypes.GetCurrentRecordsets
  * @typedef {import("../../types/matchDbTypes").GetPendingRecordsets} MatchDbTypes.GetPendingRecordsets
+ * @typedef {import("../../types/matchDbTypes").GetSeasonDataRecordsets} MatchDbTypes.GetSeasonDataRecordsets
  * @typedef {import("../../types/matchDbTypes").GetSeasonDataFromChallengeRecordsets} MatchDbTypes.GetSeasonDataFromChallengeRecordsets
  * @typedef {import("../../types/matchDbTypes").GetUpcomingRecordsets} MatchDbTypes.GetUpcomingRecordsets
  * @typedef {import("../../types/matchTypes").ConfirmedMatchesData} MatchTypes.ConfirmedMatchesData
@@ -539,6 +540,63 @@ class MatchDb {
         await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
 
         return cache;
+    }
+
+    //              #     ##                                  ###          #
+    //              #    #  #                                 #  #         #
+    //  ###   ##   ###    #     ##    ###   ###    ##   ###   #  #   ###  ###    ###
+    // #  #  # ##   #      #   # ##  #  #  ##     #  #  #  #  #  #  #  #   #    #  #
+    //  ##   ##     #    #  #  ##    # ##    ##   #  #  #  #  #  #  # ##   #    # ##
+    // #      ##     ##   ##    ##    # #  ###     ##   #  #  ###    # #    ##   # #
+    //  ###
+    /**
+     * Gets the season data.
+     * @param {number} season The season.
+     * @returns {Promise<MatchTypes.SeasonData>} A promise that resolves with the season data.
+     */
+    static async getSeasonData(season) {
+        /** @type {MatchDbTypes.GetSeasonDataRecordsets} */
+        const data = await db.query(/* sql */`
+            DECLARE @k FLOAT
+
+            SELECT @k = K FROM tblSeason WHERE @season = Season
+
+            IF (@k IS NOT NULL)
+            BEGIN
+                SELECT
+                    ChallengeId,
+                    Season,
+                    ChallengingTeamId,
+                    ChallengedTeamId,
+                    ChallengingTeamScore,
+                    ChallengedTeamScore,
+                    GameType
+                FROM vwCompletedChallenge
+                WHERE Season = @season
+                    AND Postseason = 0
+                    AND DateClosed IS NOT NULL
+                ORDER BY MatchTime, ChallengeId
+
+                SELECT @k K
+
+                SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 1
+            END
+        `, {season: {type: Db.INT, value: season}});
+
+        return data && data.recordsets && data.recordsets.length === 3 && {
+            matches: data.recordsets[0] && data.recordsets[0].map((row) => ({
+                id: row.ChallengeId,
+                season: row.Season,
+                challengingTeamId: row.ChallengingTeamId,
+                challengedTeamId: row.ChallengedTeamId,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamScore: row.ChallengedTeamScore,
+                gameType: row.GameType
+            })) || [],
+            k: data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].K || 32,
+            season,
+            teamIds: data.recordsets[2] && data.recordsets[2].map((row) => row.TeamId) || []
+        } || void 0;
     }
 
     //              #     ##                                  ###          #          ####                     ##   #           ##    ##

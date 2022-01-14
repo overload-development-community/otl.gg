@@ -1365,6 +1365,36 @@ class TeamDb {
         });
     }
 
+    //                   ##     #      #
+    //                    #           # #
+    //  ###  #  #   ###   #    ##     #    #  #
+    // #  #  #  #  #  #   #     #    ###   #  #
+    // #  #  #  #  # ##   #     #     #     # #
+    //  ###   ###   # #  ###   ###    #      #
+    //    #                                 #
+    /**
+     * Sets a team's qualification status for a season.
+     * @param {Team} team The team.
+     * @param {number} season The season.
+     * @param {boolean} qualified Whether they are qualified.
+     * @returns {Promise} A promise that resolves when the team's qualification has been set.
+     */
+    static async qualify(team, season, qualified) {
+        await db.query(/* sql */`
+            MERGE tblTeamRating tr
+                USING (VALUES (@teamId, @season)) AS v (TeamId, Season)
+                ON tr.TeamId = v.TeamId AND tr.Season = v.Season
+            WHEN MATCHED then
+                UPDATE SET Rating = 0, Qualified = @qualified
+            WHEN NOT MATCHED THEN
+                INSERT (Season, TeamId, Rating, Qualified) VALUES (@season, @teamId, 0, @qualified);
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            season: {type: Db.INT, value: season},
+            qualified: {type: Db.BIT, value: qualified}
+        });
+    }
+
     //              #                  #           #
     //                                 #           #
     // ###    ##   ##    ###    ###   ###    ###  ###    ##
@@ -1640,32 +1670,20 @@ class TeamDb {
     //  ###  ###    ###   # #    ##   ##   #  #   # #    ##  ###   #  #  #     ###    #      ##   #      ##    ##    # #  ###     ##   #  #  #     #      ##   #  #   ##   #  #   # #  ###   ###    ##   #  #  #      ##
     //       #                                                            ###                                                                                                                                   ###
     /**
-     * Updates the ratins for the season based on the challenge supplied.
-     * @param {Challenge} challenge The challenge in the season to update ratings for.
+     * Updates the ratins for the season.
+     * @param {number} season The season to update ratings for.
      * @param {Object<string, number>} ratings The ratings.
      * @param {ChallengeTypes.GamesByChallengeId} challengeRatings The ratings after a challenge.
      * @returns {Promise} A promise that resolves when the ratings are updated.
      */
-    static async updateRatingsForSeasonFromChallenge(challenge, ratings, challengeRatings) {
+    static async updateRatingsForSeason(season, ratings, challengeRatings) {
         let sql = /* sql */`
-            DECLARE @matchTime DATETIME
-            DECLARE @season INT
-
-            SELECT @matchTime = MatchTime FROM tblChallenge WHERE ChallengeId = @challengeId
-
-            IF @matchTime < (SELECT TOP 1 DateStart FROM tblSeason ORDER BY Season)
-            BEGIN
-                SELECT TOP 1 @matchTime = DateStart FROM tblSeason ORDER BY Season
-            END
-
-            SELECT @season = Season FROM tblSeason WHERE DateStart <= @matchTime And DateEnd >= @matchTime
-
             DELETE FROM tblTeamRating WHERE Season = @season
         `;
 
         /** @type {DbTypes.Parameters} */
         let params = {
-            challengeId: {type: Db.INT, value: challenge.id}
+            season: {type: Db.INT, value: season}
         };
 
         for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: +r, rating: ratings[r], index: i}))) {

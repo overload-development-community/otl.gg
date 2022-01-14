@@ -1,4 +1,5 @@
 /**
+ * @typedef {import("../../types/seasonDbTypes").GetCurrentSeasonRecordset} SeasonDbTypes.GetCurrentSeasonRecordset
  * @typedef {import("../../types/seasonDbTypes").GetSeasonNumbersRecordset} SeasonDbTypes.GetSeasonNumbersRecordset
  */
 
@@ -17,6 +18,26 @@ const Cache = require("@roncli/node-redis").Cache,
  * A class that handles calls to the database for seasons.
  */
 class SeasonDb {
+    //              #     ##                                  #     ##
+    //              #    #  #                                 #    #  #
+    //  ###   ##   ###   #     #  #  ###   ###    ##   ###   ###    #     ##    ###   ###    ##   ###
+    // #  #  # ##   #    #     #  #  #  #  #  #  # ##  #  #   #      #   # ##  #  #  ##     #  #  #  #
+    //  ##   ##     #    #  #  #  #  #     #     ##    #  #   #    #  #  ##    # ##    ##   #  #  #  #
+    // #      ##     ##   ##    ###  #     #      ##   #  #    ##   ##    ##    # #  ###     ##   #  #
+    //  ###
+    /**
+     * Gets the current season number.
+     * @return {Promise<number>} A promise that returns the current season number.
+     */
+    static async getCurrentSeason() {
+        /** @type {SeasonDbTypes.GetCurrentSeasonRecordset} */
+        const data = await db.query(/* sql */`
+            SELECT MAX(Season) FROM tblSeason
+        `);
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Season || void 0;
+    }
+
     //              #     ##                                  #  #              #
     //              #    #  #                                 ## #              #
     //  ###   ##   ###    #     ##    ###   ###    ##   ###   ## #  #  #  # #   ###    ##   ###    ###
