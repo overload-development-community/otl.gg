@@ -857,6 +857,27 @@ class Commands {
         return {pilot, confirm};
     }
 
+    //       #                 #     ###    #    ##           #    ###           ##          #    #                  #                   #
+    //       #                 #     #  #         #           #     #           #  #         #    #                                      #
+    //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###    #     ###   #  #  #  #  ###   ###    ##   ###   ##    ####   ##    ###
+    // #     #  #  # ##  #     ##    ###    #     #    #  #   #     #    ##     ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #
+    // #     #  #  ##    #     # #   #      #     #    #  #   #     #      ##   #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #
+    //  ##   #  #   ##    ##   #  #  #     ###   ###    ##     ##  ###   ###    #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###
+    /**
+     * Checks to ensure the pilot is authorized.
+     * @param {PlayerTypes.UserOrGuildMember} pilot The pilot to check.
+     * @param {DiscordJs.GuildMember} member The member issuing the command.
+     * @param {DiscordJs.TextChannel} channel The channel to reply on.
+     * @returns {Promise} A promise that resolves when the check has completed.
+     */
+    static async checkPilotIsAuthorized(pilot, member, channel) {
+        const authorized = await pilot.isAuthorized();
+        if (!authorized) {
+            await Discord.queue(`Sorry, ${member}, but this pilot is not authorized.`, channel);
+            throw new Warning("Pilot is not authorized.");
+        }
+    }
+
     //       #                 #     ###    #    ##           #    #  #         #     ##         ###
     //       #                 #     #  #         #           #    ## #         #    #  #         #
     //  ##   ###    ##    ##   # #   #  #  ##     #     ##   ###   ## #   ##   ###   #  #  ###    #     ##    ###  # #
@@ -2491,11 +2512,6 @@ class Commands {
             throw new Warning("Team is disbanded.");
         }
 
-        if (team.locked) {
-            await Discord.queue(`Sorry, ${member}, but that team's roster is locked for the playoffs.  Roster changes will become available when that team is no longer participating.`, channel);
-            throw new Warning("Team rosters are locked.");
-        }
-
         let isInvited;
         try {
             isInvited = await member.hasBeenInvitedToTeam(team);
@@ -2564,11 +2580,6 @@ class Commands {
         }
 
         const team = await Commands.checkMemberOnTeam(member, channel);
-
-        if (team.locked) {
-            await Discord.queue(`Sorry, ${member}, but your team's roster is locked for the playoffs.  Roster changes will become available when your team is no longer participating.`, channel);
-            throw new Warning("Team rosters are locked.");
-        }
 
         const isFounder = member.isFounder();
         if (isFounder) {
@@ -4370,11 +4381,28 @@ class Commands {
                 await Discord.queue(`Sorry, ${member}, but you can't report a win.  Have the other team use this command instead.`, channel);
                 return false;
             }
+
+            if (challenge.details.restricted) {
+                const details = await challenge.getTeamDetails(),
+                    unauthorized = details.stats.filter((stat) => !stat.authorized);
+
+                if (unauthorized.length > 0) {
+                    try {
+                        await challenge.clearStats();
+                    } catch (err) {
+                        await Discord.queue(`Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`!report\` followed by the score using a space to separate the scores, for example \`!report 49 27\`.`, channel);
+                        throw new Exception(err.message, err);
+                    }
+
+                    await Discord.queue(`Sorry, ${member}, but the following players are unauthorized to play in this match: ${unauthorized.map((player) => player.name).join(", ")}`, channel);
+                    return false;
+                }
+            }
         } else {
             const details = await challenge.getTeamDetails();
 
             if (details.stats.length > 0) {
-                await challenge.clearStats(member);
+                await challenge.clearStats();
             }
 
             score1 = +scoreStr1;
@@ -5625,6 +5653,9 @@ class Commands {
                     team = await Commands.checkTeamExists(teamName, member, channel);
 
                 await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+                if (challenge.details.restricted) {
+                    await Commands.checkPilotIsAuthorized(pilot, member, channel);
+                }
                 await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
 
                 try {
@@ -5647,6 +5678,9 @@ class Commands {
                     team = await Commands.checkTeamExists(teamName, member, channel);
 
                 await Commands.checkTeamIsInChallenge(challenge, team, member, channel);
+                if (challenge.details.restricted) {
+                    await Commands.checkPilotIsAuthorized(pilot, member, channel);
+                }
                 await Commands.checkChallengeTeamStats(challenge, pilot, team, member, channel);
 
                 try {
@@ -5728,6 +5762,19 @@ class Commands {
             timeChanged = false;
         try {
             ({challengingTeamStats, challengedTeamStats, scoreChanged, timeChanged} = await challenge.addStats(+gameId, mapping, false, timestamp));
+
+            if (challenge.details.restricted) {
+                const details = await challenge.getTeamDetails(),
+                    unauthorized = details.stats.filter((stat) => !stat.authorized);
+
+                if (unauthorized.length > 0) {
+                    await challenge.clearStats();
+
+                    await Discord.queue(`Sorry, ${member}, but the following players are unauthorized to play in this match: ${unauthorized.map((player) => player.name).join(", ")}`, channel);
+
+                    return false;
+                }
+            }
         } catch (err) {
             if (err.constructor.name === "Error") {
                 await Discord.queue(`Sorry, ${member}, but there was a problem adding stats: ${err.message}`, channel);
@@ -6223,6 +6270,96 @@ class Commands {
         return true;
     }
 
+    //                     #           #           #             #
+    //                     #                       #             #
+    // ###    ##    ###   ###   ###   ##     ##   ###    ##    ###
+    // #  #  # ##  ##      #    #  #   #    #      #    # ##  #  #
+    // #     ##      ##    #    #      #    #      #    ##    #  #
+    // #      ##   ###      ##  #     ###    ##     ##   ##    ###
+    /**
+     * Sets a match to be a restricted match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async restricted(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!restricted` command by itself to set this challenge as a restricted match.", channel)) {
+            return false;
+        }
+
+        if (!challenge.challengingTeam.locked || !challenge.challengedTeam.locked) {
+            await Discord.queue(`Sorry, ${member}, but both teams need to have their rosters locked to use this command.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.setRestricted(true);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
+    //                                 #           #           #             #
+    //                                 #                       #             #
+    // #  #  ###   ###    ##    ###   ###   ###   ##     ##   ###    ##    ###
+    // #  #  #  #  #  #  # ##  ##      #    #  #   #    #      #    # ##  #  #
+    // #  #  #  #  #     ##      ##    #    #      #    #      #    ##    #  #
+    //  ###  #  #  #      ##   ###      ##  #     ###    ##     ##   ##    ###
+    /**
+     * Sets a match to be an unrestricted match.
+     * @param {DiscordJs.GuildMember} member The user initiating the command.
+     * @param {DiscordJs.TextChannel} channel The channel the message was sent over.
+     * @param {string} message The text of the command.
+     * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
+     */
+    async unrestricted(member, channel, message) {
+        if (!Commands.checkChannelIsOnServer(channel)) {
+            return false;
+        }
+
+        const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
+        if (!challenge) {
+            return false;
+        }
+
+        await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkNoParameters(message, member, "Use the `!restricted` command by itself to set this challenge as a restricted match.", channel)) {
+            return false;
+        }
+
+        Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (challenge.details.postseason) {
+            await Discord.queue(`Sorry, ${member}, but this is a postseason match.  Use the \`!regularseason\` command to make this a regular season match instead.`, channel);
+            return false;
+        }
+
+        try {
+            await challenge.setRestricted(false);
+        } catch (err) {
+            await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
+            throw err;
+        }
+
+        return true;
+    }
+
     //                     #
     //                     #
     // ###    ##    ###   ###    ###    ##    ###   ###    ##   ###
@@ -6253,8 +6390,13 @@ class Commands {
             return false;
         }
 
+        if (!challenge.challengingTeam.locked || !challenge.challengedTeam.locked) {
+            await Discord.queue(`Sorry, ${member}, but both teams need to have their rosters locked to use this command.`, channel);
+            return false;
+        }
+
         try {
-            await challenge.setPostseason();
+            await challenge.setPostseason(true);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;
@@ -6293,8 +6435,15 @@ class Commands {
             return false;
         }
 
+        Commands.checkChallengeDetails(challenge, member, channel);
+
+        if (!challenge.details.postseason) {
+            await Discord.queue(`Sorry, ${member}, but this is not a postseason match.`, channel);
+            return false;
+        }
+
         try {
-            await challenge.setRegularSeason();
+            await challenge.setPostseason(false);
         } catch (err) {
             await Discord.queue(`Sorry, ${member}, but there was a server error.`, channel);
             throw err;

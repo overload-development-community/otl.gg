@@ -1680,7 +1680,8 @@ class Challenge {
             suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             discordEvent: await Discord.findEventById(details.discordEventId),
             googleEvent: await Calendar.get(details.googleEventId),
-            server: details.server
+            server: details.server,
+            restricted: details.restricted
         };
     }
 
@@ -2342,48 +2343,91 @@ class Challenge {
     // ###     ##     ##  #      ##   ###      ##  ###     ##    # #  ###     ##   #  #
     /**
      * Sets a challenge to be a postseason match.
+     * @param {boolean} postseason Whether this is a postseason match.
      * @returns {Promise} A promise that resolves when the challenge is set as a postseason match.
      */
-    async setPostseason() {
+    async setPostseason(postseason) {
         try {
-            await Db.setPostseason(this);
+            await Db.setPostseason(this, postseason);
         } catch (err) {
-            throw new Exception("There was a database error setting a challenge to be a postseason match.", err);
+            throw new Exception("There was a database error setting a challenge's postseason status.", err);
         }
 
         try {
-            await Discord.queue("This challenge is now a postseason match.  All stats will count towards postseason stats for the previous season.", this.channel);
+            if (postseason) {
+                const authorized = await Db.getAuthorizedPlayers(this);
+
+                await Discord.richQueue(Discord.messageEmbed({
+                    title: "Postseason Match Restricted",
+                    description: "This match is now set as a restricted tournament match for the postseason.  The following players are eligible to play in this match.",
+                    fields: [
+                        {
+                            name: this.challengingTeam.name,
+                            value: authorized.challengingTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
+                            inline: true
+                        },
+                        {
+                            name: this.challengedTeam.name,
+                            value: authorized.challengedTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
+                            inline: true
+                        }
+                    ]
+                }), this.channel);
+            } else {
+                await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
+            }
 
             await this.updatePinnedPost();
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting a challenge to be a postseason match.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error setting a challenge's postseason status.  Please resolve this manually as soon as possible.", err);
         }
     }
 
-    //               #    ###                     ##                 ##
-    //               #    #  #                     #                #  #
-    //  ###    ##   ###   #  #   ##    ###  #  #   #     ###  ###    #     ##    ###   ###    ##   ###
-    // ##     # ##   #    ###   # ##  #  #  #  #   #    #  #  #  #    #   # ##  #  #  ##     #  #  #  #
-    //   ##   ##     #    # #   ##     ##   #  #   #    # ##  #     #  #  ##    # ##    ##   #  #  #  #
-    // ###     ##     ##  #  #   ##   #      ###  ###    # #  #      ##    ##    # #  ###     ##   #  #
-    //                                 ###
+    //               #    ###                 #           #           #             #
+    //               #    #  #                #                       #             #
+    //  ###    ##   ###   #  #   ##    ###   ###   ###   ##     ##   ###    ##    ###
+    // ##     # ##   #    ###   # ##  ##      #    #  #   #    #      #    # ##  #  #
+    //   ##   ##     #    # #   ##      ##    #    #      #    #      #    ##    #  #
+    // ###     ##     ##  #  #   ##   ###      ##  #     ###    ##     ##   ##    ###
     /**
-     * Sets a challenge to be a regular season match.
-     * @returns {Promise} A promise that resolves when the challenge is set as a regular season match.
+     * Sets a challenge to be a restricted match.
+     * @param {boolean} restricted Whether this is a restricted match.
+     * @returns {Promise} A promise that resolves when the challenge is set as a restricted match.
      */
-    async setRegularSeason() {
+    async setRestricted(restricted) {
         try {
-            await Db.setRegularSeason(this);
+            await Db.setRestricted(this, restricted);
         } catch (err) {
-            throw new Exception("There was a database error setting a challenge to be a regular season match.", err);
+            throw new Exception("There was a database error setting a challenge to be a restricted match.", err);
         }
 
         try {
-            await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
+            if (restricted) {
+                const authorized = await Db.getAuthorizedPlayers(this);
+
+                await Discord.richQueue(Discord.messageEmbed({
+                    title: "Match Restricted",
+                    description: "This match is now set as a restricted tournament match.  The following players are eligible to play in this match.",
+                    fields: [
+                        {
+                            name: this.challengingTeam.name,
+                            value: authorized.challengingTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
+                            inline: true
+                        },
+                        {
+                            name: this.challengedTeam.name,
+                            value: authorized.challengedTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
+                            inline: true
+                        }
+                    ]
+                }), this.channel);
+            } else {
+                await Discord.queue("This match is now set as unrestricted, both teams' full rosters may play in this match.", this.channel);
+            }
 
             await this.updatePinnedPost();
         } catch (err) {
-            throw new Exception("There was a critical Discord error setting a challenge to be a regular season match.  Please resolve this manually as soon as possible.", err);
+            throw new Exception("There was a critical Discord error setting a challenge to be a restricted match.  Please resolve this manually as soon as possible.", err);
         }
     }
 

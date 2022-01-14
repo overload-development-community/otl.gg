@@ -8,5 +8,11 @@ declare module "discord.js" {
          * @returns {Promise<PlayerTypes.PlayerStats>} A promise that resolves with the pilot's stats.
          */
         getStats(): Promise<PlayerTypes.PlayerStats>
+
+        /**
+         * Returns whether the pilot is authorized.
+         * @returns {Promise<boolean>} A promise that returns whether the pilot is authorized.
+         */
+        isAuthorized(): Promise<boolean>
     }
 }

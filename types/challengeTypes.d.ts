@@ -2,6 +2,17 @@ import Team from "../src/models/team";
 import PlayerTypes from "./playerTypes";
 
 declare namespace ChallengeTypes {
+    type AuthorizedPlayers = {
+        challengingTeamPlayers: {
+            discordId: string
+            name: string
+        }[]
+        challengedTeamPlayers: {
+            discordId: string
+            name: string
+        }[]
+    }
+
     type ChallengeConstructor = {
         id?: number
         challengingTeam: Team
@@ -129,6 +140,7 @@ declare namespace ChallengeTypes {
         discordEventId: string
         googleEventId: string
         server: string
+        restricted: boolean
         homeMaps: string[]
     }
 
@@ -202,6 +214,7 @@ declare namespace ChallengeTypes {
         stats: (PlayerTypes.KDAStats & PlayerTypes.CTFStats & {
             playerId: number
             name: string
+            authorized: boolean
             teamId: number
             twitchName: string
             damage: number

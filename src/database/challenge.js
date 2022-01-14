@@ -8,6 +8,7 @@
  * @typedef {import("../../types/challengeDbTypes").ExtendRecordsets} ChallengeDbTypes.ExtendRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAllByTeamRecordsets} ChallengeDbTypes.GetAllByTeamRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAllByTeamsRecordsets} ChallengeDbTypes.GetAllByTeamsRecordsets
+ * @typedef {import("../../types/challengeDbTypes").GetAuthorizedPlayersRecordsets} ChallengeDbTypes.GetAuthorizedPlayersRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetByIdRecordsets} ChallengeDbTypes.GetByIdRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetByTeamsRecordsets} ChallengeDbTypes.GetByTeamsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetCastDataRecordsets} ChallengeDbTypes.GetCastDataRecordsets
@@ -30,6 +31,7 @@
  * @typedef {import("../../types/challengeDbTypes").UnvoidRecordsets} ChallengeDbTypes.UnvoidRecordsets
  * @typedef {import("../../types/challengeDbTypes").VoidRecordsets} ChallengeDbTypes.VoidRecordsets
  * @typedef {import("../../types/challengeDbTypes").VoidWithPenaltiesRecordsets} ChallengeDbTypes.VoidWithPenaltiesRecordsets
+ * @typedef {import("../../types/challengeTypes").AuthorizedPlayers} ChallengeTypes.AuthorizedPlayers
  * @typedef {import("../../types/challengeTypes").CastData} ChallengeTypes.CastData
  * @typedef {import("../../types/challengeTypes").ChallengeData} ChallengeTypes.ChallengeData
  * @typedef {import("../../types/challengeTypes").ClockedData} ChallengeTypes.ClockedData
@@ -642,6 +644,42 @@ class ChallengeDb {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.ChallengeId, challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId})) || [];
     }
 
+    //              #     ##          #    #                  #                   #  ###   ##
+    //              #    #  #         #    #                                      #  #  #   #
+    //  ###   ##   ###   #  #  #  #  ###   ###    ##   ###   ##    ####   ##    ###  #  #   #     ###  #  #   ##   ###    ###
+    // #  #  # ##   #    ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #  ###    #    #  #  #  #  # ##  #  #  ##
+    //  ##   ##     #    #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #  #      #    # ##   # #  ##    #       ##
+    // #      ##     ##  #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###  #     ###    # #    #    ##   #     ###
+    //  ###                                                                                             #
+    /**
+     * Gets the authorized players for a restricted match.
+     * @param {Challenge} challenge The challenge.
+     * @returns {Promise<ChallengeTypes.AuthorizedPlayers>} A promise that returns the authorized players.
+     */
+    static async getAuthorizedPlayers(challenge) {
+        /** @type {ChallengeDbTypes.GetAuthorizedPlayersRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT r.TeamId, p.DiscordId, p.Name
+            FROM tblRoster r
+            INNER JOIN tblPlayer p on r.PlayerId = p.PlayerId
+            WHERE r.TeamId IN (@challengingTeamId, @challengedTeamId)
+                AND r.Authorized = 1
+        `, {
+            challengingTeamId: {type: Db.INT, value: challenge.challengingTeam.id},
+            challengedTeamId: {type: Db.INT, value: challenge.challengedTeam.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && {
+            challengingTeamPlayers: data.recordsets[0].filter((row) => row.TeamId === challenge.challengingTeam.id).sort((a, b) => a.Name.localeCompare(b.Name)).map((row) => ({
+                discordId: row.DiscordId,
+                name: row.Name
+            })),
+            challengedTeamPlayers: data.recordsets[0].filter((row) => row.TeamId === challenge.challengedTeam.id).sort((a, b) => a.Name.localeCompare(b.Name)).map((row) => ({
+                discordId: row.DiscordId,
+                name: row.Name
+            }))
+        } || void 0;
+    }
+
     //              #    ###         ###      #
     //              #    #  #         #       #
     //  ###   ##   ###   ###   #  #   #     ###
@@ -1059,7 +1097,8 @@ class ChallengeDb {
                 c.SuggestedGameTypeTeamId,
                 c.DiscordEventId,
                 c.GoogleEventId,
-                c.Server
+                c.Server,
+                c.Restricted
             FROM tblChallenge c
             LEFT OUTER JOIN tblPlayer p ON c.CasterPlayerId = p.PlayerId
             WHERE c.ChallengeId = @challengeId
@@ -1116,6 +1155,7 @@ class ChallengeDb {
             discordEventId: data.recordsets[0][0].DiscordEventId,
             googleEventId: data.recordsets[0][0].GoogleEventId,
             server: data.recordsets[0][0].Server,
+            restricted: data.recordsets[0][0].Restricted,
             homeMaps: data.recordsets[1] && data.recordsets[1].map((row) => row.Map) || void 0
         } || void 0;
     }
@@ -1384,9 +1424,10 @@ class ChallengeDb {
                 WHERE t.TeamId IN (@challengingTeamId, @challengedTeamId)
             ) a
 
-            SELECT s.PlayerId, p.Name, s.TeamId, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
+            SELECT s.PlayerId, p.Name, COALESCE(r.Authorized, 1) Authorized, s.TeamId, s.Captures, s.Pickups, s.CarrierKills, s.Returns, s.Kills, s.Assists, s.Deaths, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
             FROM tblStat s
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN tblRoster r ON p.PlayerId = r.PlayerId
             LEFT OUTER JOIN tblChallengeStreamer cs ON s.ChallengeId = cs.ChallengeId AND p.PlayerId = cs.PlayerId
             WHERE s.ChallengeId = @challengeId
 
@@ -1412,6 +1453,7 @@ class ChallengeDb {
             stats: data.recordsets[1].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,
+                authorized: row.Authorized,
                 teamId: row.TeamId,
                 captures: row.Captures,
                 pickups: row.Pickups,
@@ -1942,30 +1984,16 @@ class ChallengeDb {
     /**
      * Sets a match to be a postseason match.
      * @param {Challenge} challenge The challenge.
+     * @param {boolean} postseason Whether this is a postseason match.
      * @returns {Promise} A promise that resolves when the match is set as a postseason match.
      */
-    static async setPostseason(challenge) {
+    static async setPostseason(challenge, postseason) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET Postseason = 1 WHERE ChallengeId = @challengeId
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
-    }
-
-    //               #    ###                     ##                 ##
-    //               #    #  #                     #                #  #
-    //  ###    ##   ###   #  #   ##    ###  #  #   #     ###  ###    #     ##    ###   ###    ##   ###
-    // ##     # ##   #    ###   # ##  #  #  #  #   #    #  #  #  #    #   # ##  #  #  ##     #  #  #  #
-    //   ##   ##     #    # #   ##     ##   #  #   #    # ##  #     #  #  ##    # ##    ##   #  #  #  #
-    // ###     ##     ##  #  #   ##   #      ###  ###    # #  #      ##    ##    # #  ###     ##   #  #
-    //                                 ###
-    /**
-     * Sets a match to be a regular season match.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the match is set as a postseason match.
-     */
-    static async setRegularSeason(challenge) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET Postseason = 0 WHERE ChallengeId = @challengeId
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
+            UPDATE tblChallenge SET Postseason = @postseason, Restricted = @postseason WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            postseason: {type: Db.BIT, value: postseason}
+        });
     }
 
     //               #    ###                      #          #              #
@@ -1983,6 +2011,27 @@ class ChallengeDb {
         await db.query(/* sql */`
             UPDATE tblChallenge SET DateRematched = GETUTCDATE() WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
+    }
+
+    //               #    ###                 #           #           #             #
+    //               #    #  #                #                       #             #
+    //  ###    ##   ###   #  #   ##    ###   ###   ###   ##     ##   ###    ##    ###
+    // ##     # ##   #    ###   # ##  ##      #    #  #   #    #      #    # ##  #  #
+    //   ##   ##     #    # #   ##      ##    #    #      #    #      #    ##    #  #
+    // ###     ##     ##  #  #   ##   ###      ##  #     ###    ##     ##   ##    ###
+    /**
+     * Sets a match to be a restricted match.
+     * @param {Challenge} challenge The challenge.
+     * @param {boolean} restricted Whether this is a restricted match.
+     * @returns {Promise} A promise that resolves when the match is set as a restricted match.
+     */
+    static async setRestricted(challenge, restricted) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET Restricted = @restricted WHERE ChallengeId = @challengeId
+        `, {
+            challengeId: {type: Db.INT, value: challenge.id},
+            restricted: {type: Db.BIT, value: restricted}
+        });
     }
 
     //               #     ##

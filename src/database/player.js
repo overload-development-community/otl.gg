@@ -27,6 +27,7 @@
  * @typedef {import("../../types/playerTypes").PlayerKDAStats} PlayerTypes.PlayerKDAStats
  * @typedef {import("../../types/playerTypes").PlayerStats} PlayerTypes.PlayerStats
  * @typedef {import("../../types/playerTypes").SeasonStats} PlayerTypes.SeasonStats
+ * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  * @typedef {import("../models/team")} Team
  * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
  */
@@ -2321,6 +2322,31 @@ class PlayerDb {
             teamId: {type: Db.INT, value: team.id}
         });
         return !!(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
+    }
+
+    //  #            ##          #    #                  #                   #
+    //              #  #         #    #                                      #
+    // ##     ###   #  #  #  #  ###   ###    ##   ###   ##    ####   ##    ###
+    //  #    ##     ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #
+    //  #      ##   #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #
+    // ###   ###    #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###
+    /**
+     * Checks if a pilot is authorized.
+     * @param {PlayerTypes.UserOrGuildMember} member The pilot.
+     * @returns {Promise<boolean>} A promise that returns whether the pilot is authorized.
+     */
+    static async isAuthorized(member) {
+        /** @type {DbTypes.EmptyRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT TOP 1 1
+            FROM tblRoster r
+            INNER JOIN tblPlayer p ON r.PlayerId = p.PlayerId
+            WHERE p.DiscordId = @discordId
+                AND r.Authorized = 0
+        `, {
+            discordId: {type: Db.INT, value: member.id}
+        });
+        return !(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
 
     //   #          #          ###                     ###                #             #  #  #         #     #    ##

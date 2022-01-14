@@ -223,6 +223,20 @@ DiscordJs.GuildMember.prototype.hasRequestedTeam = async function(team) {
     }
 };
 
+//  #            ##          #    #                  #                   #
+//              #  #         #    #                                      #
+// ##     ###   #  #  #  #  ###   ###    ##   ###   ##    ####   ##    ###
+//  #    ##     ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #
+//  #      ##   #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #
+// ###   ###    #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###
+DiscordJs.GuildMember.prototype.isAuthorized = async function() {
+    try {
+        return await Db.isAuthorized(this);
+    } catch (err) {
+        throw new Exception("There was a database error checking whether the pilot is authorized.", err);
+    }
+};
+
 //  #            ##                #           #           ##         ####                       #
 //              #  #               #                      #  #        #                          #
 // ##     ###   #      ###  ###   ###    ###  ##    ###   #  #  ###   ###    ##   #  #  ###    ###   ##   ###

@@ -81,6 +81,16 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type GetAuthorizedPlayersRecordsets = {
+        recordsets: [
+            {
+                TeamId: number
+                DiscordId: string
+                Name: string
+            }[]
+        ]
+    }
+
     type GetByIdRecordsets = {
         recordsets: [
             ChallengeData[]
@@ -185,6 +195,7 @@ declare namespace ChallengeDbTypes {
                 DiscordEventId: string
                 GoogleEventId: string
                 Server: string
+                Restricted: boolean
             }[],
             {
                 Map: string
@@ -265,6 +276,7 @@ declare namespace ChallengeDbTypes {
             (KDAStats & CTFStats & {
                 PlayerId: number
                 Name: string
+                Authorized: boolean
                 TeamId: number
                 TwitchName: string
             })[],

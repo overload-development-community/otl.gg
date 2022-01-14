@@ -1592,6 +1592,11 @@ class TeamDb {
     static async setLocked(team, locked) {
         await db.query(/* sql */`
             UPDATE tblTeam SET Locked = @locked WHERE TeamId = @teamId
+
+            IF (@locked = 1)
+            BEGIN
+                UPDATE tblRoster SET Authorized = 1 WHERE TeamId = @teamId
+            END
         `, {
             teamId: {type: Db.INT, value: team.id},
             locked: {type: Db.BIT, value: locked}

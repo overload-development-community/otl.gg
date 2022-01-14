@@ -95,6 +95,12 @@ declare module "discord.js" {
         hasRequestedTeam(team: OTLTeam): Promise<boolean>
 
         /**
+         * Returns whether the pilot is authorized.
+         * @returns {Promise<boolean>} A promise that returns whether the pilot is authorized.
+         */
+        isAuthorized(): Promise<boolean>
+
+        /**
          * Returns whether the pilot is a captain or a founder.
          * @returns {boolean} Whether the pilot is a captain or a founder.
          */
