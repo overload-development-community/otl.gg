@@ -188,6 +188,10 @@ span.grey {
     font-size: 14px;
 }
 
+#records .opponents .notqualified {
+    color: #FF0000;
+}
+
 #records .maps {
     display: grid;
     grid-template-columns: repeat(2, auto);

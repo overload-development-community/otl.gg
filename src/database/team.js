@@ -511,13 +511,15 @@ class TeamDb {
                 CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END TeamId,
                 t.Name,
                 t.Tag,
-                CASE WHEN COUNT(c.ChallengeId) > 3 THEN 3 ELSE COUNT(c.ChallengeId) END * (1000 + 1000 * ((1.0 * SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore > c.ChallengingTeamScore)) THEN 1 ELSE 0 END) + 0.5 * SUM(CASE WHEN c.ChallengingTeamScore = c.ChallengedTeamScore THEN 1 ELSE 0 END)) / COUNT(c.ChallengeId))) / 3.0 Rating
+                CASE WHEN COUNT(c.ChallengeId) > 3 THEN 3 ELSE COUNT(c.ChallengeId) END * (1000 + 1000 * ((1.0 * SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore > c.ChallengingTeamScore)) THEN 1 ELSE 0 END) + 0.5 * SUM(CASE WHEN c.ChallengingTeamScore = c.ChallengedTeamScore THEN 1 ELSE 0 END)) / COUNT(c.ChallengeId))) / 3.0 Rating,
+                tr.Qualified
             FROM vwCompletedChallenge c
             INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = t.TeamId
+            INNER JOIN tblTeamRating tr on t.TeamId = tr.TeamId
             WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
-            GROUP BY CASE WHEN ChallengingTeamId = @teamId THEN ChallengedTeamId ELSE ChallengingTeamId END, t.Name, t.Tag
+            GROUP BY CASE WHEN ChallengingTeamId = @teamId THEN ChallengedTeamId ELSE ChallengingTeamId END, t.Name, t.Tag, tr.Qualified
             ORDER BY t.Name
 
             SELECT
@@ -710,7 +712,8 @@ class TeamDb {
                 teamId: row.TeamId,
                 name: row.Name,
                 tag: row.Tag,
-                rating: row.Rating
+                rating: row.Rating,
+                qualified: row.Qualified
             })),
             maps: data.recordsets[3].map((row) => ({
                 map: row.Map,

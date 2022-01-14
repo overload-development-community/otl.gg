@@ -130,6 +130,7 @@ declare namespace TeamDbTypes {
                 Name: string
                 Tag: string
                 Rating: number
+                Qualified: boolean
             }[],
             {
                 Map: string

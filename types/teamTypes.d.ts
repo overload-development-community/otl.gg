@@ -142,6 +142,7 @@ declare namespace TeamTypes {
             name: string
             tag: string
             rating: number
+            qualified?: boolean
         }[]
         maps: {
             map: string
