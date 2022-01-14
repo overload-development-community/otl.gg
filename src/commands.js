@@ -6697,6 +6697,10 @@ class Commands {
 
         await Commands.checkMemberIsOwner(member);
 
+        if (!await Commands.checkHasParameters(message, member, "To set a team as qualified, use `!qualified` along with the team name or tag, for example `!notqualified JOA`.", channel)) {
+            return false;
+        }
+
         const team = await Commands.checkTeamExists(message, member, channel);
 
         await team.qualify(true);
@@ -6726,6 +6730,10 @@ class Commands {
         }
 
         await Commands.checkMemberIsOwner(member);
+
+        if (!await Commands.checkHasParameters(message, member, "To set a team as not qualified, use `!notqualified` along with the team name or tag, for example `!notqualified JOA`.", channel)) {
+            return false;
+        }
 
         const team = await Commands.checkTeamExists(message, member, channel);
 
