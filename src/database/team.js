@@ -1716,6 +1716,10 @@ class TeamDb {
      */
     static async updateRatingsForSeason(season, ratings, challengeRatings) {
         let sql = /* sql */`
+            DECLARE @notQualified TABLE (TeamId INT)
+
+            INSERT INTO @notQualified (TeamId) SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 0
+
             DELETE FROM tblTeamRating WHERE Season = @season
         `;
 
@@ -1724,21 +1728,22 @@ class TeamDb {
             season: {type: Db.INT, value: season}
         };
 
+        let hasData = false;
+
         for (const {teamId, rating, index} of Object.keys(ratings).map((r, i) => ({teamId: +r, rating: ratings[r], index: i}))) {
             sql = /* sql */`
                 ${sql}
 
                 INSERT INTO tblTeamRating
-                (Season, TeamId, Rating)
-                VALUES
-                (@season, @team${index}Id, @rating${index})
+                (Season, TeamId, Rating, Qualified)
+                SELECT @season, @team${index}Id, @rating${index}, CASE WHEN EXISTS (SELECT TeamId FROM @notQualified WHERE TeamId = @team${index}Id) THEN 0 ELSE 1 END
             `;
 
             params[`team${index}id`] = {type: Db.INT, value: teamId};
             params[`rating${index}`] = {type: Db.FLOAT, value: rating};
-        }
 
-        let hasData = false;
+            hasData = true;
+        }
 
         for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: +r, challengeRating: challengeRatings[+r], index: i}))) {
             sql = /* sql */`
@@ -1764,6 +1769,15 @@ class TeamDb {
                 hasData = false;
             }
         }
+
+        sql = /* sql */`
+            ${sql}
+
+            INSERT INTO tblTeamRating
+            (Season, TeamId, Rating, Qualified)
+            SELECT @season, TeamId, 0, 0
+            FROM @notQualified
+        `;
 
         if (hasData) {
             await db.query(sql, params);

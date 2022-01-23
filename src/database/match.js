@@ -597,7 +597,7 @@ class MatchDb {
 
                 SELECT @k K
 
-                SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 1
+                SELECT TeamId FROM tblTeam WHERE Disbanded = 0 AND TeamId NOT IN (SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 0)
             END
         `, {season: {type: Db.INT, value: season}});
 
@@ -676,7 +676,7 @@ class MatchDb {
 
                 SELECT @k K, @seasonAdded SeasonAdded, @season Season
 
-                SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 1
+                SELECT TeamId FROM tblTeam WHERE Disbanded = 0 AND TeamId NOT IN (SELECT TeamId FROM tblTeamRating WHERE Season = @season AND Qualified = 0)
             END
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
