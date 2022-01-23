@@ -32,7 +32,7 @@ class SeasonDb {
     static async getCurrentSeason() {
         /** @type {SeasonDbTypes.GetCurrentSeasonRecordset} */
         const data = await db.query(/* sql */`
-            SELECT MAX(Season) FROM tblSeason
+            SELECT MAX(Season) Season FROM tblSeason
         `);
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Season || void 0;

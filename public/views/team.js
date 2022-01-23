@@ -95,7 +95,7 @@ class TeamView {
                             ${teamData.ratings.map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
-                                <div class="numeric${opponent.qualified ? "" : " notqualified"}">${Math.round(opponent.rating)}</div>
+                                <div class="numeric${opponent.qualified ? "" : " notqualified"}${opponent.games < 3 ? " provisional" : ""}">${Math.round(opponent.rating)}</div>
                             `).join("")}
                         </div>
                     `}
