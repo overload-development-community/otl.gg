@@ -1678,8 +1678,8 @@ class Challenge {
             gameType: details.gameType,
             suggestedGameType: details.suggestedGameType,
             suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
-            discordEvent: await Discord.findEventById(details.discordEventId),
-            googleEvent: await Calendar.get(details.googleEventId),
+            discordEvent: details.discordEventId ? await Discord.findEventById(details.discordEventId) : void 0,
+            googleEvent: details.googleEventId ? await Calendar.get(details.googleEventId) : void 0,
             server: details.server,
             restricted: details.restricted
         };
