@@ -1106,7 +1106,7 @@ class Commands {
      * @returns {Promise<boolean>} A promise that resolves with whether the command completed successfully.
      */
     async simulate(member, channel, message) {
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!idMessageParse.test(message)) {
             return false;
@@ -2447,7 +2447,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!teamPilotParse.test(message)) {
             await Discord.queue(`Sorry, ${member}, but you must specify the team and mention the pilot, for example, \`!capexempt CF @roncli\`.`, channel);
@@ -4669,7 +4669,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team tag followed by the new team name to rename a team, for example `!rename CF Juno Offworld Automation`.", channel)) {
             return false;
@@ -4716,7 +4716,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the old team tag followed by the new team tag to rename a team tag, for example `!retag CF JOA`.", channel)) {
             return false;
@@ -4766,7 +4766,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team and mention the pilot, for example, `!replacefounder CF @roncli`.", channel)) {
             return false;
@@ -4814,7 +4814,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the captain to eject with this command.", channel)) {
             return false;
@@ -4861,7 +4861,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the pilot to eject with this command.", channel)) {
             return false;
@@ -4910,7 +4910,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the two teams to create a match for, along with the optional game type.", channel)) {
             return false;
@@ -5033,7 +5033,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!lockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -5079,7 +5079,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!unlockmatch` by itself to lock a challenge.", channel)) {
             return false;
@@ -5126,7 +5126,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcehomemapteam` along with the team you want to be the home map team.", channel)) {
             return false;
@@ -5170,7 +5170,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use `!forcemap` with either the letter of the home map to use or with a neutral home map.", channel)) {
             return false;
@@ -5225,7 +5225,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!message) {
             await Discord.queue(`Sorry, ${member}, but this command cannot be used by itself.  To force a team size, use the \`!forceteamsize <size>\` command, for example, \`!forceteamsize 3\`.`, channel);
@@ -5271,7 +5271,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         const gameType = message.toUpperCase();
 
@@ -5313,7 +5313,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To force a time, use `!forcetime` along with the date and time.", channel)) {
             return false;
@@ -5399,7 +5399,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use `!cleartime` by itself to clear the match time.", channel)) {
             return false;
@@ -5439,7 +5439,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To force a score, use `!forcereport` followed by the score of the challenging team, and then the score of the challenged team.  Separate the scores with a space.", channel)) {
             return false;
@@ -5498,7 +5498,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!adjudicate` command followed by how you wish to adjudicate this match, either `cancel`, `extend`, or `penalize`.  If you penalize a team, include the name of the team.", channel)) {
             return false;
@@ -5581,7 +5581,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!overtime` command followed by the number of overtime periods played in this match.", channel)) {
             return false;
@@ -5631,7 +5631,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!addstat` command followed by the pilot you are recording the stat for, along with the team tag, kills, assists, and deaths.", channel)) {
             return false;
@@ -5720,7 +5720,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!addstats` command followed by the tracker's game ID to add stats to the challenge.  If necessary, map the in-game pilot names to their Discord accounts by appending the in-game pilot name first and then mentioning the pilot.", channel)) {
             return false;
@@ -5923,7 +5923,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!clearstats` command by itself to clear all of the stats from a challenge.", channel)) {
             return false;
@@ -5966,7 +5966,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!removestat` command followed by the pilot whose stat you are removing.", channel)) {
             return false;
@@ -6027,7 +6027,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         let challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
 
@@ -6109,7 +6109,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "Use the `!unvoidgame` command with the challenge ID of the challenge you wish to unvoid.", channel)) {
             return false;
@@ -6165,7 +6165,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!closegame` command by itself to close a channel where the match has been completed or voided.", channel)) {
             return false;
@@ -6209,7 +6209,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!swapcolors` command by itself to swap the colors of the two teams that played.", channel)) {
             return false;
@@ -6258,7 +6258,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         try {
             await challenge.title(message);
@@ -6293,7 +6293,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!restricted` command by itself to set this challenge as a restricted match.", channel)) {
             return false;
@@ -6337,7 +6337,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!restricted` command by itself to set this challenge as a restricted match.", channel)) {
             return false;
@@ -6384,7 +6384,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!postseason` command by itself to set this challenge as a postseason match.", channel)) {
             return false;
@@ -6429,7 +6429,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkNoParameters(message, member, "Use the `!regularseason` command by itself to set this challenge as a regular season match.", channel)) {
             return false;
@@ -6470,7 +6470,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to lock the roster for with this command.", channel)) {
             return false;
@@ -6507,7 +6507,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the team you wish to unlock the roster for with this command.", channel)) {
             return false;
@@ -6545,7 +6545,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the map you wish to add with this command.", channel)) {
             return false;
@@ -6598,7 +6598,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "You must specify the map you wish to remove with this command.", channel)) {
             return false;
@@ -6807,7 +6807,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         const challenge = await Commands.checkChannelIsChallengeRoom(channel, member);
         if (!challenge) {
@@ -6844,7 +6844,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To set a team as qualified, use `!qualified` along with the team name or tag, for example `!notqualified JOA`.", channel)) {
             return false;
@@ -6878,7 +6878,7 @@ class Commands {
             return false;
         }
 
-        await Commands.checkMemberIsOwner(member);
+        Commands.checkMemberIsOwner(member);
 
         if (!await Commands.checkHasParameters(message, member, "To set a team as not qualified, use `!notqualified` along with the team name or tag, for example `!notqualified JOA`.", channel)) {
             return false;
