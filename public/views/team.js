@@ -87,6 +87,18 @@ class TeamView {
                             Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span>
                         `}
                     </div>
+                    ${!season || season < 7 || teamData.ratings.length === 0 ? "" : /* html */`
+                        <div class="opponents" style="grid-column-end: span 2;">
+                            <div class="header">Tag</div>
+                            <div class="header opponent">Opponent</div>
+                            <div class="header">Rating vs. Opponent</div>
+                            ${teamData.ratings.map((opponent) => /* html */`
+                                <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
+                                <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
+                                <div class="numeric${opponent.qualified ? "" : " notqualified"}">${Math.round(opponent.rating)}</div>
+                            `).join("")}
+                        </div>
+                    `}
                     <div class="section">Team Anarchy</div>
                     <div class="section">Capture the Flag</div>
                     <div class="splits">
@@ -133,18 +145,6 @@ class TeamView {
                             `).join("")}
                         `}
                     </div>
-                    ${!season || season < 7 || teamData.ratings.length === 0 ? "" : /* html */`
-                        <div class="opponents" style="grid-column-end: span 2;">
-                            <div class="header">Tag</div>
-                            <div class="header opponent">Opponent</div>
-                            <div class="header">Rating</div>
-                            ${teamData.ratings.map((opponent) => /* html */`
-                                <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
-                                <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
-                                <div class="numeric${opponent.qualified ? "" : " notqualified"}">${Math.round(opponent.rating)}</div>
-                            `).join("")}
-                        </div>
-                    `}
                     <div class="maps">
                         ${teamData.maps.filter((o) => o.gameType === "TA").length === 0 ? "" : /* html */`
                             <div class="header">Map</div>

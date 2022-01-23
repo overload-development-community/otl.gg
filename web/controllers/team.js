@@ -65,7 +65,7 @@ class TeamPage {
             res.status(200).send(await Common.page(
                 "",
                 {css: ["/css/team.css"]},
-                TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
+                TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season: season || seasonList[seasonList.length - 1], postseason, teams}),
                 req
             ));
         } else {
