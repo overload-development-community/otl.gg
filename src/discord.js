@@ -328,7 +328,7 @@ class Discord {
             Log.exception("Disconnected from Discord.", ev);
         });
 
-        discord.on("message", (message) => {
+        discord.on("messageCreate", (message) => {
             Discord.message(message.author, message.content, message.channel);
         });
 
@@ -560,7 +560,10 @@ class Discord {
             return void 0;
         }
 
-        embed.setFooter(embed.footer ? embed.footer.text : "", Discord.icon);
+        embed.setFooter({
+            text: embed.footer ? embed.footer.text : "",
+            iconURL: Discord.icon
+        });
 
         if (embed && embed.fields) {
             embed.fields.forEach((field) => {
