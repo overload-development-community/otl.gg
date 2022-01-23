@@ -146,7 +146,7 @@ class Log {
                                 uri: settings.logger.url,
                                 body: {
                                     key: settings.logger.key,
-                                    application: "otl.gg",
+                                    application: settings.logger.application,
                                     category: "exception",
                                     message: `${log.message}\n${util.inspect(log.obj)}`,
                                     date: new Date().getTime()
