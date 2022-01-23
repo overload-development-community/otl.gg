@@ -447,7 +447,7 @@ class Discord {
             if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
                 let success = false;
                 try {
-                    if (channel.type === "GUILD_TEXT" && Commands.isDuplicateCommand(member, channel, text)) {
+                    if (channel.type === "GUILD_TEXT" && await Commands.isDuplicateCommand(member, channel, text)) {
                         Log.warning(`${channel} ${member}: ${text}\nDuplicate command thrown out.`);
                     } else {
                         success = await commands[command](member, channel, args);
