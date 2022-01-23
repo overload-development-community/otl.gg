@@ -2184,23 +2184,23 @@ class Team {
                     teamRecords[match.challengingTeamId][match.challengedTeamId] = {w: 0, l: 0, t: 0, rating: 0};
                 }
 
-                if (!teamRecords[match.challengedTeamId][match.challengedTeamId]) {
-                    teamRecords[match.challengedTeamId][match.challengedTeamId] = {w: 0, l: 0, t: 0, rating: 0};
+                if (!teamRecords[match.challengedTeamId][match.challengingTeamId]) {
+                    teamRecords[match.challengedTeamId][match.challengingTeamId] = {w: 0, l: 0, t: 0, rating: 0};
                 }
 
                 if (match.challengingTeamScore > match.challengedTeamScore) {
                     teamRecords[match.challengingTeamId][match.challengedTeamId].w++;
-                    teamRecords[match.challengedTeamId][match.challengedTeamId].l++;
+                    teamRecords[match.challengedTeamId][match.challengingTeamId].l++;
                 }
 
                 if (match.challengingTeamScore < match.challengedTeamScore) {
                     teamRecords[match.challengingTeamId][match.challengedTeamId].l++;
-                    teamRecords[match.challengedTeamId][match.challengedTeamId].w++;
+                    teamRecords[match.challengedTeamId][match.challengingTeamId].w++;
                 }
 
                 if (match.challengingTeamScore === match.challengedTeamScore) {
                     teamRecords[match.challengingTeamId][match.challengedTeamId].t++;
-                    teamRecords[match.challengedTeamId][match.challengedTeamId].t++;
+                    teamRecords[match.challengedTeamId][match.challengingTeamId].t++;
                 }
             });
 
@@ -2210,12 +2210,13 @@ class Team {
                 Object.keys(teamRecords[teamId]).forEach((opponentTeamId) => {
                     const record = teamRecords[+teamId][+opponentTeamId];
 
-                    record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.l) / (record.w + record.l + record.t))) / 3);
+                    record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.t) / (record.w + record.l + record.t))) / 3);
+                    console.log(teamId, opponentTeamId, record);
 
                     total += record.rating;
                 });
 
-                ratings[teamId] = total / data.teamIds.length;
+                ratings[teamId] = total / (data.teamIds.length - 1);
             });
         }
 
