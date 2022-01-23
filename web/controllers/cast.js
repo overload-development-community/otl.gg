@@ -1,4 +1,4 @@
-const HtmlMinifier = require("html-minifier"),
+const HtmlMinifierTerser = require("html-minifier-terser"),
 
     Common = require("../includes/common"),
 
@@ -47,7 +47,7 @@ class Cast {
         if (challenge) {
             const data = await challenge.getCastData();
 
-            res.status(200).send(HtmlMinifier.minify(CastView.get({
+            res.status(200).send(await HtmlMinifierTerser.minify(CastView.get({
                 challenge,
                 challengingTeamRoster: data.challengingTeamRoster.sort((a, b) => Common.normalizeName(a.name, challenge.challengingTeam.tag).localeCompare(Common.normalizeName(b.name, challenge.challengingTeam.tag))),
                 challengedTeamRoster: data.challengedTeamRoster.sort((a, b) => Common.normalizeName(a.name, challenge.challengedTeam.tag).localeCompare(Common.normalizeName(b.name, challenge.challengedTeam.tag))),
