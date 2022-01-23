@@ -301,10 +301,12 @@ class ChallengeDb {
             SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
-            await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+                await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+            }
         }
     }
 
@@ -332,7 +334,9 @@ class ChallengeDb {
             ORDER BY ch.Map
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -354,7 +358,9 @@ class ChallengeDb {
             UPDATE tblChallenge SET Map = SuggestedMap, SuggestedMap = NULL, SuggestedMapTeamId = NULL, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //                     #    #                ###                      ##    #
@@ -392,7 +398,9 @@ class ChallengeDb {
             map: {type: Db.VARCHAR(100), value: challenge.details.map}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -413,7 +421,9 @@ class ChallengeDb {
             UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //                          #
@@ -544,7 +554,9 @@ class ChallengeDb {
             setBlueTeamId: {type: Db.INT, value: blueTeam ? blueTeam.id : void 0}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && {
             id: data.recordsets[0][0].ChallengeId,
@@ -583,7 +595,9 @@ class ChallengeDb {
             SELECT DateClockDeadline FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateClockDeadline || void 0;
     }
@@ -1520,7 +1534,9 @@ class ChallengeDb {
             number: {type: Db.INT, value: number}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].Map || void 0;
     }
@@ -1679,7 +1695,9 @@ class ChallengeDb {
             SELECT DateConfirmed FROM tblChallenge WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
     }
@@ -1812,7 +1830,9 @@ class ChallengeDb {
             gameType: {type: Db.VARCHAR(5), value: gameType}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //               #    #  #                    #  #              ###
@@ -1850,7 +1870,9 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -1897,7 +1919,9 @@ class ChallengeDb {
             map: {type: Db.VARCHAR(100), value: map}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //               #    #  #         #     #      #          ##   ##                #     ####               #                   #
@@ -2066,7 +2090,9 @@ class ChallengeDb {
             requireConfirmation: {type: Db.BIT, value: !!requireConfirmation}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateConfirmed || void 0;
     }
@@ -2129,7 +2155,9 @@ class ChallengeDb {
             map: {type: Db.VARCHAR(100), value: challenge.details.map}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
@@ -2154,7 +2182,9 @@ class ChallengeDb {
             date: {type: Db.DATETIME, value: date}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //               #    ###    #     #    ##
@@ -2177,7 +2207,9 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //               #    #  #        ###
@@ -2200,7 +2232,9 @@ class ChallengeDb {
             challengeId: {type: Db.INT, value: challenge.id}
         });
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //                                        #     ##                     ###
@@ -2319,7 +2353,9 @@ class ChallengeDb {
             WHERE ChallengeId = @id
         `, {id: {type: Db.INT, value: challenge.id}});
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
     }
 
     //                          #       #
@@ -2341,7 +2377,7 @@ class ChallengeDb {
             SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+        if (!settings.disableRedis && data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
             await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
     }
@@ -2377,7 +2413,7 @@ class ChallengeDb {
             SELECT PlayerId FROM tblStat WHERE ChallengeId = @challengeId
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
+        if (!settings.disableRedis && data && data.recordsets && data.recordsets[0] && data.recordsets[0].length > 0) {
             await Cache.invalidate([...data.recordsets[0].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
     }
@@ -2450,7 +2486,7 @@ class ChallengeDb {
         /** @type {ChallengeDbTypes.VoidWithPenaltiesRecordsets} */
         const data = await db.query(sql, params);
 
-        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {
+        if (!settings.disableRedis && data && data.recordsets && data.recordsets[1] && data.recordsets[1].length > 0) {
             await Cache.invalidate([...data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`), `${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
 

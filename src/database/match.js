@@ -52,7 +52,11 @@ class MatchDb {
         const key = `${settings.redisPrefix}:db:match:getConfirmed:${season || "null"}:${page || "null"}:${matchesPerPage}`;
 
         /** @type {MatchTypes.ConfirmedMatchesData} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -223,7 +227,9 @@ class MatchDb {
             }))
         } || {completed: [], stats: [], standings: []};
 
-        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return cache;
     }
@@ -243,7 +249,11 @@ class MatchDb {
         const key = `${settings.redisPrefix}:db:match:getCurrent`;
 
         /** @type {MatchTypes.CurrentMatchesData} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -387,7 +397,9 @@ class MatchDb {
             }))
         } || {matches: void 0, standings: void 0, previousStandings: void 0};
 
-        await Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return cache;
     }
@@ -408,7 +420,11 @@ class MatchDb {
         const key = `${settings.redisPrefix}:db:match:getPending:${season || "null"}`;
 
         /** @type {MatchTypes.PendingMatchesData} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -537,7 +553,9 @@ class MatchDb {
             completed: data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].Completed || 0
         } || {matches: [], standings: [], previousStandings: [], completed: 0};
 
-        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:challenge:updated`]);
+        }
 
         return cache;
     }
@@ -662,7 +680,7 @@ class MatchDb {
             END
         `, {challengeId: {type: Db.INT, value: challenge.id}});
 
-        if (data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].SeasonAdded) {
+        if (!settings.disableRedis && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].SeasonAdded) {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:season:added`]);
         }
 

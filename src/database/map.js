@@ -86,7 +86,11 @@ class MapDb {
         const key = `${settings.redisPrefix}:db:map:getPlayedBySeason:${season || "null"}`;
 
         /** @type {string[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -114,7 +118,9 @@ class MapDb {
         `, {season: {type: Db.INT, value: season}});
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || void 0;
 
-        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return cache;
     }

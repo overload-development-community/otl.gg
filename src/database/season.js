@@ -53,7 +53,11 @@ class SeasonDb {
         const key = `${settings.redisPrefix}:db:season:getSeasonNumbers`;
 
         /** @type {number[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -70,7 +74,9 @@ class SeasonDb {
         `);
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Season) || [];
 
-        await Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:season:added`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:season:added`]);
+        }
 
         return cache;
     }

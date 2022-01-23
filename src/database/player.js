@@ -173,10 +173,12 @@ class PlayerDb {
             name: {type: Db.VARCHAR(24), value: member.displayName}
         });
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
+            }
         }
     }
 
@@ -199,7 +201,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getCareer:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}:${gameType}`;
 
         /** @type {PlayerTypes.CareerData} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -523,7 +529,9 @@ class PlayerDb {
             }, {})
         } || void 0;
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        }
 
         return cache;
     }
@@ -567,7 +575,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getFreeAgents`;
 
         /** @type {PlayerTypes.FreeAgent[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -584,7 +596,9 @@ class PlayerDb {
         `);
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({playerId: row.PlayerId, name: row.Name, discordId: row.DiscordId, timezone: row.Timezone})) || [];
 
-        await Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:player:freeagents`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, void 0, [`${settings.redisPrefix}:invalidate:player:freeagents`]);
+        }
 
         return cache;
     }
@@ -607,7 +621,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getGameLog:${playerId}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /** @type {PlayerTypes.GameLogData} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -695,7 +713,9 @@ class PlayerDb {
             seasons: data.recordsets[2].map((row) => row.Season)
         };
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[3] && data.recordsets[3][0] && data.recordsets[3][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+        }
 
         return cache;
     }
@@ -718,7 +738,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getRecords:CTF:player:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -982,7 +1006,9 @@ class PlayerDb {
             }))
         } || void 0;
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        }
 
         return cache;
     }
@@ -1005,7 +1031,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getRecords:CTF:team:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -1255,7 +1285,9 @@ class PlayerDb {
             }))
         } || void 0;
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        }
 
         return cache;
     }
@@ -1278,7 +1310,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getRecords:TA:player:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -1546,7 +1582,9 @@ class PlayerDb {
             }))
         } || void 0;
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        }
 
         return cache;
     }
@@ -1569,7 +1607,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getRecords:TA:team:${season === void 0 ? "null" : season}:${!!postseason}:${teamId}`;
 
         /** @type {Object<string, PlayerTypes.GameRecord[]>} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -1820,7 +1862,9 @@ class PlayerDb {
             }))
         } || void 0;
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        }
 
         return cache;
     }
@@ -1873,7 +1917,11 @@ class PlayerDb {
     static async getSeasonStats(season, postseason, gameType, all) {
         const key = `${settings.redisPrefix}:db:player:getSeasonStats:${season === void 0 ? "null" : season}:${gameType}:${!!postseason}:${all ? "all" : "active"}`;
         /** @type {PlayerTypes.SeasonStats[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -2007,7 +2055,9 @@ class PlayerDb {
             kda: row.KDA
         }));
 
-        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        }
 
         return cache;
     }
@@ -2168,7 +2218,11 @@ class PlayerDb {
         const key = `${settings.redisPrefix}:db:player:getTopKda`;
 
         /** @type {PlayerTypes.PlayerKDAStats[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -2244,7 +2298,9 @@ class PlayerDb {
             kda: row.KDA
         })) || [];
 
-        await Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`].concat(cache.map((player) => `${settings.redisPrefix}:invalidate:player:${player.playerId}:updated`)));
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`].concat(cache.map((player) => `${settings.redisPrefix}:invalidate:player:${player.playerId}:updated`)));
+        }
 
         return cache;
     }
@@ -2495,10 +2551,12 @@ class PlayerDb {
             timezone: {type: Db.VARCHAR(50), value: timezone}
         });
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`]);
+            }
         }
     }
 

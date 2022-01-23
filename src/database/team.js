@@ -176,10 +176,12 @@ class TeamDb {
             teamId: {type: Db.INT, value: team.id}
         });
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
+            }
         }
     }
 
@@ -229,10 +231,12 @@ class TeamDb {
 
         const teamId = data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].TeamId || void 0;
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+            }
         }
 
         return teamId ? {member: newTeam.member, id: teamId, name: newTeam.name, tag: newTeam.tag, isFounder: true, disbanded: false, locked: false} : void 0;
@@ -289,10 +293,12 @@ class TeamDb {
                 AND DateVoided IS NULL
         `, {teamId: {type: Db.INT, value: team.id}});
 
-        if (data && data.recordsets && data.recordsets[1]) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`].concat(data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`)));
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[1]) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`].concat(data.recordsets[1].map((row) => `${settings.redisPrefix}:invalidate:player:${row.PlayerId}:updated`)));
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+            }
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
@@ -410,7 +416,11 @@ class TeamDb {
         const key = `${settings.redisPrefix}:db:team:getData:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /** @type {TeamTypes.TeamStats} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -778,7 +788,9 @@ class TeamDb {
             }))
         } || {records: void 0, opponents: void 0, ratings: void 0, maps: void 0, statsTA: void 0, statsCTF: void 0};
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return cache;
     }
@@ -801,7 +813,11 @@ class TeamDb {
         const key = `${settings.redisPrefix}:db:team:getGameLog:${team.tag}:${season === void 0 ? "null" : season}:${!!postseason}`;
 
         /** @type {TeamTypes.GameLog[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -914,7 +930,9 @@ class TeamDb {
             damage: row.Damage
         })) || [];
 
-        await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
 
         return cache;
     }
@@ -1153,7 +1171,11 @@ class TeamDb {
         const key = `${settings.redisPrefix}:db:team:getSeasonStandings:${season || "null"}:${records}:${map || "null"}`;
 
         /** @type {TeamTypes.Standing[]} */
-        let cache = await Cache.get(key);
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
 
         if (cache) {
             return cache;
@@ -1247,7 +1269,9 @@ class TeamDb {
         });
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties, wins1: row.Wins1, losses1: row.Losses1, ties1: row.Ties1, wins2: row.Wins2, losses2: row.Losses2, ties2: row.Ties2, wins3: row.Wins3, losses3: row.Losses3, ties3: row.Ties3, winsMap: row.WinsMap || 0, lossesMap: row.LossesMap || 0, tiesMap: row.TiesMap || 0})) || [];
 
-        await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:team:status`]);
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:team:status`]);
+        }
 
         return cache;
     }
@@ -1431,10 +1455,12 @@ class TeamDb {
             teamId: {type: Db.INT, value: team.id}
         });
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:team:status`, `${settings.redisPrefix}:invalidate:player:updated`]);
+            }
         }
     }
 
@@ -1573,10 +1599,12 @@ class TeamDb {
             discordId: {type: Db.VARCHAR(24), value: member.id}
         });
 
-        if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
-        } else {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
+        if (!settings.disableRedis) {
+            if (data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].PlayerId) {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`, `${settings.redisPrefix}:invalidate:player:${data.recordsets[0][0].PlayerId}:updated`]);
+            } else {
+                await Cache.invalidate([`${settings.redisPrefix}:invalidate:player:freeagents`, `${settings.redisPrefix}:invalidate:player:updated`]);
+            }
         }
     }
 
@@ -1739,7 +1767,9 @@ class TeamDb {
             await db.query(sql, params);
         }
 
-        await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        if (!settings.disableRedis) {
+            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
     }
 }
 
