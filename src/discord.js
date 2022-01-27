@@ -523,7 +523,10 @@ class Discord {
      * @returns {Promise} A promise that resolves when the message is edited.
      */
     static async richEdit(message, embed) {
-        embed.setFooter(embed.footer ? embed.footer.text : "", Discord.icon);
+        embed.setFooter({
+            text: embed.footer ? embed.footer.text : "",
+            iconURL: Discord.icon
+        });
 
         if (embed && embed.fields) {
             embed.fields.forEach((field) => {
