@@ -1804,8 +1804,8 @@ class ChallengeDb {
             UPDATE tblChallenge SET DiscordEventId = @discordEventId, GoogleEventId = @googleEventId WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
-            discordEventId: {type: Db.VARCHAR(24), value: challenge.details.discordEvent.id},
-            googleEventId: {type: Db.VARCHAR(1024), value: challenge.details.googleEvent.id}
+            discordEventId: {type: Db.VARCHAR(24), value: challenge.details.discordEvent ? challenge.details.discordEvent.id : void 0},
+            googleEventId: {type: Db.VARCHAR(1024), value: challenge.details.googleEvent ? challenge.details.googleEvent.id : void 0}
         });
     }
 
