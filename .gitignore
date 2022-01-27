@@ -62,6 +62,7 @@ typings/
 
 # Settings
 settings.js
+settings.google.json
 
 # Industry Medium font
 IndustryMedium.*
