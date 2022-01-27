@@ -3369,7 +3369,6 @@ class Commands {
                         date.setDate(date.getDate() + 1);
                     }
                 } catch (err) {
-                    console.log(err);
                     await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                     throw new Warning("Invalid date.");
                 }
@@ -5335,7 +5334,6 @@ class Commands {
                         date.setDate(date.getDate() + 1);
                     }
                 } catch (err) {
-                    console.log(err);
                     await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                     throw new Warning("Invalid date.");
                 }
@@ -6753,7 +6751,6 @@ class Commands {
                         date.setDate(date.getDate() + 1);
                     }
                 } catch (err) {
-                    console.log(err);
                     await Discord.queue(`Sorry, ${member}, but I couldn't parse that date and time.`, channel);
                     throw new Warning("Invalid date.");
                 }
