@@ -70,6 +70,7 @@ class HomeView {
                     </div>
                 `).join("")}
             </div>
+            <div id="add-to-calendar">Add the OTL to your <a href="https://otl.gg/calendar" target="_blank">Google Calendar</a>.</div>
             <div id="body">
                 <div>
                     <div class="section">Season Top Teams</div>

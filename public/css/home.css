@@ -117,6 +117,13 @@
     color: white;
 }
 
+#add-to-calendar {
+    color: white;
+    padding: 0 10px;
+    font-size: 14px;
+    text-align: right;
+}
+
 #body {
     display: grid;
     grid-template-columns: repeat(2, auto);

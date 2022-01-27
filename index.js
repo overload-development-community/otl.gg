@@ -76,6 +76,11 @@ const compression = require("compression"),
         res.redirect("https://ronc.li/otl-discord");
     });
 
+    // Setup Google Calendar redirect.
+    app.get("/calendar", (req, res) => {
+        res.redirect("https://calendar.google.com/calendar/u/0?cid=cnJybmp2MzVrdHV1azI5NW43OGxkcGM3bm9AZ3JvdXAuY2FsZW5kYXIuZ29vZ2xlLmNvbQ");
+    });
+
     // Setup JS/CSS handlers.
     app.get("/css", minify.cssHandler);
     app.get("/js", minify.jsHandler);
