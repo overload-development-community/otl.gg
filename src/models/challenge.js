@@ -23,6 +23,7 @@ const Calendar = require("../calendar"),
     Log = require("../logging/log"),
     NameMapDb = require("../database/nameMap"),
     schedule = require("node-schedule"),
+    settings = require("../../settings"),
     Team = require("./team"),
     Tracker = require("../tracker"),
 
@@ -1679,7 +1680,7 @@ class Challenge {
             suggestedGameType: details.suggestedGameType,
             suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             discordEvent: details.discordEventId ? await Discord.findEventById(details.discordEventId) : void 0,
-            googleEvent: details.googleEventId ? await Calendar.get(details.googleEventId) : void 0,
+            googleEvent: details.googleEventId && settings.google.enabled ? await Calendar.get(details.googleEventId) : void 0,
             server: details.server,
             restricted: details.restricted
         };
@@ -3319,10 +3320,27 @@ class Challenge {
         }
 
         // Set Google event.
-        try {
-            if (this.details.googleEvent) {
-                if (this.details.matchTime) {
-                    await Calendar.update(this.details.googleEvent.id, {
+        if (settings.google.enabled) {
+            try {
+                if (this.details.googleEvent) {
+                    if (this.details.matchTime) {
+                        await Calendar.update(this.details.googleEvent.id, {
+                            summary: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                            start: {
+                                dateTime: this.details.matchTime.toISOString()
+                            },
+                            end: {
+                                dateTime: new Date(this.details.matchTime.getTime() + 20 * 60 * 1000).toISOString()
+                            },
+                            description: htmlParameters.join("<br />")
+                        });
+                    } else {
+                        await Calendar.delete(this.details.googleEvent);
+
+                        this.details.googleEvent = void 0;
+                    }
+                } else if (this.details.matchTime) {
+                    this.details.googleEvent = await Calendar.add({
                         summary: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                         start: {
                             dateTime: this.details.matchTime.toISOString()
@@ -3332,25 +3350,10 @@ class Challenge {
                         },
                         description: htmlParameters.join("<br />")
                     });
-                } else {
-                    await Calendar.delete(this.details.googleEvent);
-
-                    this.details.googleEvent = void 0;
                 }
-            } else if (this.details.matchTime) {
-                this.details.googleEvent = await Calendar.add({
-                    summary: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
-                    start: {
-                        dateTime: this.details.matchTime.toISOString()
-                    },
-                    end: {
-                        dateTime: new Date(this.details.matchTime.getTime() + 20 * 60 * 1000).toISOString()
-                    },
-                    description: htmlParameters.join("<br />")
-                });
+            } catch (err) {
+                Log.exception("There was an error while trying to update a challenge's Google event.", err);
             }
-        } catch (err) {
-            Log.exception("There was an error while trying to update a challenge's Google event.", err);
         }
 
         try {
