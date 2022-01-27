@@ -4,11 +4,16 @@
 
 const google = require("googleapis").google,
     Log = require("./logging/log"),
+    path = require("path"),
     settings = require("../settings").google,
 
+    auth = require("googleapis").Auth,
     calendar = google.calendar({
-        version: "v3",
-        key: settings.key.private_key
+        auth: new auth.GoogleAuth({
+            keyFile: path.join(__dirname, "../settings.google.json"),
+            scopes: ["https://www.googleapis.com/auth/calendar.events"]
+        }),
+        version: "v3"
     });
 
 //   ###           ##                      #
