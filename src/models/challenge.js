@@ -1859,7 +1859,7 @@ class Challenge {
         await challenge.loadDetails();
 
         for (const member of challenge.channel.members) {
-            const activity = member[1].presence.activities.find((p) => p.name === "Twitch");
+            const activity = member[1].presence ? member[1].presence.activities.find((p) => p.name === "Twitch") : void 0;
 
             if (activity && urlParse.test(activity.url)) {
                 const {groups: {user}} = urlParse.exec(activity.url);
