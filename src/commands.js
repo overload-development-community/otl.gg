@@ -6343,7 +6343,7 @@ class Commands {
             return false;
         }
 
-        Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
 
         if (challenge.details.postseason) {
             await Discord.queue(`Sorry, ${member}, but this is a postseason match.  Use the \`!regularseason\` command to make this a regular season match instead.`, channel);
@@ -6435,7 +6435,7 @@ class Commands {
             return false;
         }
 
-        Commands.checkChallengeDetails(challenge, member, channel);
+        await Commands.checkChallengeDetails(challenge, member, channel);
 
         if (!challenge.details.postseason) {
             await Discord.queue(`Sorry, ${member}, but this is not a postseason match.`, channel);
