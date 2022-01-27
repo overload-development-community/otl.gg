@@ -1778,6 +1778,7 @@ class TeamDb {
             SELECT @season, TeamId, 0, 0
             FROM @notQualified
         `;
+        params.season = {type: Db.INT, value: season};
 
         if (hasData) {
             await db.query(sql, params);
