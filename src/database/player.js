@@ -2400,7 +2400,7 @@ class PlayerDb {
             WHERE p.DiscordId = @discordId
                 AND r.Authorized = 0
         `, {
-            discordId: {type: Db.INT, value: member.id}
+            discordId: {type: Db.VARCHAR(24), value: member.id}
         });
         return !(data && data.recordsets && data.recordsets[0] && data.recordsets[0][0]);
     }
