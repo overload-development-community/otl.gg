@@ -2211,7 +2211,6 @@ class Team {
                     const record = teamRecords[+teamId][+opponentTeamId];
 
                     record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.t) / (record.w + record.l + record.t))) / 3);
-                    console.log(teamId, opponentTeamId, record);
 
                     total += record.rating;
                 });
