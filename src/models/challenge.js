@@ -3277,25 +3277,50 @@ class Challenge {
             await message.pin();
         }
 
-        // Set Discord event.
-        if (this.details.discordEvent.isCompleted()) {
+        if (this.details.discordEvent && this.details.discordEvent.isCompleted()) {
             this.details.discordEvent = void 0;
         }
 
         try {
             if (this.details.discordEvent) {
-                if (!this.details.matchTime) {
+                // Set Discord event.
+                if (this.details.discordEvent.isCompleted()) {
+                    this.details.discordEvent = void 0;
+                } else if (!this.details.matchTime) {
                     await this.details.discordEvent.delete();
 
                     this.details.discordEvent = void 0;
                 } else if (matchTimeUpdate) {
-                    await this.details.discordEvent.edit({
-                        name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
-                        scheduledStartTime: this.details.matchTime,
-                        scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
-                        description: eventParameters.join("\n"),
-                        reason: "Match update."
-                    });
+                    if (this.details.confirmed || this.details.matchTime < new Date()) {
+                        await this.details.discordEvent.edit({
+                            name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                            description: eventParameters.join("\n"),
+                            reason: "Match update."
+                        });
+                    } else if (this.details.discordEvent.isScheduled()) {
+                        await this.details.discordEvent.edit({
+                            name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                            scheduledStartTime: this.details.matchTime,
+                            scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
+                            description: eventParameters.join("\n"),
+                            reason: "Match update."
+                        });
+                    } else {
+                        await this.details.discordEvent.delete();
+
+                        this.details.discordEvent = void 0;
+
+                        this.details.discordEvent = await Discord.createEvent({
+                            name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                            scheduledStartTime: this.details.matchTime,
+                            scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
+                            privacyLevel: "GUILD_ONLY",
+                            entityType: "EXTERNAL",
+                            description: eventParameters.join("\n"),
+                            entityMetadata: {location: "OTL"},
+                            reason: "Match update."
+                        });
+                    }
                 } else {
                     await this.details.discordEvent.edit({
                         name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
@@ -3303,7 +3328,7 @@ class Challenge {
                         reason: "Match update."
                     });
                 }
-            } else if (this.details.matchTime) {
+            } else if (this.details.matchTime && this.details.matchTime > new Date()) {
                 this.details.discordEvent = await Discord.createEvent({
                     name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                     scheduledStartTime: this.details.matchTime,
