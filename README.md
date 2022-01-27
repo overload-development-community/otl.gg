@@ -4,6 +4,44 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v7.0.0 - 1/27/2022
+
+New Features:
+
+* New dark-ish mode.
+* New rating system for OTL Season 7.  See Discord for details.
+* Provisional ratings are now only italicized and not prorated, since the rating system does the proration already.
+* Rosters can now be added to while locked, but new players cannot play in restricted challenges until the team's roster is unlocked.
+* Discord timestamps are now shown instead of times across multiple timezones.
+* `!convert` can be used anywhere.  Make sure you still have your own timezone set with `!timezone`, or this command won't work as expected.
+* Challenges are now recorded in Google Calendar at https://otl.gg/calendar.
+* Discord events are now added when challenge times are agreed to.
+* Use Discord events instead of database for `!next` command.
+* `!clock` no longer has a restriction of one clock per opponent per season.
+* `!remove` is now allowed when rosters are locked.
+* Servers are now recorded with the match when `!report` with a URL or `!addstats` is used to report a match.
+* Added monsterball levels to https://otl.gg/maplist.
+* Repository now called `otl.gg` instead of `otl-bot`.
+* Scores added to #otlbot-alerts channel.
+* New `!qualified` and `!notqualified` admin commands.  Non-qualified teams, which don't count towards a team's rating, are shown in red on the team page.
+* New `!restricted` and `!unrestricted` admin commands to specify that a challenge is restricted and should not allow players added while a team's roster is locked to play in that challenge.
+
+Bug Fixes:
+
+* Pilot to Discord name mapping is now done in the database instead of Redis.
+* Caching refactored to use a library, should prevent endless connections to the redis server.
+* `!report` no longer can be performed by the winning team with a URL.
+* Fixed a CSS error with diamonds in the map section of players page.
+* Duplicated commands are no longer allowed, preventing multiple reports of the same game.
+* `!clock` validation is now done in the correct order to prevent confusion.
+* `!confirm` can no longer be done by two people simultaneously.
+* `!forcemap` can no longer be used prior to the team size being set.
+* `!forceteamsize` and `!suggestteamsize` now show specific error messages depending on the input.
+* `!regen` command now logged properly.
+* `!removemap` error message no longer causes a crash.
+* Items cached are no longer saved 1000 times as long as necessary.
+* Replaced html-minifier library with html-minifier-terser.
+
 ## v6.0.2 - 8/30/2021
 
 * Package updates.
