@@ -3598,7 +3598,7 @@ class Commands {
 
         const matches = await Match.getUpcoming(),
             eventIds = matches.filter((m) => m.discordEventId).map((m) => m.discordEventId),
-            events = (await Discord.getUpcomingEvents()).filter((e) => eventIds.indexOf(e.id) === -1);
+            events = (await Discord.getUpcomingEvents()).filter((e) => eventIds.indexOf(e.id) === -1 && e.creator.id !== Discord.botId).sort((a, b) => a.scheduledStartAt.getTime() - b.scheduledStartAt.getTime());
 
         if (matches.length === 0 && events.length === 0) {
             await Discord.queue("There are no matches or events currently scheduled.", channel);

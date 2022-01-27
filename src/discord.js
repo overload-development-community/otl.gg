@@ -94,6 +94,24 @@ class Discord {
         return announcementsChannel;
     }
 
+    // #            #    ###      #
+    // #            #     #       #
+    // ###    ##   ###    #     ###
+    // #  #  #  #   #     #    #  #
+    // #  #  #  #   #     #    #  #
+    // ###    ##     ##  ###    ###
+    /**
+     * Returns the ID of the bot.
+     * @returns {string} The ID of the bot.
+     */
+    static get botId() {
+        if (discord && discord.user) {
+            return discord.user.id;
+        }
+
+        return "";
+    }
+
     //                    #           #          ###         ##
     //                    #                      #  #         #
     //  ##    ###  ###   ###    ###  ##    ###   #  #   ##    #     ##
