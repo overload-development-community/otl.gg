@@ -498,7 +498,7 @@ class Challenge {
         const notFound = [];
 
         for (const alias of Object.keys(nameMap)) {
-            if (!nameMap[alias]) {
+            if (!map[alias]) {
                 await NameMapDb.add(alias, nameMap[alias]);
             }
             map[alias] = nameMap[alias];
