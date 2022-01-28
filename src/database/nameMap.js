@@ -40,7 +40,7 @@ class NameMapDb {
             WHEN MATCHED THEN
                 UPDATE SET DiscordId = v.DiscordId
             WHEN NOT MATCHED THEN
-                INSERT (PilotName, DiscordId) VALUES (v.Name, v.DiscordId)
+                INSERT (PilotName, DiscordId) VALUES (v.Name, v.DiscordId);
         `, {
             name: {type: Db.VARCHAR(64), value: name},
             discordId: {type: Db.VARCHAR(24), value: discordId}
