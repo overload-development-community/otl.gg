@@ -1608,6 +1608,10 @@ class Challenge {
      * @returns {Promise<boolean>} A promise that resolves with whether the command is a duplicate.
      */
     async isDuplicateCommand(member, message) {
+        if (message === "!rematch") {
+            return false;
+        }
+
         if (lastCommand[this.channelName] === message) {
             await Discord.queue(`Sorry, ${member}, but this command is a duplicate of the last command issued in this channel.`, this.channel);
             return true;
