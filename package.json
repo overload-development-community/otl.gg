@@ -18,7 +18,7 @@
         "url": "https://github.com/overload-development-community/otl.gg.git"
     },
     "dependencies": {
-        "@roncli/node-database": "roncli/node-database#v1.2.6",
+        "@roncli/node-database": "roncli/node-database#v1.2.7",
         "@roncli/node-redis": "roncli/node-redis#v0.1.12",
         "@root/request": "1.8.1",
         "compression": "1.7.4",
