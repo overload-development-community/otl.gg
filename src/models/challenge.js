@@ -1608,7 +1608,7 @@ class Challenge {
      * @returns {Promise<boolean>} A promise that resolves with whether the command is a duplicate.
      */
     async isDuplicateCommand(member, message) {
-        if (message === "!rematch") {
+        if (message && message.length > 0 && ["!rematch", "!streaming", "!notstreaming", "!stream", "!testing", "!stoptesting", "!removetwitch", "!next", "!mynext", "!matchtime", "!countdown", "!accept", "!leave", "!challenge", "!matchtime", "!deadline", "!deadlinecountdown"].indexOf(message.split(" ")[0]) !== -1) {
             return false;
         }
 
