@@ -75,7 +75,7 @@ class Calendar {
                 eventId: event.id
             });
 
-            if (res.status !== 200) {
+            if ([200, 204].indexOf(res.status) === -1) {
                 Log.exception("Error while deleting a Google Calendar entry.", res.statusText);
             }
         } catch (err) {
