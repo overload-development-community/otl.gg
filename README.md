@@ -6,7 +6,7 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 ## v7.0.1 - 3/9/2022
 
-* Allow a number of commands to be repeated.  Critial commands that would cause problems to be repeated are still not allowed.  If you find yourself in a situation where you need to repeat a command (for instance, your opponent typed `!confirm` when your team was supposed to), interject a dummy command, such as `!version`, in between two commands to allow the command you wish to repeat to go through.
+* Allow a number of commands to be repeated.  Critical commands that would cause problems to be repeated are still not allowed.  If you find yourself in a situation where you need to repeat a command (for instance, your opponent typed `!confirm` when your team was supposed to), interject a dummy command, such as `!version`, in between two commands to allow the command you wish to repeat to go through.
 * Fix bug when deleting Google calendar events.
 * Package updates.
 
