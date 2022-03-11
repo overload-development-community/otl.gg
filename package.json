@@ -22,7 +22,7 @@
         "@roncli/node-redis": "roncli/node-redis#v0.1.13",
         "@root/request": "1.8.1",
         "compression": "1.7.4",
-        "csso": "5.0.2",
+        "csso": "5.0.3",
         "discord-markdown": "2.5.1",
         "discord.js": "13.6.0",
         "express": "4.17.3",
