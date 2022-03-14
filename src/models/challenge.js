@@ -1613,7 +1613,7 @@ class Challenge {
         }
 
         if (lastCommand[this.channelName] === message) {
-            await Discord.queue(`Sorry, ${member}, but this command is a duplicate of the last command issued in this channel.`, this.channel);
+            await Discord.queue(`Sorry, ${member}, but this command is a duplicate of the last command issued in this channel.  If you need to use this command, please issue the \`!version\` command first followed by this command again to prevent the duplication.`, this.channel);
             return true;
         }
 
