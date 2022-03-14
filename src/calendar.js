@@ -1,14 +1,13 @@
 /**
- * @typedef {import("googleapis").calendar_v3.Schema$Event} Google.Calendar.SchemaEvent
+ * @typedef {import("@googleapis/calendar").calendar_v3.Schema$Event} Google.Calendar.SchemaEvent
  */
 
-const google = require("googleapis").google,
-    Log = require("./logging/log"),
+const Log = require("./logging/log"),
     path = require("path"),
     settings = require("../settings").google,
 
-    auth = require("googleapis").Auth,
-    calendar = google.calendar({
+    auth = require("@googleapis/calendar").auth,
+    calendar = require("@googleapis/calendar").calendar({
         auth: new auth.GoogleAuth({
             keyFile: path.join(__dirname, "../settings.google.json"),
             scopes: ["https://www.googleapis.com/auth/calendar.events"]
