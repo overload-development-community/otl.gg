@@ -52,4 +52,11 @@ module.exports = function(morgan) {
 
     // newline - Simple newline.
     morgan.token("newline", () => "\n");
+
+    // realip - The user's real IP address.
+    morgan.token("realip", (req) => {
+        const ip = (req.headers["x-forwarded-for"] ? `${req.headers["x-forwarded-for"]}` : void 0) || req.ip;
+
+        return ip;
+    });
 };

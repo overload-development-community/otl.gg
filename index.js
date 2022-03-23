@@ -65,7 +65,7 @@ const compression = require("compression"),
     morganExtensions(morgan);
 
     // Initialize middleware stack.
-    app.use(morgan(":colorstatus \x1b[30m\x1b[0m:method\x1b[0m :url\x1b[30m\x1b[0m:newline    Date :date[iso]    IP :req[ip]    Time :colorresponse ms"));
+    app.use(morgan(":colorstatus \x1b[30m\x1b[0m:method\x1b[0m :url\x1b[30m\x1b[0m:newline    Date :date[iso]    IP :realip    Time :colorresponse ms"));
     app.use(compression());
 
     // Setup public redirects.
