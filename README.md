@@ -4,6 +4,14 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v7.0.2 - 5/22/2022
+
+* When a command is duplicated, mention that you can use !version to avoid the duplication if you need to run the command.
+* Fix bot DMs.
+* Use the Google Calendar library instead of the entire Google library.
+* Fix bug with logging.
+* Package updates.
+
 ## v7.0.1 - 3/9/2022
 
 * Allow a number of commands to be repeated.  Critical commands that would cause problems to be repeated are still not allowed.  If you find yourself in a situation where you need to repeat a command (for instance, your opponent typed `!confirm` when your team was supposed to), interject a dummy command, such as `!version`, in between two commands to allow the command you wish to repeat to go through.
