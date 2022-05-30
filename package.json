@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@googleapis/calendar": "1.0.2",
-        "@roncli/node-database": "roncli/node-database#v1.2.9",
+        "@roncli/node-database": "roncli/node-database#v1.2.10",
         "@roncli/node-redis": "roncli/node-redis#v0.1.14",
         "@root/request": "1.8.1",
         "compression": "1.7.4",
