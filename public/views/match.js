@@ -109,7 +109,7 @@ class MatchView {
                     </div>
                 </div>
                 ${details.stats && details.stats.length > 0 ? /* html */`
-                    <div id="stats" class="stats-${challenge.details.gameType.toLowerCase()}">
+                    <div id="stats" style="grid-template-columns: auto 18px repeat(${(challenge.details.gameType === "CTF" ? 9 : 5) + (details.stats.length > 0 && details.stats[0].damage ? 2 : 0)}, auto)">
                         <div class="header">Team</div>
                         <div class="header name">Name</div>
                         ${challenge.details.gameType === "CTF" ? /* html */`
@@ -122,8 +122,10 @@ class MatchView {
                         <div class="header">K</div>
                         <div class="header">A</div>
                         <div class="header">D</div>
-                        <div class="header">Dmg</div>
-                        <div class="header">Net</div>
+                        ${details.stats.length > 0 && details.stats[0].damage ? /* html */`
+                            <div class="header">Dmg</div>
+                            <div class="header">Net</div>
+                        ` : ""}
                         ${details.stats.sort((a, b) => b.captures - a.captures || (b.kills + b.assists) / Math.max(b.deaths, 1) - (a.kills + a.assists) / Math.max(a.deaths, 1) || b.kills - a.kills || b.assists - a.assists || a.deaths - b.deaths || a.name.toString().localeCompare(b.name)).map((s) => /* html */ `
                             <div class="tag">${(team = challenge.challengingTeam.id === s.teamId ? challenge.challengingTeam : challenge.challengedTeam) === null ? "" : /* html */`
                                 <div class="diamond${team.role && team.role.hexColor ? "" : "-empty"}" ${team.role && team.role.hexColor ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a>
@@ -142,8 +144,10 @@ class MatchView {
                             <div class="numeric">${s.kills}</div>
                             <div class="numeric">${s.assists}</div>
                             <div class="numeric">${s.deaths}</div>
-                            <div class="numeric">${s.damage === void 0 ? "" : Math.floor(s.damage)}</div>
-                            <div class="numeric">${s.netDamage === void 0 ? "" : `${s.netDamage > 0 ? "+" : s.netDamage < 0 ? "-" : ""}${Math.abs(Math.floor(s.netDamage))}`}</div>
+                            ${details.stats.length > 0 && details.stats[0].damage ? /* html */`
+                                <div class="numeric">${s.damage === void 0 ? "" : Math.floor(s.damage)}</div>
+                                <div class="numeric">${s.netDamage === void 0 ? "" : `${s.netDamage > 0 ? "+" : s.netDamage < 0 ? "-" : ""}${Math.abs(Math.floor(s.netDamage))}`}</div>
+                            ` : ""}
                         `).join("")}
                     </div>
                 ` : ""}
