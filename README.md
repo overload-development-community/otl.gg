@@ -4,6 +4,13 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.0.0 - 7/26/2022
+
+* Fixed various bugs related to ratings and disqualified teams.
+* Remove damage and net columns from games that don't have damage recorded.
+* Hardened querystring handling on the internal match API.
+* Package updates.
+
 ## v7.0.2 - 5/22/2022
 
 * When a command is duplicated, mention that you can use !version to avoid the duplication if you need to run the command.
