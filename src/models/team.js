@@ -1,11 +1,5 @@
 /**
  * @typedef {import("../../types/challengeTypes").GamesByChallengeId} ChallengeTypes.GamesByChallengeId
- * @typedef {import("discord.js").CategoryChannel} DiscordJs.CategoryChannel
- * @typedef {import("discord.js").ColorResolvable} DiscordJs.ColorResolvable
- * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("discord.js").Role} DiscordJs.Role
- * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("discord.js").VoiceChannel} DiscordJs.VoiceChannel
  * @typedef {import("./challenge.js")} Challenge
  * @typedef {import("../../types/matchTypes").SeasonData} MatchTypes.SeasonData
  * @typedef {import("./newTeam.js")} NewTeam
@@ -17,6 +11,7 @@
  */
 
 const Db = require("../database/team"),
+    DiscordJs = require("discord.js"),
     Elo = require("../elo"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
@@ -502,13 +497,13 @@ class Team {
 
             await captainsChannel.permissionOverwrites.edit(
                 captain,
-                {"VIEW_CHANNEL": true},
+                {ViewChannel: true},
                 {reason: `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`}
             );
 
             await captainsVoiceChannel.permissionOverwrites.edit(
                 captain,
-                {"VIEW_CHANNEL": true},
+                {ViewChannel: true},
                 {reason: `${member.displayName} added ${captain.displayName} as a captain of ${this.name}.`}
             );
 
@@ -517,7 +512,7 @@ class Team {
             await Discord.queue(`${captain}, you have been added as a captain of **${this.name}**!  You now have access to your team's captain's channel, ${captainsChannel}, and can post in the team's announcements channel, ${announcementsChannel}.  Be sure to read the pinned messages in that channel for more information as to what you can do for your team as a captain.`, captain);
             await Discord.queue(`Welcome **${captain}** as the newest team captain!`, captainsChannel);
             await Discord.queue(`**${captain}** is now a team captain!`, teamChannel);
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
@@ -644,7 +639,7 @@ class Team {
             await Discord.queue(`${member}, you are now a member of **${this.name}**!  You now have access to your team's channel, ${teamChannel}.`, member);
             await Discord.queue(`**${member}** has accepted your invitation to join the team!`, captainsChannel);
             await Discord.queue(`**${member}** has joined the team!`, teamChannel);
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Pilot Added",
                 color: this.role.color,
@@ -759,7 +754,7 @@ class Team {
                 await Discord.queue(`Your team **${this.name}** has been disbanded.`, teamMember);
             }
 
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Team Disbanded",
                 color: this.role.color,
@@ -1092,7 +1087,7 @@ class Team {
 
             await captainsChannel.permissionOverwrites.edit(
                 pilot,
-                {"VIEW_CHANNEL": true},
+                {ViewChannel: true},
                 {reason: `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`}
             );
 
@@ -1101,7 +1096,7 @@ class Team {
             await Discord.queue(`${pilot}, you are now the founder of **${this.name}**!`, pilot);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
@@ -1185,7 +1180,7 @@ class Team {
                     await challenge.updatePinnedPost();
                 }
 
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: `${this.name} (${this.tag})`,
                     description: "Pilot Left",
                     color: this.role.color,
@@ -1313,7 +1308,7 @@ class Team {
             await Discord.queue(`${captain}, you are no longer a captain of **${this.name}**.`, captain);
             await Discord.queue(`${captain.displayName} is no longer a team captain.`, captainsChannel);
             await Discord.queue(`${captain.displayName} is no longer a team captain.`, teamChannel);
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
@@ -1444,7 +1439,7 @@ class Team {
                 await Discord.queue(`${pilot.displayName} has been removed from the team by ${member.displayName}.`, captainsChannel);
                 await Discord.queue(`${pilot.displayName} has been removed from the team by ${member.displayName}.`, teamChannel);
 
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: `${this.name} (${this.tag})`,
                     description: "Pilot Removed",
                     color: this.role.color,
@@ -1506,7 +1501,7 @@ class Team {
 
             await Discord.queue(`${member} has changed your team's name to **${name}**.`, this.teamChannel);
 
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Team renamed",
                 color: this.role.color,
@@ -1576,7 +1571,7 @@ class Team {
 
             await captainsChannel.permissionOverwrites.edit(
                 pilot,
-                {"VIEW_CHANNEL": true},
+                {ViewChannel: true},
                 {reason: `${member.displayName} made ${pilot.displayName} the founder of ${this.name}.`}
             );
 
@@ -1585,7 +1580,7 @@ class Team {
             await Discord.queue(`${pilot}, you are now the founder of **${this.name}**!`, pilot);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
             await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
                 color: this.role.color,
@@ -1661,7 +1656,7 @@ class Team {
 
             await Discord.queue(`${member} has changed your team's tag to **${tag}**.`, this.teamChannel);
 
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Team tag renamed",
                 color: this.role.color,
@@ -1788,97 +1783,97 @@ class Team {
 
         await founder.roles.add(teamRole, `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
-        const category = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel(this.name, "GUILD_CATEGORY", [ // eslint-disable-line no-extra-parens
+        const category = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel(this.name, DiscordJs.ChannelType.GuildCategory, [ // eslint-disable-line no-extra-parens
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
+                deny: ["ViewChannel"]
             }, {
                 id: teamRole.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`));
 
-        const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, "GUILD_TEXT", [
+        const announcementsChannel = await Discord.createChannel(this.announcementsChannelName, DiscordJs.ChannelType.GuildText, [
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL", "SEND_MESSAGES"]
+                deny: ["ViewChannel", "SendMessages"]
             }, {
                 id: teamRole.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }, {
                 id: Discord.founderRole,
-                allow: ["SEND_MESSAGES", "MANAGE_MESSAGES", "MENTION_EVERYONE"]
+                allow: ["SendMessages", "ManageMessages", "MentionEveryone"]
             }, {
                 id: Discord.captainRole,
-                allow: ["SEND_MESSAGES", "MENTION_EVERYONE"]
+                allow: ["SendMessages", "MentionEveryone"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await announcementsChannel.setParent(category, {lockPermissions: false});
 
-        const teamChannel = await Discord.createChannel(this.teamChannelName, "GUILD_TEXT", [
+        const teamChannel = await Discord.createChannel(this.teamChannelName, DiscordJs.ChannelType.GuildText, [
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
+                deny: ["ViewChannel"]
             }, {
                 id: teamRole.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }, {
                 id: Discord.founderRole,
-                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
+                allow: ["ManageMessages", "MentionEveryone"]
             }, {
                 id: Discord.captainRole,
-                allow: ["MENTION_EVERYONE"]
+                allow: ["MentionEveryone"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await teamChannel.setParent(category, {lockPermissions: false});
 
-        const captainsChannel = await Discord.createChannel(this.captainsChannelName, "GUILD_TEXT", [
+        const captainsChannel = await Discord.createChannel(this.captainsChannelName, DiscordJs.ChannelType.GuildText, [
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
+                deny: ["ViewChannel"]
             }, {
                 id: founder.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }, {
                 id: Discord.founderRole,
-                allow: ["MANAGE_MESSAGES", "MENTION_EVERYONE"]
+                allow: ["ManageMessages", "MentionEveryone"]
             }, {
                 id: Discord.captainRole,
-                allow: ["MENTION_EVERYONE"]
+                allow: ["MentionEveryone"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await captainsChannel.setParent(category, {lockPermissions: false});
 
-        const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, "GUILD_VOICE", [
+        const teamVoiceChannel = await Discord.createChannel(this.teamVoiceChannelName, DiscordJs.ChannelType.GuildVoice, [
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
+                deny: ["ViewChannel"]
             }, {
                 id: teamRole.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await teamVoiceChannel.setParent(category, {lockPermissions: false});
         await teamVoiceChannel.edit({bitrate: 64000});
 
-        const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, "GUILD_VOICE", [
+        const captainsVoiceChannel = await Discord.createChannel(this.captainsVoiceChannelName, DiscordJs.ChannelType.GuildVoice, [
             {
                 id: Discord.id,
-                deny: ["VIEW_CHANNEL"]
+                deny: ["ViewChannel"]
             }, {
                 id: founder.id,
-                allow: ["VIEW_CHANNEL"]
+                allow: ["ViewChannel"]
             }
         ], `${founder.displayName} ${reinstating ? "reinstated" : "created"} the team ${this.name}.`);
 
         await captainsVoiceChannel.setParent(category, {lockPermissions: false});
         await captainsVoiceChannel.edit({bitrate: 64000});
 
-        await Discord.richQueue(Discord.messageEmbed({
+        await Discord.richQueue(Discord.embedBuilder({
             title: `${this.name} (${this.tag})`,
             description: reinstating ? "Team Reinstated" : "New Team",
             fields: [
@@ -1892,7 +1887,7 @@ class Team {
             }
         }), Discord.rosterUpdatesChannel);
 
-        const msg1 = await Discord.richQueue(Discord.messageEmbed({
+        const msg1 = await Discord.richQueue(Discord.embedBuilder({
             title: "Founder commands",
             fields: [
                 {
@@ -1926,7 +1921,7 @@ class Team {
             await msg1.pin();
         }
 
-        const msg2 = await Discord.richQueue(Discord.messageEmbed({
+        const msg2 = await Discord.richQueue(Discord.embedBuilder({
             title: "Captain commands",
             fields: [
                 {

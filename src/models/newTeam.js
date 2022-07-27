@@ -1,10 +1,9 @@
 /**
- * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
  * @typedef {import("../../types/newTeamTypes").NewTeamData} NewTeamTypes.NewTeamData
  */
 
 const Db = require("../database/newTeam"),
+    DiscordJs = require("discord.js"),
     Exception = require("../logging/exception"),
     Team = require("./team");
 
@@ -75,13 +74,13 @@ class NewTeam {
                 throw new Error("Channel already exists.");
             }
 
-            await Discord.createChannel(newTeam.channelName, "GUILD_TEXT", [
+            await Discord.createChannel(newTeam.channelName, DiscordJs.ChannelType.GuildText, [
                 {
                     id: Discord.id,
-                    deny: ["VIEW_CHANNEL"]
+                    deny: ["ViewChannel"]
                 }, {
                     id: member.id,
-                    allow: ["VIEW_CHANNEL"]
+                    allow: ["ViewChannel"]
                 }
             ], `${member.displayName} has started the process of creating a team.`);
 
@@ -252,7 +251,7 @@ class NewTeam {
      * @returns {Promise} A promise that resolves when the channel is updated.
      */
     async updateChannel() {
-        const embed = Discord.messageEmbed({
+        const embed = Discord.embedBuilder({
             title: "New Team Creation",
             fields: [
                 {
@@ -275,7 +274,10 @@ class NewTeam {
         commands.push("`!cancel` - Cancels team creation.");
         commands.push("`!complete` - Completes the team creation process and creates your team on the OTL.");
 
-        embed.addField("Commands", commands.join("\n"));
+        embed.addFields({
+            name: "Commands",
+            value: commands.join("\n")
+        });
 
         const pinned = await this.channel.messages.fetchPinned(false);
 

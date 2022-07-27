@@ -9,16 +9,13 @@
  * @typedef {import("../../types/challengeTypes").PlayersByTeam} ChallengeTypes.PlayersByTeam
  * @typedef {import("../../types/challengeTypes").StreamerData} ChallengeTypes.StreamerData
  * @typedef {import("../../types/challengeTypes").TeamDetailsData} ChallengeTypes.TeamDetailsData
- * @typedef {import("discord.js").CategoryChannel} DiscordJs.CategoryChannel
- * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("discord.js").User} DiscordJs.User
  * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
 const Calendar = require("../calendar"),
     Common = require("../../web/includes/common"),
     Db = require("../database/challenge"),
+    DiscordJs = require("discord.js"),
     Exception = require("../logging/exception"),
     Log = require("../logging/log"),
     NameMapDb = require("../database/nameMap"),
@@ -121,23 +118,23 @@ class Challenge {
                     throw new Error("Channel already exists.");
                 }
 
-                await Discord.createChannel(challenge.channelName, "GUILD_TEXT", [
+                await Discord.createChannel(challenge.channelName, DiscordJs.ChannelType.GuildText, [
                     {
                         id: Discord.id,
-                        deny: ["VIEW_CHANNEL"]
+                        deny: ["ViewChannel"]
                     }, {
                         id: challengingTeam.role.id,
-                        allow: ["VIEW_CHANNEL"]
+                        allow: ["ViewChannel"]
                     }, {
                         id: challengedTeam.role.id,
-                        allow: ["VIEW_CHANNEL"]
+                        allow: ["ViewChannel"]
                     }
                 ], `${challengingTeam.name} challenged ${challengedTeam.name}.`);
 
-                if (Discord.challengesCategory.children.size >= 40) {
+                if (Discord.challengesCategory.children.cache.size >= 40) {
                     const oldPosition = Discord.challengesCategory.position;
                     await Discord.challengesCategory.setName("Old Challenges", "Exceeded 40 challenges.");
-                    Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", "GUILD_CATEGORY", [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
+                    Discord.challengesCategory = /** @type {DiscordJs.CategoryChannel} */ (await Discord.createChannel("Challenges", DiscordJs.ChannelType.GuildCategory, [], "Exceeded 40 challenges.")); // eslint-disable-line no-extra-parens
                     await Discord.challengesCategory.setPosition(oldPosition + 1);
                 }
 
@@ -154,7 +151,7 @@ class Challenge {
                     description = `**${data.homeMapTeam.tag}** is the home map team, so **${(data.homeMapTeam.tag === challengingTeam.tag ? challengedTeam : challengingTeam).tag}** must choose from one of the following home maps:\n\n${(await data.homeMapTeam.getHomeMaps(Challenge.getGameTypeForHomes(gameType, teamSize))).map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`;
                 }
 
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: "Challenge commands - Map",
                     description,
                     color: data.homeMapTeam.role.color,
@@ -1093,7 +1090,7 @@ class Challenge {
             await this.channel.delete(`${member} closed the challenge.`);
 
             if (this.details.dateConfirmed && !this.details.dateVoided) {
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: `${this.challengingTeam.name} ${this.details.challengingTeamScore}, ${this.challengedTeam.name} ${this.details.challengedTeamScore}${this.details.overtimePeriods > 0 ? ` ${this.details.overtimePeriods > 1 ? this.details.overtimePeriods : ""}OT` : ""}`,
                     description: `Played <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>\n${Challenge.getGameTypeName(this.details.gameType)} in ${this.details.map}`,
                     color: this.details.challengingTeamScore > this.details.challengedTeamScore ? this.challengingTeam.role.color : this.details.challengedTeamScore > this.details.challengingTeamScore ? this.challengedTeam.role.color : void 0,
@@ -1311,7 +1308,7 @@ class Challenge {
         this.setNotifyMatchStarting();
 
         try {
-            const embed = Discord.messageEmbed({
+            const embed = Discord.embedBuilder({
                 title: "Match Confirmed",
                 fields: [
                     {
@@ -1414,12 +1411,12 @@ class Challenge {
         this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
 
         try {
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 description: "The time for this match has been set.",
                 fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>`}]
             }), this.channel);
 
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                 description: `This match is scheduled for <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>.`,
                 fields: [
@@ -1880,7 +1877,7 @@ class Challenge {
         }
 
         try {
-            const msg = Discord.messageEmbed({
+            const msg = Discord.embedBuilder({
                 fields: []
             });
             if (Math.round((challenge.details.matchTime.getTime() - new Date().getTime()) / 300000) > 0) {
@@ -1890,14 +1887,23 @@ class Challenge {
             }
 
             if (!challenge.details.map) {
-                msg.addField("Please select your map!", `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned post in this channel to see what your options are.`);
+                msg.addFields({
+                    name: "Please select your map!",
+                    value: `**${challenge.challengingTeam.id === challenge.details.homeMapTeam.id ? challenge.challengedTeam.tag : challenge.challengingTeam.tag}** must still select from the home maps for this match.  Please check the pinned post in this channel to see what your options are.`
+                });
             }
 
             if (!challenge.details.teamSize) {
-                msg.addField("Please select the team size!", "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own.");
+                msg.addFields({
+                    name: "Please select the team size!",
+                    value: "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own."
+                });
             }
 
-            msg.addField("Are you streaming this match on Twitch?", "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website.");
+            msg.addFields({
+                name: "Are you streaming this match on Twitch?",
+                value: "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website."
+            });
 
             await Discord.richQueue(msg, challenge.channel);
         } catch (err) {
@@ -2024,7 +2030,7 @@ class Challenge {
             if (winningScore === losingScore) {
                 await Discord.queue(`This match has been reported as a **tie**, **${winningScore}** to **${losingScore}**.  If this is correct, **${winningTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
             } else {
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     description: `This match has been reported as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  If this is correct, **${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
                     color: winningTeam.role.color
                 }), this.channel);
@@ -2090,7 +2096,7 @@ class Challenge {
             try {
                 await this.channel.permissionOverwrites.edit(
                     member,
-                    {"VIEW_CHANNEL": true},
+                    {ViewChannel: true},
                     {reason: `${member} is scheduled to cast this match.`}
                 );
 
@@ -2362,7 +2368,7 @@ class Challenge {
             if (postseason) {
                 const authorized = await Db.getAuthorizedPlayers(this);
 
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: "Postseason Match Restricted",
                     description: "This match is now set as a restricted tournament match for the postseason.  The following players are eligible to play in this match.",
                     fields: [
@@ -2410,7 +2416,7 @@ class Challenge {
             if (restricted) {
                 const authorized = await Db.getAuthorizedPlayers(this);
 
-                await Discord.richQueue(Discord.messageEmbed({
+                await Discord.richQueue(Discord.embedBuilder({
                     title: "Match Restricted",
                     description: "This match is now set as a restricted tournament match.  The following players are eligible to play in this match.",
                     fields: [
@@ -2469,7 +2475,7 @@ class Challenge {
         this.setNotifyMatchStarting();
 
         try {
-            const embed = Discord.messageEmbed({
+            const embed = Discord.embedBuilder({
                 title: "Match Confirmed",
                 fields: [
                     {
@@ -2598,12 +2604,12 @@ class Challenge {
         }
 
         try {
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 description: `${member} has set the time for this match.`,
                 fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>`}]
             }), this.channel);
 
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                 description: `This match is scheduled for <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>.`,
                 fields: [
@@ -2805,7 +2811,7 @@ class Challenge {
         this.details.suggestedTimeTeam = team;
 
         try {
-            await Discord.richQueue(Discord.messageEmbed({
+            await Discord.richQueue(Discord.embedBuilder({
                 description: `**${team.name}** is suggesting to play the match at the time listed below.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtime\` to agree to this suggestion.`,
                 fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.suggestedTime.getTime() / 1000)}:F>`}]
             }), this.channel);
@@ -2945,7 +2951,7 @@ class Challenge {
                 if (Discord.findGuildMemberById(member.id)) {
                     await this.channel.permissionOverwrites.edit(
                         member,
-                        {"VIEW_CHANNEL": null},
+                        {ViewChannel: null},
                         {reason: `${member} is no longer scheduled to cast this match.`}
                     );
                 }
@@ -3034,7 +3040,7 @@ class Challenge {
             await this.loadDetails();
         }
 
-        const embed = Discord.messageEmbed({
+        const embed = Discord.embedBuilder({
             title: this.details.title || `**${this.challengingTeam.name}** vs **${this.challengedTeam.name}**`,
             fields: []
         });
@@ -3114,7 +3120,10 @@ class Challenge {
             }
         }
 
-        embed.addField("Match Checklist:", checklist.join("\n"));
+        embed.addFields({
+            name: "Match Checklist:",
+            value: checklist.join("\n")
+        });
 
         const parameters = [];
         const eventParameters = [];
@@ -3163,7 +3172,10 @@ class Challenge {
             htmlParameters.push("<b>Postseason Game</b>");
         }
 
-        embed.addField("Match Parameters:", parameters.join("\n"));
+        embed.addFields({
+            name: "Match Parameters:",
+            value: parameters.join("\n")
+        });
 
         const challengingTeam = [];
 
@@ -3213,7 +3225,11 @@ class Challenge {
             });
         }
 
-        embed.addField(`**${this.challengingTeam.name}**`, challengingTeam.join("\n"), true);
+        embed.addFields({
+            name: `**${this.challengingTeam.name}**`,
+            value: challengingTeam.join("\n"),
+            inline: true
+        });
 
         const challengedTeam = [];
 
@@ -3263,9 +3279,16 @@ class Challenge {
             });
         }
 
-        embed.addField(`**${this.challengedTeam.name}**`, challengedTeam.join("\n"), true);
+        embed.addFields({
+            name: `**${this.challengedTeam.name}**`,
+            value: challengedTeam.join("\n"),
+            inline: true
+        });
 
-        embed.addField("Challenge Commands", "Visit https://otl.gg/about for a full list of available challenge commands.");
+        embed.addFields({
+            name: "Challenge Commands",
+            value: "Visit https://otl.gg/about for a full list of available challenge commands."
+        });
 
         const pinned = await this.channel.messages.fetchPinned(false);
 
@@ -3318,8 +3341,8 @@ class Challenge {
                             name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                             scheduledStartTime: this.details.matchTime,
                             scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
-                            privacyLevel: "GUILD_ONLY",
-                            entityType: "EXTERNAL",
+                            privacyLevel: DiscordJs.GuildScheduledEventPrivacyLevel.GuildOnly,
+                            entityType: DiscordJs.GuildScheduledEventEntityType.External,
                             description: eventParameters.join("\n"),
                             entityMetadata: {location: "OTL"},
                             reason: "Match update."
@@ -3337,8 +3360,8 @@ class Challenge {
                     name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                     scheduledStartTime: this.details.matchTime,
                     scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
-                    privacyLevel: "GUILD_ONLY",
-                    entityType: "EXTERNAL",
+                    privacyLevel: DiscordJs.GuildScheduledEventPrivacyLevel.GuildOnly,
+                    entityType: DiscordJs.GuildScheduledEventEntityType.External,
                     description: eventParameters.join("\n"),
                     entityMetadata: {location: "OTL"},
                     reason: "Match update."

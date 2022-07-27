@@ -9,8 +9,15 @@ const DiscordJs = require("discord.js"),
 
     commands = new Commands(),
     discord = new DiscordJs.Client({
-        intents: ["DIRECT_MESSAGES", "GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_PRESENCES"],
-        partials: ["CHANNEL"]
+        intents: [
+            DiscordJs.IntentsBitField.Flags.DirectMessages,
+            DiscordJs.IntentsBitField.Flags.Guilds,
+            DiscordJs.IntentsBitField.Flags.GuildMembers,
+            DiscordJs.IntentsBitField.Flags.GuildMessages,
+            DiscordJs.IntentsBitField.Flags.GuildPresences
+        ],
+        partials: [DiscordJs.Partials.Channel],
+        rest: {retries: 999999}
     }),
     messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/,
     urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
@@ -445,11 +452,11 @@ class Discord {
      * Parses a message.
      * @param {DiscordJs.User} user The user who sent the message.
      * @param {string} message The text of the message.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.NewsChannel|DiscordJs.PartialDMChannel|DiscordJs.ThreadChannel} channel The channel the message was sent on.
+     * @param {DiscordJs.TextBasedChannel} channel The channel the message was sent on.
      * @returns {Promise} A promise that resolves when the message is parsed.
      */
     static async message(user, message, channel) {
-        if (settings.testing && (channel.type === "DM" || !channel.guild || channel.guild.id !== otlGuild.id)) {
+        if (settings.testing && (channel.type === DiscordJs.ChannelType.DM || !channel.guild || channel.guild.id !== otlGuild.id)) {
             return;
         }
 
@@ -466,7 +473,7 @@ class Discord {
             if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
                 let success = false;
                 try {
-                    if (channel.type === "GUILD_TEXT" && await Commands.isDuplicateCommand(member, channel, text)) {
+                    if (channel.type === DiscordJs.ChannelType.GuildText && await Commands.isDuplicateCommand(member, channel, text)) {
                         Log.warning(`${channel} ${member}: ${text}\nDuplicate command thrown out.`);
                     } else {
                         success = await commands[command](member, channel, args);
@@ -508,25 +515,24 @@ class Discord {
 
         let msg;
         try {
-            msg = await Discord.richQueue(new DiscordJs.MessageEmbed({description: message}), channel);
+            msg = await Discord.richQueue(new DiscordJs.EmbedBuilder({description: message}), channel);
         } catch {}
         return msg;
     }
 
-    //                                             ####        #              #
-    //                                             #           #              #
-    // # #    ##    ###    ###    ###   ###   ##   ###   # #   ###    ##    ###
-    // ####  # ##  ##     ##     #  #  #  #  # ##  #     ####  #  #  # ##  #  #
-    // #  #  ##      ##     ##   # ##   ##   ##    #     #  #  #  #  ##    #  #
-    // #  #   ##   ###    ###     # #  #      ##   ####  #  #  ###    ##    ###
-    //                                  ###
+    //             #              #  ###          #    ##       #
+    //             #              #  #  #               #       #
+    //  ##   # #   ###    ##    ###  ###   #  #  ##     #     ###
+    // # ##  ####  #  #  # ##  #  #  #  #  #  #   #     #    #  #
+    // ##    #  #  #  #  ##    #  #  #  #  #  #   #     #    #  #
+    //  ##   #  #  ###    ##    ###  ###    ###  ###   ###    ###
     /**
-     * Gets a new DiscordJs MessageEmbed object.
-     * @param {DiscordJs.MessageEmbedOptions} [options] The options to pass.
-     * @returns {DiscordJs.MessageEmbed} The MessageEmbed object.
+     * Gets a new DiscordJs EmbedBuilder object.
+     * @param {DiscordJs.EmbedData} [options] The options to pass.
+     * @returns {DiscordJs.EmbedBuilder} The EmbedBuilder object.
      */
-    static messageEmbed(options) {
-        return new DiscordJs.MessageEmbed(options);
+    static embedBuilder(options) {
+        return new DiscordJs.EmbedBuilder(options);
     }
 
     //        #          #     ####     #   #     #
@@ -538,26 +544,26 @@ class Discord {
     /**
      * Edits a rich embed message.
      * @param {DiscordJs.Message} message The posted message to edit.
-     * @param {DiscordJs.MessageEmbed} embed The message to change the posted message to.
+     * @param {DiscordJs.EmbedBuilder} embed The message to change the posted message to.
      * @returns {Promise} A promise that resolves when the message is edited.
      */
     static async richEdit(message, embed) {
         embed.setFooter({
-            text: embed.footer ? embed.footer.text : "",
+            text: embed.data && embed.data.footer ? embed.data.footer.text : "Overload Teams League",
             iconURL: Discord.icon
         });
 
-        if (embed && embed.fields) {
-            embed.fields.forEach((field) => {
+        if (embed && embed.data && embed.data.fields) {
+            embed.data.fields.forEach((field) => {
                 if (field.value && field.value.length > 1024) {
                     field.value = field.value.substring(0, 1024);
                 }
             });
         }
 
-        embed.color = message.embeds[0].color;
+        embed.setColor(message.embeds[0].color);
 
-        if (!embed.timestamp) {
+        if (!embed.data || !embed.data.timestamp) {
             embed.setTimestamp(new Date());
         }
 
@@ -573,7 +579,7 @@ class Discord {
     //                            #
     /**
      * Queues a rich embed message to be sent.
-     * @param {DiscordJs.MessageEmbed} embed The message to be sent.
+     * @param {DiscordJs.EmbedBuilder} embed The message to be sent.
      * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
@@ -583,23 +589,23 @@ class Discord {
         }
 
         embed.setFooter({
-            text: embed.footer ? embed.footer.text : "",
+            text: embed.data && embed.data.footer ? embed.data.footer.text : "Overload Teams League",
             iconURL: Discord.icon
         });
 
-        if (embed && embed.fields) {
-            embed.fields.forEach((field) => {
+        if (embed && embed.data && embed.data.fields) {
+            embed.data.fields.forEach((field) => {
                 if (field.value && field.value.length > 1024) {
                     field.value = field.value.substring(0, 1024);
                 }
             });
         }
 
-        if (!embed.color) {
+        if (!embed.data || !embed.data.color) {
             embed.setColor(0xFF6600);
         }
 
-        if (!embed.timestamp) {
+        if (!embed.data || !embed.data.timestamp) {
             embed.setTimestamp(new Date());
         }
 
@@ -625,16 +631,16 @@ class Discord {
     /**
      * Creates a new channel on the Discord server.
      * @param {string} name The name of the channel.
-     * @param {"GUILD_CATEGORY" | "GUILD_TEXT" | "GUILD_VOICE"} type The type of channel to create.
+     * @param {DiscordJs.GuildChannelTypes} type The type of channel to create.
      * @param {DiscordJs.OverwriteResolvable[]|DiscordJs.Collection<DiscordJs.Snowflake, DiscordJs.OverwriteResolvable>} [overwrites] The permissions that should overwrite the default permission set.
      * @param {string} [reason] The reason the channel is being created.
-     * @returns {Promise<DiscordJs.TextChannel | DiscordJs.NewsChannel | DiscordJs.VoiceChannel | DiscordJs.CategoryChannel | DiscordJs.StoreChannel | DiscordJs.StageChannel>} The created channel.
+     * @returns {Promise<DiscordJs.TextChannel | DiscordJs.NewsChannel | DiscordJs.VoiceChannel | DiscordJs.CategoryChannel | DiscordJs.StageChannel>} The created channel.
      */
     static createChannel(name, type, overwrites, reason) {
         if (!otlGuild) {
             return void 0;
         }
-        return otlGuild.channels.create(name, {type, permissionOverwrites: overwrites, reason});
+        return otlGuild.channels.create({name, type, permissionOverwrites: overwrites, reason});
     }
 
     //                          #          ###         ##

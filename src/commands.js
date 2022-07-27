@@ -1,9 +1,6 @@
 /**
  * @typedef {import("../types/challengeTypes").GamePlayerStats} ChallengeTypes.GamePlayerStats
  * @typedef {import("../types/challengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
- * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
- * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
- * @typedef {import("discord.js").User} DiscordJs.User
  * @typedef {import("../types/mapTypes").MapData} MapTypes.MapData
  * @typedef {import("../types/playerTypes").PilotWithConfirmation} PlayerTypes.PilotWithConfirmation
  * @typedef {import("../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
@@ -11,13 +8,13 @@
  * @typedef {import("../types/teamTypes").TeamWithConfirmation} TeamTypes.TeamWithConfirmation
  */
 
-const Exception = require("./logging/exception");
-
-const tc = require("timezonecomplete"),
+const DiscordJs = require("discord.js"),
+    tc = require("timezonecomplete"),
     tzdata = require("tzdata"),
 
     Challenge = require("./models/challenge"),
     Common = require("../web/includes/common"),
+    Exception = require("./logging/exception"),
     Map = require("./models/map"),
     Match = require("./models/match"),
     pjson = require("../package.json"),
@@ -398,7 +395,7 @@ class Commands {
      * @returns {boolean} Whether the channel is on the correct server.
      */
     static checkChannelIsOnServer(channel) {
-        return channel.type === "GUILD_TEXT" && channel.guild.name === settings.guild;
+        return channel.type === DiscordJs.ChannelType.GuildText && channel.guild.name === settings.guild;
     }
 
     //       #                 #     #  #               ###                                  #
@@ -2097,13 +2094,13 @@ class Commands {
         const team = message ? await Commands.checkTeamExists(message, member, channel) : await Commands.checkMemberOnTeam(member, channel),
             homes = await team.getHomeMapsByType();
 
-        const msg = Discord.messageEmbed({
+        const msg = Discord.embedBuilder({
             title: `Home maps for **${team.name}**`,
             fields: []
         });
 
         Object.keys(homes).sort().forEach((gameType) => {
-            msg.fields.push({
+            msg.addFields({
                 name: Challenge.getGameTypeName(gameType),
                 value: homes[gameType].join("\n"),
                 inline: true
@@ -2250,13 +2247,13 @@ class Commands {
         if (Object.keys(neutrals).length === 0) {
             await Discord.queue(`**${team.name}** does not have any neutral maps specified yet.`, channel);
         } else {
-            const msg = Discord.messageEmbed({
+            const msg = Discord.embedBuilder({
                 title: `Neutral maps for **${team.name}**`,
                 fields: []
             });
 
             Object.keys(neutrals).forEach((gameType) => {
-                msg.fields.push({
+                msg.addFields({
                     name: Challenge.getGameTypeName(gameType),
                     value: neutrals[gameType].join("\n"),
                     inline: false
@@ -3604,7 +3601,7 @@ class Commands {
             return true;
         }
 
-        const msg = Discord.messageEmbed({
+        const msg = Discord.embedBuilder({
             title: "Overload Teams League Schedule",
             fields: []
         });
@@ -3612,18 +3609,30 @@ class Commands {
         if (message === "time") {
             if (matches.length !== 0) {
                 for (const [index, match] of matches.entries()) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addFields({
+                        name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                        value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                    });
                 }
             }
 
             if (events.length !== 0) {
                 for (const [index, event] of events.entries()) {
                     if (event.scheduledStartAt >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Begins <t:${Math.floor(event.scheduledStartAt.getTime() / 1000)}:F>.`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: `Begins <t:${Math.floor(event.scheduledStartAt.getTime() / 1000)}:F>.`
+                        });
                     } else if (event.scheduledEndAt >= new Date()) {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Currently ongoing until <t:${Math.floor(event.scheduledEndAt.getTime() / 1000)}:F>.`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: `Currently ongoing until <t:${Math.floor(event.scheduledEndAt.getTime() / 1000)}:F>.`
+                        });
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, "Just recently completed.");
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: "Just recently completed."
+                        });
                     }
                 }
             }
@@ -3637,9 +3646,15 @@ class Commands {
                         seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                     if (difference > 0) {
-                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                            value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                        });
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                            value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                        });
                     }
                 });
             }
@@ -3653,7 +3668,10 @@ class Commands {
                             minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                             seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: `Begins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`
+                        });
                     } else if (event.scheduledEndAt >= new Date()) {
                         const difference = event.scheduledEndAt.getTime() - new Date().getTime(),
                             days = Math.floor(Math.abs(difference) / (24 * 60 * 60 * 1000)),
@@ -3661,9 +3679,15 @@ class Commands {
                             minutes = Math.floor(Math.abs(difference) / (60 * 1000) % 60 % 60),
                             seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`);
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: `Currently ongoing for another ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.`
+                        });
                     } else {
-                        msg.addField(`${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`, "Just recently completed.");
+                        msg.addFields({
+                            name: `${index === 0 ? "Upcoming Events:\n" : ""}${event.name}`,
+                            value: "Just recently completed."
+                        });
                     }
                 });
             }
@@ -3703,14 +3727,17 @@ class Commands {
             return true;
         }
 
-        const msg = Discord.messageEmbed({
+        const msg = Discord.embedBuilder({
             title: "Overload Teams League Schedule",
             fields: []
         });
 
         if (message === "time") {
             for (const [index, match] of matches.entries()) {
-                msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                msg.addFields({
+                    name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                    value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins <t:${Math.floor(match.matchTime.getTime() / 1000)}:F>.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                });
             }
         } else {
             matches.forEach((match, index) => {
@@ -3721,9 +3748,15 @@ class Commands {
                     seconds = Math.floor(Math.abs(difference) / 1000 % 60);
 
                 if (difference > 0) {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addFields({
+                        name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                        value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegins in ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`}.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                    });
                 } else {
-                    msg.addField(`${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`, `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`);
+                    msg.addFields({
+                        name: `${index === 0 ? "Upcoming Matches:\n" : ""}${match.challengingTeamName} vs ${match.challengedTeamName}`,
+                        value: `**${Challenge.getGameTypeName(match.gameType)}**${match.map ? ` in **${match.map}**` : ""}\nBegan ${days > 0 ? `${days} day${days === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 ? `${hours} hour${hours === 1 ? "" : "s"}, ` : ""}${days > 0 || hours > 0 || minutes > 0 ? `${minutes} minute${minutes === 1 ? "" : "s"}, ` : ""}${`${seconds} second${seconds === 1 ? "" : "s"}`} ago.\n${match.twitchName ? `Watch online at https://twitch.tv/${match.twitchName}.` : Commands.checkChannelIsOnServer(channel) ? `Watch online at https://otl.gg/cast/${match.challengeId}, or use \`!cast ${match.challengeId}\` to cast this game.` : `Watch online at https://otl.gg/cast/${match.challengeId}.`}`
+                    });
                 }
             });
         }
@@ -4641,7 +4674,7 @@ class Commands {
                 value: `https://otl.gg/player/${stats.playerId}/${encodeURIComponent(Common.normalizeName(Discord.getName(pilot), stats.tag))}`
             });
 
-            Discord.richQueue(Discord.messageEmbed({
+            Discord.richQueue(Discord.embedBuilder({
                 title: `Season ${stats.season} Stats for ${Common.normalizeName(Discord.getName(pilot), stats.tag)}`,
                 fields
             }), channel);
@@ -5783,7 +5816,7 @@ class Commands {
             }
         }
 
-        const msg = Discord.messageEmbed({
+        const msg = Discord.embedBuilder({
             title: "Stats Added",
             fields: []
         });
@@ -5794,13 +5827,13 @@ class Commands {
                 winningTeam = winningScore === challenge.details.challengingTeamScore ? challenge.challengingTeam : challenge.challengedTeam;
 
             if (winningScore === losingScore) {
-                msg.fields.push({
+                msg.addFields({
                     name: "Score Updated",
                     value: `The score for this match has been updated to a tie with the score of **${winningScore}** to **${losingScore}**.`,
                     inline: false
                 });
             } else {
-                msg.fields.push({
+                msg.addFields({
                     name: "Score Updated",
                     value: `The score for this match has been updated to a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.`,
                     inline: false
@@ -5810,7 +5843,7 @@ class Commands {
         }
 
         if (timeChanged) {
-            msg.fields.push({
+            msg.addFields({
                 name: "Match Time Updated",
                 value: `The match time for this match has been updated to **<t:${Math.floor(challenge.details.matchTime.getTime() / 1000)}:F>**`,
                 inline: false
@@ -5819,7 +5852,7 @@ class Commands {
 
         switch (challenge.details.gameType) {
             case "TA":
-                msg.fields.push({
+                msg.addFields({
                     name: `${challenge.challengingTeam.name} Stats`,
                     value: `${challengingTeamStats.sort((a, b) => {
                         if (a.kills !== b.kills) {
@@ -5839,7 +5872,7 @@ class Commands {
                     inline: false
                 });
 
-                msg.fields.push({
+                msg.addFields({
                     name: `${challenge.challengedTeam.name} Stats`,
                     value: `${challengedTeamStats.sort((a, b) => {
                         if ((a.kills + a.assists) / Math.max(a.deaths, 1) !== (b.kills + b.assists) / Math.max(b.deaths, 1)) {
@@ -5851,7 +5884,7 @@ class Commands {
                 });
                 break;
             case "CTF":
-                msg.fields.push({
+                msg.addFields({
                     name: `${challenge.challengingTeam.name} Stats`,
                     value: `${challengingTeamStats.sort((a, b) => {
                         if (a.captures !== b.captures) {
@@ -5871,7 +5904,7 @@ class Commands {
                     inline: false
                 });
 
-                msg.fields.push({
+                msg.addFields({
                     name: `${challenge.challengedTeam.name} Stats`,
                     value: `${challengedTeamStats.sort((a, b) => {
                         if (a.captures !== b.captures) {
@@ -6776,7 +6809,7 @@ class Commands {
             }
         }
 
-        await Discord.richQueue(Discord.messageEmbed({
+        await Discord.richQueue(Discord.embedBuilder({
             description: "**Converted Time**",
             fields: [
                 {name: "Local Time", value: `<t:${Math.floor(date.getTime() / 1000)}:F>`, inline: true},
