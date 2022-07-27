@@ -32,7 +32,12 @@ class MatchApi {
      * @returns {Promise} A promise that resolves when the request is complete.
      */
     static async get(req, res) {
-        return res.json(await Match.getBySeason(req.query.season, req.query.page));
+        const querySeason = req.query.season && req.query.season.toString() || void 0,
+            queryPage = req.query.page && req.query.page.toString() || void 0,
+            season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10),
+            page = isNaN(+queryPage) ? void 0 : Number.parseInt(queryPage, 10);
+
+        return res.json(await Match.getBySeason(season, page));
     }
 }
 
