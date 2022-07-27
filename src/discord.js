@@ -14,7 +14,8 @@ const DiscordJs = require("discord.js"),
             DiscordJs.IntentsBitField.Flags.Guilds,
             DiscordJs.IntentsBitField.Flags.GuildMembers,
             DiscordJs.IntentsBitField.Flags.GuildMessages,
-            DiscordJs.IntentsBitField.Flags.GuildPresences
+            DiscordJs.IntentsBitField.Flags.GuildPresences,
+            DiscordJs.IntentsBitField.Flags.MessageContent
         ],
         partials: [DiscordJs.Partials.Channel],
         rest: {retries: 999999}
