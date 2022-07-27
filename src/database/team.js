@@ -1745,6 +1745,16 @@ class TeamDb {
             hasData = true;
         }
 
+        sql = /* sql */`
+            ${sql}
+
+            INSERT INTO tblTeamRating
+            (Season, TeamId, Rating, Qualified)
+            SELECT @season, nq.TeamId, 0, 0
+            FROM @notQualified nq
+            WHERE NOT EXISTS(SELECT TOP 1 1 FROM tblTeamRating WHERE Season = @season AND TeamId = nq.TeamId)
+        `;
+
         for (const {challengeId, challengeRating, index} of Object.keys(challengeRatings).map((r, i) => ({challengeId: +r, challengeRating: challengeRatings[+r], index: i}))) {
             sql = /* sql */`
                 ${sql}
@@ -1770,14 +1780,6 @@ class TeamDb {
             }
         }
 
-        sql = /* sql */`
-            ${sql}
-
-            INSERT INTO tblTeamRating
-            (Season, TeamId, Rating, Qualified)
-            SELECT @season, TeamId, 0, 0
-            FROM @notQualified
-        `;
         params.season = {type: Db.INT, value: season};
 
         if (hasData) {

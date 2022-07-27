@@ -2163,10 +2163,6 @@ class Team {
             const teamRecords = {};
 
             data.matches.forEach((match) => {
-                if (data.teamIds.indexOf(match.challengingTeamId) === -1 || data.teamIds.indexOf(match.challengedTeamId) === -1) {
-                    return;
-                }
-
                 if (!teamRecords[match.challengingTeamId]) {
                     teamRecords[match.challengingTeamId] = {};
                 }
@@ -2200,17 +2196,23 @@ class Team {
             });
 
             Object.keys(teamRecords).forEach((teamId) => {
-                let total = 0;
+                let total = 0,
+                    count = 0;
 
                 Object.keys(teamRecords[teamId]).forEach((opponentTeamId) => {
+                    if (data.teamIds.indexOf(+opponentTeamId) === -1) {
+                        return;
+                    }
+
                     const record = teamRecords[+teamId][+opponentTeamId];
 
                     record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.t) / (record.w + record.l + record.t))) / 3);
 
+                    count++;
                     total += record.rating;
                 });
 
-                ratings[teamId] = total / (data.teamIds.length - 1);
+                ratings[teamId] = count === 0 ? 0 : total / count;
             });
         }
 
