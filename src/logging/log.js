@@ -166,7 +166,7 @@ class Log {
                         const message = Discord.embedBuilder({
                             color: 0xFF0000,
                             fields: [],
-                            timestamp: log.date.getTime() // TODO: Remove .getTime() once this is fixed: https://github.com/discordjs/discord.js/issues/8323
+                            timestamp: log.date
                         });
 
                         if (log.message) {
@@ -179,7 +179,7 @@ class Log {
                     const message = Discord.embedBuilder({
                         color: log.type === "log" ? 0x80FF80 : log.type === "warning" ? 0xFFFF00 : 0xFF0000,
                         fields: [],
-                        timestamp: log.date.getTime() // TODO: Remove .getTime() once this is fixed: https://github.com/discordjs/discord.js/issues/8323
+                        timestamp: log.date
                     });
 
                     if (log.message) {
@@ -220,7 +220,7 @@ class Log {
                 const message = Discord.embedBuilder({
                     color: 0xFF0000,
                     fields: [],
-                    timestamp: log.date.getTime() // TODO: Remove .getTime() once this is fixed: https://github.com/discordjs/discord.js/issues/8323
+                    timestamp: log.date
                 });
 
                 message.setDescription(log.message);
@@ -249,7 +249,7 @@ class Log {
                 const message = Discord.embedBuilder({
                     color: 0xFF0000,
                     fields: [],
-                    timestamp: log.date.getTime() // TODO: Remove .getTime() once this is fixed: https://github.com/discordjs/discord.js/issues/8323
+                    timestamp: log.date
                 });
 
                 message.setDescription(log.message);
