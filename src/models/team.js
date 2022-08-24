@@ -2196,8 +2196,7 @@ class Team {
             });
 
             Object.keys(teamRecords).forEach((teamId) => {
-                let total = 0,
-                    count = 0;
+                let total = 0;
 
                 Object.keys(teamRecords[teamId]).forEach((opponentTeamId) => {
                     if (data.teamIds.indexOf(+opponentTeamId) === -1) {
@@ -2208,11 +2207,10 @@ class Team {
 
                     record.rating = Math.min(record.w + record.l + record.t, 3) * ((1000 + 1000 * ((record.w + 0.5 * record.t) / (record.w + record.l + record.t))) / 3);
 
-                    count++;
                     total += record.rating;
                 });
 
-                ratings[teamId] = count === 0 ? 0 : total / count;
+                ratings[teamId] = data.teamIds.length === 0 ? 0 : total / (data.teamIds.length - 1);
             });
         }
 
