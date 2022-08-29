@@ -210,10 +210,10 @@ class Log {
      * @returns {Promise} A promise that resolves when the output has been completed.
      */
     static async outputToDiscord(log, err) {
-        let value = util.inspect(log.obj),
+        let value = log.obj ? util.inspect(log.obj) : "",
             continued = false;
 
-        while (value.length > 0) {
+        do {
             if (continued) {
                 await Discord.queue(value.substring(0, 1024), /** @type {DiscordJs.TextChannel} */ (Discord.findChannelByName("otlbot-errors"))); // eslint-disable-line no-extra-parens
             } else if (log.message) {
@@ -225,11 +225,13 @@ class Log {
 
                 message.setDescription(log.message);
 
-                message.addFields({
-                    name: "Message",
-                    value: value.substring(0, 1024),
-                    inline: false
-                });
+                if (value.length > 0) {
+                    message.addFields({
+                        name: "Message",
+                        value: value.substring(0, 1024),
+                        inline: false
+                    });
+                }
 
                 continued = true;
 
@@ -237,7 +239,7 @@ class Log {
             }
 
             value = value.substring(1024);
-        }
+        } while (value.length > 0);
 
         value = `Error while writing to logging database: ${util.inspect(err)}`;
         continued = false;
