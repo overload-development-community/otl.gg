@@ -2,7 +2,8 @@
  * @typedef {express.Router} Express.Router
  */
 
-const compression = require("compression"),
+const Azure = require("./src/azure"),
+    compression = require("compression"),
     express = require("express"),
     minify = require("./src/minify"),
     morgan = require("morgan"),
@@ -60,6 +61,9 @@ const compression = require("compression"),
     // Startup Discord.
     Discord.startup();
     await Discord.connect();
+
+    // Startup Azure.
+    Azure.startup();
 
     // Add morgan extensions.
     morganExtensions(morgan);
