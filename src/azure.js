@@ -6,7 +6,6 @@
 
 const azure = require("@azure/identity"),
     ComputeManagementClient = require("@azure/arm-compute").ComputeManagementClient,
-    Discord = require("./discord"),
     EventEmitter = require("events").EventEmitter,
     Log = require("./logging/log"),
     Tracker = require("./tracker"),
@@ -16,6 +15,13 @@ const azure = require("@azure/identity"),
 
 /** @type {{[x: string]: TrackerTypes.Game}} */
 const servers = {};
+
+/** @type {typeof import("./discord")} */
+let Discord;
+
+setTimeout(() => {
+    Discord = require("./discord");
+}, 0);
 
 //    #
 //   # #
