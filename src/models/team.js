@@ -1891,7 +1891,7 @@ class Team {
             title: "Founder commands",
             fields: [
                 {
-                    name: "!color ([light|dark]) [red|orange|yellow|green|indigo|blue|purple]",
+                    name: "!color ([light|dark]) [red|orange|yellow|lime|green|spring|aqua|azure|blue|violet|purple|pink]",
                     value: "Set the color for display in Discord."
                 },
                 {

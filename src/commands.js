@@ -28,7 +28,7 @@ const DiscordJs = require("discord.js"),
     addStatsParse = /^(?<gameId>[0-9]+)(?: (?<minutes>[1-9]?[0-9]):(?<seconds>[0-9]{2}(?:\.[0-9]{3})?))?(?<newMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     addStatsMapParse = /^ (?<pilotName>[^@]+) <@!?(?<id>[0-9]+)>(?<newMapMessage>(?: [^@]+ <@!?[0-9]+>)*)$/,
     challengeParse = /^(?<teamName>.{1,25}?)(?: (?<gameType>(?:CTF|TA)))?$/i,
-    colorParse = /^(?:dark |light )?(?:red|orange|yellow|green|aqua|blue|purple)$/,
+    colorParse = /^(?:dark |light )?(?:red|orange|yellow|lime|green|spring|aqua|azure|blue|violet|purple|pink)$/,
     createMatchParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})(?: (?<gameType>(?:CTF|TA)))?(?: (?<number>(?:[1-9][0-9]*)))?$/i,
     idParse = /^<@!?(?<id>[0-9]+)>$/,
     idConfirmParse = /^<@!?(?<id>[0-9]+)>(?: (?<confirmed>confirm|[^ ]*))?$/,
@@ -1491,12 +1491,12 @@ class Commands {
 
         await Commands.checkMemberIsFounder(member, channel);
 
-        if (!await Commands.checkHasParameters(message, member, "You can use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel)) {
+        if (!await Commands.checkHasParameters(message, member, "You can use the following colors: red, orange, yellow, lime, green, spring, aqua, azure, blue, violet, purple, pink.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter `!color dark green`.", channel)) {
             return false;
         }
 
         if (!colorParse.test(message)) {
-            await Discord.queue(`Sorry, ${member}, but you can only use the following colors: red, orange, yellow, green, aqua, blue, purple.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`, channel);
+            await Discord.queue(`Sorry, ${member}, but you can only use the following colors: red, orange, yellow, lime, green, spring, aqua, azure, blue, violet, purple, pink.  You can also request a light or dark variant.  For instance, if you want a dark green color for your team, enter \`!color dark green\`.`, channel);
             throw new Warning("Invalid color.");
         }
 
@@ -1544,6 +1544,19 @@ class Commands {
                         break;
                 }
                 break;
+            case "lime":
+                switch (colors[0]) {
+                    case "dark":
+                        color = 0x408000;
+                        break;
+                    case "light":
+                        color = 0xC0FF80;
+                        break;
+                    default:
+                        color = 0x80FF00;
+                        break;
+                }
+                break;
             case "green":
                 switch (colors[0]) {
                     case "dark":
@@ -1554,6 +1567,19 @@ class Commands {
                         break;
                     default:
                         color = 0x00FF00;
+                        break;
+                }
+                break;
+            case "spring":
+                switch (colors[0]) {
+                    case "dark":
+                        color = 0x008040;
+                        break;
+                    case "light":
+                        color = 0x80FFC0;
+                        break;
+                    default:
+                        color = 0x00FF80;
                         break;
                 }
                 break;
@@ -1570,6 +1596,19 @@ class Commands {
                         break;
                 }
                 break;
+            case "azure":
+                switch (colors[0]) {
+                    case "dark":
+                        color = 0x004080;
+                        break;
+                    case "light":
+                        color = 0x80C0FF;
+                        break;
+                    default:
+                        color = 0x0080FF;
+                        break;
+                }
+                break;
             case "blue":
                 switch (colors[0]) {
                     case "dark":
@@ -1583,6 +1622,19 @@ class Commands {
                         break;
                 }
                 break;
+            case "violet":
+                switch (colors[0]) {
+                    case "dark":
+                        color = 0x400080;
+                        break;
+                    case "light":
+                        color = 0xC080FF;
+                        break;
+                    default:
+                        color = 0x8000FF;
+                        break;
+                }
+                break;
             case "purple":
                 switch (colors[0]) {
                     case "dark":
@@ -1593,6 +1645,19 @@ class Commands {
                         break;
                     default:
                         color = 0xFF00FF;
+                        break;
+                }
+                break;
+            case "pink":
+                switch (colors[0]) {
+                    case "dark":
+                        color = 0x800040;
+                        break;
+                    case "light":
+                        color = 0xFF80C0;
+                        break;
+                    default:
+                        color = 0xFF0080;
                         break;
                 }
                 break;

@@ -155,7 +155,7 @@ class AboutView {
 
                     <div class="section">Team Management</div>
 
-                    <div class="command">!color<br />[(light|<wbr />dark)]<br />(red|<wbr />orange|<wbr />yellow|<wbr />green|<wbr />blue|<wbr />purple)</div>
+                    <div class="command">!color<br />[(light|<wbr />dark)]<br />(red|<wbr />orange|<wbr />yellow|<wbr />lime|<wbr />green|<wbr />spring|<wbr />aqua|<wbr />azure|<wbr />blue|<wbr />violet|<wbr />purple|<wbr />pink)</div>
                     <div>Founder only.  Gives your team role a color on the Discord server.</div>
                     <div class="example">!color red<br />!color dark green</div>
 
