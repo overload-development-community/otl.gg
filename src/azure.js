@@ -76,10 +76,10 @@ class Azure {
      */
     static setup(server, region, channel) {
         server.started = true;
-        if (!server.warningTimeout) {
+        if (server.warningTimeout) {
             clearTimeout(server.warningTimeout);
         }
-        if (!server.timeout) {
+        if (server.timeout) {
             clearTimeout(server.timeout);
         }
         server.warningTimeout = void 0;

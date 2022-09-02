@@ -12,7 +12,6 @@ const DiscordJs = require("discord.js"),
     tc = require("timezonecomplete"),
     tzdata = require("tzdata"),
 
-    Azure = require("./azure"),
     Challenge = require("./models/challenge"),
     Common = require("../web/includes/common"),
     Exception = require("./logging/exception"),
@@ -48,6 +47,13 @@ const DiscordJs = require("discord.js"),
     teamTagteamNameParse = /^(?<teamTag>[^ ]{1,5}) (?<teamName>.{6,25})$/,
     twoTeamTagParse = /^(?<teamTag1>[^ ]{1,5}) (?<teamTag2>[^ ]{1,5})$/,
     vodParse = /^(?<challengeId>[1-9][0-9]*) (?<vod>https?:\/\/.+)$/;
+
+/** @type {typeof import("./azure")} */
+let Azure;
+
+setTimeout(() => {
+    Azure = require("./azure");
+}, 0);
 
 /** @type {typeof import("./discord")} */
 let Discord;
