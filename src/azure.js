@@ -89,10 +89,10 @@ class Azure {
         browser.removeAllListeners(server.ipAddress);
         browser.on(server.ipAddress, async (data) => {
             // Ensure the timeouts are cleared.
-            if (!server.warningTimeout) {
+            if (server.warningTimeout) {
                 clearTimeout(server.warningTimeout);
             }
-            if (!server.timeout) {
+            if (server.timeout) {
                 clearTimeout(server.timeout);
             }
             server.warningTimeout = void 0;
