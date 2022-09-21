@@ -196,10 +196,6 @@ declare namespace TeamTypes {
         })[]
 
     }
-    type TeamWithConfirmation = {
-        team: Team
-        confirm: string
-    }
 }
 
 export = TeamTypes

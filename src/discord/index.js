@@ -1,26 +1,25 @@
 const DiscordJs = require("discord.js"),
+    fs = require("fs/promises"),
+    path = require("path"),
+    Rest = require("@discordjs/rest"),
 
-    Commands = require("./commands"),
-    Exception = require("./logging/exception"),
-    Log = require("./logging/log"),
-    Notify = require("./notify"),
-    settings = require("../settings"),
-    Warning = require("./logging/warning"),
+    Exception = require("../logging/exception"),
+    Log = require("../logging/log"),
+    Notify = require("../notify"),
+    settings = require("../../settings"),
+    Warning = require("../logging/warning"),
 
-    commands = new Commands(),
     discord = new DiscordJs.Client({
         intents: [
             DiscordJs.IntentsBitField.Flags.DirectMessages,
             DiscordJs.IntentsBitField.Flags.Guilds,
             DiscordJs.IntentsBitField.Flags.GuildMembers,
             DiscordJs.IntentsBitField.Flags.GuildMessages,
-            DiscordJs.IntentsBitField.Flags.GuildPresences,
-            DiscordJs.IntentsBitField.Flags.MessageContent
+            DiscordJs.IntentsBitField.Flags.GuildPresences
         ],
         partials: [DiscordJs.Partials.Channel],
         rest: {retries: 999999}
     }),
-    messageParse = /^!(?<cmd>[^ ]+)(?: +(?<args>.*[^ ]))? *$/,
     urlParse = /^https:\/\/www.twitch.tv\/(?<user>.+)$/;
 
 let readied = false;
@@ -61,8 +60,8 @@ let testersRole;
 /** @type {DiscordJs.TextChannel} */
 let vodsChannel;
 
-require("./extensions/discordJs.GuildMember.extensions");
-require("./extensions/discordJs.User.extensions");
+require("../extensions/discordJs.GuildMember.extensions");
+require("../extensions/discordJs.User.extensions");
 
 //  ####     #                                    #
 //   #  #                                         #
@@ -325,10 +324,56 @@ class Discord {
      * @returns {void}
      */
     static startup() {
-        discord.on("ready", () => {
+        discord.on("ready", async () => {
             Log.log("Connected to Discord.");
 
             otlGuild = discord.guilds.cache.find((g) => g.name === settings.guild);
+
+            const files = await fs.readdir(path.join(__dirname, "commands")),
+                simulate = new DiscordJs.SlashCommandBuilder(),
+                guildCommands = [],
+                globalCommands = [];
+
+            simulate
+                .setName("simulate")
+                .setDescription("Simulates a command from another user.");
+
+            for (const file of files) {
+                const commandFile = require(`./commands/${file}`);
+
+                /** @type {DiscordJs.SlashCommandBuilder} */
+                const command = commandFile.command();
+
+                if (commandFile.global) {
+                    globalCommands.push(command);
+                } else {
+                    guildCommands.push(command);
+                    if (commandFile.simulate) {
+                        simulate.addSubcommand((subcommand) => {
+                            subcommand
+                                .addUserOption((option) => option
+                                    .setName("from")
+                                    .setDescription("The user to simulate the command with.")
+                                    .setRequired(true));
+                            commandFile.builder(subcommand);
+                            return subcommand;
+                        });
+                    }
+                }
+            }
+
+            simulate.setDefaultMemberPermissions(0);
+
+            guildCommands.push(simulate);
+
+            try {
+                const rest = new Rest.REST().setToken(settings.discord.token);
+
+                await rest.put(DiscordJs.Routes.applicationGuildCommands(settings.discord.clientId, otlGuild.id), {body: guildCommands});
+                await rest.put(DiscordJs.Routes.applicationCommands(settings.discord.clientId), {body: globalCommands});
+            } catch (err) {
+                Log.exception("Error adding slash commands.", err);
+            }
 
             if (!readied) {
                 readied = true;
@@ -355,10 +400,6 @@ class Discord {
             Log.exception("Disconnected from Discord.", ev);
         });
 
-        discord.on("messageCreate", (message) => {
-            Discord.message(message.author, message.content, message.channel);
-        });
-
         discord.on("guildMemberRemove", async (member) => {
             if (member.guild && member.guild.id === otlGuild.id) {
                 try {
@@ -380,6 +421,48 @@ class Discord {
                 } catch (err) {
                     Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
                 }
+            }
+        });
+
+        discord.on("interactionCreate", async (interaction) => {
+            if (!interaction.isChatInputCommand()) {
+                return;
+            }
+
+            // TODO: Add a semaphore to commands where appropiate.
+
+            let success = false;
+
+            try {
+                if (interaction.commandName === "simulate") {
+                    const module = require(`../discord/commands/${interaction.options.getSubcommand(true).toLowerCase()}`);
+
+                    if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
+                        return;
+                    }
+
+                    success = await module.handle(interaction, interaction.options.getUser("from", true));
+                } else {
+                    const module = require(`../discord/commands/${interaction.commandName.toLowerCase()}`);
+
+                    if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
+                        return;
+                    }
+
+                    success = await module.handle(interaction, interaction.user);
+                }
+            } catch (err) {
+                if (err instanceof Warning) {
+                    Log.warning(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message || err}`);
+                } else if (err instanceof Exception) {
+                    Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message}`, err.innerError);
+                } else {
+                    Log.exception(`${interaction.channel} ${interaction.user}: ${interaction}`, err);
+                }
+            }
+
+            if (success) {
+                Log.log(`${interaction.channel} ${interaction.user}: ${interaction}`);
             }
         });
 
@@ -444,60 +527,6 @@ class Discord {
         return discord && discord.ws && otlGuild ? discord.ws.status === 0 : false;
     }
 
-    // # #    ##    ###    ###    ###   ###   ##
-    // ####  # ##  ##     ##     #  #  #  #  # ##
-    // #  #  ##      ##     ##   # ##   ##   ##
-    // #  #   ##   ###    ###     # #  #      ##
-    //                                  ###
-    /**
-     * Parses a message.
-     * @param {DiscordJs.User} user The user who sent the message.
-     * @param {string} message The text of the message.
-     * @param {DiscordJs.TextBasedChannel} channel The channel the message was sent on.
-     * @returns {Promise} A promise that resolves when the message is parsed.
-     */
-    static async message(user, message, channel) {
-        if (settings.testing && (channel.type === DiscordJs.ChannelType.DM || !channel.guild || channel.guild.id !== otlGuild.id)) {
-            return;
-        }
-
-        const member = otlGuild.members.cache.find((m) => m.id === user.id);
-
-        for (const text of message.split("\n")) {
-            if (!messageParse.test(text)) {
-                continue;
-            }
-
-            const {groups: {cmd, args}} = messageParse.exec(text),
-                command = cmd.toLocaleLowerCase();
-
-            if (Object.getOwnPropertyNames(Commands.prototype).filter((p) => typeof Commands.prototype[p] === "function" && p !== "constructor").indexOf(command) !== -1) {
-                let success = false;
-                try {
-                    if (channel.type === DiscordJs.ChannelType.GuildText && await Commands.isDuplicateCommand(member, channel, text)) {
-                        Log.warning(`${channel} ${member}: ${text}\nDuplicate command thrown out.`);
-                    } else {
-                        success = await commands[command](member, channel, args);
-                    }
-                } catch (err) {
-                    if (err instanceof Warning) {
-                        Log.warning(`${channel} ${member}: ${text}\n${err}`);
-                    } else if (err instanceof Exception) {
-                        Log.exception(`${channel} ${member}: ${text}\n${err.message}`, err.innerError);
-                    } else {
-                        Log.exception(`${channel} ${member}: ${text}`, err);
-                    }
-
-                    return;
-                }
-
-                if (success) {
-                    Log.log(`${channel} ${member}: ${text}`);
-                }
-            }
-        }
-    }
-
     //  ###  #  #   ##   #  #   ##
     // #  #  #  #  # ##  #  #  # ##
     // #  #  #  #  ##    #  #  ##
@@ -506,7 +535,7 @@ class Discord {
     /**
      * Queues a message to be sent.
      * @param {string} message The message to be sent.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember|DiscordJs.GuildTextBasedChannel} channel The channel to send the message to.
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
     static async queue(message, channel) {
@@ -516,7 +545,7 @@ class Discord {
 
         let msg;
         try {
-            msg = await Discord.richQueue(new DiscordJs.EmbedBuilder({description: message}), channel);
+            msg = await Discord.richQueue(Discord.embedBuilder({description: message}), channel);
         } catch {}
         return msg;
     }
@@ -533,7 +562,19 @@ class Discord {
      * @returns {DiscordJs.EmbedBuilder} The EmbedBuilder object.
      */
     static embedBuilder(options) {
-        return new DiscordJs.EmbedBuilder(options);
+        const embed = new DiscordJs.EmbedBuilder(options);
+
+        embed.setFooter({text: embed.data && embed.data.footer ? embed.data.footer.text : "Overload Teams League", iconURL: Discord.icon});
+
+        if (!embed.data || !embed.data.color) {
+            embed.setColor(0xFF6600);
+        }
+
+        if (!embed.data || !embed.data.timestamp) {
+            embed.setTimestamp(new Date());
+        }
+
+        return embed;
     }
 
     //        #          #     ####     #   #     #
@@ -581,7 +622,7 @@ class Discord {
     /**
      * Queues a rich embed message to be sent.
      * @param {DiscordJs.EmbedBuilder} embed The message to be sent.
-     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember} channel The channel to send the message to.
+     * @param {DiscordJs.TextChannel|DiscordJs.DMChannel|DiscordJs.GuildMember|DiscordJs.GuildTextBasedChannel} channel The channel to send the message to.
      * @returns {Promise<DiscordJs.Message>} A promise that resolves with the sent message.
      */
     static async richQueue(embed, channel) {
@@ -589,25 +630,12 @@ class Discord {
             return void 0;
         }
 
-        embed.setFooter({
-            text: embed.data && embed.data.footer ? embed.data.footer.text : "Overload Teams League",
-            iconURL: Discord.icon
-        });
-
         if (embed && embed.data && embed.data.fields) {
             embed.data.fields.forEach((field) => {
                 if (field.value && field.value.length > 1024) {
                     field.value = field.value.substring(0, 1024);
                 }
             });
-        }
-
-        if (!embed.data || !embed.data.color) {
-            embed.setColor(0xFF6600);
-        }
-
-        if (!embed.data || !embed.data.timestamp) {
-            embed.setTimestamp(new Date());
         }
 
         let msg;
@@ -621,6 +649,21 @@ class Discord {
             }
         } catch {}
         return msg;
+    }
+
+    //       #                             ##    ###           ##          ##
+    //       #                              #     #           #  #        #  #
+    //  ##   ###    ###  ###   ###    ##    #     #     ###   #  #  ###    #     ##   ###   # #    ##   ###
+    // #     #  #  #  #  #  #  #  #  # ##   #     #    ##     #  #  #  #    #   # ##  #  #  # #   # ##  #  #
+    // #     #  #  # ##  #  #  #  #  ##     #     #      ##   #  #  #  #  #  #  ##    #     # #   ##    #
+    //  ##   #  #   # #  #  #  #  #   ##   ###   ###   ###     ##   #  #   ##    ##   #      #     ##   #
+    /**
+     * Returns whether the channel is on the OTL server.
+     * @param {DiscordJs.GuildTextBasedChannel} channel The channel.
+     * @returns {boolean} Whether the channel is on the OTL server.
+     */
+    static channelIsOnServer(channel) {
+        return channel.type === DiscordJs.ChannelType.GuildText && channel.guild.name === settings.guild;
     }
 
     //                          #           ##   #                             ##

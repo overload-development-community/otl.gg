@@ -1,4 +1,5 @@
 /**
+ * @typedef {import("../../types/challengeTypes").AuthorizedPlayers} ChallengeTypes.AuthorizedPlayers
  * @typedef {import("../../types/challengeTypes").CastData} ChallengeTypes.CastData
  * @typedef {import("../../types/challengeTypes").ChallengeConstructor} ChallengeTypes.ChallengeConstructor
  * @typedef {import("../../types/challengeTypes").CreateData} ChallengeTypes.CreateData
@@ -9,6 +10,7 @@
  * @typedef {import("../../types/challengeTypes").PlayersByTeam} ChallengeTypes.PlayersByTeam
  * @typedef {import("../../types/challengeTypes").StreamerData} ChallengeTypes.StreamerData
  * @typedef {import("../../types/challengeTypes").TeamDetailsData} ChallengeTypes.TeamDetailsData
+ * @typedef {import("../../types/challengeTypes").TeamPenaltyData} ChallengeTypes.TeamPenaltyData
  * @typedef {import("../../types/playerTypes").UserOrGuildMember} PlayerTypes.UserOrGuildMember
  */
 
@@ -44,6 +46,13 @@ let Discord;
 
 setTimeout(() => {
     Discord = require("../discord");
+}, 0);
+
+/** @type {typeof import("../discord/validation")} */
+let Validation;
+
+setTimeout(() => {
+    Validation = require("../discord/validation");
 }, 0);
 
 //   ###   #              ##     ##
@@ -193,6 +202,54 @@ class Challenge {
         return firstChallenge;
     }
 
+    //          #     #  #  #                     #
+    //          #     #  ####
+    //  ###   ###   ###  ####   ###  ###   ###   ##    ###    ###
+    // #  #  #  #  #  #  #  #  #  #  #  #  #  #   #    #  #  #  #
+    // # ##  #  #  #  #  #  #  # ##  #  #  #  #   #    #  #   ##
+    //  # #   ###   ###  #  #   # #  ###   ###   ###   #  #  #
+    //                               #     #                  ###
+    /**
+     * Adds a pilot mapping.
+     * @param {string} name The name of the pilot.
+     * @param {DiscordJs.User} pilot The pilot.
+     * @returns {Promise} A promise that resolves when the mapping has been added.
+     */
+    static async addMapping(name, pilot) {
+        try {
+            await NameMapDb.add(name, pilot.id);
+        } catch (err) {
+            throw new Exception("There was an error adding a pilot mapping.", err);
+        }
+    }
+
+    //              #     ##   ##    ##    ###         ###                      ###    #     #    ##          ###           #                      ##
+    //              #    #  #   #     #    #  #        #  #                      #           #     #          #  #         # #                    #  #
+    //  ###   ##   ###   #  #   #     #    ###   #  #  ###    ###   ###    ##    #    ##    ###    #     ##   ###    ##    #     ##   ###    ##   #      ###  # #    ##
+    // #  #  # ##   #    ####   #     #    #  #  #  #  #  #  #  #  ##     # ##   #     #     #     #    # ##  #  #  # ##  ###   #  #  #  #  # ##  # ##  #  #  ####  # ##
+    //  ##   ##     #    #  #   #     #    #  #   # #  #  #  # ##    ##   ##     #     #     #     #    ##    #  #  ##     #    #  #  #     ##    #  #  # ##  #  #  ##
+    // #      ##     ##  #  #  ###   ###   ###     #   ###    # #  ###     ##    #    ###     ##  ###    ##   ###    ##    #     ##   #      ##    ###   # #  #  #   ##
+    //  ###                                       #
+    /**
+     * Gets all games in a series before the specified game number.
+     * @param {string} title The base title.
+     * @param {number} game The game number.
+     * @returns {Promise<Challenge[]>} A promise that resolves with an array of earlier challenges in the series.
+     */
+    static async getAllByBaseTitleBeforeGame(title, game) {
+        if (game === 1) {
+            return [];
+        }
+
+        try {
+            const challenges = await Db.getAllByBaseTitleBeforeGame(title, game);
+
+            return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
+        } catch (err) {
+            throw new Exception("There was a database error getting a team's challenges.", err);
+        }
+    }
+
     //              #     ##   ##    ##    ###         ###
     //              #    #  #   #     #    #  #         #
     //  ###   ##   ###   #  #   #     #    ###   #  #   #     ##    ###  # #
@@ -247,11 +304,11 @@ class Challenge {
     //  ###                     #
     /**
      * Gets a challenge by its channel.
-     * @param {DiscordJs.TextChannel} channel The channel.
+     * @param {DiscordJs.GuildTextBasedChannel} channel The channel.
      * @returns {Promise<Challenge>} The challenge.
      */
     static async getByChannel(channel) {
-        if (!channelParse.test(channel.name)) {
+        if (!channel || !channel.name || !channelParse.test(channel.name)) {
             return void 0;
         }
 
@@ -418,8 +475,6 @@ class Challenge {
             throw new Exception("There was a database error adding a stat to a CTF challenge.", err);
         }
 
-        await Discord.queue(`Added stats for ${pilot}: ${captures} C/${pickups} P, ${carrierKills} CK, ${returns} R, ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
-
         await this.updatePinnedPost();
     }
 
@@ -445,8 +500,6 @@ class Challenge {
             throw new Exception("There was a database error adding a stat to a TA challenge.", err);
         }
 
-        await Discord.queue(`Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`, this.channel);
-
         await this.updatePinnedPost();
     }
 
@@ -459,12 +512,11 @@ class Challenge {
     /**
      * Adds stats to the challenge from the tracker.
      * @param {number} gameId The game ID from the tracker.
-     * @param {Object<string, string>} nameMap A lookup dictionary of names used in game to Discord IDs.
      * @param {boolean} [requireConfirmation] Whether to require confirmation of the report.
      * @param {number} [timestamp] The timestamp to discard data after.
      * @returns {Promise<ChallengeTypes.GameBoxScore>} A promise that returns data about the game's stats and score.
      */
-    async addStats(gameId, nameMap, requireConfirmation, timestamp) {
+    async addStats(gameId, requireConfirmation, timestamp) {
         let game;
         try {
             game = (await Tracker.getMatch(gameId)).body;
@@ -493,13 +545,6 @@ class Challenge {
         }
 
         const notFound = [];
-
-        for (const alias of Object.keys(nameMap)) {
-            if (!map[alias]) {
-                await NameMapDb.add(alias, nameMap[alias]);
-            }
-            map[alias] = nameMap[alias];
-        }
 
         for (const player of game.players) {
             if (!map[player.name]) {
@@ -830,10 +875,9 @@ class Challenge {
     /**
      * Indicates that a pilot will be streaming the challenge.
      * @param {DiscordJs.GuildMember} member The pilot streaming the challenge.
-     * @param {string} twitchName The Twitch channel name for the pilot.
      * @returns {Promise} A promise that resolves when the pilot has been updated to be streaming the challenge.
      */
-    async addStreamer(member, twitchName) {
+    async addStreamer(member) {
         try {
             await Db.addStreamer(this, member);
         } catch (err) {
@@ -841,8 +885,6 @@ class Challenge {
         }
 
         try {
-            await Discord.queue(`${member} has been setup to stream this match at https://twitch.tv/${twitchName}.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error adding a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -858,16 +900,16 @@ class Challenge {
     //              #
     /**
      * Adjudicates a match.
-     * @param {DiscordJs.GuildMember} member The admin adjudicating the match.
      * @param {string} decision The decision.
      * @param {Team[]} teams The teams being adjudicated, if any.
-     * @returns {Promise} A promise that resolves when the match has been adjudicated.
+     * @returns {Promise<ChallengeTypes.TeamPenaltyData[]>} A promise that resolves when the match has been adjudicated.
      */
-    async adjudicate(member, decision, teams) {
+    async adjudicate(decision, teams) {
         if (!this.details) {
             await this.loadDetails();
         }
 
+        let penalizedTeams;
         switch (decision) {
             case "cancel":
                 try {
@@ -882,8 +924,6 @@ class Challenge {
                 this.setNotifyMatchMissed();
                 this.setNotifyMatchStarting();
 
-                await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
-
                 break;
             case "extend":
             {
@@ -897,20 +937,12 @@ class Challenge {
                 this.details.dateClockDeadline = deadline;
                 this.details.dateClockDeadlineNotified = void 0;
                 this.details.matchTime = void 0;
-                this.details.suggestedTime = void 0;
-                this.details.suggestedTimeTeam = void 0;
 
                 this.setNotifyClockExpired(deadline);
                 this.setNotifyMatchMissed();
                 this.setNotifyMatchStarting();
 
                 try {
-                    if (deadline) {
-                        await Discord.queue(`${member} has extended the deadline of this challenge.  You have 14 days to get the match scheduled.`, this.channel);
-                    } else {
-                        await Discord.queue(`${member} has cleared the match time of this challenge, please schedule a new time to play.`, this.channel);
-                    }
-
                     await this.updatePinnedPost();
                 } catch (err) {
                     throw new Exception("There was a critical Discord error extending a challenge.  Please resolve this manually as soon as possible.", err);
@@ -920,7 +952,6 @@ class Challenge {
             }
             case "penalize":
             {
-                let penalizedTeams;
                 try {
                     penalizedTeams = await Db.voidWithPenalties(this, teams);
                 } catch (err) {
@@ -931,35 +962,13 @@ class Challenge {
                 this.setNotifyMatchMissed();
                 this.setNotifyMatchStarting();
 
-                try {
-                    await Discord.queue(`${member} has voided this challenge.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  An admin will close this channel soon.`, this.channel);
-
-                    for (const penalizedTeam of penalizedTeams) {
-                        const team = await Team.getById(penalizedTeam.teamId);
-
-                        if (penalizedTeam.first) {
-                            await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's first penalty, that means your next three games will automatically give home map advantages to your opponent.  If you are penalized again, your team will be disbanded, and all current captains and founders will be barred from being a founder or captain of another team.`, team.teamChannel);
-
-                            await team.updateChannels();
-                        } else {
-                            const oldCaptains = team.role.members.filter((m) => !!m.roles.cache.find((r) => r.id === Discord.founderRole.id || r.id === Discord.captainRole.id));
-
-                            await team.disband(member);
-
-                            for (const captain of oldCaptains.values()) {
-                                await Discord.queue(`${member} voided the challenge against **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**.  Penalties were assessed against **${teams.map((t) => t.name).join(" and ")}**.  As this was your team's second penalty, your team has been disbanded.  The founder and captains of your team are now barred from being a founder or captain of another team.`, captain);
-                            }
-                        }
-                    }
-                } catch (err) {
-                    throw new Exception("There was a critical Discord error penalizing a challenge.  Please resolve this manually as soon as possible.", err);
-                }
-
                 break;
             }
         }
 
         await this.updatePinnedPost();
+
+        return penalizedTeams;
     }
 
     //       ##                       ##    #           #
@@ -970,18 +979,13 @@ class Challenge {
     //  ##   ###    ##    # #  #      ##     ##   # #    ##  ###
     /**
      * Clears all stats from a challenge.
-     * @param {DiscordJs.GuildMember} [member] The pilot issuing the command.
      * @returns {Promise} A promise that returns when the stats have been cleared.
      */
-    async clearStats(member) {
+    async clearStats() {
         try {
             await Db.clearStats(this);
         } catch (err) {
             throw new Exception("There was a database error clearing the stats for a challenge.", err);
-        }
-
-        if (member) {
-            await Discord.queue(`${member}, all stats have been cleared for this match.`, this.channel);
         }
     }
 
@@ -993,10 +997,9 @@ class Challenge {
     //  ##   ###    ##    # #  #      #    ###   #  #   ##
     /**
      * Clears the time of the match.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the time has been cleared.
      */
-    async clearTime(member) {
+    async clearTime() {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1008,15 +1011,11 @@ class Challenge {
         }
 
         this.details.matchTime = void 0;
-        this.details.suggestedTime = void 0;
-        this.details.suggestedTimeTeam = void 0;
 
         this.setNotifyMatchMissed();
         this.setNotifyMatchStarting();
 
         try {
-            await Discord.queue(`${member} has cleared the match time for this match.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -1053,7 +1052,7 @@ class Challenge {
         this.setNotifyClockExpired(dates.clockDeadline);
 
         try {
-            await Discord.queue(`**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`, this.channel);
+            await Discord.queue(`**${team.name}** has put ${this.channel} on the clock.  The clock deadline is <t:${Math.floor(this.details.dateClockDeadline.getTime() / 1000)}:F>.`, this.channel);
 
             await this.updatePinnedPost();
         } catch (err) {
@@ -1188,7 +1187,7 @@ class Challenge {
                 }), Discord.matchResultsChannel);
 
                 if (this.details.caster) {
-                    await Discord.queue(`Thanks for casting the <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:D> match between ${this.challengingTeam.name} and ${this.challengedTeam.name}!  The final score was ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore}.  Use the command \`!vod ${this.id} <url>\` to add the VoD.`, this.details.caster);
+                    await Discord.queue(`Thanks for casting the <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:D> match between ${this.challengingTeam.name} and ${this.challengedTeam.name}!  The final score was ${this.challengingTeam.tag} ${this.details.challengingTeamScore} to ${this.challengedTeam.tag} ${this.details.challengedTeamScore}.  Use the command \`/vod ${this.id} <url>\` to add the VoD.`, this.details.caster);
                 }
             }
 
@@ -1204,82 +1203,6 @@ class Challenge {
         }
 
         await Team.updateRatingsForSeasonFromChallenge(this);
-    }
-
-    //                     #    #                 ##                     ###
-    //                    # #                    #  #                     #
-    //  ##    ##   ###    #    ##    ###   # #   #      ###  # #    ##    #    #  #  ###    ##
-    // #     #  #  #  #  ###    #    #  #  ####  # ##  #  #  ####  # ##   #    #  #  #  #  # ##
-    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #  ##     #     # #  #  #  ##
-    //  ##    ##   #  #   #    ###   #     #  #   ###   # #  #  #   ##    #      #   ###    ##
-    //                                                                          #    #
-    /**
-     * Confirms a game type suggestion.
-     * @returns {Promise} A promise that resolves when a game type has been confirmed.
-     */
-    async confirmGameType() {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        let homes;
-        try {
-            homes = await Db.confirmGameType(this);
-        } catch (err) {
-            throw new Exception("There was a database error confirming a suggested game type for a challenge.", err);
-        }
-
-        this.details.gameType = this.details.suggestedGameType;
-        this.details.suggestedGameType = void 0;
-        this.details.suggestedGameTypeTeam = void 0;
-
-        try {
-            if (homes.length === 0) {
-                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
-            } else {
-                await Discord.queue(`The game for this match has been set to **${Challenge.getGameTypeName(this.details.gameType)}**, so **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
-            }
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested game type for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                     #    #                #  #
-    //                    # #                    ####
-    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
-    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #  #  #
-    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #
-    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #  ###
-    //                                                       #
-    /**
-     * Confirms a neutral map suggestion.
-     * @returns {Promise} A promise that resolves when a neutral map has been confirmed.
-     */
-    async confirmMap() {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.confirmMap(this);
-        } catch (err) {
-            throw new Exception("There was a database error confirming a suggested neutral map for a challenge.", err);
-        }
-
-        this.details.map = this.details.suggestedMap;
-        this.details.usingHomeMapTeam = false;
-        this.details.suggestedMap = void 0;
-        this.details.suggestedMapTeam = void 0;
-
-        try {
-            await Discord.queue(`The map for this match has been set to the neutral map of **${this.details.map}**.`, this.channel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested neutral map for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
     }
 
     //                     #    #                #  #         #          #
@@ -1308,131 +1231,11 @@ class Challenge {
         this.setNotifyMatchStarting();
 
         try {
-            const embed = Discord.embedBuilder({
-                title: "Match Confirmed",
-                fields: [
-                    {
-                        name: "Post the game stats",
-                        value: "Remember, OTL matches are only official with pilot statistics from the tracker at https://tracker.otl.gg or from the .ssl file for the game from the server."
-                    },
-                    {
-                        name: "This channel is now closed",
-                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be removed once the stats have been posted."
-                    }
-                ]
-            });
-
-            const winningScore = Math.max(this.details.challengingTeamScore, this.details.challengedTeamScore),
-                losingScore = Math.min(this.details.challengingTeamScore, this.details.challengedTeamScore),
-                winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
-
-            if (winningScore === losingScore) {
-                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.${this.details.adminCreated ? "" : "  Interested in playing another right now?  Use the `!rematch` command!"}`);
-            } else {
-                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.${this.details.adminCreated ? "" : "  Interested in playing another right now?  Use the `!rematch` command!"}`);
-                embed.setColor(winningTeam.role.color);
-            }
-
-            await Discord.richQueue(embed, this.channel);
-
             await Discord.queue(`The match at ${this.channel} has been confirmed with the final score **${this.challengingTeam.name}** ${this.details.challengingTeamScore} to **${this.challengedTeam.name}** ${this.details.challengedTeamScore}.  Please add stats and close the channel.`, Discord.alertsChannel);
 
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error confirming a reported match.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                     #    #                ###                      ##    #
-    //                    # #                     #                      #  #
-    //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##
-    // #     #  #  #  #  ###    #    #  #  ####   #    # ##  #  #  ####    #    #      #   # ##
-    // #     #  #  #  #   #     #    #     #  #   #    ##    # ##  #  #  #  #   #     #    ##
-    //  ##    ##   #  #   #    ###   #     #  #   #     ##    # #  #  #   ##   ###   ####   ##
-    /**
-     * Confirms a team size suggestion.
-     * @returns {Promise} A promise that resolves when a team size has been confirmed.
-     */
-    async confirmTeamSize() {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        let homes;
-        try {
-            homes = await Db.confirmTeamSize(this);
-        } catch (err) {
-            throw new Exception("There was a database error confirming a suggested team size for a challenge.", err);
-        }
-
-        this.details.teamSize = this.details.suggestedTeamSize;
-        this.details.suggestedTeamSize = void 0;
-        this.details.suggestedTeamSizeTeam = void 0;
-
-        try {
-            if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
-                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
-            } else {
-                await Discord.queue(`The team size for this match has been set to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
-            }
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested team size for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                     #    #                ###    #
-    //                    # #                     #
-    //  ##    ##   ###    #    ##    ###   # #    #    ##    # #    ##
-    // #     #  #  #  #  ###    #    #  #  ####   #     #    ####  # ##
-    // #     #  #  #  #   #     #    #     #  #   #     #    #  #  ##
-    //  ##    ##   #  #   #    ###   #     #  #   #    ###   #  #   ##
-    /**
-     * Confirms a time suggestion.
-     * @returns {Promise} A promise that resolves when a time has been confirmed.
-     */
-    async confirmTime() {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.confirmTime(this);
-        } catch (err) {
-            throw new Exception("There was a database error confirming a suggested time for a challenge.", err);
-        }
-
-        this.details.matchTime = this.details.suggestedTime;
-        this.details.suggestedTime = void 0;
-        this.details.suggestedTimeTeam = void 0;
-
-        this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
-        this.setNotifyMatchStarting(new Date(this.details.matchTime.getTime() - 1800000));
-
-        try {
-            await Discord.richQueue(Discord.embedBuilder({
-                description: "The time for this match has been set.",
-                fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>`}]
-            }), this.channel);
-
-            await Discord.richQueue(Discord.embedBuilder({
-                title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
-                description: `This match is scheduled for <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>.`,
-                fields: [
-                    {
-                        name: "Match Time",
-                        value: `Use \`!matchtime ${this.id}\` to get the time of this match in your own time zone, or \`!countdown ${this.id}\` to get the amount of time remaining until the start of the match.`
-                    }, {
-                        name: "Casting",
-                        value: `Use \`!cast ${this.id}\` if you wish to cast this match.`
-                    }
-                ]
-            }), Discord.scheduledMatchesChannel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error confirming a suggested time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -1445,7 +1248,7 @@ class Challenge {
     /**
      * Creates a rematch.
      * @param {Team} team The team responding to the rematch.
-     * @returns {Promise} A promise that resolves when the rematch has been created.
+     * @returns {Promise<Challenge>} A promise that returns the new challenge.
      */
     async createRematch(team) {
         try {
@@ -1469,7 +1272,26 @@ class Challenge {
         challenge.setNotifyMatchMissed(new Date(new Date().getTime() + 3600000));
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));
 
-        await Discord.queue(`The rematch has been created!  Visit ${challenge.channel} to get started.`, this.channel);
+        return challenge;
+    }
+
+    //              #     ##          #    #                  #                   #  ###   ##
+    //              #    #  #         #    #                                      #  #  #   #
+    //  ###   ##   ###   #  #  #  #  ###   ###    ##   ###   ##    ####   ##    ###  #  #   #     ###  #  #   ##   ###    ###
+    // #  #  # ##   #    ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #  ###    #    #  #  #  #  # ##  #  #  ##
+    //  ##   ##     #    #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #  #      #    # ##   # #  ##    #       ##
+    // #      ##     ##  #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###  #     ###    # #    #    ##   #     ###
+    //  ###                                                                                             #
+    /**
+     * Gets the list of authorized players.
+     * @returns {Promise<ChallengeTypes.AuthorizedPlayers>} A promise that returns the authorized players.
+     */
+    async getAuthorizedPlayers() {
+        try {
+            return await Db.getAuthorizedPlayers(this);
+        } catch (err) {
+            throw new Exception("There was a database error loading authorized players.", err);
+        }
     }
 
     //              #     ##                 #    ###          #
@@ -1591,33 +1413,6 @@ class Challenge {
         return details;
     }
 
-    //  #           ###               ##     #                 #           ##                                    #
-    //              #  #               #                       #          #  #                                   #
-    // ##     ###   #  #  #  #  ###    #    ##     ##    ###  ###    ##   #      ##   # #   # #    ###  ###    ###
-    //  #    ##     #  #  #  #  #  #   #     #    #     #  #   #    # ##  #     #  #  ####  ####  #  #  #  #  #  #
-    //  #      ##   #  #  #  #  #  #   #     #    #     # ##   #    ##    #  #  #  #  #  #  #  #  # ##  #  #  #  #
-    // ###   ###    ###    ###  ###   ###   ###    ##    # #    ##   ##    ##    ##   #  #  #  #   # #  #  #   ###
-    //                          #
-    /**
-     * Check to see if this was the last command issued in the channel.
-     * @param {DiscordJs.GuildMember} member The guild member initiating the command.
-     * @param {string} message The text of the command.
-     * @returns {Promise<boolean>} A promise that resolves with whether the command is a duplicate.
-     */
-    async isDuplicateCommand(member, message) {
-        if (message && message.length > 0 && ["!rematch", "!streaming", "!notstreaming", "!stream", "!testing", "!stoptesting", "!removetwitch", "!next", "!mynext", "!matchtime", "!countdown", "!accept", "!leave", "!challenge", "!matchtime", "!deadline", "!deadlinecountdown"].indexOf(message.split(" ")[0]) !== -1) {
-            return false;
-        }
-
-        if (lastCommand[this.channelName] === message) {
-            await Discord.queue(`Sorry, ${member}, but this command is a duplicate of the last command issued in this channel.  If you need to use this command, please issue the \`!version\` command first followed by this command again to prevent the duplication.`, this.channel);
-            return true;
-        }
-
-        lastCommand[this.channelName] = message;
-        return false;
-    }
-
     // ##                   #  ###          #           #    ##
     //  #                   #  #  #         #                 #
     //  #     ##    ###   ###  #  #   ##   ###    ###  ##     #     ###
@@ -1649,12 +1444,6 @@ class Challenge {
             usingHomeMapTeam: details.usingHomeMapTeam,
             challengingTeamPenalized: details.challengingTeamPenalized,
             challengedTeamPenalized: details.challengedTeamPenalized,
-            suggestedMap: details.suggestedMap,
-            suggestedMapTeam: details.suggestedMapTeamId ? details.suggestedMapTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
-            suggestedTeamSize: details.suggestedTeamSize,
-            suggestedTeamSizeTeam: details.suggestedTeamSizeTeamId ? details.suggestedTeamSizeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
-            suggestedTime: details.suggestedTime,
-            suggestedTimeTeam: details.suggestedTimeTeamId ? details.suggestedTimeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             reportingTeam: details.reportingTeamId ? details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             challengingTeamScore: details.challengingTeamScore,
             challengedTeamScore: details.challengedTeamScore,
@@ -1667,7 +1456,6 @@ class Challenge {
             dateReported: details.dateReported,
             dateConfirmed: details.dateConfirmed,
             dateClosed: details.dateClosed,
-            dateRematchRequested: details.dateRematchRequested,
             rematchTeam: details.rematchTeamId ? details.rematchTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             dateRematched: details.dateRematched,
             dateVoided: details.dateVoided,
@@ -1678,8 +1466,6 @@ class Challenge {
             challengingTeamRating: details.challengingTeamRating,
             challengedTeamRating: details.challengedTeamRating,
             gameType: details.gameType,
-            suggestedGameType: details.suggestedGameType,
-            suggestedGameTypeTeam: details.suggestedGameTypeTeamId ? details.suggestedGameTypeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             discordEvent: details.discordEventId ? await Discord.findEventById(details.discordEventId) : void 0,
             googleEvent: details.googleEventId && settings.google.enabled ? await Calendar.get(details.googleEventId) : void 0,
             server: details.server,
@@ -1695,10 +1481,9 @@ class Challenge {
     // ###    ##    ##   #  #
     /**
      * Locks a challenge.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the challenge is locked.
      */
-    async lock(member) {
+    async lock() {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -1712,8 +1497,6 @@ class Challenge {
         this.details.adminCreated = true;
 
         try {
-            await Discord.queue(`This challenge has been locked by ${member}.  Match parameters can no longer be set.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error locking a challenge.  Please resolve this manually as soon as possible.", err);
@@ -1896,13 +1679,13 @@ class Challenge {
             if (!challenge.details.teamSize) {
                 msg.addFields({
                     name: "Please select the team size!",
-                    value: "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `!suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `!confirmteamsize` to confirm the suggestion, or suggest their own."
+                    value: "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `/suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `/confirmteamsize` to confirm the suggestion, or suggest their own."
                 });
             }
 
             msg.addFields({
                 name: "Are you streaming this match on Twitch?",
-                value: "Don't forget to use the `!streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website."
+                value: "Don't forget to use the `/streaming` command to indicate that you are streaming to Twitch!  This will allow others to watch or cast this match on the website."
             });
 
             await Discord.richQueue(msg, challenge.channel);
@@ -1911,6 +1694,27 @@ class Challenge {
         }
 
         challenge.setNotifyMatchStarting();
+    }
+
+    //              #     #      #         #  #         #          #      #                #  #               #                ##
+    //              #           # #        ####         #          #                       ## #               #                 #
+    // ###    ##   ###   ##     #    #  #  ####   ###  ###    ##   ###   ##    ###    ###  ## #   ##   #  #  ###   ###    ###   #     ###
+    // #  #  #  #   #     #    ###   #  #  #  #  #  #   #    #     #  #   #    #  #  #  #  # ##  # ##  #  #   #    #  #  #  #   #    ##
+    // #  #  #  #   #     #     #     # #  #  #  # ##   #    #     #  #   #    #  #   ##   # ##  ##    #  #   #    #     # ##   #      ##
+    // #  #   ##     ##  ###    #      #   #  #   # #    ##   ##   #  #  ###   #  #  #     #  #   ##    ###    ##  #      # #  ###   ###
+    //                                #                                               ###
+    /**
+     * Notifies both teams if there are matching neutral maps.
+     * @returns {Promise} A promise that resolves when the teams have been notified.
+     */
+    async notifyMatchingNeutrals() {
+        if (!this.details.challengingTeamPenalized && !this.details.challengedTeamPenalized && !this.details.adminCreated) {
+            const matches = await Db.getMatchingNeutralsForChallenge(this);
+
+            if (matches && matches.length > 0) {
+                await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}}`, this.channel);
+            }
+        }
     }
 
     //        #          #     #  #
@@ -1937,8 +1741,6 @@ class Challenge {
         }
 
         try {
-            await Discord.queue(`The map for this match has been set to **${this.details.map}**.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error picking a map for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -1962,8 +1764,6 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a database error removing a stat from a challenge.", err);
         }
-
-        await Discord.queue(`Removed stats for ${pilot}.`, this.channel);
     }
 
     //                                      ##    #                                        ####                     ##   #           ##    ##
@@ -1986,8 +1786,6 @@ class Challenge {
         }
 
         try {
-            await Discord.queue(`${member} is no longer streaming this match.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -2006,15 +1804,12 @@ class Challenge {
      * @param {Team} losingTeam The losing team.
      * @param {number} winningScore The winning score.
      * @param {number} losingScore The losing score.
-     * @param {boolean} displayNotice Display a notice about multiple games.
      * @returns {Promise} A promise that resolves when the match has been reported.
      */
-    async reportMatch(losingTeam, winningScore, losingScore, displayNotice) {
+    async reportMatch(losingTeam, winningScore, losingScore) {
         if (!this.details) {
             await this.loadDetails();
         }
-
-        const winningTeam = losingTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam;
 
         try {
             this.details.dateReported = await Db.report(this, losingTeam, losingTeam.id === this.challengingTeam.id ? losingScore : winningScore, losingTeam.id === this.challengingTeam.id ? winningScore : losingScore);
@@ -2027,45 +1822,10 @@ class Challenge {
         this.details.challengedTeamScore = losingTeam.id === this.challengingTeam.id ? winningScore : losingScore;
 
         try {
-            if (winningScore === losingScore) {
-                await Discord.queue(`This match has been reported as a **tie**, **${winningScore}** to **${losingScore}**.  If this is correct, **${winningTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`, this.channel);
-            } else {
-                await Discord.richQueue(Discord.embedBuilder({
-                    description: `This match has been reported as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.  If this is correct, **${losingTeam.id === this.challengingTeam.id ? this.challengedTeam.name : this.challengingTeam.name}** needs to \`!confirm\` the result.  If this was reported in error, the losing team may correct this by re-issuing the \`!report\` command with the correct score.`,
-                    color: winningTeam.role.color
-                }), this.channel);
-            }
-
-            if (displayNotice) {
-                await Discord.queue("If there are multiple games to include in this report, continue to `!report` more tracker URLs.  You may `!report 0 0` in order to reset the stats and restart the reporting process.", this.channel);
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error reporting a challenge.  Please resolve this manually as soon as possible.", err);
         }
-    }
-
-    //                                       #    ###                      #          #
-    //                                       #    #  #                     #          #
-    // ###    ##    ###  #  #   ##    ###   ###   #  #   ##   # #    ###  ###    ##   ###
-    // #  #  # ##  #  #  #  #  # ##  ##      #    ###   # ##  ####  #  #   #    #     #  #
-    // #     ##    #  #  #  #  ##      ##    #    # #   ##    #  #  # ##   #    #     #  #
-    // #      ##    ###   ###   ##   ###      ##  #  #   ##   #  #   # #    ##   ##   #  #
-    //                #
-    /**
-     * Requests a rematch for the challenge.
-     * @param {Team} team The team requesting the rematch.
-     * @returns {Promise} A promise that resolves when the rematch has been requested.
-     */
-    async requestRematch(team) {
-        try {
-            await Db.requestRematch(this, team);
-        } catch (err) {
-            throw new Exception("There was a database error requesting a rematch.", err);
-        }
-
-        await Discord.queue(`**${team.name}** is requesting a rematch!  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, do you accept?  The match will be scheduled immediately.  Use the \`!rematch\` command, and the new challenge will be created!`, this.channel);
     }
 
     //               #     ##                 #
@@ -2118,46 +1878,31 @@ class Challenge {
     //                                                   #    #
     /**
      * Sets the game type.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {string} gameType The game type.
-     * @returns {Promise} A promise that resolves when the game type has been set.
+     * @returns {Promise<string[]>} A promise that returns the new list of home maps for the challenge.
      */
-    async setGameType(member, gameType) {
+    async setGameType(gameType) {
         if (!this.details) {
             await this.loadDetails();
         }
 
-        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(gameType, this.details.teamSize));
-        if (!homes || homes.length < 5) {
-            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this game type and team size.  Try lowering the team size with \`!forceteamsize\` and try again.`, this.channel);
-            return;
-        }
-
+        let homes;
         try {
-            await Db.setGameType(this, gameType);
+            homes = await Db.setGameType(this, gameType);
         } catch (err) {
             throw new Exception("There was a database error setting a game type for a challenge.", err);
         }
 
         this.details.gameType = gameType;
-        this.details.suggestedGameType = void 0;
-        this.details.suggestedGameTypeTeam = void 0;
+        this.details.map = void 0;
 
         try {
-            await Discord.queue(`${member} has set the game type for this match to **${Challenge.getGameTypeName(this.details.gameType)}**.`, this.channel);
-
-            if (!this.details.challengingTeamPenalized && !this.details.challengedTeamPenalized && !this.details.adminCreated) {
-                const matches = await Db.getMatchingNeutralsForChallenge(this);
-
-                if (matches && matches.length > 0) {
-                    await Discord.queue(`Both teams have ${matches.length === 1 ? "a matching preferred neutral map!" : "matching preferred neutral maps!"}\n\n${matches.map((m) => `**${m}**`).join("\n")}}`, this.channel);
-                }
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
         }
+
+        return homes;
     }
 
     //               #    ####                     #
@@ -2187,11 +1932,10 @@ class Challenge {
     //                                                        #
     /**
      * Sets the home map team.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Team} team The team to set as the home team.
      * @returns {Promise} A promise that resolves when the home map team has been set.
      */
-    async setHomeMapTeam(member, team) {
+    async setHomeMapTeam(team) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2208,16 +1952,12 @@ class Challenge {
         this.details.map = void 0;
 
         try {
-            if (homes.length === 0) {
-                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of **${(team.tag === this.challengingTeam.tag ? this.challengingTeam : this.challengedTeam).tag}**'s home maps.  To view the home maps, you must first agree to a team size.`, this.channel);
-            } else {
-                await Discord.queue(`${member} has made **${team.tag}** the home map team, so **${(team.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a home map team for a challenge.  Please resolve this manually as soon as possible.", err);
         }
+
+        return homes;
     }
 
     //               #    #  #
@@ -2229,11 +1969,10 @@ class Challenge {
     //                                #
     /**
      * Sets the map for the challenge.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {string} map The name of the map.
      * @returns {Promise} A promise that resolves when the map has been saved.
      */
-    async setMap(member, map) {
+    async setMap(map) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2246,12 +1985,8 @@ class Challenge {
 
         this.details.map = map;
         this.details.usingHomeMapTeam = false;
-        this.details.suggestedMap = void 0;
-        this.details.suggestedMapTeam = void 0;
 
         try {
-            await Discord.queue(`${member} has set the map for this match to **${this.details.map}**.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a map for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -2365,29 +2100,6 @@ class Challenge {
         }
 
         try {
-            if (postseason) {
-                const authorized = await Db.getAuthorizedPlayers(this);
-
-                await Discord.richQueue(Discord.embedBuilder({
-                    title: "Postseason Match Restricted",
-                    description: "This match is now set as a restricted tournament match for the postseason.  The following players are eligible to play in this match.",
-                    fields: [
-                        {
-                            name: this.challengingTeam.name,
-                            value: authorized.challengingTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
-                            inline: true
-                        },
-                        {
-                            name: this.challengedTeam.name,
-                            value: authorized.challengedTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
-                            inline: true
-                        }
-                    ]
-                }), this.channel);
-            } else {
-                await Discord.queue("This challenge is now a regular season match.  All stats will count towards the current season stats.", this.channel);
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a challenge's postseason status.  Please resolve this manually as soon as possible.", err);
@@ -2413,29 +2125,6 @@ class Challenge {
         }
 
         try {
-            if (restricted) {
-                const authorized = await Db.getAuthorizedPlayers(this);
-
-                await Discord.richQueue(Discord.embedBuilder({
-                    title: "Match Restricted",
-                    description: "This match is now set as a restricted tournament match.  The following players are eligible to play in this match.",
-                    fields: [
-                        {
-                            name: this.challengingTeam.name,
-                            value: authorized.challengingTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
-                            inline: true
-                        },
-                        {
-                            name: this.challengedTeam.name,
-                            value: authorized.challengedTeamPlayers.map((player) => `<@${player.discordId}>`).join("\n"),
-                            inline: true
-                        }
-                    ]
-                }), this.channel);
-            } else {
-                await Discord.queue("This match is now set as unrestricted, both teams' full rosters may play in this match.", this.channel);
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting a challenge to be a restricted match.  Please resolve this manually as soon as possible.", err);
@@ -2475,33 +2164,6 @@ class Challenge {
         this.setNotifyMatchStarting();
 
         try {
-            const embed = Discord.embedBuilder({
-                title: "Match Confirmed",
-                fields: [
-                    {
-                        name: "Post the game stats",
-                        value: "Remember, OTL matches are only official with pilot statistics from the tracker at https://tracker.otl.gg or from the .ssl file for the game from the server."
-                    },
-                    {
-                        name: "This channel is now closed",
-                        value: "No further match-related commands will be accepted.  If you need to adjust anything in this match, please notify an admin immediately.  This channel will be closed once the stats have been posted."
-                    }
-                ]
-            });
-
-            const winningScore = Math.max(this.details.challengingTeamScore, this.details.challengedTeamScore),
-                losingScore = Math.min(this.details.challengingTeamScore, this.details.challengedTeamScore),
-                winningTeam = winningScore === this.details.challengingTeamScore ? this.challengingTeam : this.challengedTeam;
-
-            if (winningScore === losingScore) {
-                embed.setDescription(`This match has been confirmed as a **tie**, **${winningScore}** to **${losingScore}**.${this.details.adminCreated ? "" : "  Interested in playing another right now?  Use the `!rematch` command!"}`);
-            } else {
-                embed.setDescription(`This match has been confirmed as a win for **${winningTeam.name}** by the score of **${winningScore}** to **${losingScore}**.${this.details.adminCreated ? "" : "  Interested in playing another right now?  Use the `!rematch` command!"}`);
-                embed.setColor(winningTeam.role.color);
-            }
-
-            await Discord.richQueue(embed, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the score for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -2543,7 +2205,7 @@ class Challenge {
         }
 
         let homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, size));
-        if (!homes || homes.length < 5) {
+        if (!homes || homes.length < Validation.MAXIMUM_MAPS_PER_GAME_TYPE) {
             Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this team size.`, this.channel);
             return;
         }
@@ -2555,16 +2217,8 @@ class Challenge {
         }
 
         this.details.teamSize = size;
-        this.details.suggestedTeamSize = void 0;
-        this.details.suggestedTeamSizeTeam = void 0;
 
         try {
-            if (this.details.gameType === "TA" && (!this.details.map || homes.indexOf(this.details.map) === -1)) {
-                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.  **${(this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam : this.challengingTeam).tag}** must now choose from one of the following home maps:\n\n${homes.map((map, index) => `${String.fromCharCode(97 + index)}) ${map}`).join("\n")}`, this.channel);
-            } else {
-                await Discord.queue(`An admin has set the team size for this match to **${this.details.teamSize}v${this.details.teamSize}**.  Either team may suggest changing this at any time with the \`!suggestteamsize\` command.`, this.channel);
-            }
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the team size for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -2579,11 +2233,10 @@ class Challenge {
     // ###     ##     ##   #    ###   #  #   ##
     /**
      * Sets the time of the match.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Date} date The time of the match.
      * @returns {Promise} A promise that resolves when the time has been set.
      */
-    async setTime(member, date) {
+    async setTime(date) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2595,8 +2248,6 @@ class Challenge {
         }
 
         this.details.matchTime = date;
-        this.details.suggestedTime = void 0;
-        this.details.suggestedTimeTeam = void 0;
 
         if (!this.details.dateConfirmed) {
             this.setNotifyMatchMissed(new Date(this.details.matchTime.getTime() + 3600000));
@@ -2605,20 +2256,15 @@ class Challenge {
 
         try {
             await Discord.richQueue(Discord.embedBuilder({
-                description: `${member} has set the time for this match.`,
-                fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>`}]
-            }), this.channel);
-
-            await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                 description: `This match is scheduled for <t:${Math.floor(this.details.matchTime.getTime() / 1000)}:F>.`,
                 fields: [
                     {
                         name: "Match Time",
-                        value: `Use \`!matchtime ${this.id}\` to get the time of this match in your own time zone, or \`!countdown ${this.id}\` to get the amount of time remaining until the start of the match.`
+                        value: `Use \`/matchtime ${this.id}\` to get the time of this match in your own time zone, or \`/countdown ${this.id}\` to get the amount of time remaining until the start of the match.`
                     }, {
                         name: "Casting",
-                        value: `Use \`!cast ${this.id}\` if you wish to cast this match.`
+                        value: `Use \`/cast ${this.id}\` if you wish to cast this match.`
                     }
                 ]
             }), Discord.scheduledMatchesChannel);
@@ -2659,166 +2305,6 @@ class Challenge {
             } catch (err) {
                 throw new Exception("There was a Discord error adding a VoD to the VoDs channel.", err);
             }
-        }
-    }
-
-    //                                        #     ##                     ###
-    //                                        #    #  #                     #
-    //  ###   #  #   ###   ###   ##    ###   ###   #      ###  # #    ##    #    #  #  ###    ##
-    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
-    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #  ##     #     # #  #  #  ##
-    // ###     ###  #     #      ##   ###      ##   ###   # #  #  #   ##    #      #   ###    ##
-    //               ###   ###                                                    #    #
-    /**
-     * Suggests a game type for the challenge.
-     * @param {Team} team The team suggesting the game type.
-     * @param {string} gameType The game type.
-     * @returns {Promise} A promise that resolves when the game type has been suggested.
-     */
-    async suggestGameType(team, gameType) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(gameType, this.details.teamSize));
-        if (!homes || homes.length < 5) {
-            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this game type and team size.  Try lowering the team size with \`!suggestteamsize\` and try again.`, this.channel);
-            return;
-        }
-
-        try {
-            await Db.suggestGameType(this, team, gameType);
-        } catch (err) {
-            throw new Exception("There was a database error suggesting a game type for a challenge.", err);
-        }
-
-        this.details.suggestedGameType = gameType;
-        this.details.suggestedGameTypeTeam = team;
-
-        try {
-            await Discord.queue(`**${team.name}** is suggesting to play **${Challenge.getGameTypeName(gameType)}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtype\` to agree to this suggestion.`, this.channel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a game type for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                                        #    #  #
-    //                                        #    ####
-    //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###
-    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  #  #  #  #
-    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #
-    // ###     ###  #     #      ##   ###      ##  #  #   # #  ###
-    //               ###   ###                                 #
-    /**
-     * Suggests a map for the challenge.
-     * @param {Team} team The team suggesting the map.
-     * @param {string} map The map.
-     * @param {boolean} [random] Whether the map was random.
-     * @returns {Promise} A promise that resolves when the map has been suggested.
-     */
-    async suggestMap(team, map, random) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.suggestMap(this, team, map);
-        } catch (err) {
-            throw new Exception("There was a database error suggesting a map for a challenge.", err);
-        }
-
-        this.details.suggestedMap = map;
-        this.details.suggestedMapTeam = team;
-
-        try {
-            await Discord.queue(`**${team.name}** is suggesting to play a ${random ? "random" : "neutral"} map, **${map}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmmap\` to agree to this suggestion.`, this.channel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a map for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                                        #    ###                      ##    #
-    //                                        #     #                      #  #
-    //  ###   #  #   ###   ###   ##    ###   ###    #     ##    ###  # #    #    ##    ####   ##
-    // ##     #  #  #  #  #  #  # ##  ##      #     #    # ##  #  #  ####    #    #      #   # ##
-    //   ##   #  #   ##    ##   ##      ##    #     #    ##    # ##  #  #  #  #   #     #    ##
-    // ###     ###  #     #      ##   ###      ##   #     ##    # #  #  #   ##   ###   ####   ##
-    //               ###   ###
-    /**
-     * Suggests a team size for the challenge.
-     * @param {Team} team The team suggesting the team size.
-     * @param {number} size The team size.
-     * @returns {Promise} A promise that resolves when the team size has been suggested.
-     */
-    async suggestTeamSize(team, size) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        const homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, size));
-        if (!homes || homes.length < 5) {
-            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this team size.`, this.channel);
-            return;
-        }
-
-        try {
-            await Db.suggestTeamSize(this, team, size);
-        } catch (err) {
-            throw new Exception("There was a database error suggesting a team size for a challenge.", err);
-        }
-
-        this.details.suggestedTeamSize = size;
-        this.details.suggestedTeamSizeTeam = team;
-
-        try {
-            await Discord.queue(`**${team.name}** is suggesting to play a **${size}v${size}**.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmteamsize\` to agree to this suggestion.`, this.channel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a team size for a challenge.  Please resolve this manually as soon as possible.", err);
-        }
-    }
-
-    //                                        #    ###    #
-    //                                        #     #
-    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##
-    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
-    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
-    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##
-    //               ###   ###
-    /**
-     * Suggests a time for the challenge.
-     * @param {Team} team The team suggesting the time.
-     * @param {Date} date The time.
-     * @returns {Promise} A promise that resolves when the team size has been suggested.
-     */
-    async suggestTime(team, date) {
-        if (!this.details) {
-            await this.loadDetails();
-        }
-
-        try {
-            await Db.suggestTime(this, team, date);
-        } catch (err) {
-            throw new Exception("There was a database error suggesting a time for a challenge.", err);
-        }
-
-        this.details.suggestedTime = date;
-        this.details.suggestedTimeTeam = team;
-
-        try {
-            await Discord.richQueue(Discord.embedBuilder({
-                description: `**${team.name}** is suggesting to play the match at the time listed below.  **${(team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam).name}**, use \`!confirmtime\` to agree to this suggestion.`,
-                fields: [{name: "Local Time", value: `<t:${Math.floor(this.details.suggestedTime.getTime() / 1000)}:F>`}]
-            }), this.channel);
-
-            await this.updatePinnedPost();
-        } catch (err) {
-            throw new Exception("There was a critical Discord error suggesting a time for a challenge.  Please resolve this manually as soon as possible.", err);
         }
     }
 
@@ -2878,11 +2364,6 @@ class Challenge {
         this.details.title = title && title.length > 0 ? title : void 0;
 
         try {
-            if (this.details.title) {
-                await Discord.queue(`The title of this match has been updated to **${title}**.`, this.channel);
-            } else {
-                await Discord.queue("The title of this match has been unset.", this.channel);
-            }
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error changing the title for a challenge.  Please resolve this manually as soon as possible.", err);
@@ -2897,10 +2378,9 @@ class Challenge {
     //  ###  #  #  ###    ##    ##   #  #
     /**
      * Unlocks a challenge.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @returns {Promise} A promise that resolves when the challenge is unlocked.
      */
-    async unlock(member) {
+    async unlock() {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -2914,8 +2394,6 @@ class Challenge {
         this.details.adminCreated = false;
 
         try {
-            await Discord.queue(`This challenge has been unlocked by ${member}.  You may now use \`!suggestmap\` to suggest a neutral map and \`!suggesttime\` to suggest the match time.`, this.channel);
-
             await this.updatePinnedPost();
         } catch (err) {
             throw new Exception("There was a critical Discord error unlocking a challenge.  Please resolve this manually as soon as possible.", err);
@@ -3051,16 +2529,8 @@ class Challenge {
             checklist.push(`- This match has been placed on the clock by **${this.details.clockTeam.tag}**.  Both teams must agree to all match parameters by <t:${Math.floor(this.details.dateClockDeadline.getTime() / 1000)}:F>`);
         }
 
-        if (this.details.suggestedGameType && !this.details.dateConfirmed) {
-            checklist.push(`- ${this.details.suggestedGameTypeTeam.tag} suggested **${Challenge.getGameTypeName(this.details.suggestedGameType)}**.  **${this.details.suggestedGameTypeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtype\`.`);
-        }
-
         if (!this.details.teamSize) {
-            checklist.push("- Agree to a team size.  Suggest a team size with `!suggestteamsize`.");
-        }
-
-        if (this.details.suggestedTeamSize) {
-            checklist.push(`- ${this.details.suggestedTeamSizeTeam.tag} suggested **${this.details.suggestedTeamSize}v${this.details.suggestedTeamSize}**.  **${this.details.suggestedTeamSizeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmteamsize\`.`);
+            checklist.push("- Agree to a team size.  Suggest a team size with `/suggestteamsize`.");
         }
 
         if (!this.details.map) {
@@ -3069,36 +2539,26 @@ class Challenge {
             } else {
                 const maps = await this.details.homeMapTeam.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, this.details.teamSize));
 
-                checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map with \`!pickmap\` from the following maps:`);
+                checklist.push(`- **${this.details.homeMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** to pick a map with \`/pickmap\` from the following maps:`);
                 maps.forEach((map, index) => {
                     checklist.push(`  ${String.fromCharCode(97 + index)}) ${map}`);
                 });
 
                 if (!this.details.dateConfirmed) {
-                    if (this.details.suggestedMap) {
-                        checklist.push(`- ${this.details.suggestedMapTeam.tag} suggested **${this.details.suggestedMap}**.  **${this.details.suggestedMapTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmmap\`.`);
-                    } else if (this.details.adminCreated) {
-                        checklist.push("- To play a neutral map, suggest a map with `!suggestmap`.");
+                    if (!this.details.adminCreated) {
+                        checklist.push("- To play a neutral map, suggest a map with `/suggestmap`.");
                     }
                 }
             }
         }
 
         if (!this.details.matchTime) {
-            checklist.push("- Agree to a match time.  Suggest a time with `!suggesttime`.");
-        }
-
-        if (this.details.suggestedTime && !this.details.dateConfirmed) {
-            checklist.push(`- ${this.details.suggestedTimeTeam.tag} suggested **<t:${Math.floor(this.details.suggestedTime.getTime() / 1000)}:F>**.  **${this.details.suggestedTimeTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirmtime\`.`);
+            checklist.push("- Agree to a match time.  Suggest a time with `/suggesttime`.");
         }
 
         if (this.details.teamSize && this.details.map && this.details.matchTime && !this.details.dateConfirmed) {
             if (!this.details.reportingTeam && !this.details.dateReported) {
-                checklist.push("- Report the match with `!report`.");
-            }
-
-            if (this.details.dateReported && !this.details.dateConfirmed) {
-                checklist.push(`- ${this.details.reportingTeam.tag} reported the match with a score of **${this.challengingTeam.tag} ${this.details.challengingTeamScore}** to **${this.challengedTeam.tag} ${this.details.challengedTeamScore}**.  **${this.details.reportingTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!confirm\`.`);
+                checklist.push("- Report the match with `/report` or `/reportscore`.");
             }
         }
 
@@ -3113,11 +2573,7 @@ class Challenge {
         }
 
         if (this.details.dateConfirmed && !this.details.dateRematched) {
-            if (this.details.dateRematchRequested) {
-                checklist.push(`- ${this.details.rematchTeam.tag} has requested a rematch, **${this.details.rematchTeam.tag === this.challengingTeam.tag ? this.challengedTeam.tag : this.challengingTeam.tag}** can confirm with \`!rematch\`.`);
-            } else {
-                checklist.push(`- Use \`!rematch\` to start a new ${this.details.teamSize}v${this.details.teamSize} ${Challenge.getGameTypeName(this.details.gameType)} game between the same teams.`);
-            }
+            checklist.push(`- Use \`/rematch\` to start a new ${this.details.teamSize}v${this.details.teamSize} ${Challenge.getGameTypeName(this.details.gameType)} game between the same teams.`);
         }
 
         embed.addFields({
@@ -3423,11 +2879,10 @@ class Challenge {
     //  #     ##   ###    ###
     /**
      * Voids a match.
-     * @param {DiscordJs.GuildMember} member The pilot issuing the command.
      * @param {Team} [teamDisbanding] The team that is disbanding.
      * @returns {Promise} A promise that resolves when the match is voided.
      */
-    async void(member, teamDisbanding) {
+    async void(teamDisbanding) {
         if (!this.details) {
             await this.loadDetails();
         }
@@ -3448,8 +2903,6 @@ class Challenge {
             if (this.channel) {
                 if (teamDisbanding) {
                     await Discord.queue(`${teamDisbanding.name} has disbanded, and thus this challenge has been automatically voided.  An admin will close this channel soon.`, this.channel);
-                } else {
-                    await Discord.queue(`${member} has voided this challenge.  No penalties were assessed.  An admin will close this channel soon.`, this.channel);
                 }
 
                 await Discord.queue(`The match at ${this.channel} has been voided.  Please close the channel.`, Discord.alertsChannel);

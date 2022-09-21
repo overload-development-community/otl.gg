@@ -85,11 +85,12 @@ class Map {
     /**
      * Removes a map from the OTL.
      * @param {string} map The map to remove.
+     * @param {string} gameType The game type.
      * @returns {Promise} A promise that resolves when the map has been removed.
      */
-    static async remove(map) {
+    static async remove(map, gameType) {
         try {
-            await Db.remove(map);
+            await Db.remove(map, gameType);
         } catch (err) {
             throw new Exception("There was a database error removing a map.", err);
         }
@@ -105,7 +106,7 @@ class Map {
      * Validates a map with the database.
      * @param {string} map The map to validate.
      * @param {string} gameType The game type.
-     * @returns {Promise<MapTypes.MapData>} The validated map.
+     * @returns {Promise<MapTypes.MapData>} A promise that returns the validated map.
      */
     static async validate(map, gameType) {
         try {

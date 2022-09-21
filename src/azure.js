@@ -1,12 +1,13 @@
 /**
  * @typedef {import("../types/azureTypes").Server} AzureTypes.Server
- * @typedef {import("discord.js").TextChannel} DiscordJs.TextChannel
+ * @typedef {import("discord.js").GuildTextBasedChannel} DiscordJs.GuildTextBasedChannel
  * @typedef {import("../types/trackerTypes").Game} TrackerTypes.Game
  */
 
 const azure = require("@azure/identity"),
     ComputeManagementClient = require("@azure/arm-compute").ComputeManagementClient,
     EventEmitter = require("events").EventEmitter,
+    Exception = require("./logging/exception"),
     Log = require("./logging/log"),
     Tracker = require("./tracker"),
 
@@ -44,12 +45,12 @@ class Azure {
      * Sets the timeouts for the server.
      * @param {AzureTypes.Server} server The server object.
      * @param {string} region The server's region.
-     * @param {DiscordJs.TextChannel} channel The Discord channel to communicate to.
+     * @param {DiscordJs.GuildTextBasedChannel} channel The Discord channel to communicate to.
      * @returns {void}
      */
     static setTimeouts(server, region, channel) {
         server.warningTimeout = setTimeout(async () => {
-            await Discord.queue(`The ${region} server will automatically shut down in 5 minutes.  Use the \`!extend ${region}\` command to reset the shutdown timer to 15 minutes.`, channel);
+            await Discord.queue(`The ${region} server will automatically shut down in 5 minutes.  Use the \`/extend ${region}\` command to reset the shutdown timer to 15 minutes.`, channel);
         }, 600000);
         server.timeout = setTimeout(async () => {
             await Azure.stop(server);
@@ -71,7 +72,7 @@ class Azure {
      * Sets up communications for a server.
      * @param {AzureTypes.Server} server The server object.
      * @param {string} region The server's region.
-     * @param {DiscordJs.TextChannel} channel The Discord channel to communicate to.
+     * @param {DiscordJs.GuildTextBasedChannel} channel The Discord channel to communicate to.
      * @returns {void}
      */
     static setup(server, region, channel) {
@@ -158,10 +159,14 @@ class Azure {
      * @returns {Promise} A promise that resolves when the server has been started.
      */
     static start(server) {
-        const credential = new azure.ClientSecretCredential(settings.tenantId, settings.clientId, settings.secret),
-            client = new ComputeManagementClient(credential, settings.subscriptionId);
+        try {
+            const credential = new azure.ClientSecretCredential(settings.tenantId, settings.clientId, settings.secret),
+                client = new ComputeManagementClient(credential, settings.subscriptionId);
 
-        return client.virtualMachines.beginStart(server.resourceGroupName, server.vmName);
+            return client.virtualMachines.beginStart(server.resourceGroupName, server.vmName);
+        } catch (err) {
+            throw new Exception("Error starting server.", err);
+        }
     }
 
     //         #                 #

@@ -269,10 +269,10 @@ class NewTeam {
 
         const commands = [];
 
-        commands.push("`!name <name>` - Set your team's name.  Required before you complete team creation.");
-        commands.push("`!tag <tag>` - Sets your tame tag, which is up to five letters or numbers that is considered to be a short form of your team name.  Required before you complete team creation.");
-        commands.push("`!cancel` - Cancels team creation.");
-        commands.push("`!complete` - Completes the team creation process and creates your team on the OTL.");
+        commands.push("`/name <name>` - Set your team's name.  Required before you complete team creation.");
+        commands.push("`/tag <tag>` - Sets your tame tag, which is up to five letters or numbers that is considered to be a short form of your team name.  Required before you complete team creation.");
+        commands.push("`/cancel` - Cancels team creation.");
+        commands.push("`/complete` - Completes the team creation process and creates your team on the OTL.");
 
         embed.addFields({
             name: "Commands",

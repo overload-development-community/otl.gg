@@ -69,6 +69,12 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type GetAllByBaseTitleBeforeGameRecordsets = {
+        recordsets: [
+            ChallengeData[]
+        ]
+    }
+
     type GetAllByTeamRecordsets = {
         recordsets: [
             ChallengeData[]
@@ -162,12 +168,6 @@ declare namespace ChallengeDbTypes {
                 UsingHomeMapTeam: boolean
                 ChallengingTeamPenalized: boolean
                 ChallengedTeamPenalized: boolean
-                SuggestedMap: string
-                SuggestedMapTeamId: number
-                SuggestedTeamSize: number
-                SuggestedTeamSizeTeamId: number
-                SuggestedTime: Date
-                SuggestedTimeTeamId: number
                 ReportingTeamId: number
                 ChallengingTeamScore: number
                 ChallengedTeamScore: number
@@ -190,8 +190,6 @@ declare namespace ChallengeDbTypes {
                 ChallengingTeamRating: number
                 ChallengedTeamRating: number
                 GameType: string
-                SuggestedGameType: string
-                SuggestedGameTypeTeamId: number
                 DiscordEventId: string
                 GoogleEventId: string
                 Server: string

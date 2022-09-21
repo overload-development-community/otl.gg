@@ -2,10 +2,9 @@
  * @typedef {import("../models/challenge")} Challenge
  * @typedef {import("../../types/challengeDbTypes").ClockRecordsets} ChallengeDbTypes.ClockRecordsets
  * @typedef {import("../../types/challengeDbTypes").CloseRecordsets} ChallengeDbTypes.CloseRecordsets
- * @typedef {import("../../types/challengeDbTypes").ConfirmGameTypeRecordsets} ChallengeDbTypes.ConfirmGameTypeRecordsets
- * @typedef {import("../../types/challengeDbTypes").ConfirmTeamSizeRecordsets} ChallengeDbTypes.ConfirmTeamSizeRecordsets
  * @typedef {import("../../types/challengeDbTypes").CreateRecordsets} ChallengeDbTypes.CreateRecordsets
  * @typedef {import("../../types/challengeDbTypes").ExtendRecordsets} ChallengeDbTypes.ExtendRecordsets
+ * @typedef {import("../../types/challengeDbTypes").GetAllByBaseTitleBeforeGameRecordsets} ChallengeDbTypes.GetAllByBaseTitleBeforeGameRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAllByTeamRecordsets} ChallengeDbTypes.GetAllByTeamRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAllByTeamsRecordsets} ChallengeDbTypes.GetAllByTeamsRecordsets
  * @typedef {import("../../types/challengeDbTypes").GetAuthorizedPlayersRecordsets} ChallengeDbTypes.GetAuthorizedPlayersRecordsets
@@ -310,122 +309,6 @@ class ChallengeDb {
         }
     }
 
-    //                     #    #                 ##                     ###
-    //                    # #                    #  #                     #
-    //  ##    ##   ###    #    ##    ###   # #   #      ###  # #    ##    #    #  #  ###    ##
-    // #     #  #  #  #  ###    #    #  #  ####  # ##  #  #  ####  # ##   #    #  #  #  #  # ##
-    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #  ##     #     # #  #  #  ##
-    //  ##    ##   #  #   #    ###   #     #  #   ###   # #  #  #   ##    #      #   ###    ##
-    //                                                                          #    #
-    /**
-     * Confirms a suggested game type for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise<string[]>} A promise that resolves with the home map team's home maps for the new game type.
-     */
-    static async confirmGameType(challenge) {
-        /** @type {ChallengeDbTypes.ConfirmGameTypeRecordsets} */
-        const data = await db.query(/* sql */`
-            UPDATE tblChallenge SET GameType = SuggestedGameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
-
-            SELECT ch.Map
-            FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
-            WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Map
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
-
-        if (!settings.disableRedis) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
-        }
-
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
-    }
-
-    //                     #    #                #  #
-    //                    # #                    ####
-    //  ##    ##   ###    #    ##    ###   # #   ####   ###  ###
-    // #     #  #  #  #  ###    #    #  #  ####  #  #  #  #  #  #
-    // #     #  #  #  #   #     #    #     #  #  #  #  # ##  #  #
-    //  ##    ##   #  #   #    ###   #     #  #  #  #   # #  ###
-    //                                                       #
-    /**
-     * Confirms a suggested neutral map for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the suggested neutral map has been confirmed.
-     */
-    static async confirmMap(challenge) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET Map = SuggestedMap, SuggestedMap = NULL, SuggestedMapTeamId = NULL, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
-
-        if (!settings.disableRedis) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
-        }
-    }
-
-    //                     #    #                ###                      ##    #
-    //                    # #                     #                      #  #
-    //  ##    ##   ###    #    ##    ###   # #    #     ##    ###  # #    #    ##    ####   ##
-    // #     #  #  #  #  ###    #    #  #  ####   #    # ##  #  #  ####    #    #      #   # ##
-    // #     #  #  #  #   #     #    #     #  #   #    ##    # ##  #  #  #  #   #     #    ##
-    //  ##    ##   #  #   #    ###   #     #  #   #     ##    # #  #  #   ##   ###   ####   ##
-    /**
-     * Confirms a suggested team size for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise<string[]>} A promise that resolves when the suggested team size has been confirmed.
-     */
-    static async confirmTeamSize(challenge) {
-        /** @type {ChallengeDbTypes.ConfirmTeamSizeRecordsets} */
-        const data = await db.query(/* sql */`
-            UPDATE tblChallenge SET TeamSize = SuggestedTeamSize, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
-
-            IF NOT EXISTS(
-                SELECT TOP 1 1
-                FROM tblChallengeHome ch
-                INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END AND c.Map = ch.Map
-            )
-            BEGIN
-                UPDATE tblChallenge SET Map = NULL WHERE ChallengeId = @challengeId
-            END
-
-            SELECT ch.Map
-            FROM tblChallengeHome ch
-            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
-            WHERE ch.ChallengeId = @challengeId
-            ORDER BY ch.Map
-        `, {
-            challengeId: {type: Db.INT, value: challenge.id},
-            map: {type: Db.VARCHAR(100), value: challenge.details.map}
-        });
-
-        if (!settings.disableRedis) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
-        }
-
-        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
-    }
-
-    //                     #    #                ###    #
-    //                    # #                     #
-    //  ##    ##   ###    #    ##    ###   # #    #    ##    # #    ##
-    // #     #  #  #  #  ###    #    #  #  ####   #     #    ####  # ##
-    // #     #  #  #  #   #     #    #     #  #   #     #    #  #  ##
-    //  ##    ##   #  #   #    ###   #     #  #   #    ###   #  #   ##
-    /**
-     * Confirms a suggested time for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @returns {Promise} A promise that resolves when the suggested time has been confirmed.
-     */
-    static async confirmTime(challenge) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET MatchTime = SuggestedTime, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
-        `, {challengeId: {type: Db.INT, value: challenge.id}});
-
-        if (!settings.disableRedis) {
-            await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
-        }
-    }
-
     //                          #
     //                          #
     //  ##   ###    ##    ###  ###    ##
@@ -585,8 +468,6 @@ class ChallengeDb {
             UPDATE tblChallenge SET
                 DateClockDeadline = CASE WHEN DateClockDeadline IS NULL THEN NULL ELSE DATEADD(DAY, 14, GETUTCDATE()) END,
                 MatchTime = NULL,
-                SuggestedTime = NULL,
-                SuggestedTimeTeamId = NULL,
                 DateMatchTimeNotified = NULL,
                 DateMatchTimePassedNotified = NULL,
                 DateClockDeadlineNotified = NULL
@@ -600,6 +481,36 @@ class ChallengeDb {
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateClockDeadline || void 0;
+    }
+
+    //              #     ##   ##    ##    ###         ###                      ###    #     #    ##          ###           #                      ##
+    //              #    #  #   #     #    #  #        #  #                      #           #     #          #  #         # #                    #  #
+    //  ###   ##   ###   #  #   #     #    ###   #  #  ###    ###   ###    ##    #    ##    ###    #     ##   ###    ##    #     ##   ###    ##   #      ###  # #    ##
+    // #  #  # ##   #    ####   #     #    #  #  #  #  #  #  #  #  ##     # ##   #     #     #     #    # ##  #  #  # ##  ###   #  #  #  #  # ##  # ##  #  #  ####  # ##
+    //  ##   ##     #    #  #   #     #    #  #   # #  #  #  # ##    ##   ##     #     #     #     #    ##    #  #  ##     #    #  #  #     ##    #  #  # ##  #  #  ##
+    // #      ##     ##  #  #  ###   ###   ###     #   ###    # #  ###     ##    #    ###     ##  ###    ##   ###    ##    #     ##   #      ##    ###   # #  #  #   ##
+    //  ###                                       #
+    /**
+     * Gets all games in a series before the specified game number.
+     * @param {string} title The base title.
+     * @param {number} game The game number.
+     * @returns {Promise<ChallengeTypes.ChallengeData[]>} A promise that resolves with an array of challenge data.
+     */
+    static async getAllByBaseTitleBeforeGame(title, game) {
+        /** @type {ChallengeDbTypes.GetAllByBaseTitleBeforeGameRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT TOP (@game) ChallengeId, ChallengingTeamId, ChallengedTeamId
+            FROM tblChallenge
+            WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
+                AND DateVoided IS NULL
+                AND Title LIKE @title + '%'
+            ORDER BY ChallengeId
+        `, {
+            title: {type: Db.VARCHAR(100), value: title},
+            game: {type: Db.INT, value: game - 1}
+        });
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({id: row.ChallengeId, challengingTeamId: row.ChallengingTeamId, challengedTeamId: row.ChallengedTeamId})) || [];
     }
 
     //              #     ##   ##    ##    ###         ###
@@ -623,6 +534,7 @@ class ChallengeDb {
                 AND DateConfirmed IS NULL
                 AND DateClosed IS NULL
                 AND DateVoided IS NULL
+            ORDER BY ChallengeId
         `, {
             teamId: {type: Db.INT, value: team.id}
         });
@@ -651,6 +563,7 @@ class ChallengeDb {
             WHERE (ChallengingTeamId = @team1Id OR ChallengedTeamId = @team1Id)
                 AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
                 AND DateVoided IS NULL
+            ORDER BY ChallengeId
         `, {
             team1Id: {type: Db.INT, value: team1.id},
             team2Id: {type: Db.INT, value: team2.id}
@@ -1079,12 +992,6 @@ class ChallengeDb {
                 c.UsingHomeMapTeam,
                 c.ChallengingTeamPenalized,
                 c.ChallengedTeamPenalized,
-                c.SuggestedMap,
-                c.SuggestedMapTeamId,
-                c.SuggestedTeamSize,
-                c.SuggestedTeamSizeTeamId,
-                c.SuggestedTime,
-                c.SuggestedTimeTeamId,
                 c.ReportingTeamId,
                 c.ChallengingTeamScore,
                 c.ChallengedTeamScore,
@@ -1097,7 +1004,6 @@ class ChallengeDb {
                 c.DateReported,
                 c.DateConfirmed,
                 c.DateClosed,
-                c.DateRematchRequested,
                 c.RematchTeamId,
                 c.DateRematched,
                 c.DateVoided,
@@ -1107,8 +1013,6 @@ class ChallengeDb {
                 c.ChallengingTeamRating,
                 c.ChallengedTeamRating,
                 c.GameType,
-                c.SuggestedGameType,
-                c.SuggestedGameTypeTeamId,
                 c.DiscordEventId,
                 c.GoogleEventId,
                 c.Server,
@@ -1136,12 +1040,6 @@ class ChallengeDb {
             usingHomeMapTeam: data.recordsets[0][0].UsingHomeMapTeam,
             challengingTeamPenalized: data.recordsets[0][0].ChallengingTeamPenalized,
             challengedTeamPenalized: data.recordsets[0][0].ChallengedTeamPenalized,
-            suggestedMap: data.recordsets[0][0].SuggestedMap,
-            suggestedMapTeamId: data.recordsets[0][0].SuggestedMapTeamId,
-            suggestedTeamSize: data.recordsets[0][0].SuggestedTeamSize,
-            suggestedTeamSizeTeamId: data.recordsets[0][0].SuggestedTeamSizeTeamId,
-            suggestedTime: data.recordsets[0][0].SuggestedTime,
-            suggestedTimeTeamId: data.recordsets[0][0].SuggestedTimeTeamId,
             reportingTeamId: data.recordsets[0][0].ReportingTeamId,
             challengingTeamScore: data.recordsets[0][0].ChallengingTeamScore,
             challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
@@ -1155,7 +1053,6 @@ class ChallengeDb {
             dateConfirmed: data.recordsets[0][0].DateConfirmed,
             dateClosed: data.recordsets[0][0].DateClosed,
             dateVoided: data.recordsets[0][0].DateVoided,
-            dateRematchRequested: data.recordsets[0][0].DateRematchRequested,
             rematchTeamId: data.recordsets[0][0].RematchTeamId,
             dateRematched: data.recordsets[0][0].DateRematched,
             overtimePeriods: data.recordsets[0][0].OvertimePeriods,
@@ -1164,8 +1061,6 @@ class ChallengeDb {
             challengingTeamRating: data.recordsets[0][0].ChallengingTeamRating,
             challengedTeamRating: data.recordsets[0][0].ChallengedTeamRating,
             gameType: data.recordsets[0][0].GameType,
-            suggestedGameType: data.recordsets[0][0].SuggestedGameType,
-            suggestedGameTypeTeamId: data.recordsets[0][0].SuggestedGameTypeTeamId,
             discordEventId: data.recordsets[0][0].DiscordEventId,
             googleEventId: data.recordsets[0][0].GoogleEventId,
             server: data.recordsets[0][0].Server,
@@ -1295,7 +1190,7 @@ class ChallengeDb {
         const data = await db.query(/* sql */`
             SELECT Map
             FROM (
-                SELECT ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} WITH TIES ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
+                SELECT ${["most", "least"].indexOf(direction) !== -1 && !isNaN(count) ? `TOP ${count} WITH TIES ` : ""}Map, COUNT(ChallengeId) Games, NEWID() Id
                 FROM vwCompletedChallenge
                 WHERE GameType = @type
                     AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeId = @id AND GameType = @homeType)
@@ -1629,27 +1524,6 @@ class ChallengeDb {
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].DateReported || void 0;
     }
 
-    //                                       #    ###                      #          #
-    //                                       #    #  #                     #          #
-    // ###    ##    ###  #  #   ##    ###   ###   #  #   ##   # #    ###  ###    ##   ###
-    // #  #  # ##  #  #  #  #  # ##  ##      #    ###   # ##  ####  #  #   #    #     #  #
-    // #     ##    #  #  #  #  ##      ##    #    # #   ##    #  #  # ##   #    #     #  #
-    // #      ##    ###   ###   ##   ###      ##  #  #   ##   #  #   # #    ##   ##   #  #
-    //                #
-    /**
-     * Logs a request for a rematch for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @param {Team} team The team requesting the rematch.
-     * @returns {Promise} A promise that resolves when the rematch has been requested.
-     */
-    static async requestRematch(challenge, team) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET RematchTeamId = @teamId, DateRematchRequested = GETUTCDATE() WHERE ChallengeId = @challengeId
-        `, {
-            teamId: {type: Db.INT, value: team.id},
-            challengeId: {type: Db.INT, value: challenge.id}
-        });
-    }
 
     //               #     ##                 #
     //               #    #  #                #
@@ -1824,7 +1698,7 @@ class ChallengeDb {
      */
     static async setGameType(challenge, gameType) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET GameType = @gameType, SuggestedGameType = NULL, SuggestedGameTypeTeamId = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET GameType = @gameType, Map = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             gameType: {type: Db.VARCHAR(5), value: gameType}
@@ -1913,7 +1787,7 @@ class ChallengeDb {
      */
     static async setMap(challenge, map) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0, SuggestedMap = NULL, SuggestedMapTeamId = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET Map = @map, UsingHomeMapTeam = 0 WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             map: {type: Db.VARCHAR(100), value: map}
@@ -2132,7 +2006,7 @@ class ChallengeDb {
     static async setTeamSize(challenge, size) {
         /** @type {ChallengeDbTypes.SetTeamSizeRecordsets} */
         const data = await db.query(/* sql */`
-            UPDATE tblChallenge SET TeamSize = @size, SuggestedTeamSize = NULL, SuggestedTeamSizeTeamId = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET TeamSize = @size WHERE ChallengeId = @challengeId
 
             IF NOT EXISTS(
                 SELECT ch.Map
@@ -2176,7 +2050,7 @@ class ChallengeDb {
      */
     static async setTime(challenge, date) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET MatchTime = @date, SuggestedTime = NULL, SuggestedTimeTeamId = NULL, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET MatchTime = @date, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
@@ -2235,102 +2109,6 @@ class ChallengeDb {
         if (!settings.disableRedis) {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
         }
-    }
-
-    //                                        #     ##                     ###
-    //                                        #    #  #                     #
-    //  ###   #  #   ###   ###   ##    ###   ###   #      ###  # #    ##    #    #  #  ###    ##
-    // ##     #  #  #  #  #  #  # ##  ##      #    # ##  #  #  ####  # ##   #    #  #  #  #  # ##
-    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #  ##     #     # #  #  #  ##
-    // ###     ###  #     #      ##   ###      ##   ###   # #  #  #   ##    #      #   ###    ##
-    //               ###   ###                                                    #    #
-    /**
-     * Suggests a game type for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @param {Team} team The team issuing the suggestion.
-     * @param {string} gameType The suggested game type.
-     * @returns {Promise} A promise that resolves when the game type has been suggested.
-     */
-    static async suggestGameType(challenge, team, gameType) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET SuggestedGameType = @gameType, SuggestedGameTypeTeamId = @teamId WHERE ChallengeId = @challengeId
-        `, {
-            gameType: {type: Db.VARCHAR(5), value: gameType},
-            teamId: {type: Db.INT, value: team.id},
-            challengeId: {type: Db.INT, value: challenge.id}
-        });
-    }
-
-    //                                        #    #  #
-    //                                        #    ####
-    //  ###   #  #   ###   ###   ##    ###   ###   ####   ###  ###
-    // ##     #  #  #  #  #  #  # ##  ##      #    #  #  #  #  #  #
-    //   ##   #  #   ##    ##   ##      ##    #    #  #  # ##  #  #
-    // ###     ###  #     #      ##   ###      ##  #  #   # #  ###
-    //               ###   ###                                 #
-    /**
-     * Suggests a map for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @param {Team} team The team issuing the suggestion.
-     * @param {string} map The suggested map.
-     * @returns {Promise} A promise that resolves when the map has been suggested.
-     */
-    static async suggestMap(challenge, team, map) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET SuggestedMap = @map, SuggestedMapTeamId = @teamId WHERE ChallengeId = @challengeId
-        `, {
-            map: {type: Db.VARCHAR(100), value: map},
-            teamId: {type: Db.INT, value: team.id},
-            challengeId: {type: Db.INT, value: challenge.id}
-        });
-    }
-
-    //                                        #    ###                      ##    #
-    //                                        #     #                      #  #
-    //  ###   #  #   ###   ###   ##    ###   ###    #     ##    ###  # #    #    ##    ####   ##
-    // ##     #  #  #  #  #  #  # ##  ##      #     #    # ##  #  #  ####    #    #      #   # ##
-    //   ##   #  #   ##    ##   ##      ##    #     #    ##    # ##  #  #  #  #   #     #    ##
-    // ###     ###  #     #      ##   ###      ##   #     ##    # #  #  #   ##   ###   ####   ##
-    //               ###   ###
-    /**
-     * Suggests a team size for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @param {Team} team The team issuing the suggestion.
-     * @param {number} size The team size.
-     * @returns {Promise} A promise that resolves when the team size has been suggested.
-     */
-    static async suggestTeamSize(challenge, team, size) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET SuggestedTeamSize = @size, SuggestedTeamSizeTeamId = @teamId WHERE ChallengeId = @challengeId
-        `, {
-            size: {type: Db.INT, value: size},
-            teamId: {type: Db.INT, value: team.id},
-            challengeId: {type: Db.INT, value: challenge.id}
-        });
-    }
-
-    //                                        #    ###    #
-    //                                        #     #
-    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##
-    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
-    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
-    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##
-    //               ###   ###
-    /**
-     * Suggests a time for a challenge.
-     * @param {Challenge} challenge The challenge.
-     * @param {Team} team The team issuing the suggestion.
-     * @param {Date} date The time.
-     * @returns {Promise} A promise that resolves when the time has been suggested.
-     */
-    static async suggestTime(challenge, team, date) {
-        await db.query(/* sql */`
-            UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId
-        `, {
-            date: {type: Db.DATETIME, value: date},
-            teamId: {type: Db.INT, value: team.id},
-            challengeId: {type: Db.INT, value: challenge.id}
-        });
     }
 
     //                           ##         ##

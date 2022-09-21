@@ -33,6 +33,13 @@ setTimeout(() => {
     Discord = require("../discord");
 }, 0);
 
+/** @type {typeof import("../discord/validation")} */
+let Validation;
+
+setTimeout(() => {
+    Validation = require("../discord/validation");
+}, 0);
+
 //  #####
 //    #
 //    #     ###    ###   ## #
@@ -612,9 +619,10 @@ class Team {
     /**
      * Adds a pilot to the team.
      * @param {DiscordJs.GuildMember} member The pilot to add.
+     * @param {boolean} [capExempt] Whether the pilot is cap exempt.
      * @returns {Promise} A promise that resolves when the pilot has been added.
      */
-    async addPilot(member) {
+    async addPilot(member, capExempt) {
         try {
             await Db.addPilot(member, this);
         } catch (err) {
@@ -632,12 +640,21 @@ class Team {
                 throw new Error("Team's channel does not exist.");
             }
 
-            await member.roles.add(this.role, `${member.displayName} accepted their invitation to ${this.name}.`);
+            if (capExempt) {
+                await member.roles.add(this.role, `${member.displayName} added by cap exemption to ${this.name}.`);
+                await member.roles.add(Discord.exemptRole);
+            } else {
+                await member.roles.add(this.role, `${member.displayName} accepted their invitation to ${this.name}.`);
+            }
 
             await this.updateChannels();
 
             await Discord.queue(`${member}, you are now a member of **${this.name}**!  You now have access to your team's channel, ${teamChannel}.`, member);
-            await Discord.queue(`**${member}** has accepted your invitation to join the team!`, captainsChannel);
+            if (capExempt) {
+                await Discord.queue(`**${member}** has been added to the team via cap exemption!`, captainsChannel);
+            } else {
+                await Discord.queue(`**${member}** has accepted your invitation to join the team!`, captainsChannel);
+            }
             await Discord.queue(`**${member}** has joined the team!`, teamChannel);
             await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
@@ -650,7 +667,7 @@ class Team {
                     }
                 ],
                 footer: {
-                    text: "added by accepted invitation"
+                    text: `added by ${capExempt ? "cap exemption" : "accepted invitation"}`
                 }
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
@@ -778,8 +795,9 @@ class Team {
 
         for (const challengeId of challengeIds) {
             const challenge = await Challenge.getById(challengeId);
-            if (challenge) {
-                challenge.void(member, this);
+            await challenge.loadDetails();
+            if (challenge && !challenge.details.dateConfirmed) {
+                challenge.void(this);
             }
         }
     }
@@ -1037,7 +1055,7 @@ class Team {
         }
 
         try {
-            await Discord.queue(`${toMember.displayName}, you have been invited to join **${this.name}** by ${fromMember.displayName}.  You can accept this invitation by responding with \`!accept ${this.name}\`.`, toMember);
+            await Discord.queue(`${toMember.displayName}, you have been invited to join **${this.name}** by ${fromMember.displayName}.  You can accept this invitation by responding with \`/accept ${this.name}\`.`, toMember);
 
             await this.updateChannels();
         } catch (err) {
@@ -1578,8 +1596,8 @@ class Team {
             await this.updateChannels();
 
             await Discord.queue(`${pilot}, you are now the founder of **${this.name}**!`, pilot);
-            await Discord.queue(`${pilot.displayName} is now the team founder!`, captainsChannel);
-            await Discord.queue(`${pilot.displayName} is now the team founder!`, teamChannel);
+            await Discord.queue(`${pilot} is now the team founder!`, captainsChannel);
+            await Discord.queue(`${pilot} is now the team founder!`, teamChannel);
             await Discord.richQueue(Discord.embedBuilder({
                 title: `${this.name} (${this.tag})`,
                 description: "Leadership Update",
@@ -1891,27 +1909,27 @@ class Team {
             title: "Founder commands",
             fields: [
                 {
-                    name: "!color ([light|dark]) [red|orange|yellow|lime|green|spring|aqua|azure|blue|violet|purple|pink]",
+                    name: "/color ([light|dark]) [red|orange|yellow|lime|green|spring|aqua|azure|blue|violet|purple|pink]",
                     value: "Set the color for display in Discord."
                 },
                 {
-                    name: "!teamtimezone <timezone>",
+                    name: "/teamtimezone <timezone>",
                     value: "Sets the default timezone for your team."
                 },
                 {
-                    name: "!addcaptain <teammate>",
+                    name: "/addcaptain <teammate>",
                     value: "Makes a teammate a captain."
                 },
                 {
-                    name: "!removecaptain <captain>",
+                    name: "/removecaptain <captain>",
                     value: "Removes a captain.  Does not remove them from the team."
                 },
                 {
-                    name: "!disband",
+                    name: "/disband",
                     value: "Disbands the team."
                 },
                 {
-                    name: "!makefounder <teammate>",
+                    name: "/makefounder <teammate>",
                     value: "Replace yourself with another teammate."
                 }
             ]
@@ -1925,19 +1943,31 @@ class Team {
             title: "Captain commands",
             fields: [
                 {
-                    name: "!home [1|2|3|4|5] <map>",
-                    value: "Set a home map.  You must set all 5 home maps before you can send or receive challenges."
+                    name: "/addhome <type> <map>",
+                    value: `Set a home map.  You must set all ${Validation.MAXIMUM_MAPS_PER_GAME_TYPE} home maps for 2v2, 3v3, 4v4+, and CTF in order to send or receive challenges.`
                 },
                 {
-                    name: "!invite <pilot>",
+                    name: "/removehome <type> <map>",
+                    value: `Removes a home map.  You must set all ${Validation.MAXIMUM_MAPS_PER_GAME_TYPE} home maps for 2v2, 3v3, 4v4+, and CTF in order to send or receive challenges.`
+                },
+                {
+                    name: "/addneutral <type> <map>",
+                    value: "Set a neutral map for other teams to view."
+                },
+                {
+                    name: "/removeneutral <type> <map>",
+                    value: "Removes a neutral map for other teams to view."
+                },
+                {
+                    name: "/invite <pilot>",
                     value: "Invite a pilot to join your team."
                 },
                 {
-                    name: "!remove <pilot>",
+                    name: "/remove <pilot>",
                     value: "Removes a pilot from the team, or revokes a pilot's invitation, or removes a pilot's request to join the team."
                 },
                 {
-                    name: "!challenge <team>",
+                    name: "/challenge <team>",
                     value: "Challenge a team to a match."
                 }
             ]

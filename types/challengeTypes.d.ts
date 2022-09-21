@@ -107,12 +107,6 @@ declare namespace ChallengeTypes {
         usingHomeMapTeam: boolean
         challengingTeamPenalized: boolean
         challengedTeamPenalized: boolean
-        suggestedMap: string
-        suggestedMapTeamId: number
-        suggestedTeamSize: number
-        suggestedTeamSizeTeamId: number
-        suggestedTime: Date
-        suggestedTimeTeamId: number
         reportingTeamId: number
         challengingTeamScore: number
         challengedTeamScore: number
@@ -125,7 +119,6 @@ declare namespace ChallengeTypes {
         dateReported: Date
         dateConfirmed: Date
         dateClosed: Date
-        dateRematchRequested: Date
         rematchTeamId: number
         dateRematched: Date
         dateVoided: Date
@@ -135,8 +128,6 @@ declare namespace ChallengeTypes {
         challengingTeamRating: number
         challengedTeamRating: number
         gameType: string
-        suggestedGameType: string
-        suggestedGameTypeTeamId: number
         discordEventId: string
         googleEventId: string
         server: string

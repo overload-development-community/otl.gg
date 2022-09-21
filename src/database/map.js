@@ -132,12 +132,16 @@ class MapDb {
     /**
      * Removes a map from the database.
      * @param {string} map The map to remove.
+     * @param {string} gameType The game type.
      * @returns {Promise} A promise that resolves when the map has been removed.
      */
-    static async remove(map) {
+    static async remove(map, gameType) {
         await db.query(/* sql */`
-            DELETE FROM tblAllowedMap WHERE Map = @map
-        `, {map: {type: Db.VARCHAR(100), value: map}});
+            DELETE FROM tblAllowedMap WHERE Map = @map AND GameType = @gameType
+        `, {
+            map: {type: Db.VARCHAR(100), value: map},
+            gameType: {type: Db.VARCHAR(5), value: gameType}
+        });
     }
 
     //             ##     #       #         #
@@ -150,7 +154,7 @@ class MapDb {
      * Validates a map.
      * @param {string} map The map.
      * @param {string} gameType The game type.
-     * @returns {Promise<MapTypes.MapData>} A promise that resolves with the validated map.
+     * @returns {Promise<MapTypes.MapData>} A promise that returns the validated map.
      */
     static async validate(map, gameType) {
         /** @type {MapDbTypes.ValidateRecordsets} */

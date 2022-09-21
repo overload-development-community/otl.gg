@@ -149,11 +149,6 @@ declare namespace PlayerTypes {
         deaths: number
     }
 
-    type PilotWithConfirmation = {
-        pilot: DiscordJs.GuildMember,
-        confirm: string
-    }
-
     type PlayerKDAStats = {
         playerId: number
         name: string
