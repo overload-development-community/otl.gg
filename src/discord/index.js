@@ -429,8 +429,6 @@ class Discord {
                 return;
             }
 
-            // TODO: Add a semaphore to commands where appropiate.
-
             let success = false;
 
             try {

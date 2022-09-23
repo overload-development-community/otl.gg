@@ -180,7 +180,6 @@ declare namespace ChallengeDbTypes {
                 DateReported: Date
                 DateConfirmed: Date
                 DateClosed: Date
-                DateRematchRequested: Date
                 RematchTeamId: number
                 DateRematched: Date
                 OvertimePeriods: number

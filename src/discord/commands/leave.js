@@ -4,7 +4,10 @@
 
 const Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    buttonSemaphore = new Semaphore(1);
 
 //  #
 //  #
@@ -101,10 +104,10 @@ class Leave {
             components: [row]
         });
 
-        const collector = response.createMessageComponentCollector();
+        const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", async (buttonInteraction) => {
-            if (buttonInteraction.customId !== customId) {
+        collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+            if (collector.ended || buttonInteraction.customId !== customId) {
                 return;
             }
 
@@ -124,6 +127,7 @@ class Leave {
                         })
                     ]
                 });
+                collector.stop();
                 throw err;
             }
 
@@ -139,6 +143,10 @@ class Leave {
             });
 
             collector.stop();
+        }));
+
+        collector.on("end", async () => {
+            await interaction.editReply({components: []});
         });
 
         return true;
