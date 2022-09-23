@@ -1,7 +1,10 @@
 const ChallengeModel = require("../../models/challenge"),
     Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //   ###   #              ##     ##
 //  #   #  #               #      #
@@ -87,44 +90,46 @@ class Challenge {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        await interaction.deferReply({ephemeral: false});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            await interaction.deferReply({ephemeral: false});
 
-        const member = Discord.findGuildMemberById(user.id),
-            checkOpponent = interaction.options.getString("team", true),
-            type = interaction.options.getString("type", false) || "TA";
+            const member = Discord.findGuildMemberById(user.id),
+                checkOpponent = interaction.options.getString("team", true),
+                type = interaction.options.getString("type", false) || "TA";
 
-        await Validation.memberShouldBeCaptainOrFounder(interaction, member);
-        const team = await Validation.memberShouldBeOnATeam(interaction, member),
-            opponent = await Validation.teamShouldExist(interaction, checkOpponent, member);
-        await Validation.teamsShouldBeDifferent(interaction, team, opponent, member, "but this would cause shenanigans.  The two teams must be different in a challenge!");
-        await Validation.teamShouldNotBeDisbanded(interaction, opponent, member);
-        await Validation.teamsShouldBeChallengeable(interaction, team, opponent, member);
-        await Validation.teamsShouldNotHaveExistingChallenge(interaction, team, opponent, member);
+            await Validation.memberShouldBeCaptainOrFounder(interaction, member);
+            const team = await Validation.memberShouldBeOnATeam(interaction, member),
+                opponent = await Validation.teamShouldExist(interaction, checkOpponent, member);
+            await Validation.teamsShouldBeDifferent(interaction, team, opponent, member, "but this would cause shenanigans.  The two teams must be different in a challenge!");
+            await Validation.teamShouldNotBeDisbanded(interaction, opponent, member);
+            await Validation.teamsShouldBeChallengeable(interaction, team, opponent, member);
+            await Validation.teamsShouldNotHaveExistingChallenge(interaction, team, opponent, member);
 
-        let challenge;
-        try {
-            challenge = await ChallengeModel.create(team, opponent, {gameType: type});
-        } catch (err) {
+            let challenge;
+            try {
+                challenge = await ChallengeModel.create(team, opponent, {gameType: type});
+            } catch (err) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw err;
+            }
+
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
+                        description: `${member}, your challenge to **${opponent.name}** has been issued!  Visit ${challenge.channel} for match discussion and to set the parameters for your match.`
                     })
                 ]
             });
-            throw err;
-        }
-
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${member}, your challenge to **${opponent.name}** has been issued!  Visit ${challenge.channel} for match discussion and to set the parameters for your match.`
-                })
-            ]
+            return true;
         });
-        return true;
     }
 }
 

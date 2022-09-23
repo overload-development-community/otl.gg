@@ -1,6 +1,9 @@
 const Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //    #        #      #  #   #
 //   # #       #      #  #   #
@@ -86,42 +89,44 @@ class AddHome {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        await interaction.deferReply({ephemeral: true});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            await interaction.deferReply({ephemeral: true});
 
-        const member = Discord.findGuildMemberById(user.id),
-            type = interaction.options.getString("type", true),
-            checkMap = interaction.options.getString("map", true);
+            const member = Discord.findGuildMemberById(user.id),
+                type = interaction.options.getString("type", true),
+                checkMap = interaction.options.getString("map", true);
 
-        await Validation.memberShouldBeCaptainOrFounder(interaction, member);
-        const map = await Validation.mapShouldBeValid(interaction, type, checkMap, member),
-            team = await Validation.memberShouldBeOnATeam(interaction, member),
-            homes = await Validation.teamShouldNotHaveHomeSet(interaction, team, type, map, member);
-        await Validation.homeListShouldHaveRoom(interaction, homes, type, member);
+            await Validation.memberShouldBeCaptainOrFounder(interaction, member);
+            const map = await Validation.mapShouldBeValid(interaction, type, checkMap, member),
+                team = await Validation.memberShouldBeOnATeam(interaction, member),
+                homes = await Validation.teamShouldNotHaveHomeSet(interaction, team, type, map, member);
+            await Validation.homeListShouldHaveRoom(interaction, homes, type, member);
 
-        try {
-            await team.addHomeMap(member, type, map.map);
-        } catch (err) {
+            try {
+                await team.addHomeMap(member, type, map.map);
+            } catch (err) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw err;
+            }
+
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
+                        description: `${member}, your home map of **${map.map}** has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`,
+                        color: team.role.color
                     })
                 ]
             });
-            throw err;
-        }
-
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${member}, your home map of **${map.map}** has been set.  Note this only applies to future challenges, any current challenges you have will use the home maps you had at the time of the challenge.`,
-                    color: team.role.color
-                })
-            ]
+            return true;
         });
-        return true;
     }
 }
 

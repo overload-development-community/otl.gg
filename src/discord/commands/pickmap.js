@@ -1,6 +1,9 @@
 const Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //  ####     #           #      #   #
 //  #   #                #      #   #
@@ -85,49 +88,51 @@ class PickMap {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        const member = Discord.findGuildMemberById(user.id),
-            challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
-        if (!challenge) {
-            return false;
-        }
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            const member = Discord.findGuildMemberById(user.id),
+                challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
+            if (!challenge) {
+                return false;
+            }
 
-        await interaction.deferReply({ephemeral: false});
+            await interaction.deferReply({ephemeral: false});
 
-        const option = interaction.options.getString("option", true).toLowerCase().charCodeAt(0) - 96;
+            const option = interaction.options.getString("option", true).toLowerCase().charCodeAt(0) - 96;
 
-        const team = await Validation.memberShouldBeOnATeam(interaction, member);
-        await Validation.memberShouldBeCaptainOrFounder(interaction, member);
-        await Validation.teamShouldBeInChallenge(interaction, team, challenge, member);
-        await Validation.challengeShouldHaveDetails(interaction, challenge, member);
-        await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
-        await Validation.challengeShouldNotBeConfirmed(interaction, challenge, member);
-        await Validation.teamShouldNotBeHome(interaction, team, challenge, member);
-        await Validation.challengeShouldHaveTeamSize(interaction, challenge, member);
-        await Validation.mapNotPickedEarlierInSeries(interaction, option, challenge, member);
+            const team = await Validation.memberShouldBeOnATeam(interaction, member);
+            await Validation.memberShouldBeCaptainOrFounder(interaction, member);
+            await Validation.teamShouldBeInChallenge(interaction, team, challenge, member);
+            await Validation.challengeShouldHaveDetails(interaction, challenge, member);
+            await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
+            await Validation.challengeShouldNotBeConfirmed(interaction, challenge, member);
+            await Validation.teamShouldNotBeHome(interaction, team, challenge, member);
+            await Validation.challengeShouldHaveTeamSize(interaction, challenge, member);
+            await Validation.mapNotPickedEarlierInSeries(interaction, option, challenge, member);
 
-        try {
-            await challenge.pickMap(option);
-        } catch (err) {
+            try {
+                await challenge.pickMap(option);
+            } catch (err) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw err;
+            }
+
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
+                        description: `The map for this match has been set to **${challenge.details.map}**.`
                     })
                 ]
             });
-            throw err;
-        }
-
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `The map for this match has been set to **${challenge.details.map}**.`
-                })
-            ]
+            return true;
         });
-        return true;
     }
 }
 

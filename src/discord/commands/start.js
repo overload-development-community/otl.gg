@@ -1,8 +1,11 @@
 const Azure = require("../../azure"),
     Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
+    Semaphore = require("../../semaphore"),
     settings = require("../../../settings"),
-    Validation = require("../validation");
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //   ###    #                    #
 //  #   #   #                    #
@@ -63,38 +66,40 @@ class Start {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        await interaction.deferReply({ephemeral: false});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            await interaction.deferReply({ephemeral: false});
 
-        const checkServer = interaction.options.getString("server", true).toLowerCase();
+            const checkServer = interaction.options.getString("server", true).toLowerCase();
 
-        const server = await Validation.serverShouldExist(interaction, checkServer, user);
-        await Validation.serverShouldNotBeRunning(interaction, server, user);
+            const server = await Validation.serverShouldExist(interaction, checkServer, user);
+            await Validation.serverShouldNotBeRunning(interaction, server, user);
 
-        try {
-            await Azure.start(server);
-        } catch (err) {
+            try {
+                await Azure.start(server);
+            } catch (err) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${user}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw err;
+            }
+
+            Azure.setup(server, checkServer, interaction.channel);
+
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${user}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
+                        description: `${user}, the ${checkServer} server has been started at **${server.ipAddress}** (${server.host}) and should be available in a couple of minutes.  The server will automatically shut down when idle for 15 minutes.  Use the \`/extend ${checkServer}\` command to reset the idle shutdown timer and move notifications about this server to a new channel.`
                     })
                 ]
             });
-            throw err;
-        }
-
-        Azure.setup(server, checkServer, interaction.channel);
-
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${user}, the ${checkServer} server has been started at **${server.ipAddress}** (${server.host}) and should be available in a couple of minutes.  The server will automatically shut down when idle for 15 minutes.  Use the \`/extend ${checkServer}\` command to reset the idle shutdown timer and move notifications about this server to a new channel.`
-                })
-            ]
+            return true;
         });
-        return true;
     }
 }
 

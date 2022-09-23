@@ -1,6 +1,9 @@
 const Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //   ###                   #     #
 //    #                          #
@@ -76,42 +79,44 @@ class Invite {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        await interaction.deferReply({ephemeral: true});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            await interaction.deferReply({ephemeral: true});
 
-        const member = Discord.findGuildMemberById(user.id);
+            const member = Discord.findGuildMemberById(user.id);
 
-        await Validation.memberShouldBeCaptainOrFounder(interaction, member);
-        const team = await Validation.memberShouldBeOnATeam(interaction, member);
-        await Validation.teamShouldNotBeAtCapacity(interaction, team, member);
-        const pilot = await Validation.pilotShouldBeOnServer(interaction, member);
-        await Validation.pilotShouldNotBeCreatingTeam(interaction, pilot, member);
-        await Validation.pilotShouldNotBeOnATeam(interaction, pilot, member);
-        await Validation.pilotShouldNotBeInvitedToTeam(interaction, pilot, team, member);
+            await Validation.memberShouldBeCaptainOrFounder(interaction, member);
+            const team = await Validation.memberShouldBeOnATeam(interaction, member);
+            await Validation.teamShouldNotBeAtCapacity(interaction, team, member);
+            const pilot = await Validation.pilotShouldBeOnServer(interaction, member);
+            await Validation.pilotShouldNotBeCreatingTeam(interaction, pilot, member);
+            await Validation.pilotShouldNotBeOnATeam(interaction, pilot, member);
+            await Validation.pilotShouldNotBeInvitedToTeam(interaction, pilot, team, member);
 
-        try {
-            await team.invitePilot(member, pilot);
-        } catch (err) {
+            try {
+                await team.invitePilot(member, pilot);
+            } catch (err) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw err;
+            }
+
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
+                        description: `${member}, ${pilot} has been invited to your team.`,
+                        color: team.role.color
                     })
                 ]
             });
-            throw err;
-        }
-
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${member}, ${pilot} has been invited to your team.`,
-                    color: team.role.color
-                })
-            ]
+            return true;
         });
-        return true;
     }
 }
 

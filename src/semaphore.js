@@ -34,7 +34,7 @@ class Semaphore {
      */
     constructor(maxConcurrentRequests = 1) {
         /**
-         * @type {{resolve: (value: any) => void, reject: (reason?: any) => void, fnToCall: Function, args: any[]}[]}
+         * @type {{resolve: (value: any) => void, reject: (reason?: any) => void, fnToCall: function, args: any[]}[]}
          */
         this.currentRequests = [];
         this.runningRequests = 0;
@@ -50,9 +50,10 @@ class Semaphore {
     /**
      * Returns a Promise that will eventually return the result of the function passed in
      * Use this to limit the number of concurrent function executions
-     * @param {Function} fnToCall function that has a cap on the number of concurrent executions
+     * @template T The return type of fnToCall.
+     * @param {function(): T|Promise<T>} fnToCall function that has a cap on the number of concurrent executions
      * @param  {...any} args any arguments to be passed to fnToCall
-     * @returns {Promise<any>} Promise that will resolve with the resolved value as if the function passed in was directly called
+     * @returns {Promise<T>} Promise that will resolve with the resolved value as if the function passed in was directly called
      */
     callFunction(fnToCall, ...args) {
         return new Promise((resolve, reject) => {

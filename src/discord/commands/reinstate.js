@@ -7,7 +7,8 @@ const Discord = require("../../discord"),
     Semaphore = require("../../semaphore"),
     Validation = require("../validation"),
 
-    buttonSemaphore = new Semaphore(1);
+    buttonSemaphore = new Semaphore(1),
+    commandSemaphore = new Semaphore(1);
 
 //  ####            #                   #             #
 //  #   #                               #             #
@@ -85,73 +86,75 @@ class Reinstate {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        const response = await interaction.deferReply({ephemeral: true});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            const response = await interaction.deferReply({ephemeral: true});
 
-        const member = Discord.findGuildMemberById(user.id);
+            const member = Discord.findGuildMemberById(user.id);
 
-        const checkTeam = await Reinstate.validate(interaction, member);
+            const checkTeam = await Reinstate.validate(interaction, member);
 
-        const customId = `reinstate-${user.id}-${checkTeam.tag}-${Date.now()}`;
+            const customId = `reinstate-${user.id}-${checkTeam.tag}-${Date.now()}`;
 
-        const row = /** @type {DiscordJs.ActionRowBuilder<DiscordJs.ButtonBuilder>} */(new DiscordJs.ActionRowBuilder() // eslint-disable-line no-extra-parens
-            .addComponents(new DiscordJs.ButtonBuilder()
-                .setCustomId(customId)
-                .setLabel(`Yes, reinstate ${checkTeam.name}`)
-                .setStyle(DiscordJs.ButtonStyle.Danger)));
+            const row = /** @type {DiscordJs.ActionRowBuilder<DiscordJs.ButtonBuilder>} */(new DiscordJs.ActionRowBuilder() // eslint-disable-line no-extra-parens
+                .addComponents(new DiscordJs.ButtonBuilder()
+                    .setCustomId(customId)
+                    .setLabel(`Yes, reinstate ${checkTeam.name}`)
+                    .setStyle(DiscordJs.ButtonStyle.Danger)));
 
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${member}, are you sure you want to reinstate **${checkTeam.name}**?  You will become the team's founder.`,
-                    color: 0xffff00
-                })
-            ],
-            components: [row]
-        });
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `${member}, are you sure you want to reinstate **${checkTeam.name}**?  You will become the team's founder.`,
+                        color: 0xffff00
+                    })
+                ],
+                components: [row]
+            });
 
-        const collector = response.createMessageComponentCollector({time: 890000});
+            const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
+            collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            const team = await Reinstate.validate(interaction, member);
+                const team = await Reinstate.validate(interaction, member);
 
-            try {
-                await team.reinstate(member);
-            } catch (err) {
+                try {
+                    await team.reinstate(member);
+                } catch (err) {
+                    await interaction.editReply({components: []});
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
                 await interaction.editReply({components: []});
                 await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
+                            description: `Congratulations, ${member}!  Your team has been reinstated!  You may now visit ${team.teamChannel} for team chat, and ${team.captainsChannel} for private chat with your team captains as well as system notifications for your team.`
                         })
                     ]
                 });
-                collector.stop();
-                throw err;
-            }
 
-            await interaction.editReply({components: []});
-            await interaction.followUp({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `Congratulations, ${member}!  Your team has been reinstated!  You may now visit ${team.teamChannel} for team chat, and ${team.captainsChannel} for private chat with your team captains as well as system notifications for your team.`
-                    })
-                ]
+                collector.stop();
+            }));
+
+            collector.on("end", async () => {
+                await interaction.editReply({components: []});
             });
 
-            collector.stop();
-        }));
-
-        collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            return true;
         });
-
-        return true;
     }
 
     //             ##     #       #         #

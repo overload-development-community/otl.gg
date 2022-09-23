@@ -1,6 +1,9 @@
 const Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
-    Validation = require("../validation");
+    Semaphore = require("../../semaphore"),
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //    #        #      #   ###    #             #
 //   # #       #      #  #   #   #             #
@@ -86,87 +89,89 @@ class AddStat {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        const member = Discord.findGuildMemberById(user.id),
-            challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
-        if (!challenge) {
-            return false;
-        }
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            const member = Discord.findGuildMemberById(user.id),
+                challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
+            if (!challenge) {
+                return false;
+            }
 
-        await interaction.deferReply({ephemeral: false});
+            await interaction.deferReply({ephemeral: false});
 
-        const pilot = interaction.options.getUser("pilot", true),
-            checkTeam = interaction.options.getString("team", true),
-            kills = interaction.options.getNumber("kills", true),
-            assists = interaction.options.getNumber("assists", true),
-            deaths = interaction.options.getNumber("deaths", true),
-            captures = interaction.options.getNumber("captures", false),
-            pickups = interaction.options.getNumber("pickups", false),
-            carrierKills = interaction.options.getNumber("carrierKills", false),
-            returns = interaction.options.getNumber("returns", false);
+            const pilot = interaction.options.getUser("pilot", true),
+                checkTeam = interaction.options.getString("team", true),
+                kills = interaction.options.getNumber("kills", true),
+                assists = interaction.options.getNumber("assists", true),
+                deaths = interaction.options.getNumber("deaths", true),
+                captures = interaction.options.getNumber("captures", false),
+                pickups = interaction.options.getNumber("pickups", false),
+                carrierKills = interaction.options.getNumber("carrierKills", false),
+                returns = interaction.options.getNumber("returns", false);
 
-        await Validation.memberShouldBeOwner(interaction, member);
-        await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
-        await Validation.challengeShouldBeConfirmed(interaction, challenge, member);
-        const team = await Validation.teamShouldExist(interaction, checkTeam, member);
-        await Validation.pilotShouldBeAuthorized(interaction, pilot, challenge, member);
-        await Validation.teamShouldBeInChallenge(interaction, team, challenge, member);
-        await Validation.teamShouldNeedMoreStats(interaction, team, challenge, pilot, member);
+            await Validation.memberShouldBeOwner(interaction, member);
+            await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
+            await Validation.challengeShouldBeConfirmed(interaction, challenge, member);
+            const team = await Validation.teamShouldExist(interaction, checkTeam, member);
+            await Validation.pilotShouldBeAuthorized(interaction, pilot, challenge, member);
+            await Validation.teamShouldBeInChallenge(interaction, team, challenge, member);
+            await Validation.teamShouldNeedMoreStats(interaction, team, challenge, pilot, member);
 
-        switch (challenge.details.gameType) {
-            case "TA":
-                try {
-                    await challenge.addStatTA(team, pilot, kills, assists, deaths);
-                } catch (err) {
+            switch (challenge.details.gameType) {
+                case "TA":
+                    try {
+                        await challenge.addStatTA(team, pilot, kills, assists, deaths);
+                    } catch (err) {
+                        await interaction.editReply({
+                            embeds: [
+                                Discord.embedBuilder({
+                                    description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                    color: 0xff0000
+                                })
+                            ]
+                        });
+                        throw err;
+                    }
+
                     await interaction.editReply({
                         embeds: [
                             Discord.embedBuilder({
-                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                                color: 0xff0000
+                                description: `Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`
                             })
                         ]
                     });
-                    throw err;
-                }
 
-                await interaction.editReply({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `Added stats for ${pilot}: ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`
-                        })
-                    ]
-                });
+                    break;
+                case "CTF":
+                    await Validation.statsShouldIncludeCTFStats(interaction, captures, pickups, carrierKills, returns, member);
 
-                break;
-            case "CTF":
-                await Validation.statsShouldIncludeCTFStats(interaction, captures, pickups, carrierKills, returns, member);
+                    try {
+                        await challenge.addStatCTF(team, pilot, captures, pickups, carrierKills, returns, kills, assists, deaths);
+                    } catch (err) {
+                        await interaction.editReply({
+                            embeds: [
+                                Discord.embedBuilder({
+                                    description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                    color: 0xff0000
+                                })
+                            ]
+                        });
+                        throw err;
+                    }
 
-                try {
-                    await challenge.addStatCTF(team, pilot, captures, pickups, carrierKills, returns, kills, assists, deaths);
-                } catch (err) {
                     await interaction.editReply({
                         embeds: [
                             Discord.embedBuilder({
-                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                                color: 0xff0000
+                                description: `Added stats for ${pilot}: ${captures} C/${pickups} P, ${carrierKills} CK, ${returns} R, ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`
                             })
                         ]
                     });
-                    throw err;
-                }
 
-                await interaction.editReply({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `Added stats for ${pilot}: ${captures} C/${pickups} P, ${carrierKills} CK, ${returns} R, ${((kills + assists) / Math.max(deaths, 1)).toFixed(3)} KDA (${kills} K, ${assists} A, ${deaths} D)`
-                        })
-                    ]
-                });
+                    break;
+            }
 
-                break;
-        }
-
-        return true;
+            return true;
+        });
     }
 }
 

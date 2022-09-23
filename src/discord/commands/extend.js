@@ -1,8 +1,11 @@
 const Azure = require("../../azure"),
     Discord = require("../../discord"),
     DiscordJs = require("discord.js"),
+    Semaphore = require("../../semaphore"),
     settings = require("../../../settings"),
-    Validation = require("../validation");
+    Validation = require("../validation"),
+
+    commandSemaphore = new Semaphore(1);
 
 //  #####          #                       #
 //  #              #                       #
@@ -63,24 +66,26 @@ class Extend {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static async handle(interaction, user) {
-        await interaction.deferReply({ephemeral: false});
+    static handle(interaction, user) {
+        return commandSemaphore.callFunction(async () => {
+            await interaction.deferReply({ephemeral: false});
 
-        const checkServer = interaction.options.getString("server", true).toLowerCase();
+            const checkServer = interaction.options.getString("server", true).toLowerCase();
 
-        const server = await Validation.serverShouldExist(interaction, checkServer, user);
-        await Validation.serverShouldBeRunning(interaction, server, user);
+            const server = await Validation.serverShouldExist(interaction, checkServer, user);
+            await Validation.serverShouldBeRunning(interaction, server, user);
 
-        Azure.setup(server, checkServer, interaction.channel);
+            Azure.setup(server, checkServer, interaction.channel);
 
-        await interaction.editReply({
-            embeds: [
-                Discord.embedBuilder({
-                    description: `${user}, the ${checkServer} server has been extended at **${server.ipAddress}** (${server.host}).  The server will automatically shut down when idle for 15 minutes.`
-                })
-            ]
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `${user}, the ${checkServer} server has been extended at **${server.ipAddress}** (${server.host}).  The server will automatically shut down when idle for 15 minutes.`
+                    })
+                ]
+            });
+            return true;
         });
-        return true;
     }
 }
 
