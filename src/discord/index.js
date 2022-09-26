@@ -688,7 +688,7 @@ class Discord {
      * @param {DiscordJs.GuildChannelTypes} type The type of channel to create.
      * @param {DiscordJs.OverwriteResolvable[]|DiscordJs.Collection<DiscordJs.Snowflake, DiscordJs.OverwriteResolvable>} [overwrites] The permissions that should overwrite the default permission set.
      * @param {string} [reason] The reason the channel is being created.
-     * @returns {Promise<DiscordJs.TextChannel | DiscordJs.NewsChannel | DiscordJs.VoiceChannel | DiscordJs.CategoryChannel | DiscordJs.StageChannel>} The created channel.
+     * @returns {Promise<DiscordJs.TextChannel | DiscordJs.NewsChannel | DiscordJs.VoiceChannel | DiscordJs.CategoryChannel | DiscordJs.StageChannel | DiscordJs.ForumChannel>} The created channel.
      */
     static createChannel(name, type, overwrites, reason) {
         if (!otlGuild) {
