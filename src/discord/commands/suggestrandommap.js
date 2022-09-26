@@ -66,6 +66,15 @@ class SuggestRandomMap {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
@@ -109,18 +118,27 @@ class SuggestRandomMap {
                     return;
                 }
 
+                await buttonInteraction.deferUpdate();
+
                 const buttonUser = buttonInteraction.user,
                     buttonMember = Discord.findGuildMemberById(buttonUser.id);
-                await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
-                const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
-                await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
-                await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
-                const map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, checkMap, buttonMember);
-                await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the randomly suggested map.", true);
+
+                let team, map;
+                try {
+                    await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                    team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
+                    await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
+                    await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
+                    map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, checkMap, buttonMember);
+                    await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the randomly suggested map.", true);
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 try {
                     await challenge.setMap(map.map);
@@ -152,7 +170,9 @@ class SuggestRandomMap {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;

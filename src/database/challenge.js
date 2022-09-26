@@ -24,6 +24,7 @@
  * @typedef {import("../../types/challengeDbTypes").PlayerRecordsets} ChallengeDbTypes.PlayerRecordsets
  * @typedef {import("../../types/challengeDbTypes").ReportRecordsets} ChallengeDbTypes.ReportRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetConfirmedRecordsets} ChallengeDbTypes.SetConfirmedRecordsets
+ * @typedef {import("../../types/challengeDbTypes").SetGameTypeRecordsets} ChallengeDbTypes.SetGameTypeRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetHomeMapTeamRecordsets} ChallengeDbTypes.SetHomeMapTeamRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetScoreRecordsets} ChallengeDbTypes.SetScoreRecordsets
  * @typedef {import("../../types/challengeDbTypes").SetTeamSizeRecordsets} ChallengeDbTypes.SetTeamSizeRecordsets
@@ -1697,8 +1698,15 @@ class ChallengeDb {
      * @returns {Promise} A promise that resolves when the game type has been set.
      */
     static async setGameType(challenge, gameType) {
-        await db.query(/* sql */`
+        /** @type {ChallengeDbTypes.SetGameTypeRecordsets} */
+        const data = await db.query(/* sql */`
             UPDATE tblChallenge SET GameType = @gameType, Map = NULL WHERE ChallengeId = @challengeId
+
+            SELECT ch.Map
+            FROM tblChallengeHome ch
+            INNER JOIN tblChallenge c ON ch.ChallengeId = c.ChallengeId AND ch.GameType = CASE WHEN c.GameType = 'CTF' THEN 'CTF' WHEN c.TeamSize = 2 THEN '2v2' WHEN c.TeamSize = 3 THEN '3v3' WHEN c.TeamSize >= 4 THEN '4v4+' ELSE '' END
+            WHERE ch.ChallengeId = @challengeId
+            ORDER BY ch.Map
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             gameType: {type: Db.VARCHAR(5), value: gameType}
@@ -1707,6 +1715,8 @@ class ChallengeDb {
         if (!settings.disableRedis) {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
         }
+
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.Map) || [];
     }
 
     //               #    #  #                    #  #              ###
@@ -2001,7 +2011,7 @@ class ChallengeDb {
      * Sets a team size for a challenge.
      * @param {Challenge} challenge The challenge.
      * @param {number} size The team size.
-     * @returns {Promise} A promise that resolves when the team size has been set.
+     * @returns {Promise<string[]>} A promise that returns the new home maps.
      */
     static async setTeamSize(challenge, size) {
         /** @type {ChallengeDbTypes.SetTeamSizeRecordsets} */

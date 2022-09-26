@@ -60,8 +60,6 @@ class AddMapping {
             name = interaction.options.getString("name", true),
             pilot = interaction.options.getUser("pilot", true);
 
-        await interaction.deferReply({ephemeral: false});
-
         await Validation.memberShouldBeOwner(interaction, member);
 
         try {
@@ -81,7 +79,7 @@ class AddMapping {
         await interaction.editReply({
             embeds: [
                 Discord.embedBuilder({
-                    description: `${member}, **${name} has been mapped to ${pilot}.`
+                    description: `${member}, **${name}** has been mapped to ${pilot}.`
                 })
             ]
         });

@@ -45,13 +45,21 @@ class Uncast {
         const member = Discord.findGuildMemberById(user.id),
             challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
         if (!challenge) {
+            await interaction.reply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but this command can only be used in a challenge room.`,
+                        color: 0xff0000
+                    })
+                ],
+                ephemeral: true
+            });
             return false;
         }
 
         await interaction.deferReply({ephemeral: true});
 
         await Validation.challengeShouldHaveDetails(interaction, challenge, member);
-        await Validation.challengeShouldNotHaveCaster(interaction, challenge, member);
         await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
         await Validation.challengeShouldHaveCaster(interaction, challenge, member);
         await Validation.memberShouldBeCaster(interaction, challenge, member);
@@ -70,23 +78,13 @@ class Uncast {
             throw err;
         }
 
-        if (challenge.channel) {
-            await interaction.editReply({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `${member}, you are no longer scheduled to cast this match, and have been removed from ${challenge.channel}.`
-                    })
-                ]
-            });
-        } else {
-            await interaction.editReply({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `${member}, you are no longer scheduled to cast this match.`
-                    })
-                ]
-            });
-        }
+        await interaction.editReply({
+            embeds: [
+                Discord.embedBuilder({
+                    description: `${member}, you are no longer scheduled to cast this match.`
+                })
+            ]
+        });
 
         return true;
     }

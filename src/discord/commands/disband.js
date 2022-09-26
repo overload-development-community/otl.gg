@@ -28,10 +28,10 @@ class Disband {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "team";
     }
 
     // #            #    ##       #
@@ -111,7 +111,15 @@ class Disband {
                 return;
             }
 
-            const team = await Disband.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let team;
+            try {
+                team = await Disband.validate(interaction, member);
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             try {
                 await team.disband(member);
@@ -140,7 +148,9 @@ class Disband {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

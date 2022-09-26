@@ -48,13 +48,6 @@ setTimeout(() => {
     Discord = require("../discord");
 }, 0);
 
-/** @type {typeof import("../discord/validation")} */
-let Validation;
-
-setTimeout(() => {
-    Validation = require("../discord/validation");
-}, 0);
-
 //   ###   #              ##     ##
 //  #   #  #               #      #
 //  #      # ##    ###     #      #     ###   # ##    ## #   ###
@@ -734,7 +727,7 @@ class Challenge {
 
             // Add damage stats.
             await Db.setDamage(this, game.damage.filter((stat) => playerTeam[stat.attacker] && playerTeam[stat.defender]).map((stat) => {
-                stat.attacker = stat.attacker || stat.defender;
+                stat.attacker ||= stat.defender;
 
                 return {
                     team: playerTeam[stat.attacker].team,
@@ -987,6 +980,12 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a database error clearing the stats for a challenge.", err);
         }
+
+        try {
+            await this.updatePinnedPost();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error setting the time for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //       ##                      ###    #
@@ -1052,7 +1051,7 @@ class Challenge {
         this.setNotifyClockExpired(dates.clockDeadline);
 
         try {
-            await Discord.queue(`**${team.name}** has put ${this.channel} on the clock.  The clock deadline is <t:${Math.floor(this.details.dateClockDeadline.getTime() / 1000)}:F>.`, this.channel);
+            await Discord.queue(`**${team.name}** has put ${this.channel} on the clock.  The clock deadline is <t:${Math.floor(this.details.dateClockDeadline.getTime() / 1000)}:F>.`, Discord.alertsChannel);
 
             await this.updatePinnedPost();
         } catch (err) {
@@ -1764,6 +1763,12 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a database error removing a stat from a challenge.", err);
         }
+
+        try {
+            await this.updatePinnedPost();
+        } catch (err) {
+            throw new Exception("There was a critical Discord error removing a pilot as a streamer for a challenge.  Please resolve this manually as soon as possible.", err);
+        }
     }
 
     //                                      ##    #                                        ####                     ##   #           ##    ##
@@ -2197,19 +2202,14 @@ class Challenge {
     /**
      * Sets the team size.
      * @param {number} size The team size.
-     * @returns {Promise} A promise that resolves when the team size has been set.
+     * @returns {Promise<string[]>} A promise that returns the new home maps.
      */
     async setTeamSize(size) {
         if (!this.details) {
             await this.loadDetails();
         }
 
-        let homes = await this.getHomeMaps(Challenge.getGameTypeForHomes(this.details.gameType, size));
-        if (!homes || homes.length < Validation.MAXIMUM_MAPS_PER_GAME_TYPE) {
-            Discord.queue(`${this.details.homeMapTeam.name} does not have enough home maps set up for this team size.`, this.channel);
-            return;
-        }
-
+        let homes;
         try {
             homes = await Db.setTeamSize(this, size);
         } catch (err) {
@@ -2223,6 +2223,8 @@ class Challenge {
         } catch (err) {
             throw new Exception("There was a critical Discord error setting the team size for a challenge.  Please resolve this manually as soon as possible.", err);
         }
+
+        return homes;
     }
 
     //               #    ###    #
@@ -2576,10 +2578,12 @@ class Challenge {
             checklist.push(`- Use \`/rematch\` to start a new ${this.details.teamSize}v${this.details.teamSize} ${Challenge.getGameTypeName(this.details.gameType)} game between the same teams.`);
         }
 
-        embed.addFields({
-            name: "Match Checklist:",
-            value: checklist.join("\n")
-        });
+        if (checklist.length > 0) {
+            embed.addFields({
+                name: "Match Checklist:",
+                value: checklist.join("\n")
+            });
+        }
 
         const parameters = [];
         const eventParameters = [];

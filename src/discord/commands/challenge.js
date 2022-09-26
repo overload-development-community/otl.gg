@@ -27,10 +27,10 @@ class Challenge {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "challenge";
     }
 
     // #            #    ##       #

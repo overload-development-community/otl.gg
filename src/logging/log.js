@@ -40,6 +40,10 @@ class Log {
      * @returns {void}
      */
     static log(message) {
+        if (settings.testing) {
+            console.log(message);
+            return;
+        }
         queue.push({
             type: "log",
             date: new Date(),
@@ -61,6 +65,10 @@ class Log {
      * @returns {void}
      */
     static warning(message) {
+        if (settings.testing) {
+            console.log(`Warning: ${message}`);
+            return;
+        }
         queue.push({
             type: "warning",
             date: new Date(),
@@ -83,6 +91,11 @@ class Log {
      * @returns {void}
      */
     static exception(message, obj) {
+        if (settings.testing) {
+            console.log(`Error: ${message}`);
+            console.log(util.inspect(obj));
+            return;
+        }
         queue.push({
             type: "exception",
             date: new Date(),

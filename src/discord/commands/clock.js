@@ -1,5 +1,6 @@
 /**
  * @typedef {import("../../models/challenge")} Challenge
+ * @typedef {import("../../models/team")} Team
  */
 
 const Discord = require("../../discord"),
@@ -21,20 +22,6 @@ const Discord = require("../../discord"),
  * A command to put a challenge on the clock.
  */
 class Clock {
-    //         #                ##           #
-    //                           #           #
-    //  ###   ##    # #   #  #   #     ###  ###    ##
-    // ##      #    ####  #  #   #    #  #   #    # ##
-    //   ##    #    #  #  #  #   #    # ##   #    ##
-    // ###    ###   #  #   ###  ###    # #    ##   ##
-    /**
-     * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
-     */
-    static get simulate() {
-        return true;
-    }
-
     // #            #    ##       #
     // #                  #       #
     // ###   #  #  ##     #     ###   ##   ###
@@ -85,6 +72,15 @@ class Clock {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
@@ -117,7 +113,15 @@ class Clock {
                     return;
                 }
 
-                const team = await Clock.validate(interaction, challenge, member);
+                await buttonInteraction.deferUpdate();
+
+                let team;
+                try {
+                    team = await Clock.validate(interaction, challenge, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 try {
                     await challenge.clock(team);
@@ -150,7 +154,9 @@ class Clock {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;
@@ -168,7 +174,7 @@ class Clock {
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
      * @param {Challenge} challenge The challenge.
      * @param {DiscordJs.GuildMember} member The guild member initiating the interaction.
-     * @returns {Promise} A promise that returns when validation completes.
+     * @returns {Promise<Team>} A promise that returns when validation completes.
      */
     static async validate(interaction, challenge, member) {
         await Validation.memberShouldBeCaptainOrFounder(interaction, member);
@@ -182,6 +188,8 @@ class Clock {
         await Validation.challengeShouldNotBeLocked(interaction, challenge, member);
         await Validation.teamShouldNotHaveRecentlyClocked(interaction, team, member);
         await Validation.teamsShouldNotHaveTooManyClockedChallenges(interaction, challenge, member);
+
+        return team;
     }
 }
 

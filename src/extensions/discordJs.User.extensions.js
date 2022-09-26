@@ -24,7 +24,7 @@ DiscordJs.User.prototype.getStats = async function() {
 //  #    ##     ####  #  #   #    #  #  #  #  #  #   #      #   # ##  #  #
 //  #      ##   #  #  #  #   #    #  #  #  #  #      #     #    ##    #  #
 // ###   ###    #  #   ###    ##  #  #   ##   #     ###   ####   ##    ###
-DiscordJs.GuildMember.prototype.isAuthorized = async function() {
+DiscordJs.User.prototype.isAuthorized = async function() {
     try {
         return await Db.isAuthorized(this);
     } catch (err) {

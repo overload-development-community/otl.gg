@@ -29,10 +29,10 @@ class Reinstate {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "team";
     }
 
     // #            #    ##       #
@@ -119,7 +119,15 @@ class Reinstate {
                     return;
                 }
 
-                const team = await Reinstate.validate(interaction, member);
+                await buttonInteraction.deferUpdate();
+
+                let team;
+                try {
+                    team = await Reinstate.validate(interaction, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 try {
                     await team.reinstate(member);
@@ -150,7 +158,9 @@ class Reinstate {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;

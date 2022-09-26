@@ -28,10 +28,10 @@ class Cancel {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "newteam";
     }
 
     // #            #    ##       #
@@ -111,7 +111,15 @@ class Cancel {
                 return;
             }
 
-            const newTeam = await Cancel.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let newTeam;
+            try {
+                newTeam = await Cancel.validate(interaction, member);
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             try {
                 await newTeam.delete(`${member.displayName} cancelled team creation.`);
@@ -141,7 +149,9 @@ class Cancel {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

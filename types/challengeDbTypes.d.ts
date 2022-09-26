@@ -326,6 +326,14 @@ declare namespace ChallengeDbTypes {
         ]
     }
 
+    type SetGameTypeRecordsets = {
+        recordsets: [
+            {
+                Map: string
+            }[]
+        ]
+    }
+
     type SetHomeMapTeamRecordsets = {
         recordsets: [
             {

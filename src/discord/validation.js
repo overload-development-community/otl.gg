@@ -11,6 +11,8 @@
 
 const Challenge = require("../models/challenge"),
     Discord = require("../discord"),
+    Exception = require("../logging/exception"),
+    Log = require("../logging/log"),
     Map = require("../models/map"),
     tc = require("timezonecomplete"),
     settings = require("../../settings"),
@@ -871,11 +873,21 @@ class Validation {
         try {
             boxScore = await challenge.addStats(+gameId, requireConfirmation, timestamp);
         } catch (err) {
-            if (err.constructor.name === "Error") {
+            if (!requireConfirmation) {
                 await interaction.editReply({
                     embeds: [
                         Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a problem with adding this match using the tracker URL.  You can still report the score of this match using \`/reportscore\` followed by the score using a space to separate the scores, for example \`/reportscore 49 27\`.`,
+                            description: `Sorry, ${member}, but there was a problem with adding stats to this match.  ${err.message}.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+                throw new Warning(err.message);
+            } else if (err.constructor.name === "Error") {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a problem with reporting this match using the tracker URL.  You can still report the score of this match using \`/reportscore\` followed by the score using a space to separate the scores, for example \`/reportscore 49 27\`.`,
                             color: 0xff0000
                         })
                     ]
@@ -1030,6 +1042,29 @@ class Validation {
                 ]
             });
             throw err;
+        }
+    }
+
+    // ##                ###          #     #                ####
+    //  #                #  #         #     #                #
+    //  #     ##    ###  ###   #  #  ###   ###    ##   ###   ###   ###   ###    ##   ###
+    //  #    #  #  #  #  #  #  #  #   #     #    #  #  #  #  #     #  #  #  #  #  #  #  #
+    //  #    #  #   ##   #  #  #  #   #     #    #  #  #  #  #     #     #     #  #  #
+    // ###    ##   #     ###    ###    ##    ##   ##   #  #  ####  #     #      ##   #
+    //              ###
+    /**
+     * Logs a button error.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {Error} err The error.
+     * @returns {void}
+     */
+    static logButtonError(interaction, err) {
+        if (err instanceof Warning) {
+            Log.warning(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response - ${err.message || err}`);
+        } else if (err instanceof Exception) {
+            Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response - ${err.message}`, err.innerError);
+        } else {
+            Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response`, err);
         }
     }
 
@@ -1955,6 +1990,10 @@ class Validation {
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
     static async pilotShouldBeAuthorized(interaction, pilot, challenge, member) {
+        if (!challenge.details.postseason && !challenge.details.restricted) {
+            return;
+        }
+
         let authorized;
         try {
             authorized = await pilot.isAuthorized();
@@ -2442,7 +2481,7 @@ class Validation {
 
         let map;
         try {
-            map = challenge.getRandomMap(popularity, popularity ? amount : void 0);
+            map = await challenge.getRandomMap(popularity, popularity ? amount : void 0);
         } catch (err) {
             await interaction.editReply({
                 embeds: [
@@ -2455,7 +2494,7 @@ class Validation {
             throw err;
         }
 
-        if (!this.mapNotPickedEarlierInSeries) {
+        if (!map) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
@@ -3491,7 +3530,7 @@ class Validation {
     static async teamsShouldBeDifferent(interaction, team, opponent, member, message, followUp) {
         const fx = followUp ? interaction.followUp : interaction.editReply;
         if (team.id === opponent.id) {
-            await fx({
+            await fx.call(interaction, {
                 embeds: [
                     Discord.embedBuilder({
                         description: `Sorry, ${member}, ${message}`,

@@ -30,10 +30,10 @@ class Complete {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "newteam";
     }
 
     // #            #    ##       #
@@ -125,7 +125,15 @@ class Complete {
                 return;
             }
 
-            const newTeam = await Complete.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let newTeam;
+            try {
+                newTeam = await Complete.validate(interaction, member);
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             let team;
             try {
@@ -155,7 +163,9 @@ class Complete {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

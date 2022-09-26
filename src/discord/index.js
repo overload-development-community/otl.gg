@@ -330,13 +330,11 @@ class Discord {
             otlGuild = discord.guilds.cache.find((g) => g.name === settings.guild);
 
             const files = await fs.readdir(path.join(__dirname, "commands")),
-                simulate = new DiscordJs.SlashCommandBuilder(),
                 guildCommands = [],
                 globalCommands = [];
 
-            simulate
-                .setName("simulate")
-                .setDescription("Simulates a command from another user.");
+            /** @type {{[x: string]: (function(DiscordJs.SlashCommandSubcommandBuilder): DiscordJs.SlashCommandSubcommandBuilder)[]}} */
+            const simulateCommands = {};
 
             for (const file of files) {
                 const commandFile = require(`./commands/${file}`);
@@ -349,7 +347,10 @@ class Discord {
                 } else {
                     guildCommands.push(command);
                     if (commandFile.simulate) {
-                        simulate.addSubcommand((subcommand) => {
+                        if (!simulateCommands[commandFile.simulate]) {
+                            simulateCommands[commandFile.simulate] = [];
+                        }
+                        simulateCommands[commandFile.simulate].push((subcommand) => {
                             subcommand
                                 .addUserOption((option) => option
                                     .setName("from")
@@ -362,9 +363,20 @@ class Discord {
                 }
             }
 
-            simulate.setDefaultMemberPermissions(0);
+            for (const group of Object.keys(simulateCommands)) {
+                const simulate = new DiscordJs.SlashCommandBuilder();
+                simulate
+                    .setName(`simulate${group}`)
+                    .setDescription(`Simulates a ${group} command from another user.`)
+                    .setDefaultMemberPermissions(0);
 
-            guildCommands.push(simulate);
+                for (const subcommand of simulateCommands[group]) {
+                    simulate.addSubcommand(subcommand);
+                }
+
+                guildCommands.push(simulate);
+            }
+
 
             try {
                 const rest = new Rest.REST().setToken(settings.discord.token);
@@ -432,7 +444,7 @@ class Discord {
             let success = false;
 
             try {
-                if (interaction.commandName === "simulate") {
+                if (interaction.commandName.startsWith("simulate")) {
                     const module = require(`../discord/commands/${interaction.options.getSubcommand(true).toLowerCase()}`);
 
                     if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {

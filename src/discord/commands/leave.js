@@ -28,10 +28,10 @@ class Leave {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "player";
     }
 
     // #            #    ##       #
@@ -111,7 +111,15 @@ class Leave {
                 return;
             }
 
-            const team = await Leave.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let team;
+            try {
+                team = await Leave.validate(interaction, member);
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             try {
                 await team.pilotLeft(member);
@@ -146,7 +154,9 @@ class Leave {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

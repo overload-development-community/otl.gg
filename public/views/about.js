@@ -114,7 +114,7 @@ class AboutView {
                     <div class="example">/cast 1</div>
 
                     <div class="command">/uncast</div>
-                    <div>You must use this command in a challenge room you are casting a match for.  Indicates that you no longer wish to cast a scheduled match.</div>
+                    <div>You must use this command in a challenge channel you are casting a match for.  Indicates that you no longer wish to cast a scheduled match.</div>
                     <div class="example">/uncast</div>
 
                     <div class="command">/vod &lt;challengeId> &lt;url></div>
@@ -220,7 +220,7 @@ class AboutView {
                     <div class="section">Challenges (Only allowed in challenge channels)</div>
 
                     <div class="command">/convert (&lt;date and time&gt;|<wbr />now)</div>
-                    <div>Converts a date and time to everyone's time zone in the challenge room.  If you omit the date or year, it will use what the date or year will be the next time it is the entered time.  Uses your personal time zone.</div>
+                    <div>Converts a date and time to everyone's time zone in the challenge channel.  If you omit the date or year, it will use what the date or year will be the next time it is the entered time.  Uses your personal time zone.</div>
                     <div class="example">/convert 3/14 3:00 PM<br />/convert Mar 14 15:00<br />/convert 3:00 PM<br />/convert now</div>
 
                     <div class="command">/matchtime</div>
@@ -276,7 +276,7 @@ class AboutView {
                     <div class="example">/reportscore 62 39<br />/reportscore 45 78<br />/reportscore 63 63</div>
 
                     <div class="command">/rematch</div>
-                    <div>Founder or Captain only.  Requests a rematch.  Both teams must enter this command.  Once that happens, this will create a new challenge room with normal parameters, except the team size will remain the same as the previous match and the match time will be set to start immediately.</div>
+                    <div>Founder or Captain only.  Requests a rematch.  Both teams must enter this command.  Once that happens, this will create a new challenge channel with normal parameters, except the team size will remain the same as the previous match and the match time will be set to start immediately.</div>
                     <div class="example">/rematch</div>
                 </div>
             </div>

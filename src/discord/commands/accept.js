@@ -30,10 +30,10 @@ class Accept {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "invitation";
     }
 
     // #            #    ##       #
@@ -119,7 +119,15 @@ class Accept {
                 return;
             }
 
-            const team = await Accept.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let team;
+            try {
+                team = await Accept.validate(interaction, member);
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             let requestedTeams;
             try {
@@ -172,7 +180,9 @@ class Accept {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

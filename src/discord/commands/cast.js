@@ -59,9 +59,9 @@ class Cast {
             const twitchName = await Validation.memberShouldHaveTwitchName(interaction, member),
                 challenge = await Validation.challengeIdShouldExist(interaction, challengeId, member);
             await Validation.challengeShouldHaveDetails(interaction, challenge, member);
-            await Validation.challengeShouldNotHaveCaster(interaction, challenge, member);
-            await Validation.challengeShouldBeScheduled(interaction, challenge, member);
             await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
+            await Validation.challengeShouldBeScheduled(interaction, challenge, member);
+            await Validation.challengeShouldNotHaveCaster(interaction, challenge, member);
 
             try {
                 await challenge.setCaster(member);

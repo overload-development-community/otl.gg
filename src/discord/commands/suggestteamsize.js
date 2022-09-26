@@ -27,10 +27,10 @@ class SuggestTeamSize {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "challenge";
     }
 
     // #            #    ##       #
@@ -96,6 +96,15 @@ class SuggestTeamSize {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
@@ -136,15 +145,24 @@ class SuggestTeamSize {
                     return;
                 }
 
+                await buttonInteraction.deferUpdate();
+
                 const buttonUser = buttonInteraction.user,
                     buttonMember = Discord.findGuildMemberById(buttonUser.id);
-                await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
-                const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
-                await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
-                await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
-                await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested team size.", true);
+
+                let team;
+                try {
+                    await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                    team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
+                    await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
+                    await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
+                    await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested team size.", true);
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 let homes;
                 try {
@@ -177,7 +195,9 @@ class SuggestTeamSize {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;

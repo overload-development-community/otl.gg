@@ -26,10 +26,10 @@ class PickMap {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "challenge";
     }
 
     // #            #    ##       #
@@ -93,6 +93,15 @@ class PickMap {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 

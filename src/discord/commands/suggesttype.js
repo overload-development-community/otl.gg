@@ -28,10 +28,10 @@ class SuggestType {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "challenge";
     }
 
     // #            #    ##       #
@@ -92,6 +92,15 @@ class SuggestType {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
@@ -114,7 +123,7 @@ class SuggestType {
             const row = /** @type {DiscordJs.ActionRowBuilder<DiscordJs.ButtonBuilder>} */(new DiscordJs.ActionRowBuilder() // eslint-disable-line no-extra-parens
                 .addComponents(new DiscordJs.ButtonBuilder()
                     .setCustomId(customId)
-                    .setLabel(`${otherTeam}, confirm the game type ${Challenge.getGameTypeName(type)}`)
+                    .setLabel(`${otherTeam.name}, confirm the game type ${Challenge.getGameTypeName(type)}`)
                     .setStyle(DiscordJs.ButtonStyle.Primary)));
 
             await interaction.editReply({
@@ -134,17 +143,26 @@ class SuggestType {
                     return;
                 }
 
+                await buttonInteraction.deferUpdate();
+
                 const buttonUser = buttonInteraction.user,
                     buttonMember = Discord.findGuildMemberById(buttonUser.id);
-                await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
-                const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
-                await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
-                await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
-                await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
-                await Validation.challengeHomesShouldHaveEnoughMaps(interaction, challenge, type, buttonMember);
-                await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested game type.", true);
+
+                let team;
+                try {
+                    await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                    team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
+                    await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
+                    await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
+                    await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
+                    await Validation.challengeHomesShouldHaveEnoughMaps(interaction, challenge, type, buttonMember);
+                    await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested game type.", true);
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 let homes;
                 try {
@@ -183,7 +201,9 @@ class SuggestType {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;

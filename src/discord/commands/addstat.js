@@ -94,6 +94,15 @@ class AddStat {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
@@ -110,6 +119,7 @@ class AddStat {
                 returns = interaction.options.getNumber("returns", false);
 
             await Validation.memberShouldBeOwner(interaction, member);
+            await Validation.challengeShouldHaveDetails(interaction, challenge, member);
             await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
             await Validation.challengeShouldBeConfirmed(interaction, challenge, member);
             const team = await Validation.teamShouldExist(interaction, checkTeam, member);

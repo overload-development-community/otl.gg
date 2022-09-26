@@ -71,7 +71,6 @@ class MatchTime {
 
         await Validation.challengeShouldHaveDetails(interaction, challenge, member);
         await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
-        await Validation.challengeShouldNotBeConfirmed(interaction, challenge, member);
 
         if (challenge.details.matchTime) {
             if (challengeId) {

@@ -14,20 +14,6 @@ const Challenge = require("../../models/challenge"),
  * A command to retrieve a team's neutral maps.
  */
 class Neutrals {
-    //         #                ##           #
-    //                           #           #
-    //  ###   ##    # #   #  #   #     ###  ###    ##
-    // ##      #    ####  #  #   #    #  #   #    # ##
-    //   ##    #    #  #  #  #   #    # ##   #    ##
-    // ###    ###   #  #   ###  ###    # #    ##   ##
-    /**
-     * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
-     */
-    static get simulate() {
-        return true;
-    }
-
     // #            #    ##       #
     // #                  #       #
     // ###   #  #  ##     #     ###   ##   ###

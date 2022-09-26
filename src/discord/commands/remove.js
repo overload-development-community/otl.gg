@@ -29,10 +29,10 @@ class Remove {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "roster";
     }
 
     // #            #    ##       #
@@ -117,7 +117,15 @@ class Remove {
                     return;
                 }
 
-                const {team, pilot} = await Remove.validate(interaction, member);
+                await buttonInteraction.deferUpdate();
+
+                let team, pilot;
+                try {
+                    ({team, pilot} = await Remove.validate(interaction, member));
+                } catch (err) {
+                    Validation.logButtonError(interaction, err);
+                    return;
+                }
 
                 try {
                     await team.removePilot(member, pilot);
@@ -149,7 +157,9 @@ class Remove {
             }));
 
             collector.on("end", async () => {
-                await interaction.editReply({components: []});
+                try {
+                    await interaction.editReply({components: []});
+                } catch {}
             });
 
             return true;

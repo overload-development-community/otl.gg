@@ -28,10 +28,10 @@ class MakeFounder {
     // ###    ###   #  #   ###  ###    # #    ##   ##
     /**
      * Indicates that this is a command that can be simulated.
-     * @returns {boolean} Whether this is a command that can be simulated.
+     * @returns {string} The subcommand group for this command.
      */
     static get simulate() {
-        return true;
+        return "roster";
     }
 
     // #            #    ##       #
@@ -115,7 +115,15 @@ class MakeFounder {
                 return;
             }
 
-            const {pilot, team} = await MakeFounder.validate(interaction, member);
+            await buttonInteraction.deferUpdate();
+
+            let pilot, team;
+            try {
+                ({pilot, team} = await MakeFounder.validate(interaction, member));
+            } catch (err) {
+                Validation.logButtonError(interaction, err);
+                return;
+            }
 
             try {
                 await team.makeFounder(member, pilot);
@@ -147,7 +155,9 @@ class MakeFounder {
         }));
 
         collector.on("end", async () => {
-            await interaction.editReply({components: []});
+            try {
+                await interaction.editReply({components: []});
+            } catch {}
         });
 
         return true;

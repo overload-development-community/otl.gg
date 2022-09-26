@@ -32,9 +32,10 @@ class AddStats {
      */
     static command() {
         return new DiscordJs.SlashCommandBuilder()
-            .addStringOption((option) => option
-                .setName("url")
-                .setDescription("The URL of the match from the tracker URL.")
+            .addNumberOption((option) => option
+                .setName("gameid")
+                .setDescription("The game ID of the match from the tracker URL.")
+                .setMinValue(1)
                 .setRequired(true))
             .addStringOption((option) => option
                 .setName("timestamp")
@@ -62,17 +63,27 @@ class AddStats {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                            color: 0xff0000
+                        })
+                    ],
+                    ephemeral: true
+                });
                 return false;
             }
 
             await interaction.deferReply({ephemeral: false});
 
+            const gameId = interaction.options.getNumber("gameid", true);
+
             await Validation.memberShouldBeOwner(interaction, member);
             await Validation.challengeShouldHaveDetails(interaction, challenge, member);
             await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
             await Validation.challengeShouldBeConfirmed(interaction, challenge, member);
-            const gameId = await Validation.trackerUrlShouldBeValid(interaction, member),
-                timestamp = await Validation.timestampShouldBeValid(interaction, member),
+            const timestamp = await Validation.timestampShouldBeValid(interaction, member),
                 boxScore = await Validation.challengeStatsShouldBeAdded(interaction, challenge, gameId, false, timestamp, member);
             await Validation.challengeShouldNotHaveUnauthorizedPlayers(interaction, challenge, member);
 

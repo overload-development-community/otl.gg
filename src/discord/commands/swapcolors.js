@@ -48,6 +48,15 @@ class SwapColors {
         const member = Discord.findGuildMemberById(user.id),
             challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
         if (!challenge) {
+            await interaction.reply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
+                        color: 0xff0000
+                    })
+                ],
+                ephemeral: true
+            });
             return false;
         }
 
