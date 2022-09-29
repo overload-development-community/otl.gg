@@ -4,6 +4,22 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.0 - 9/29/2022
+
+This release replaces the existing chat-based commands with Discord-approved slash commands.
+
+* Most commands have been replaced with slash commands.  Type slash in chat to see the full list of commands.
+* Commands have been hardened against duplication.  You will no longer be asked to interject a command, the system will just wait until the previous command has finished before attempting your command.  If the command no longer makes sense to run a second time, you'll either be ignored or you'll get an appropriate error message.
+* Commands that previously required confirmation will instead have a confirmation button to click on to confirm.  Don't tarry!  Buttons timeout after 15 minutes (well, 14 minutes and 50 seconds, anyway).
+* `/confirm`, `/confirmmap`, `/confirmteamsize`, `/confirmtime`, and `/confirmtype` have all thus been removed.
+* Out of necessity, many commands are no longer available via direct message to The Fourth Sovereign.
+* `/report` has been split up into `/report <url>` and `/reportscore <score1> <score2>`.
+* `/removetwitch` has been removed.  Use `/twitch` with no parameters instead.
+* `/next time` and `/mynext time` have been removed.  Their respective base commands now include both the local time and a countdown.
+* `/countdown` and `/deadlinecountdown` been removed.  Their respective functionality has been rolled up into `/matchtime` and `/deadline`, which now includes both the local time and a countdown.
+* `/color` now requires a shade.  ie: Use `/color normal red` where before you used `!color red`.
+* `/stream` has been removed, since it should now be obvious that the command is `/streaming`.
+
 ## v8.0.1 - 8/31/2022
 
 * Integrate ol-azure-manager into the main bot.
