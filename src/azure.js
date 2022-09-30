@@ -186,17 +186,19 @@ class Azure {
                 const serverData = await Tracker.getBrowser();
 
                 for (const server of serverData.body) {
-                    if (server.game) {
-                        if (!servers[server.server.ip]) {
-                            browser.emit(server.server.ip, {game: server.game, inLobby: false});
-                        } else if (server.game.currentPlayers !== servers[server.server.ip].currentPlayers || server.game.maxPlayers !== servers[server.server.ip].maxPlayers || server.game.mapName !== servers[server.server.ip].mapName || server.game.mode !== servers[server.server.ip].mode || server.game.inLobby !== servers[server.server.ip].inLobby) {
-                            browser.emit(server.server.ip, {game: server.game, inLobby: servers[server.server.ip].inLobby});
+                    if (server.server) {
+                        if (server.game) {
+                            if (!servers[server.server.ip]) {
+                                browser.emit(server.server.ip, {game: server.game, inLobby: false});
+                            } else if (server.game.currentPlayers !== servers[server.server.ip].currentPlayers || server.game.maxPlayers !== servers[server.server.ip].maxPlayers || server.game.mapName !== servers[server.server.ip].mapName || server.game.mode !== servers[server.server.ip].mode || server.game.inLobby !== servers[server.server.ip].inLobby) {
+                                browser.emit(server.server.ip, {game: server.game, inLobby: servers[server.server.ip].inLobby});
+                            }
+                        } else if (servers[server.server.ip]) {
+                            browser.emit(server.server.ip, {game: null, inLobby: servers[server.server.ip].inLobby});
                         }
-                    } else if (servers[server.server.ip]) {
-                        browser.emit(server.server.ip, {game: null, inLobby: servers[server.server.ip].inLobby});
-                    }
 
-                    servers[server.server.ip] = server.game;
+                        servers[server.server.ip] = server.game;
+                    }
                 }
             } catch (err) {
                 Log.exception("There was an error while checking for Azure servers.", err);
