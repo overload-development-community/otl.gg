@@ -4,6 +4,12 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.1 - 9/30/2022
+
+* Fix text bugs when testing whether an Azure server is running or not.
+* Fix a bug when reading form the game browser.
+* Fix a bug when an event is modified after its match time passes.
+
 ## v8.1.0 - 9/29/2022
 
 This release replaces the existing chat-based commands with Discord-approved slash commands.
