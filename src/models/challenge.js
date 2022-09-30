@@ -2771,14 +2771,14 @@ class Challenge {
         try {
             if (this.details.discordEvent) {
                 // Set Discord event.
-                if (this.details.discordEvent.isCompleted()) {
+                if (this.details.discordEvent.isCompleted() || this.details.matchTime.getTime() + 60 * 60 * 1000 >= Date.now()) {
                     this.details.discordEvent = void 0;
                 } else if (!this.details.matchTime) {
                     await this.details.discordEvent.delete();
 
                     this.details.discordEvent = void 0;
                 } else if (matchTimeUpdate) {
-                    if (this.details.confirmed || this.details.matchTime < new Date()) {
+                    if (this.details.confirmed || this.details.matchTime.getTime() < Date.now()) {
                         await this.details.discordEvent.edit({
                             name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
                             description: eventParameters.join("\n"),
