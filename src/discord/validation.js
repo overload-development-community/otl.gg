@@ -2519,16 +2519,17 @@ class Validation {
     /**
      * Validates that a server should be running.
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {string} checkServer The name of the server.
      * @param {AzureTypes.Server} server The server.
      * @param {DiscordJs.User} user The user.
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
-    static async serverShouldBeRunning(interaction, server, user) {
+    static async serverShouldBeRunning(interaction, checkServer, server, user) {
         if (!server.started) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${user}, but this server is not running.  Did you mean to \`/start ${server}\` instead?`,
+                        description: `Sorry, ${user}, but this server is not running.  Did you mean to \`/start ${checkServer}\` instead?`,
                         color: 0xff0000
                     })
                 ]
@@ -2576,16 +2577,17 @@ class Validation {
     /**
      * Validates that a server should not be running.
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {string} checkServer The name of the server.
      * @param {AzureTypes.Server} server The server.
      * @param {DiscordJs.User} user The user.
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
-    static async serverShouldNotBeRunning(interaction, server, user) {
+    static async serverShouldNotBeRunning(interaction, checkServer, server, user) {
         if (server.started) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `Sorry, ${user}, but this server is already running.  Use the \`/extend\` command to extend the server's uptime.`,
+                        description: `Sorry, ${user}, but this server is already running.  Use \`/extend ${checkServer}\` command to extend the server's uptime.`,
                         color: 0xff0000
                     })
                 ]

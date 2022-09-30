@@ -73,7 +73,7 @@ class Extend {
             const checkServer = interaction.options.getString("server", true).toLowerCase();
 
             const server = await Validation.serverShouldExist(interaction, checkServer, user);
-            await Validation.serverShouldBeRunning(interaction, server, user);
+            await Validation.serverShouldBeRunning(interaction, checkServer, server, user);
 
             Azure.setup(server, checkServer, interaction.channel);
 

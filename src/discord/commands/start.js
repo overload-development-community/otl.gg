@@ -73,7 +73,7 @@ class Start {
             const checkServer = interaction.options.getString("server", true).toLowerCase();
 
             const server = await Validation.serverShouldExist(interaction, checkServer, user);
-            await Validation.serverShouldNotBeRunning(interaction, server, user);
+            await Validation.serverShouldNotBeRunning(interaction, checkServer, server, user);
 
             try {
                 await Azure.start(server);
