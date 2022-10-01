@@ -338,6 +338,14 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type HasPenaltiesRecordsets = {
+        recordsets: [
+            {
+                HasPenalties: boolean
+            }[]
+        ]
+    }
+
     type ReinstateRecordsets = {
         recordsets: [
             {

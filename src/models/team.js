@@ -1025,11 +1025,29 @@ class Team {
     /**
      * Determines whether this team has clocked a challenge against another team this season.
      * @param {Team} team The team to check against.
-     * @returns {Promise<Boolean>} A promise that resolves with whether this team has clocked the specified team this season.
+     * @returns {Promise<Boolean>} A promise that returns whether this team has clocked the specified team this season.
      */
     async hasClockedThisSeason(team) {
         try {
             return await Db.hasClockedTeamThisSeason(this, team);
+        } catch (err) {
+            throw new Exception("There was a database error getting whether a team has clocked another team this season.", err);
+        }
+    }
+
+    // #                  ###                     ##     #     #
+    // #                  #  #                     #     #
+    // ###    ###   ###   #  #   ##   ###    ###   #    ###   ##     ##    ###
+    // #  #  #  #  ##     ###   # ##  #  #  #  #   #     #     #    # ##  ##
+    // #  #  # ##    ##   #     ##    #  #  # ##   #     #     #    ##      ##
+    // #  #   # #  ###    #      ##   #  #   # #  ###     ##  ###    ##   ###
+    /**
+     * Determines whether a team has penalties remaining.
+     * @returns {Promise<boolean>} A promise that returns whether this team has penalties remaining.
+     */
+    async hasPenalties() {
+        try {
+            return await Db.hasPenalties(this);
         } catch (err) {
             throw new Exception("There was a database error getting whether a team has clocked another team this season.", err);
         }

@@ -92,7 +92,7 @@ class Challenge {
      */
     static async create(challengingTeam, challengedTeam, options) {
 
-        const {adminCreated, teamSize, startNow} = options;
+        const {adminCreated, homeMapTeam, teamSize, startNow} = options;
         let {blueTeam, gameType, number} = options;
 
         if (!gameType) {
@@ -108,7 +108,7 @@ class Challenge {
         for (let count = 0; count < number; count++) {
             let data;
             try {
-                data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : void 0, teamSize, startNow, blueTeam);
+                data = await Db.create(challengingTeam, challengedTeam, gameType, !!adminCreated, adminCreated ? challengingTeam : homeMapTeam, teamSize, startNow, blueTeam);
             } catch (err) {
                 throw new Exception("There was a database error creating a challenge.", err);
             }
@@ -1256,6 +1256,21 @@ class Challenge {
             throw new Exception("There was a database error marking a challenge as rematched.", err);
         }
 
+        let homeMapTeam = this.details.usingHomeMapTeam ? this.details.homeMapTeam.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam : void 0;
+
+        if (homeMapTeam) {
+            let hasPenalties;
+            try {
+                hasPenalties = await this.challengingTeam.hasPenalties() || await this.challengedTeam.hasPenalties();
+            } catch (err) {
+                throw new Exception("There was a database error checking for a team's penalties for a rematch.", err);
+            }
+
+            if (hasPenalties) {
+                homeMapTeam = void 0;
+            }
+        }
+
         const challenge = await Challenge.create(
             team.id === this.challengingTeam.id ? this.challengedTeam : this.challengingTeam,
             team,
@@ -1264,7 +1279,8 @@ class Challenge {
                 adminCreated: false,
                 teamSize: this.details.teamSize,
                 startNow: true,
-                blueTeam: this.details.blueTeam
+                blueTeam: this.details.blueTeam,
+                homeMapTeam
             }
         );
 

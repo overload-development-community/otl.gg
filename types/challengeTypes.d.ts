@@ -84,6 +84,7 @@ declare namespace ChallengeTypes {
         startNow?: boolean
         blueTeam?: Team
         number?: number
+        homeMapTeam?: Team
     }
 
     type DamageData = PlayerTypes.WeaponStats & {

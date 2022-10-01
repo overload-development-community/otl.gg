@@ -27,6 +27,7 @@
  * @typedef {import("../../types/teamDbTypes").GetSeasonStandingsRecordsets} TeamDbTypes.GetSeasonStandingsRecordsets
  * @typedef {import("../../types/teamDbTypes").GetTimezoneRecordsets} TeamDbTypes.GetTimezoneRecordsets
  * @typedef {import("../../types/teamDbTypes").HasClockedTeamThisSeasonRecordsets} TeamDbTypes.HasClockedTeamThisSeasonRecordsets
+ * @typedef {import("../../types/teamDbTypes").HasPenaltiesRecordsets} TeamDbTypes.HasPenaltiesRecordsets
  * @typedef {import("../../types/teamDbTypes").ReinstateRecordsets} TeamDbTypes.ReinstateRecordsets
  * @typedef {import("../../types/teamDbTypes").RemovePilotRecordsets} TeamDbTypes.RemovePilotRecordsets
  * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
@@ -1308,7 +1309,7 @@ class TeamDb {
      * Checks if one team has clocked another this season.
      * @param {Team} team1 The team to check for clocking.
      * @param {Team} team2 The team to check for being clocked.
-     * @returns {Promise<boolean>} A promise that resolves with whether a team has clocked another this season.
+     * @returns {Promise<boolean>} A promise that returns whether a team has clocked another this season.
      */
     static async hasClockedTeamThisSeason(team1, team2) {
         /** @type {TeamDbTypes.HasClockedTeamThisSeasonRecordsets} */
@@ -1325,6 +1326,30 @@ class TeamDb {
             team2Id: {type: Db.INT, value: team2.id}
         });
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasClocked || false;
+    }
+
+    // #                  ###                     ##     #     #
+    // #                  #  #                     #     #
+    // ###    ###   ###   #  #   ##   ###    ###   #    ###   ##     ##    ###
+    // #  #  #  #  ##     ###   # ##  #  #  #  #   #     #     #    # ##  ##
+    // #  #  # ##    ##   #     ##    #  #  # ##   #     #     #    ##      ##
+    // #  #   # #  ###    #      ##   #  #   # #  ###     ##  ###    ##   ###
+    /**
+     * Determines whether a team has penalties remaining.
+     * @param {Team} team The team to check.
+     * @returns {Promise<boolean>} A promise that returns whether this team has penalties remaining.
+     */
+    static async hasPenalties(team) {
+        /** @type {TeamDbTypes.HasPenaltiesRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT CAST(CASE WHEN COUNT(ChallengeId) > 0 THEN 1 ELSE 0 END AS BIT) HasPenalties
+            FROM tblTeamPenalty
+            WHERE TeamId = @teamId
+                AND PenaltiesRemaining > 0
+        `, {
+            teamId: {type: Db.INT, value: team.id}
+        });
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0][0] && data.recordsets[0][0].HasPenalties || false;
     }
 
     //  #                 #     #          ###    #    ##           #
