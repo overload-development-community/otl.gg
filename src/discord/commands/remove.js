@@ -112,7 +112,7 @@ class Remove {
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
-            collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+            collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
                 if (collector.ended || buttonInteraction.customId !== customId) {
                     return;
                 }
@@ -123,7 +123,7 @@ class Remove {
                 try {
                     ({team, pilot} = await Remove.validate(interaction, member));
                 } catch (err) {
-                    Validation.logButtonError(interaction, err);
+                    Validation.logButtonError(interaction, buttonInteraction, err);
                     return;
                 }
 

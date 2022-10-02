@@ -183,7 +183,7 @@ class ReportScore {
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
-            collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+            collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
                 if (collector.ended || buttonInteraction.customId !== customId) {
                     return;
                 }
@@ -197,7 +197,7 @@ class ReportScore {
                     await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
                     const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
                     await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
-                    await Validation.teamsShouldBeDifferent(interaction, checkTeam, team, buttonMember, "but someone from the other team has to confirm the match.");
+                    await Validation.teamsShouldBeDifferent(interaction, checkTeam, team, buttonMember, "but someone from the other team has to confirm the match.", true);
                     await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
                     await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
                     await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
@@ -205,7 +205,7 @@ class ReportScore {
                     await Validation.challengeShouldHaveTeamSize(interaction, challenge, buttonMember);
                     await Validation.challengeShouldBeScheduled(interaction, challenge, buttonMember);
                 } catch (err) {
-                    Validation.logButtonError(interaction, err);
+                    Validation.logButtonError(interaction, buttonInteraction, err);
                     return;
                 }
 

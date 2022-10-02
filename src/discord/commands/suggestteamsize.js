@@ -140,7 +140,7 @@ class SuggestTeamSize {
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
-            collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+            collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
                 if (collector.ended || buttonInteraction.customId !== customId) {
                     return;
                 }
@@ -160,7 +160,7 @@ class SuggestTeamSize {
                     await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
                     await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested team size.", true);
                 } catch (err) {
-                    Validation.logButtonError(interaction, err);
+                    Validation.logButtonError(interaction, buttonInteraction, err);
                     return;
                 }
 

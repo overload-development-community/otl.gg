@@ -2,6 +2,7 @@
  * @typedef {import("../../types/azureTypes").Server} AzureTypes.Server
  * @typedef {import("../../types/ChallengeTypes").GameBoxScore} ChallengeTypes.GameBoxScore
  * @typedef {import("../../types/ChallengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
+ * @typedef {import("discord.js").ButtonInteraction} DiscordJs.ButtonInteraction
  * @typedef {import("discord.js").ChatInputCommandInteraction} DiscordJs.ChatInputCommandInteraction
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
  * @typedef {import("discord.js").User} DiscordJs.User
@@ -1055,16 +1056,17 @@ class Validation {
     /**
      * Logs a button error.
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {DiscordJs.ButtonInteraction} buttonInteraction The interaction.
      * @param {Error} err The error.
      * @returns {void}
      */
-    static logButtonError(interaction, err) {
+    static logButtonError(interaction, buttonInteraction, err) {
         if (err instanceof Warning) {
-            Log.warning(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response - ${err.message || err}`);
+            Log.warning(`${interaction.channel} ${buttonInteraction.user}: ${interaction} - Button Response - ${err.message || err}`);
         } else if (err instanceof Exception) {
-            Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response - ${err.message}`, err.innerError);
+            Log.exception(`${interaction.channel} ${buttonInteraction.user}: ${interaction} - Button Response - ${err.message}`, err.innerError);
         } else {
-            Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - Button Response`, err);
+            Log.exception(`${interaction.channel} ${buttonInteraction.user}: ${interaction} - Button Response`, err);
         }
     }
 

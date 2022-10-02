@@ -120,7 +120,7 @@ class Complete {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (buttonInteraction) => buttonSemaphore.callFunction(async () => {
+        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
             if (collector.ended || buttonInteraction.customId !== customId) {
                 return;
             }
@@ -131,7 +131,7 @@ class Complete {
             try {
                 newTeam = await Complete.validate(interaction, member);
             } catch (err) {
-                Validation.logButtonError(interaction, err);
+                Validation.logButtonError(interaction, buttonInteraction, err);
                 return;
             }
 
