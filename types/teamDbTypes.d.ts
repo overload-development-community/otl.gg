@@ -29,6 +29,17 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type GetAllActiveRecordsets = {
+        recordsets: [
+            {
+                TeamId: number
+                Name: string
+                Tag: string
+                Locked: boolean
+            }[]
+        ]
+    }
+
     type GetByIdRecordsets = {
         recordsets: [
             {

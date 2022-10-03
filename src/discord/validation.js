@@ -2226,6 +2226,35 @@ class Validation {
         }
     }
 
+    //        #    ##           #     ##   #                 ##       #  ###         ###                      ##                       #
+    //              #           #    #  #  #                  #       #  #  #         #                      #  #                      #
+    // ###   ##     #     ##   ###    #    ###    ##   #  #   #     ###  ###    ##    #     ##    ###  # #   #     #  #   ##    ###   ###
+    // #  #   #     #    #  #   #      #   #  #  #  #  #  #   #    #  #  #  #  # ##   #    # ##  #  #  ####  # ##  #  #  # ##  ##      #
+    // #  #   #     #    #  #   #    #  #  #  #  #  #  #  #   #    #  #  #  #  ##     #    ##    # ##  #  #  #  #  #  #  ##      ##    #
+    // ###   ###   ###    ##     ##   ##   #  #   ##    ###  ###    ###  ###    ##    #     ##    # #  #  #   ###   ###   ##   ###      ##
+    // #
+    /**
+     * Validates that a pilot is a team's guest.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async pilotShouldBeTeamGuest(interaction, pilot, team, member) {
+        if (!team.teamChannel.permissionOverwrites.cache.find((c) => c.id === pilot.id)) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but ${pilot} is not a guest of **${team.name}**.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning("Pilot is not a guest of the team.");
+        }
+    }
+
     //        #    ##           #     ##   #                 ##       #  #  #                     ##    #           #    ###          ##   #           ##    ##
     //              #           #    #  #  #                  #       #  #  #                    #  #   #           #     #          #  #  #            #     #
     // ###   ##     #     ##   ###    #    ###    ##   #  #   #     ###  ####   ###  # #    ##    #    ###    ###  ###    #    ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -2460,6 +2489,35 @@ class Validation {
                 ]
             });
             throw new Warning("Pilot is on a team.");
+        }
+    }
+
+    //        #    ##           #     ##   #                 ##       #  #  #         #    ###         ###                      ##                       #
+    //              #           #    #  #  #                  #       #  ## #         #    #  #         #                      #  #                      #
+    // ###   ##     #     ##   ###    #    ###    ##   #  #   #     ###  ## #   ##   ###   ###    ##    #     ##    ###  # #   #     #  #   ##    ###   ###
+    // #  #   #     #    #  #   #      #   #  #  #  #  #  #   #    #  #  # ##  #  #   #    #  #  # ##   #    # ##  #  #  ####  # ##  #  #  # ##  ##      #
+    // #  #   #     #    #  #   #    #  #  #  #  #  #  #  #   #    #  #  # ##  #  #   #    #  #  ##     #    ##    # ##  #  #  #  #  #  #  ##      ##    #
+    // ###   ###   ###    ##     ##   ##   #  #   ##    ###  ###    ###  #  #   ##     ##  ###    ##    #     ##    # #  #  #   ###   ###   ##   ###      ##
+    // #
+    /**
+     * Validates that a pilot is not a team's guest.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {DiscordJs.GuildMember} pilot The pilot.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async pilotShouldNotBeTeamGuest(interaction, pilot, team, member) {
+        if (team.teamChannel.permissionOverwrites.cache.find((c) => c.id === pilot.id)) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but ${pilot} is a guest of **${team.name}**.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning("Pilot is a guest of the team.");
         }
     }
 

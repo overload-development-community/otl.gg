@@ -10,6 +10,7 @@
  * @typedef {import("../../types/teamDbTypes").AddPilotRecordsets} TeamDbTypes.AddPilotRecordsets
  * @typedef {import("../../types/teamDbTypes").CreateRecordsets} TeamDbTypes.CreateRecordsets
  * @typedef {import("../../types/teamDbTypes").DisbandRecordsets} TeamDbTypes.DisbandRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetAllActiveRecordsets} TeamDbTypes.GetAllActiveRecordsets
  * @typedef {import("../../types/teamDbTypes").GetByIdRecordsets} TeamDbTypes.GetByIdRecordsets
  * @typedef {import("../../types/teamDbTypes").GetByNameOrTagRecordsets} TeamDbTypes.GetByNameOrTagRecordsets
  * @typedef {import("../../types/teamDbTypes").GetByPilotRecordsets} TeamDbTypes.GetByPilotRecordsets
@@ -303,6 +304,32 @@ class TeamDb {
         }
 
         return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => row.ChallengeId) || [];
+    }
+
+    //              #     ##   ##    ##     ##          #     #
+    //              #    #  #   #     #    #  #         #
+    //  ###   ##   ###   #  #   #     #    #  #   ##   ###   ##    # #    ##
+    // #  #  # ##   #    ####   #     #    ####  #      #     #    # #   # ##
+    //  ##   ##     #    #  #   #     #    #  #  #      #     #    # #   ##
+    // #      ##     ##  #  #  ###   ###   #  #   ##     ##  ###    #     ##
+    //  ###
+    /**
+     * Gets all active teams.
+     * @returns {Promise<TeamTypes.TeamData[]>} A promise that resolves with all active teams.
+     */
+    static async getAllActive() {
+        /** @type {TeamDbTypes.GetAllActiveRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT TeamId, Name, Tag, Locked
+            FROM tblTeam
+            WHERE Disbanded = 0
+        `);
+        return data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            id: row.TeamId,
+            name: row.Name,
+            tag: row.Tag,
+            locked: row.Locked
+        }));
     }
 
     //              #    ###         ###      #

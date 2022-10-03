@@ -106,6 +106,28 @@ class Team {
         return team;
     }
 
+    //              #     ##   ##    ##     ##          #     #
+    //              #    #  #   #     #    #  #         #
+    //  ###   ##   ###   #  #   #     #    #  #   ##   ###   ##    # #    ##
+    // #  #  # ##   #    ####   #     #    ####  #      #     #    # #   # ##
+    //  ##   ##     #    #  #   #     #    #  #  #      #     #    # #   ##
+    // #      ##     ##  #  #  ###   ###   #  #   ##     ##  ###    #     ##
+    //  ###
+    /**
+     * Gets all active teams.
+     * @returns {Promise<Team[]>} A promise that returns all of the teams.
+     */
+    static async getAllActive() {
+        let data;
+        try {
+            data = await Db.getAllActive();
+        } catch (err) {
+            throw new Exception("There was a database error getting all teams.", err);
+        }
+
+        return data ? data.map((d) => new Team(d)) : void 0;
+    }
+
     //              #    ###         ###      #
     //              #    #  #         #       #
     //  ###   ##   ###   ###   #  #   #     ###
@@ -540,6 +562,24 @@ class Team {
         }
     }
 
+    //          #     #   ##                       #
+    //          #     #  #  #                      #
+    //  ###   ###   ###  #     #  #   ##    ###   ###
+    // #  #  #  #  #  #  # ##  #  #  # ##  ##      #
+    // # ##  #  #  #  #  #  #  #  #  ##      ##    #
+    //  # #   ###   ###   ###   ###   ##   ###      ##
+    /**
+     * Adds a guest to the team.
+     * @param {DiscordJs.GuildMember} member The person adding the guest.
+     * @param {DiscordJs.GuildMember} pilot The guest.
+     * @return {Promise} A promise that resolves when the guest is added.
+     */
+    async addGuest(member, pilot) {
+        await this.teamChannel.permissionOverwrites.create(pilot, {ViewChannel: true}, {reason: `Added by ${member.displayName}`});
+
+        await Discord.queue(`${pilot} has been added as a guest by ${member}!`, this.teamChannel);
+    }
+
     //          #     #  #  #                    #  #
     //          #     #  #  #                    ####
     //  ###   ###   ###  ####   ##   # #    ##   ####   ###  ###
@@ -630,6 +670,12 @@ class Team {
         }
 
         try {
+            const teams = await Team.getAllActive();
+
+            for (const team of teams) {
+                await team.removeGuest(void 0, member);
+            }
+
             const captainsChannel = this.captainsChannel;
             if (!captainsChannel) {
                 throw new Error("Captain's channel does not exist for the team.");
@@ -1360,6 +1406,34 @@ class Team {
             }), Discord.rosterUpdatesChannel);
         } catch (err) {
             throw new Exception("There was a critical Discord error removing a captain.  Please resolve this manually as soon as possible.", err);
+        }
+    }
+
+    //                                      ##                       #
+    //                                     #  #                      #
+    // ###    ##   # #    ##   # #    ##   #     #  #   ##    ###   ###
+    // #  #  # ##  ####  #  #  # #   # ##  # ##  #  #  # ##  ##      #
+    // #     ##    #  #  #  #  # #   ##    #  #  #  #  ##      ##    #
+    // #      ##   #  #   ##    #     ##    ###   ###   ##   ###      ##
+    /**
+     * Removes a guest from the team.
+     * @param {DiscordJs.GuildMember} member The person adding the guest.
+     * @param {DiscordJs.GuildMember} pilot The guest.
+     * @return {Promise} A promise that resolves when the guest is removed.
+     */
+    async removeGuest(member, pilot) {
+        if (this.teamChannel.permissionOverwrites.cache.find((c) => c.id === pilot.id)) {
+            try {
+                await this.teamChannel.permissionOverwrites.delete(pilot, `Removed by ${member ? member.displayName : "joining a new team."}`);
+
+                if (member) {
+                    await Discord.queue(`${pilot} has been removed as a guest by ${member}.`, this.teamChannel);
+                } else {
+                    await Discord.queue(`${pilot} has been removed as a guest by joining a new team.`, this.teamChannel);
+                }
+            } catch (err) {
+                throw new Exception("There was a critical Discord error removing a guest from a team.  Please resolve this manually as soon as possible.", err);
+            }
         }
     }
 
