@@ -2785,9 +2785,9 @@ class Challenge {
         }
 
         try {
-            if (this.details.discordEvent) {
+            if (this.details.discordEvent || this.details.discordEvent.scheduledStartAt.getTime() + 60 * 60 * 1000 >= Date.now()) {
                 // Set Discord event.
-                if (this.details.discordEvent.isCompleted() || this.details.matchTime.getTime() + 60 * 60 * 1000 >= Date.now()) {
+                if (this.details.discordEvent.isCompleted()) {
                     this.details.discordEvent = void 0;
                 } else if (!this.details.matchTime) {
                     await this.details.discordEvent.delete();
