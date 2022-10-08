@@ -1182,7 +1182,7 @@ class ChallengeDb {
     /**
      * Gets a random map for a challenge.
      * @param {Challenge} challenge The challenge to get a random map for.
-     * @param {string} direction The order to sort on, "top" or "bottom".
+     * @param {string} direction The order to sort on, "most" or "least".
      * @param {number} count The number of maps to choose from.
      * @returns {Promise<string>} A promise that resolves with the randomly chosen map.
      */
@@ -1196,7 +1196,7 @@ class ChallengeDb {
                 WHERE GameType = @type
                     AND Map NOT IN (SELECT Map FROM tblChallengeHome WHERE ChallengeId = @id AND GameType = @homeType)
                 GROUP BY Map
-                ${["top", "bottom"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "top" ? "DESC" : "ASC"} ` : ""}
+                ${["most", "least"].indexOf(direction) !== -1 && !isNaN(count) ? `ORDER BY COUNT(ChallengeId) ${direction === "most" ? "DESC" : "ASC"} ` : ""}
             ) a
             ORDER BY Id
         `, {

@@ -1360,7 +1360,7 @@ class Challenge {
     //  ###                                                              #
     /**
      * Gets a random map for the challenge.
-     * @param {string} direction The direction, "top" or "bottom".
+     * @param {string} direction The direction, "most" or "least".
      * @param {number} count The number of maps to use from the pool.
      * @returns {Promise<string>} A promise that resolves with a random map.
      */
