@@ -937,7 +937,8 @@ class Validation {
         } catch (_) {
             try {
                 date = new Date(new tc.DateTime(new Date(`${now.toDateString()} ${datetime} UTC`).toISOString(), tz).toIsoString());
-                if (date.getTime() < now.getTime()) {
+                date.setDate(date.getDate() - 1);
+                while (date.getTime() < now.getTime()) {
                     date.setDate(date.getDate() + 1);
                 }
             } catch (err) {
