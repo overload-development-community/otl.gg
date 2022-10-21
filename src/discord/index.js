@@ -329,62 +329,63 @@ class Discord {
 
             otlGuild = discord.guilds.cache.find((g) => g.name === settings.guild);
 
-            const files = await fs.readdir(path.join(__dirname, "commands")),
-                guildCommands = [],
-                globalCommands = [];
+            if (!settings.disableBot) {
+                const files = await fs.readdir(path.join(__dirname, "commands")),
+                    guildCommands = [],
+                    globalCommands = [];
 
-            /** @type {{[x: string]: (function(DiscordJs.SlashCommandSubcommandBuilder): DiscordJs.SlashCommandSubcommandBuilder)[]}} */
-            const simulateCommands = {};
+                /** @type {{[x: string]: (function(DiscordJs.SlashCommandSubcommandBuilder): DiscordJs.SlashCommandSubcommandBuilder)[]}} */
+                const simulateCommands = {};
 
-            for (const file of files) {
-                const commandFile = require(`./commands/${file}`);
+                for (const file of files) {
+                    const commandFile = require(`./commands/${file}`);
 
-                /** @type {DiscordJs.SlashCommandBuilder} */
-                const command = commandFile.command();
+                    /** @type {DiscordJs.SlashCommandBuilder} */
+                    const command = commandFile.command();
 
-                if (commandFile.global) {
-                    globalCommands.push(command);
-                } else {
-                    guildCommands.push(command);
-                    if (commandFile.simulate) {
-                        if (!simulateCommands[commandFile.simulate]) {
-                            simulateCommands[commandFile.simulate] = [];
+                    if (commandFile.global) {
+                        globalCommands.push(command);
+                    } else {
+                        guildCommands.push(command);
+                        if (commandFile.simulate) {
+                            if (!simulateCommands[commandFile.simulate]) {
+                                simulateCommands[commandFile.simulate] = [];
+                            }
+                            simulateCommands[commandFile.simulate].push((subcommand) => {
+                                subcommand
+                                    .addUserOption((option) => option
+                                        .setName("from")
+                                        .setDescription("The user to simulate the command with.")
+                                        .setRequired(true));
+                                commandFile.builder(subcommand);
+                                return subcommand;
+                            });
                         }
-                        simulateCommands[commandFile.simulate].push((subcommand) => {
-                            subcommand
-                                .addUserOption((option) => option
-                                    .setName("from")
-                                    .setDescription("The user to simulate the command with.")
-                                    .setRequired(true));
-                            commandFile.builder(subcommand);
-                            return subcommand;
-                        });
                     }
                 }
-            }
 
-            for (const group of Object.keys(simulateCommands)) {
-                const simulate = new DiscordJs.SlashCommandBuilder();
-                simulate
-                    .setName(`simulate${group}`)
-                    .setDescription(`Simulates a ${group} command from another user.`)
-                    .setDefaultMemberPermissions(0);
+                for (const group of Object.keys(simulateCommands)) {
+                    const simulate = new DiscordJs.SlashCommandBuilder();
+                    simulate
+                        .setName(`simulate${group}`)
+                        .setDescription(`Simulates a ${group} command from another user.`)
+                        .setDefaultMemberPermissions(0);
 
-                for (const subcommand of simulateCommands[group]) {
-                    simulate.addSubcommand(subcommand);
+                    for (const subcommand of simulateCommands[group]) {
+                        simulate.addSubcommand(subcommand);
+                    }
+
+                    guildCommands.push(simulate);
                 }
 
-                guildCommands.push(simulate);
-            }
+                try {
+                    const rest = new Rest.REST().setToken(settings.discord.token);
 
-
-            try {
-                const rest = new Rest.REST().setToken(settings.discord.token);
-
-                await rest.put(DiscordJs.Routes.applicationGuildCommands(settings.discord.clientId, otlGuild.id), {body: guildCommands});
-                await rest.put(DiscordJs.Routes.applicationCommands(settings.discord.clientId), {body: globalCommands});
-            } catch (err) {
-                Log.exception("Error adding slash commands.", err);
+                    await rest.put(DiscordJs.Routes.applicationGuildCommands(settings.discord.clientId, otlGuild.id), {body: guildCommands});
+                    await rest.put(DiscordJs.Routes.applicationCommands(settings.discord.clientId), {body: globalCommands});
+                } catch (err) {
+                    Log.exception("Error adding slash commands.", err);
+                }
             }
 
             if (!readied) {
@@ -412,85 +413,87 @@ class Discord {
             Log.exception("Disconnected from Discord.", ev);
         });
 
-        discord.on("guildMemberRemove", async (member) => {
-            if (member.guild && member.guild.id === otlGuild.id) {
-                try {
-                    await member.leftDiscord();
-                } catch (err) {
-                    Log.exception(`There was a problem with ${member.displayName} leaving the server.`, err);
+        if (!settings.disableBot) {
+            discord.on("guildMemberRemove", async (member) => {
+                if (member.guild && member.guild.id === otlGuild.id) {
+                    try {
+                        await member.leftDiscord();
+                    } catch (err) {
+                        Log.exception(`There was a problem with ${member.displayName} leaving the server.`, err);
+                    }
                 }
-            }
-        });
+            });
 
-        discord.on("guildMemberUpdate", async (/** @type {DiscordJs.GuildMember} */ oldMember, newMember) => {
-            if (newMember.guild && newMember.guild.id === otlGuild.id) {
-                if (oldMember.displayName === newMember.displayName) {
+            discord.on("guildMemberUpdate", async (/** @type {DiscordJs.GuildMember} */ oldMember, newMember) => {
+                if (newMember.guild && newMember.guild.id === otlGuild.id) {
+                    if (oldMember.displayName === newMember.displayName) {
+                        return;
+                    }
+
+                    try {
+                        await newMember.updateName(oldMember);
+                    } catch (err) {
+                        Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
+                    }
+                }
+            });
+
+            discord.on("interactionCreate", async (interaction) => {
+                if (!interaction.isChatInputCommand()) {
                     return;
                 }
 
+                let success = false;
+
                 try {
-                    await newMember.updateName(oldMember);
+                    if (interaction.commandName.startsWith("simulate")) {
+                        const module = require(`../discord/commands/${interaction.options.getSubcommand(true).toLowerCase()}`);
+
+                        if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
+                            return;
+                        }
+
+                        success = await module.handle(interaction, interaction.options.getUser("from", true));
+                    } else {
+                        const module = require(`../discord/commands/${interaction.commandName.toLowerCase()}`);
+
+                        if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
+                            return;
+                        }
+
+                        success = await module.handle(interaction, interaction.user);
+                    }
                 } catch (err) {
-                    Log.exception(`There was a problem with ${oldMember.displayName} changing their name to ${newMember.displayName}.`, err);
-                }
-            }
-        });
-
-        discord.on("interactionCreate", async (interaction) => {
-            if (!interaction.isChatInputCommand()) {
-                return;
-            }
-
-            let success = false;
-
-            try {
-                if (interaction.commandName.startsWith("simulate")) {
-                    const module = require(`../discord/commands/${interaction.options.getSubcommand(true).toLowerCase()}`);
-
-                    if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
-                        return;
-                    }
-
-                    success = await module.handle(interaction, interaction.options.getUser("from", true));
-                } else {
-                    const module = require(`../discord/commands/${interaction.commandName.toLowerCase()}`);
-
-                    if (!module.global && !Discord.channelIsOnServer(interaction.channel)) {
-                        return;
-                    }
-
-                    success = await module.handle(interaction, interaction.user);
-                }
-            } catch (err) {
-                if (err instanceof Warning) {
-                    Log.warning(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message || err}`);
-                } else if (err instanceof Exception) {
-                    Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message}`, err.innerError);
-                } else {
-                    Log.exception(`${interaction.channel} ${interaction.user}: ${interaction}`, err);
-                }
-            }
-
-            if (success) {
-                Log.log(`${interaction.channel} ${interaction.user}: ${interaction}`);
-            }
-        });
-
-        discord.on("presenceUpdate", async (oldPresence, newPresence) => {
-            if (newPresence && newPresence.activities && newPresence.member && newPresence.guild && newPresence.guild.id === otlGuild.id) {
-                const activity = newPresence.activities.find((p) => p.name === "Twitch");
-
-                if (activity && urlParse.test(activity.url)) {
-                    const {groups: {user}} = urlParse.exec(activity.url);
-
-                    await newPresence.member.addTwitchName(user);
-
-                    if (activity.state.toLowerCase() === "overload") {
-                        await newPresence.member.setStreamer();
+                    if (err instanceof Warning) {
+                        Log.warning(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message || err}`);
+                    } else if (err instanceof Exception) {
+                        Log.exception(`${interaction.channel} ${interaction.user}: ${interaction} - ${err.message}`, err.innerError);
+                    } else {
+                        Log.exception(`${interaction.channel} ${interaction.user}: ${interaction}`, err);
                     }
                 }
-            }
-        });
+
+                if (success) {
+                    Log.log(`${interaction.channel} ${interaction.user}: ${interaction}`);
+                }
+            });
+
+            discord.on("presenceUpdate", async (oldPresence, newPresence) => {
+                if (newPresence && newPresence.activities && newPresence.member && newPresence.guild && newPresence.guild.id === otlGuild.id) {
+                    const activity = newPresence.activities.find((p) => p.name === "Twitch");
+
+                    if (activity && urlParse.test(activity.url)) {
+                        const {groups: {user}} = urlParse.exec(activity.url);
+
+                        await newPresence.member.addTwitchName(user);
+
+                        if (activity.state.toLowerCase() === "overload") {
+                            await newPresence.member.setStreamer();
+                        }
+                    }
+                }
+            });
+        }
 
         discord.on("error", (err) => {
             if (err.message === "read ECONNRESET") {
