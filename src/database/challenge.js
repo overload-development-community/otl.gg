@@ -493,20 +493,24 @@ class ChallengeDb {
     //  ###                                       #
     /**
      * Gets all games in a series before the specified game number.
+     * @param {Challenge} challenge The challenge.
      * @param {string} title The base title.
      * @param {number} game The game number.
      * @returns {Promise<ChallengeTypes.ChallengeData[]>} A promise that resolves with an array of challenge data.
      */
-    static async getAllByBaseTitleBeforeGame(title, game) {
+    static async getAllByBaseTitleBeforeGame(challenge, title, game) {
         /** @type {ChallengeDbTypes.GetAllByBaseTitleBeforeGameRecordsets} */
         const data = await db.query(/* sql */`
             SELECT TOP (@game) ChallengeId, ChallengingTeamId, ChallengedTeamId
             FROM tblChallenge
-            WHERE (ChallengingTeamId = @teamId OR ChallengedTeamId = @teamId)
+            WHERE (ChallengingTeamId = @team1Id OR ChallengedTeamId = @team1Id)
+                AND (ChallengingTeamId = @team2Id OR ChallengedTeamId = @team2Id)
                 AND DateVoided IS NULL
                 AND Title LIKE @title + '%'
             ORDER BY ChallengeId
         `, {
+            team1Id: {type: Db.INT, value: challenge.challengingTeam.id},
+            team2Id: {type: Db.INT, value: challenge.challengedTeam.id},
             title: {type: Db.VARCHAR(100), value: title},
             game: {type: Db.INT, value: game - 1}
         });

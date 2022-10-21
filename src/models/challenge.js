@@ -216,33 +216,6 @@ class Challenge {
         }
     }
 
-    //              #     ##   ##    ##    ###         ###                      ###    #     #    ##          ###           #                      ##
-    //              #    #  #   #     #    #  #        #  #                      #           #     #          #  #         # #                    #  #
-    //  ###   ##   ###   #  #   #     #    ###   #  #  ###    ###   ###    ##    #    ##    ###    #     ##   ###    ##    #     ##   ###    ##   #      ###  # #    ##
-    // #  #  # ##   #    ####   #     #    #  #  #  #  #  #  #  #  ##     # ##   #     #     #     #    # ##  #  #  # ##  ###   #  #  #  #  # ##  # ##  #  #  ####  # ##
-    //  ##   ##     #    #  #   #     #    #  #   # #  #  #  # ##    ##   ##     #     #     #     #    ##    #  #  ##     #    #  #  #     ##    #  #  # ##  #  #  ##
-    // #      ##     ##  #  #  ###   ###   ###     #   ###    # #  ###     ##    #    ###     ##  ###    ##   ###    ##    #     ##   #      ##    ###   # #  #  #   ##
-    //  ###                                       #
-    /**
-     * Gets all games in a series before the specified game number.
-     * @param {string} title The base title.
-     * @param {number} game The game number.
-     * @returns {Promise<Challenge[]>} A promise that resolves with an array of earlier challenges in the series.
-     */
-    static async getAllByBaseTitleBeforeGame(title, game) {
-        if (game === 1) {
-            return [];
-        }
-
-        try {
-            const challenges = await Db.getAllByBaseTitleBeforeGame(title, game);
-
-            return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
-        } catch (err) {
-            throw new Exception("There was a database error getting a team's challenges.", err);
-        }
-    }
-
     //              #     ##   ##    ##    ###         ###
     //              #    #  #   #     #    #  #         #
     //  ###   ##   ###   #  #   #     #    ###   #  #   #     ##    ###  # #
@@ -1288,6 +1261,33 @@ class Challenge {
         challenge.setNotifyMatchStarting(new Date(new Date().getTime() + 5000));
 
         return challenge;
+    }
+
+    //              #     ##   ##    ##    ###         ###                      ###    #     #    ##          ###           #                      ##
+    //              #    #  #   #     #    #  #        #  #                      #           #     #          #  #         # #                    #  #
+    //  ###   ##   ###   #  #   #     #    ###   #  #  ###    ###   ###    ##    #    ##    ###    #     ##   ###    ##    #     ##   ###    ##   #      ###  # #    ##
+    // #  #  # ##   #    ####   #     #    #  #  #  #  #  #  #  #  ##     # ##   #     #     #     #    # ##  #  #  # ##  ###   #  #  #  #  # ##  # ##  #  #  ####  # ##
+    //  ##   ##     #    #  #   #     #    #  #   # #  #  #  # ##    ##   ##     #     #     #     #    ##    #  #  ##     #    #  #  #     ##    #  #  # ##  #  #  ##
+    // #      ##     ##  #  #  ###   ###   ###     #   ###    # #  ###     ##    #    ###     ##  ###    ##   ###    ##    #     ##   #      ##    ###   # #  #  #   ##
+    //  ###                                       #
+    /**
+     * Gets all games in a series before the specified game number.
+     * @param {string} title The base title.
+     * @param {number} game The game number.
+     * @returns {Promise<Challenge[]>} A promise that resolves with an array of earlier challenges in the series.
+     */
+    async getAllByBaseTitleBeforeGame(title, game) {
+        if (game === 1) {
+            return [];
+        }
+
+        try {
+            const challenges = await Db.getAllByBaseTitleBeforeGame(this, title, game);
+
+            return Promise.all(challenges.map(async (c) => new Challenge({id: c.id, challengingTeam: await Team.getById(c.challengingTeamId), challengedTeam: await Team.getById(c.challengedTeamId)})));
+        } catch (err) {
+            throw new Exception("There was a database error getting a team's challenges.", err);
+        }
     }
 
     //              #     ##          #    #                  #                   #  ###   ##

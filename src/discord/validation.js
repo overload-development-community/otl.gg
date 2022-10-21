@@ -1098,7 +1098,7 @@ class Validation {
             return;
         }
 
-        const challenges = await Challenge.getAllByBaseTitleBeforeGame(base, gameNum);
+        const challenges = await challenge.getAllByBaseTitleBeforeGame(base, gameNum);
 
         if (challenges.length === 0) {
             return;
