@@ -4,6 +4,15 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.2 - 10/20/2022
+
+* Fixed `/pickmap` for sets of matches.  You are no longer allowed to pick the same map twice in a set.  A set is determined by challenges with the same title (differing only by game number) between the same two teams.
+* `/rematch` now alternates home map team, provided the previous match was not a neutral match.
+* New `/addguest` and `/removeguest` commands to allow captains and founders to add and remove guests from their team.  Note: confirmation from the guest will be required in a future version.
+* Fix for `/suggestrandom`.
+* Fix bug where only setting time would choose the wrong day.
+* Fix various bugs with button interactions.
+
 ## v8.1.1 - 9/30/2022
 
 * Fix text bugs when testing whether an Azure server is running or not.
