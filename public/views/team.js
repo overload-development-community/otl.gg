@@ -76,7 +76,7 @@ class TeamView {
                 `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?season=0${postseason ? "&postseason=yes" : ""}">All Time</a>`}<br />
                 <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/team/${encodeURI(pageTeam.tag)}?postseason=yes${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/team/${encodeURI(pageTeam.tag)}${isNaN(season) ? "" : `?season=${season}`}">No</a>` : "No"}
             </div>
-            <div class="section">Season Records</div>
+            <div class="section">Records</div>
             <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
             <div id="gamelog">View the <a href="/team/${encodeURIComponent(pageTeam.tag)}/gamelog${isNaN(season) ? `${postseason ? "?postseason=yes" : ""}` : `?season=${season}${postseason ? "&postseason=yes" : ""}`}">Game Log</a></div>
             ${teamData.records && (teamData.records.wins > 0 || teamData.records.losses > 0 || teamData.records.ties > 0) ? /* html */`
@@ -167,7 +167,7 @@ class TeamView {
                     </div>
                 </div>
                 ${teamData.statsTA.length === 0 && teamData.statsCTF.length === 0 ? "" : /* html */ `
-                    <div class="section">Season Player Stats</div>
+                    <div class="section">Player Stats</div>
                     <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
                     ${teamData.statsTA.length === 0 ? "" : /* html */ `
                         <div class="section">Team Anarchy</div>
