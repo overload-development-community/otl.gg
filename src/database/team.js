@@ -1297,6 +1297,7 @@ class TeamDb {
             season: {type: Db.INT, value: season},
             map: {type: Db.VARCHAR(100), value: map}
         });
+
         cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties, wins1: row.Wins1, losses1: row.Losses1, ties1: row.Ties1, wins2: row.Wins2, losses2: row.Losses2, ties2: row.Ties2, wins3: row.Wins3, losses3: row.Losses3, ties3: row.Ties3, winsMap: row.WinsMap || 0, lossesMap: row.LossesMap || 0, tiesMap: row.TiesMap || 0})) || [];
 
         if (!settings.disableRedis) {
@@ -1369,7 +1370,7 @@ class TeamDb {
     static async hasPenalties(team) {
         /** @type {TeamDbTypes.HasPenaltiesRecordsets} */
         const data = await db.query(/* sql */`
-            SELECT CAST(CASE WHEN COUNT(ChallengeId) > 0 THEN 1 ELSE 0 END AS BIT) HasPenalties
+            SELECT CAST(CASE WHEN COUNT(PenaltyId) > 0 THEN 1 ELSE 0 END AS BIT) HasPenalties
             FROM tblTeamPenalty
             WHERE TeamId = @teamId
                 AND PenaltiesRemaining > 0
