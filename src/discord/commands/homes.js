@@ -78,6 +78,8 @@ class Homes {
             team = await Validation.memberShouldBeOnATeam(interaction, member);
         }
 
+        await Validation.teamShouldNotBeDisbanded(interaction, team, member);
+
         let homes;
         try {
             homes = await team.getHomeMapsByType();
