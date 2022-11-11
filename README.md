@@ -4,6 +4,12 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.3 - 11/11/2022
+
+* Fixed validation on `/reinstate`.
+* Added validation on `/homes` to ensure that the team is not disbanded.
+* Package updates.
+
 ## v8.1.2 - 10/20/2022
 
 * Fixed `/pickmap` for sets of matches.  You are no longer allowed to pick the same map twice in a set.  A set is determined by challenges with the same title (differing only by game number) between the same two teams.
