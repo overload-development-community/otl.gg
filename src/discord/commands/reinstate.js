@@ -183,7 +183,7 @@ class Reinstate {
         await Validation.memberShouldNotBeOnATeam(interaction, member);
         await Validation.memberShouldNotBeCreatingTeam(interaction, member);
         const team = await Validation.teamShouldExist(interaction, interaction.options.getString("team", true), member);
-        await Validation.teamShouldNotBeDisbanded(interaction, team, member);
+        await Validation.teamShouldBeDisbanded(interaction, team, member);
         await Validation.memberShouldBePriorTeamCaptainOrFounder(interaction, team, member);
         await Validation.memberShouldBeAllowedToBeCaptain(interaction, member);
         await Validation.memberShouldBeAllowedToJoinATeam(interaction, member);

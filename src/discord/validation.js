@@ -2785,6 +2785,33 @@ class Validation {
         }
     }
 
+    //  #                       ##   #                 ##       #  ###         ###    #           #                    #           #
+    //  #                      #  #  #                  #       #  #  #        #  #               #                    #           #
+    // ###    ##    ###  # #    #    ###    ##   #  #   #     ###  ###    ##   #  #  ##     ###   ###    ###  ###    ###   ##    ###
+    //  #    # ##  #  #  ####    #   #  #  #  #  #  #   #    #  #  #  #  # ##  #  #   #    ##     #  #  #  #  #  #  #  #  # ##  #  #
+    //  #    ##    # ##  #  #  #  #  #  #  #  #  #  #   #    #  #  #  #  ##    #  #   #      ##   #  #  # ##  #  #  #  #  ##    #  #
+    //   ##   ##    # #  #  #   ##   #  #   ##    ###  ###    ###  ###    ##   ###   ###   ###    ###    # #  #  #   ###   ##    ###
+    /**
+     * Validates that the team is disbanded.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {Team} team The team.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async teamShouldBeDisbanded(interaction, team, member) {
+        if (!team.disbanded) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but this team is not currently disbanded.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning("Team is not disbanded.");
+        }
+    }
+
     //  #                       ##   #                 ##       #  ###         ###          ##   #           ##    ##
     //  #                      #  #  #                  #       #  #  #         #          #  #  #            #     #
     // ###    ##    ###  # #    #    ###    ##   #  #   #     ###  ###    ##    #    ###   #     ###    ###   #     #     ##   ###    ###   ##
@@ -3201,7 +3228,7 @@ class Validation {
                     })
                 ]
             });
-            throw new Warning("Team is not disbanded.");
+            throw new Warning("Team is disbanded.");
         }
     }
 
