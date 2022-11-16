@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
@@ -5,11 +10,6 @@ const Common = require("../includes/common"),
     Season = require("../../src/models/season"),
     StandingsView = require("../../public/views/standings"),
     Team = require("../../src/models/team");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
 
 //   ###    #                       #    #
 //  #   #   #                       #

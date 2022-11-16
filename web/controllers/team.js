@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
@@ -5,11 +10,6 @@ const Common = require("../includes/common"),
     Season = require("../../src/models/season"),
     Team = require("../../src/models/team"),
     TeamView = require("../../public/views/team");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
 
 //  #####                       ####
 //    #                         #   #
@@ -45,10 +45,18 @@ class TeamPage {
         if (pageTeam) {
             const teamInfo = await pageTeam.getInfo(),
                 seasonList = await Season.getSeasonNumbers(),
-                season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10),
                 postseason = !!req.query.postseason,
-                teamData = await Team.getData(pageTeam, season, postseason),
                 teams = new Teams();
+
+            let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
+
+            seasonList.push(0);
+            if (seasonList.indexOf(season) === -1) {
+                season = void 0;
+            }
+            seasonList.pop();
+
+            const teamData = await Team.getData(pageTeam, season, postseason);
 
             teamInfo.members.sort((a, b) => {
                 if (a.role !== b.role) {
@@ -65,7 +73,7 @@ class TeamPage {
             res.status(200).send(await Common.page(
                 "",
                 {css: ["/css/team.css"]},
-                TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season: season || seasonList[seasonList.length - 1], postseason, teams}),
+                TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
                 req
             ));
         } else {

@@ -1,10 +1,10 @@
-const AboutView = require("../../public/views/about"),
-    Common = require("../includes/common");
-
 /**
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
  */
+
+const AboutView = require("../../public/views/about"),
+    Common = require("../includes/common");
 
 //    #    #                     #
 //   # #   #                     #

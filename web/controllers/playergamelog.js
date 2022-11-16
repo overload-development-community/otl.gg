@@ -1,14 +1,14 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const Common = require("../includes/common"),
     Teams = require("../includes/teams"),
 
     NotFoundView = require("../../public/views/404"),
     PlayerGameLogView = require("../../public/views/playergamelog"),
     Player = require("../../src/models/player");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
 
 //  ####    ##                                 ###                        #
 //  #   #    #                                #   #                       #

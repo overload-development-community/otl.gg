@@ -1,3 +1,8 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const HtmlMinifierTerser = require("html-minifier-terser"),
 
     Common = require("../includes/common"),
@@ -6,11 +11,6 @@ const HtmlMinifierTerser = require("html-minifier-terser"),
     Challenge = require("../../src/models/challenge"),
     NotFoundView = require("../../public/views/404"),
     settings = require("../../settings");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
 
 //   ###                  #
 //  #   #                 #

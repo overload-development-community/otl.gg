@@ -227,6 +227,192 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type GetHeadToHeadStatsRecordsets = {
+        recordsets: [
+            {
+                Team1Wins: number
+                Team2Wins: number
+                Ties: number
+                Team1WinsTA: number
+                Team2WinsTA: number
+                TiesTA: number
+                Team1WinsTATeam1Home: number
+                Team2WinsTATeam1Home: number
+                TiesTATeam1Home: number
+                Team1WinsTATeam2Home: number
+                Team2WinsTATeam2Home: number
+                TiesTATeam2Home: number
+                Team1WinsTANeutral: number
+                Team2WinsTANeutral: number
+                TiesTANeutral: number
+                Team1WinsTA2v2: number
+                Team2WinsTA2v2: number
+                TiesTA2v2: number
+                Team1WinsTA3v3: number
+                Team2WinsTA3v3: number
+                TiesTA3v3: number
+                Team1WinsTA4v4: number
+                Team2WinsTA4v4: number
+                TiesTA4v4: number
+                Team1WinsCTF: number
+                Team2WinsCTF: number
+                TiesCTF: number
+                Team1WinsCTFTeam1Home: number
+                Team2WinsCTFTeam1Home: number
+                TiesCTFTeam1Home: number
+                Team1WinsCTFTeam2Home: number
+                Team2WinsCTFTeam2Home: number
+                TiesCTFTeam2Home: number
+                Team1WinsCTFNeutral: number
+                Team2WinsCTFNeutral: number
+                TiesCTFNeutral: number
+                Team1WinsCTF2v2: number
+                Team2WinsCTF2v2: number
+                TiesCTF2v2: number
+                Team1WinsCTF3v3: number
+                Team2WinsCTF3v3: number
+                TiesCTF3v3: number
+                Team1WinsCTF4v4: number
+                Team2WinsCTF4v4: number
+                TiesCTF4v4: number
+            }[],
+            {
+                Team1Wins: number
+                Team2Wins: number
+                Ties: number
+                Map: string
+                GameType: string
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                GamesWithDamage: number
+                DeathsInGamesWithDamage: number
+                OvertimePeriods: number
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Captures: number
+                Pickups: number
+                CarrierKills: number
+                Returns: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                OvertimePeriods: number
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestCaptures: number
+                BestPickups: number
+                BestCarrierKills: number
+                BestReturns: number
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                GamesWithDamage: number
+                DeathsInGamesWithDamage: number
+                OvertimePeriods: number
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Captures: number
+                Pickups: number
+                CarrierKills: number
+                Returns: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                OvertimePeriods: number
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestCaptures: number
+                BestPickups: number
+                BestCarrierKills: number
+                BestReturns: number
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            {
+                ChallengeId: number
+                ChallengingTeamId: number
+                ChallengingTeamName: string
+                ChallengingTeamTag: string
+                ChallengingTeamScore: number
+                ChallengedTeamId: number
+                ChallengedTeamName: string
+                ChallengedTeamTag: string
+                ChallengedTeamScore: number
+                RatingChange: number
+                Map: string
+                MatchTime: Date
+                GameType: string
+                StatTeamId: number
+                StatTeamName: string
+                StatTeamTag: string
+                PlayerId: number
+                Name: string
+                Captures: number
+                Pickups: number
+                CarrierKills: number
+                Returns: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+            }[],
+            {
+                DateEnd: Date
+            }[]
+        ]
+    }
+
     type GetHomeMapsRecordsets = {
         recordsets: [
             {

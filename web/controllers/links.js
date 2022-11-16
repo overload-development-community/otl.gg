@@ -1,10 +1,10 @@
-const Common = require("../includes/common"),
-    LinksView = require("../../public/views/links");
-
 /**
  * @typedef {import("express").Request} Express.Request
  * @typedef {import("express").Response} Express.Response
  */
+
+const Common = require("../includes/common"),
+    LinksView = require("../../public/views/links");
 
 //  #        #           #
 //  #                    #

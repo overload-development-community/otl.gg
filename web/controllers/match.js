@@ -1,15 +1,14 @@
+/**
+ * @typedef {import("express").Request} Express.Request
+ * @typedef {import("express").Response} Express.Response
+ */
+
 const Common = require("../includes/common"),
 
     Challenge = require("../../src/models/challenge"),
     MatchView = require("../../public/views/match"),
     NotFoundView = require("../../public/views/404"),
     Weapon = require("../../src/models/weapon");
-
-/**
- * @typedef {import("express").Request} Express.Request
- * @typedef {import("express").Response} Express.Response
- */
-
 
 //  #   #          #            #
 //  #   #          #            #

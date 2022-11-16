@@ -129,7 +129,7 @@ class TeamView {
                             ${teamData.opponents.filter((o) => o.gameType === "TA").map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
-                                <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
+                                <div><a href="/team/${pageTeam.tag}/opponent/${team.tag}" class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</a></div>
                             `).join("")}
                         `}
                     </div>
@@ -141,7 +141,7 @@ class TeamView {
                             ${teamData.opponents.filter((o) => o.gameType === "CTF").map((opponent) => /* html */`
                                 <div class="tag"><div class="diamond${(team = teams.getTeam(opponent.teamId, opponent.name, opponent.tag)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                                 <div class="opponent"><a href="/team/${team.tag}">${team.name}</a></div>
-                                <div class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</div>
+                                <div><a href="/team/${pageTeam.tag}/opponent/${team.tag}" class="numeric">${opponent.wins}-${opponent.losses}${opponent.ties ? `-${opponent.ties}` : ""}</a></div>
                             `).join("")}
                         `}
                     </div>

@@ -4,6 +4,7 @@
  * @typedef {import("../../types/matchTypes").SeasonData} MatchTypes.SeasonData
  * @typedef {import("./newTeam.js")} NewTeam
  * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
+ * @typedef {import("../../types/teamTypes").HeadToHeadStats} TeamTypes.HeadToHeadStats
  * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
  * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
  * @typedef {import("../../types/teamTypes").TeamInfo} TeamTypes.TeamInfo
@@ -238,6 +239,29 @@ class Team {
             return await Db.getGameLog(team, season, postseason);
         } catch (err) {
             throw new Exception("There was a database error getting team matches.", err);
+        }
+    }
+
+    //              #    #  #                 #  ###         #  #                 #   ##    #           #
+    //              #    #  #                 #   #          #  #                 #  #  #   #           #
+    //  ###   ##   ###   ####   ##    ###   ###   #     ##   ####   ##    ###   ###   #    ###    ###  ###    ###
+    // #  #  # ##   #    #  #  # ##  #  #  #  #   #    #  #  #  #  # ##  #  #  #  #    #    #    #  #   #    ##
+    //  ##   ##     #    #  #  ##    # ##  #  #   #    #  #  #  #  ##    # ##  #  #  #  #   #    # ##   #      ##
+    // #      ##     ##  #  #   ##    # #   ###   #     ##   #  #   ##    # #   ###   ##     ##   # #    ##  ###
+    //  ###
+    /**
+     * Gets the head to head stats for two teams.
+     * @param {Team} team1 The first team.
+     * @param {Team} team2 The second team.
+     * @param {number} season The season to get the team's game log for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<TeamTypes.HeadToHeadStats>} A promise that returns the head to head stats.
+     */
+    static async getHeadToHeadStats(team1, team2, season, postseason) {
+        try {
+            return await Db.getHeadToHeadStats(team1, team2, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting head to head stats.", err);
         }
     }
 

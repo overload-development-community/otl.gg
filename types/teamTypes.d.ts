@@ -24,6 +24,95 @@ declare namespace TeamTypes {
         name: string
     }
 
+    type HeadToHeadStats = {
+        records: {
+            section?: string
+            title?: string
+            team1wins: number
+            team2wins: number
+            ties: number
+        }[]
+        stats: {
+            team1: {
+                statsTA: (PlayerTypes.GameStats & {
+                    playerId: number
+                    name: string
+                    games: number
+                    gamesWithDamage: number
+                    deathsInGamesWithDamage: number
+                    overtimePeriods: number
+                    challengeId: number
+                    challengingTeamTag: string
+                    challengedTeamTag: string
+                    map: string
+                    matchTime: Date
+                    bestKills: number
+                    bestAssists: number
+                    bestDeaths: number
+                    bestDamage: number
+                })[]
+                statsCTF: (PlayerTypes.GameStats & PlayerTypes.CTFStats & {
+                    playerId: number
+                    name: string
+                    games: number
+                    overtimePeriods: number
+                    challengeId: number
+                    challengingTeamTag: string
+                    challengedTeamTag: string
+                    map: string
+                    matchTime: Date
+                    bestCaptures: number
+                    bestPickups: number
+                    bestCarrierKills: number
+                    bestReturns: number
+                    bestKills: number
+                    bestAssists: number
+                    bestDeaths: number
+                    bestDamage: number
+                })[]
+            }    
+            team2: {
+                statsTA: (PlayerTypes.GameStats & {
+                    playerId: number
+                    name: string
+                    games: number
+                    gamesWithDamage: number
+                    deathsInGamesWithDamage: number
+                    overtimePeriods: number
+                    challengeId: number
+                    challengingTeamTag: string
+                    challengedTeamTag: string
+                    map: string
+                    matchTime: Date
+                    bestKills: number
+                    bestAssists: number
+                    bestDeaths: number
+                    bestDamage: number
+                })[]
+                statsCTF: (PlayerTypes.GameStats & PlayerTypes.CTFStats & {
+                    playerId: number
+                    name: string
+                    games: number
+                    overtimePeriods: number
+                    challengeId: number
+                    challengingTeamTag: string
+                    challengedTeamTag: string
+                    map: string
+                    matchTime: Date
+                    bestCaptures: number
+                    bestPickups: number
+                    bestCarrierKills: number
+                    bestReturns: number
+                    bestKills: number
+                    bestAssists: number
+                    bestDeaths: number
+                    bestDamage: number
+                })[]
+            }
+        }
+        matches: TeamTypes.GameLog[]
+    }
+
     type Standing = TeamRecord & {
         wins1: number
         losses1: number
@@ -194,7 +283,6 @@ declare namespace TeamTypes {
             bestDeaths: number
             bestDamage: number
         })[]
-
     }
 }
 

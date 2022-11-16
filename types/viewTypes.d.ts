@@ -49,6 +49,14 @@ declare namespace ViewTypes {
         matchesPerPage: number
     }
 
+    type OpponentViewParameters = TeamTypes.HeadToHeadStats & {
+        team1: Team
+        team2: Team
+        seasonList: number[]
+        season: number
+        postseason: boolean
+    }
+
     type PlayerViewParameters = PlayerTypes.CareerData & {
         playerId: number
         totals: PlayerTypes.GameStats & PlayerTypes.CTFStats & {
