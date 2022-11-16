@@ -129,6 +129,10 @@ span.grey {
     grid-column-end: span 5;
 }
 
+#opponent .records .team2wins .diamond {
+    margin-left: 7px;
+}
+
 #opponent .players .title {
     padding: 10px;
     color: white;
