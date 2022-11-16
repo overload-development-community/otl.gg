@@ -1107,7 +1107,7 @@ class Validation {
         const homeMaps = await challenge.getHomeMaps(Challenge.getGameTypeForHomes(challenge.details.gameType, challenge.details.teamSize));
 
         for (const previousChallenge of challenges) {
-            if (challenge.challengedTeam !== previousChallenge.challengedTeam) {
+            if (challenge.challengedTeam.id !== previousChallenge.challengedTeam.id) {
                 continue;
             }
 
