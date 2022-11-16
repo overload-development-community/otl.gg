@@ -1108,6 +1108,7 @@ class TeamDb {
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
                     FROM tblDamage
                     WHERE TeamId <> OpponentTeamId
+                        AND ((TeamId = @team1id AND OpponentTeamId = @team2id) OR (TeamId = @team2id AND OpponentTeamId = @team1id))
                     GROUP BY PlayerId, ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
@@ -1167,6 +1168,7 @@ class TeamDb {
                 SELECT PlayerId, ChallengeId, SUM(Damage) Damage
                 FROM tblDamage
                 WHERE TeamId <> OpponentTeamId
+                    AND ((TeamId = @team1id AND OpponentTeamId = @team2id) OR (TeamId = @team2id AND OpponentTeamId = @team1id))
                 GROUP BY PlayerId, ChallengeId
             ) d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
             WHERE s.TeamId = @team1id
@@ -1214,6 +1216,7 @@ class TeamDb {
                     SELECT PlayerId, ChallengeId, SUM(Damage) Damage
                     FROM tblDamage
                     WHERE TeamId <> OpponentTeamId
+                        AND ((TeamId = @team1id AND OpponentTeamId = @team2id) OR (TeamId = @team2id AND OpponentTeamId = @team1id))
                     GROUP BY PlayerId, ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
@@ -1273,6 +1276,7 @@ class TeamDb {
                 SELECT PlayerId, ChallengeId, SUM(Damage) Damage
                 FROM tblDamage
                 WHERE TeamId <> OpponentTeamId
+                    AND ((TeamId = @team1id AND OpponentTeamId = @team2id) OR (TeamId = @team2id AND OpponentTeamId = @team1id))
                 GROUP BY PlayerId, ChallengeId
             ) d ON c.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
             WHERE s.TeamId = @team2id
