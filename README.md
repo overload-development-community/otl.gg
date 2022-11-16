@@ -4,6 +4,10 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.4 - 11/15/2022
+
+* Added new head to head page.
+
 ## v8.1.3 - 11/11/2022
 
 * Fixed validation on `/reinstate`.
