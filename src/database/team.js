@@ -30,8 +30,10 @@
  * @typedef {import("../../types/teamDbTypes").GetTimezoneRecordsets} TeamDbTypes.GetTimezoneRecordsets
  * @typedef {import("../../types/teamDbTypes").HasClockedTeamThisSeasonRecordsets} TeamDbTypes.HasClockedTeamThisSeasonRecordsets
  * @typedef {import("../../types/teamDbTypes").HasPenaltiesRecordsets} TeamDbTypes.HasPenaltiesRecordsets
+ * @typedef {import("../../types/teamDbTypes").NameExistsRecordsets} TeamDbTypes.NameExistsRecordsets
  * @typedef {import("../../types/teamDbTypes").ReinstateRecordsets} TeamDbTypes.ReinstateRecordsets
  * @typedef {import("../../types/teamDbTypes").RemovePilotRecordsets} TeamDbTypes.RemovePilotRecordsets
+ * @typedef {import("../../types/teamDbTypes").TagExistsRecordsets} TeamDbTypes.TagExistsRecordsets
  * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
  * @typedef {import("../../types/teamTypes").HeadToHeadStats} TeamTypes.HeadToHeadStats
  * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
@@ -2042,6 +2044,28 @@ class TeamDb {
         });
     }
 
+    //                         ####         #            #
+    //                         #                         #
+    // ###    ###  # #    ##   ###   #  #  ##     ###   ###    ###
+    // #  #  #  #  ####  # ##  #      ##    #    ##      #    ##
+    // #  #  # ##  #  #  ##    #      ##    #      ##    #      ##
+    // #  #   # #  #  #   ##   ####  #  #  ###   ###      ##  ###
+    /**
+     * Returns whether a name exists.
+     * @param {string} name The name.
+     * @returns {Promise<boolean>} A promise that returns whether the name exists.
+     */
+    static async nameExists(name) {
+        /** @type {TeamDbTypes.NameExistsRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT TOP 1 1 Name FROM tblTeam WHERE Name = @name
+        `, {
+            name: {type: Db.VARCHAR(25), value: name}
+        });
+
+        return !!(data && data.recordsets && data.recordsets[0] && data.recordsets.length > 0);
+    }
+
     //                   ##     #      #
     //                    #           # #
     //  ###  #  #   ###   #    ##     #    #  #
@@ -2346,6 +2370,29 @@ class TeamDb {
             teamId: {type: Db.INT, value: team.id},
             timezone: {type: Db.VARCHAR(50), value: timezone}
         });
+    }
+
+    //  #                ####         #            #
+    //  #                #                         #
+    // ###    ###   ###  ###   #  #  ##     ###   ###    ###
+    //  #    #  #  #  #  #      ##    #    ##      #    ##
+    //  #    # ##   ##   #      ##    #      ##    #      ##
+    //   ##   # #  #     ####  #  #  ###   ###      ##  ###
+    //              ###
+    /**
+     * Returns whether a tag exists.
+     * @param {string} tag The tag.
+     * @returns {Promise<boolean>} A promise that returns whether the tag exists.
+     */
+    static async tagExists(tag) {
+        /** @type {TeamDbTypes.TagExistsRecordsets} */
+        const data = await db.query(/* sql */`
+            SELECT TOP 1 1 Tag FROM tblTeam WHERE Tag = @tag
+        `, {
+            tag: {type: Db.VARCHAR(5), value: tag}
+        });
+
+        return !!(data && data.recordsets && data.recordsets[0] && data.recordsets.length > 0);
     }
 
     //                #         #          ###          #     #                       ####               ##                                  ####                     ##   #           ##    ##

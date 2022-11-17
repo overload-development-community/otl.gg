@@ -296,10 +296,10 @@ class Team {
     /**
      * Determines whether a team name exists.
      * @param {string} name The team name to check.
-     * @returns {boolean} A promise that resolves with whether the team name exists.
+     * @returns {Promise<boolean>} A promise that resolves with whether the team name exists.
      */
     static nameExists(name) {
-        return !!Discord.findRoleByName(`Team: ${name}`);
+        return Db.nameExists(name);
     }
 
     //  #                ####         #            #
@@ -312,10 +312,10 @@ class Team {
     /**
      * Determines whether a team tag exists.
      * @param {string} tag The team tag to check.
-     * @returns {boolean} A promise that resolves with whether the team tag exists.
+     * @returns {Promise<boolean>} A promise that resolves with whether the team tag exists.
      */
     static tagExists(tag) {
-        return !!Discord.findChannelByName(`Team ${tag}`);
+        return Db.tagExists(tag);
     }
 
     //                                                                    #            ##   #                             ##

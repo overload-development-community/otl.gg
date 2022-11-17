@@ -128,6 +128,8 @@ class ConfirmTime {
                     })
                 ]
             });
+
+            return true;
         });
     }
 }

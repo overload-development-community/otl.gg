@@ -543,6 +543,14 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type NameExistsRecordsets = {
+        recordsets: [
+            {
+                Name: number
+            }[]
+        ]
+    }
+
     type ReinstateRecordsets = {
         recordsets: [
             {
@@ -555,6 +563,14 @@ declare namespace TeamDbTypes {
         recordsets: [
             {
                 PlayerId: number
+            }[]
+        ]
+    }
+
+    type TagExistsRecordsets = {
+        recordsets: [
+            {
+                Tag: number
             }[]
         ]
     }

@@ -2757,7 +2757,7 @@ class Validation {
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
     static async teamNameShouldBeUnique(interaction, name, member) {
-        if (Team.nameExists(name)) {
+        if (await Team.nameExists(name)) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
@@ -3490,7 +3490,7 @@ class Validation {
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
     static async teamTagShouldBeUnique(interaction, tag, member) {
-        if (Team.tagExists(tag)) {
+        if (await Team.tagExists(tag)) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
