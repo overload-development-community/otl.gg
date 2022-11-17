@@ -32,7 +32,7 @@ class About {
      */
     static async get(req, res) {
         res.status(200).send(await Common.page(
-            "",
+            "<meta name=\"description\" content=\"Information about the Overload Teams League, and a list of the OTL bot commands for Discord.\" />",
             {css: ["/css/about.css"]},
             AboutView.get(),
             req

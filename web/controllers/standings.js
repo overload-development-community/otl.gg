@@ -85,7 +85,7 @@ class Standings {
         const standings = await Team.getSeasonStandings(isNaN(season) ? void 0 : season, recordsTitle, map);
 
         res.status(200).send(await Common.page(
-            "",
+            `<meta name="description" content="Overload Teams League standings${season ? ` for season ${season}` : ""}." />`,
             {css: ["/css/standings.css"]},
             StandingsView.get({
                 seasonList,

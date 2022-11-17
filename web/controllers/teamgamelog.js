@@ -50,7 +50,7 @@ class TeamGameLogPage {
                 teams = new Teams();
 
             res.status(200).send(await Common.page(
-                "",
+                `<meta name="description" content="Game log for ${pageTeam.name}${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
                 {css: ["/css/team.css"]},
                 TeamGameLogView.get({pageTeam, seasonList, matches, season, postseason, teams}),
                 req

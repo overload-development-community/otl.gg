@@ -32,7 +32,7 @@ class Links {
      */
     static async get(req, res) {
         res.status(200).send(await Common.page(
-            "",
+            "<meta name=\"description\" content=\"Links to purchase Overload and to find other official websites and fan websites for the game.\" />",
             {css: ["/css/links.css"]},
             LinksView.get(),
             req

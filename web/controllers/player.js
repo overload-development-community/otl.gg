@@ -3,13 +3,13 @@
  * @typedef {import("express").Response} Express.Response
  */
 
-const Common = require("../includes/common"),
-    Teams = require("../includes/teams"),
-
+const Challenge = require("../../src/models/challenge"),
+    Common = require("../includes/common"),
     NotFoundView = require("../../public/views/404"),
     PlayerModel = require("../../src/models/player"),
     PlayerView = require("../../public/views/player"),
-    Season = require("../../src/models/season");
+    Season = require("../../src/models/season"),
+    Teams = require("../includes/teams");
 
 //  ####    ##
 //  #   #    #
@@ -95,7 +95,7 @@ class Player {
             };
 
             res.status(200).send(await Common.page(
-                "",
+                `<meta name="description" content="${Challenge.getGameTypeName(gameType)} player stats for ${Common.attributeEncode(Common.normalizeName(career.player.name, career.player.tag))}${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
                 {css: ["/css/player.css"]},
                 PlayerView.get({
                     playerId,

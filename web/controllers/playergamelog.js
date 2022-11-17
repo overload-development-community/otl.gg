@@ -55,7 +55,7 @@ class PlayerGameLog {
             });
 
             res.status(200).send(await Common.page(
-                "",
+                `<meta name="description" content="Game log for ${Common.attributeEncode(Common.normalizeName(gameLog.player.name, gameLog.player.tag))}${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
                 {css: ["/css/player.css"]},
                 PlayerGameLogView.get({
                     playerId,

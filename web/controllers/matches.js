@@ -41,7 +41,7 @@ class Matches {
             completed = await Match.getBySeason(isNaN(season) ? void 0 : season);
 
         res.status(200).send(await Common.page(
-            "",
+            `<meta name="description" content="Recent matches played on the Overload Teams League${season ? ` for season ${season}` : ""}." />`,
             {css: ["/css/matches.css"], js: ["/views/matches/match.js", "/js/countdown.js", "/js/matches.js"]},
             MatchesView.get({
                 season,

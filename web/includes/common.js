@@ -79,6 +79,21 @@ class Common {
         );
     }
 
+    //        #     #           #    #            #          ####                       #
+    //        #     #                #            #          #                          #
+    //  ###  ###   ###   ###   ##    ###   #  #  ###    ##   ###   ###    ##    ##    ###   ##
+    // #  #   #     #    #  #   #    #  #  #  #   #    # ##  #     #  #  #     #  #  #  #  # ##
+    // # ##   #     #    #      #    #  #  #  #   #    ##    #     #  #  #     #  #  #  #  ##
+    //  # #    ##    ##  #     ###   ###    ###    ##   ##   ####  #  #   ##    ##    ###   ##
+    /**
+     * Attribute-encodes a string.
+     * @param {string} str The string.
+     * @returns {string} The encoded string.
+     */
+    static attributeEncode(str) {
+        return str && `${str}`.replace(/"/g, "&#34;") || "";
+    }
+
     //   #               ###
     //  # #               #
     //  #     ###  # #    #     ##    ##   ###

@@ -71,7 +71,7 @@ class TeamPage {
             const timezone = await pageTeam.getTimezone();
 
             res.status(200).send(await Common.page(
-                "",
+                `<meta name="description" content="Team stats for ${pageTeam.name}${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
                 {css: ["/css/team.css"]},
                 TeamView.get({pageTeam, teamInfo, timezone, seasonList, teamData, season, postseason, teams}),
                 req

@@ -50,7 +50,7 @@ class Match {
                 }
 
                 res.status(200).send(await Common.page(
-                    "",
+                    `<meta name="description" content="${challenge.challengingTeam.name} ${challenge.details.challengingTeamScore}, ${challenge.challengedTeam.name} ${challenge.details.challengedTeamScore}, ${challenge.details.map}${challenge.details.overtimePeriods ? ` ${challenge.details.overtimePeriods > 0 ? challenge.details.overtimePeriods : ""}OT` : ""}, played ${challenge.details.matchTime.toLocaleString("en-us", {timeZone: "UTC", weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric"})} UTC" />`,
                     {css: ["/css/match.css"], js: ["/js/match.js"]},
                     MatchView.get({
                         challenge,

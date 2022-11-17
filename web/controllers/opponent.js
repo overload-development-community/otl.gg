@@ -58,7 +58,7 @@ class Opponent {
             const {records, stats, matches} = await Team.getHeadToHeadStats(team1, team2, season, postseason);
 
             res.status(200).send(await Common.page(
-                "",
+                `<meta name="description" content="Head to head stats between ${team1.name} and ${team2.name}${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
                 {css: ["/css/opponent.css"]},
                 OpponentView.get({team1, team2, seasonList, season, postseason, records, stats, matches}),
                 req

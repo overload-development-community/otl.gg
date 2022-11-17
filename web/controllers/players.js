@@ -63,7 +63,7 @@ class Players {
             teams = new Teams();
 
         res.status(200).send(await Common.page(
-            "",
+            `<meta name="description" content="${Challenge.getGameTypeName(gameType)} player statistics${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
             {css: ["/css/players.css"]},
             PlayersView.get({
                 freeAgents,

@@ -72,7 +72,7 @@ class Records {
         const records = await Player.getRecords(season, postseason, gameType, recordType, teamId);
 
         res.status(200).send(await Common.page(
-            "",
+            `<meta name="description" content="${Challenge.getGameTypeName(gameType)} ${recordType} records${season ? ` for season ${season}` : ""}${postseason ? " in the postseason" : ""}." />`,
             {css: ["/css/records.css"]},
             RecordsView.get({
                 seasonList,

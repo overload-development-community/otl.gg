@@ -37,7 +37,7 @@ class MapList {
         const maplist = await Map.getAllAllowed();
 
         res.status(200).send(await Common.page(
-            "",
+            "<meta name=\"description\" content=\"The official approved map list for the Overload Teams League.\" />",
             {css: ["/css/maplist.css"]},
             MapListView.get(maplist),
             req

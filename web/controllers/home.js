@@ -66,7 +66,7 @@ class Home {
         });
 
         res.status(200).send(await Common.page(
-            "",
+            "<meta name=\"description\" content=\"The Overload Teams League is a Discord-based league of teams from all over the world playing the game Overload.\" />",
             {css: ["/css/home.css"]},
             HomeView.get({
                 standings,

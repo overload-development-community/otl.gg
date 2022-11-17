@@ -55,7 +55,7 @@ class Cast {
             }), settings.htmlMinifier));
         } else {
             res.status(404).send(await Common.page(
-                "",
+                `<meta name="description" content="${challenge.challengingTeam.name} vs. ${challenge.challengedTeam.name}" />`,
                 {css: ["/css/error.css"]},
                 NotFoundView.get({message: "There is no scheduled match with this Match ID."}),
                 req
