@@ -118,12 +118,14 @@ class Azure {
                             if (game.data.teamScore && Object.keys(game.data.teamScore).length > 0) {
                                 embed.addFields(Object.keys(game.data.teamScore).sort((a, b) => game.data.teamScore[b] - game.data.teamScore[a]).map((team) => ({
                                     name: team,
-                                    value: game.data.teamScore[team].toLocaleString("en-us")
+                                    value: game.data.teamScore[team].toLocaleString("en-us"),
+                                    inline: true
                                 })));
                             } else {
                                 embed.addFields(game.data.players.sort((a, b) => b.kills * 3 + b.assists - (a.kills * 3 + a.assists)).map((player) => ({
                                     name: player.name,
-                                    value: (game.data.players.length === 2 ? player.kills : player.kills * 3 + player.assists).toLocaleString("en-us")
+                                    value: (game.data.players.length === 2 ? player.kills : player.kills * 3 + player.assists).toLocaleString("en-us"),
+                                    inline: true
                                 })));
                             }
 
