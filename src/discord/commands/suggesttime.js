@@ -109,6 +109,7 @@ class SuggestTime {
             await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
             await Validation.challengeShouldNotBeConfirmed(interaction, challenge, member);
             const date = await Validation.dateShouldBeValid(interaction, datetime, member);
+            await Validation.dateShouldNotBeInPast(interaction, date, member);
 
             const otherTeam = challenge.challengingTeam.id === checkTeam.id ? challenge.challengedTeam : challenge.challengingTeam;
 

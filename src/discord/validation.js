@@ -990,6 +990,33 @@ class Validation {
         return date;
     }
 
+    //    #         #           ##   #                 ##       #  #  #         #    ###         ###         ###                 #
+    //    #         #          #  #  #                  #       #  ## #         #    #  #         #          #  #                #
+    //  ###   ###  ###    ##    #    ###    ##   #  #   #     ###  ## #   ##   ###   ###    ##    #    ###   #  #   ###   ###   ###
+    // #  #  #  #   #    # ##    #   #  #  #  #  #  #   #    #  #  # ##  #  #   #    #  #  # ##   #    #  #  ###   #  #  ##      #
+    // #  #  # ##   #    ##    #  #  #  #  #  #  #  #   #    #  #  # ##  #  #   #    #  #  ##     #    #  #  #     # ##    ##    #
+    //  ###   # #    ##   ##    ##   #  #   ##    ###  ###    ###  #  #   ##     ##  ###    ##   ###   #  #  #      # #  ###      ##
+    /**
+     * Validates that the date given is not in the past.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {Date} date The date.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async dateShouldNotBeInPast(interaction, date, member) {
+        if (date.getTime() < Date.now()) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but this date is in the past.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning("Date is in the past.");
+        }
+    }
+
     // #                       #      #            #     ##   #                 ##       #  #  #                    ###
     // #                       #                   #    #  #  #                  #       #  #  #                    #  #
     // ###    ##   # #    ##   #     ##     ###   ###    #    ###    ##   #  #   #     ###  ####   ###  # #    ##   #  #   ##    ##   # #
