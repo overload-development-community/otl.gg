@@ -4,6 +4,16 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.1.5 - 11/16/2022
+
+* Added `/confirmtime` as a workaround for the `/suggesttime` button disappearing.  This is the only confirm command planned for now.
+* Added `/reschedule` command where, if both teams agree, the match time will be cleared.
+* `/suggesttime` once again disallows times in the past.
+* The `/name` and `/tag` commands will no longer miss disbanded teams when checking for unique names and tags.
+* Scores reported from Azure will be inlined to take up less vertical space.
+* Fixed bug with `/pickmap` where it couldn't detect that a challenge was part of a set.
+* Fixed bug where commands that only run one at a time would cause random errors.
+
 ## v8.1.4 - 11/15/2022
 
 * Added new head to head page.
