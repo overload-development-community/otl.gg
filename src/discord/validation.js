@@ -1025,14 +1025,14 @@ class Validation {
     // #  #  # ##   #    ##    #  #  #  #  #  #  #  #   #    #  #  # ##  #  #   #    #  #  ##     #    #  #  #     # ##    ##    #
     //  ###   # #    ##   ##    ##   #  #   ##    ###  ###    ###  #  #   ##     ##  ###    ##   ###   #  #  #      # #  ###      ##
     /**
-     * Validates that the date given is not in the past.
+     * Validates that the date given is not in the past by more than 5 minutes.
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
      * @param {Date} date The date.
      * @param {DiscordJs.GuildMember} member The member.
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
     static async dateShouldNotBeInPast(interaction, date, member) {
-        if (date.getTime() < Date.now()) {
+        if (date.getTime() < Date.now() - 5 * 60 * 1000) {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
