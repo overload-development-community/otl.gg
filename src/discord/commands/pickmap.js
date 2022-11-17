@@ -88,12 +88,15 @@ class PickMap {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static handle(interaction, user) {
+    static async handle(interaction, user) {
+        await interaction.deferReply({ephemeral: false});
+
         return commandSemaphore.callFunction(async () => {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
-                await interaction.reply({
+                await interaction.deleteReply();
+                await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
                             description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
@@ -104,8 +107,6 @@ class PickMap {
                 });
                 return false;
             }
-
-            await interaction.deferReply({ephemeral: false});
 
             const option = interaction.options.getString("option", true).toLowerCase().charCodeAt(0) - 96;
 

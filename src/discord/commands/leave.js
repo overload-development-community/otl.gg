@@ -106,52 +106,55 @@ class Leave {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
-
+        collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
             await buttonInteraction.deferUpdate();
 
-            let team;
-            try {
-                team = await Leave.validate(interaction, member);
-            } catch (err) {
-                Validation.logButtonError(interaction, buttonInteraction, err);
-                return;
-            }
+            return buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            try {
-                await team.pilotLeft(member);
-            } catch (err) {
+
+                let team;
+                try {
+                    team = await Leave.validate(interaction, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, buttonInteraction, err);
+                    return;
+                }
+
+                try {
+                    await team.pilotLeft(member);
+                } catch (err) {
+                    try {
+                        await interaction.editReply({components: []});
+                    } catch {}
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
                 try {
                     await interaction.editReply({components: []});
                 } catch {}
                 await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
+                            description: `${member}, you have left **${team.name}**.`
                         })
                     ]
                 });
+
                 collector.stop();
-                throw err;
-            }
-
-            try {
-                await interaction.editReply({components: []});
-            } catch {}
-            await interaction.followUp({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `${member}, you have left **${team.name}**.`
-                    })
-                ]
             });
-
-            collector.stop();
-        }));
+        });
 
         collector.on("end", async () => {
             try {

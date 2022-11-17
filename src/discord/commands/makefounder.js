@@ -110,49 +110,51 @@ class MakeFounder {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
-
+        collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
             await buttonInteraction.deferUpdate();
 
-            let pilot, team;
-            try {
-                ({pilot, team} = await MakeFounder.validate(interaction, member));
-            } catch (err) {
-                Validation.logButtonError(interaction, buttonInteraction, err);
-                return;
-            }
+            return buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            try {
-                await team.makeFounder(member, pilot);
-            } catch (err) {
+                let pilot, team;
+                try {
+                    ({pilot, team} = await MakeFounder.validate(interaction, member));
+                } catch (err) {
+                    Validation.logButtonError(interaction, buttonInteraction, err);
+                    return;
+                }
+
+                try {
+                    await team.makeFounder(member, pilot);
+                } catch (err) {
+                    await interaction.editReply({components: []});
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
                 await interaction.editReply({components: []});
                 await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
+                            description: `${member}, you have transferred team ownership to ${pilot}.  You remain a team captain.`,
+                            color: team.role.color
                         })
                     ]
                 });
+
                 collector.stop();
-                throw err;
-            }
-
-            await interaction.editReply({components: []});
-            await interaction.followUp({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `${member}, you have transferred team ownership to ${pilot}.  You remain a team captain.`,
-                        color: team.role.color
-                    })
-                ]
             });
-
-            collector.stop();
-        }));
+        });
 
         collector.on("end", async () => {
             try {

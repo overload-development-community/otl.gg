@@ -66,10 +66,10 @@ class Extend {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static handle(interaction, user) {
-        return commandSemaphore.callFunction(async () => {
-            await interaction.deferReply({ephemeral: false});
+    static async handle(interaction, user) {
+        await interaction.deferReply({ephemeral: false});
 
+        return commandSemaphore.callFunction(async () => {
             const checkServer = interaction.options.getString("server", true).toLowerCase();
 
             const server = await Validation.serverShouldExist(interaction, checkServer, user);

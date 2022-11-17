@@ -106,46 +106,48 @@ class Disband {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
-
+        collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
             await buttonInteraction.deferUpdate();
 
-            let team;
-            try {
-                team = await Disband.validate(interaction, member);
-            } catch (err) {
-                Validation.logButtonError(interaction, buttonInteraction, err);
-                return;
-            }
+            return buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            try {
-                await team.disband(member);
-            } catch (err) {
+                let team;
+                try {
+                    team = await Disband.validate(interaction, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, buttonInteraction, err);
+                    return;
+                }
+
+                try {
+                    await team.disband(member);
+                } catch (err) {
+                    try {
+                        await interaction.editReply({components: []});
+                    } catch {}
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
                 try {
                     await interaction.editReply({components: []});
                 } catch {}
-                await interaction.followUp({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
-                        })
-                    ]
-                });
+                await Discord.queue("You have successfully disbanded your team.  Remember that you or anyone else who has been founder or captain of your team in the past may `/reinstate` your team.", member);
+
                 collector.stop();
-                throw err;
-            }
-
-            try {
-                await interaction.editReply({components: []});
-            } catch {}
-            await Discord.queue("You have successfully disbanded your team.  Remember that you or anyone else who has been founder or captain of your team in the past may `/reinstate` your team.", member);
-
-            collector.stop();
-        }));
+            });
+        });
 
         collector.on("end", async () => {
             try {

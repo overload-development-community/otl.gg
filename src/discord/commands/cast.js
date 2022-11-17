@@ -49,10 +49,10 @@ class Cast {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static handle(interaction, user) {
-        return commandSemaphore.callFunction(async () => {
-            await interaction.deferReply({ephemeral: true});
+    static async handle(interaction, user) {
+        await interaction.deferReply({ephemeral: true});
 
+        return commandSemaphore.callFunction(async () => {
             const member = Discord.findGuildMemberById(user.id),
                 challengeId = interaction.options.getNumber("challengeid", true);
 

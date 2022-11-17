@@ -114,70 +114,72 @@ class Accept {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
-
+        collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
             await buttonInteraction.deferUpdate();
 
-            let team;
-            try {
-                team = await Accept.validate(interaction, member);
-            } catch (err) {
-                Validation.logButtonError(interaction, buttonInteraction, err);
-                return;
-            }
+            return buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            let requestedTeams;
-            try {
-                requestedTeams = await member.getRequestedOrInvitedTeams();
-            } catch (err) {
+                let team;
+                try {
+                    team = await Accept.validate(interaction, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, buttonInteraction, err);
+                    return;
+                }
+
+                let requestedTeams;
+                try {
+                    requestedTeams = await member.getRequestedOrInvitedTeams();
+                } catch (err) {
+                    await interaction.editReply({components: []});
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
+                try {
+                    await team.addPilot(member);
+                } catch (err) {
+                    await interaction.editReply({components: []});
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
+                requestedTeams.forEach(async (requestedTeam) => {
+                    await requestedTeam.updateChannels();
+                });
+
                 await interaction.editReply({components: []});
                 await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
+                            description: `${member}, you are now a member of **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates.  Best of luck flying in the OTL!`,
+                            color: team.role.color
                         })
                     ]
                 });
+
                 collector.stop();
-                throw err;
-            }
-
-            try {
-                await team.addPilot(member);
-            } catch (err) {
-                await interaction.editReply({components: []});
-                await interaction.followUp({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
-                        })
-                    ]
-                });
-                collector.stop();
-                throw err;
-            }
-
-            requestedTeams.forEach(async (requestedTeam) => {
-                await requestedTeam.updateChannels();
             });
-
-            await interaction.editReply({components: []});
-            await interaction.followUp({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `${member}, you are now a member of **${team.name}**!  Visit your team channel at ${team.teamChannel} to talk with your teammates.  Best of luck flying in the OTL!`,
-                        color: team.role.color
-                    })
-                ]
-            });
-
-            collector.stop();
-        }));
+        });
 
         collector.on("end", async () => {
             try {

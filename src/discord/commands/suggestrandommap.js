@@ -61,12 +61,15 @@ class SuggestRandomMap {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static handle(interaction, user) {
+    static async handle(interaction, user) {
+        const response = await interaction.deferReply({ephemeral: false});
+
         return commandSemaphore.callFunction(async () => {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
-                await interaction.reply({
+                await interaction.deleteReply();
+                await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
                             description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
@@ -77,8 +80,6 @@ class SuggestRandomMap {
                 });
                 return false;
             }
-
-            const response = await interaction.deferReply({ephemeral: false});
 
             await Validation.memberShouldBeCaptainOrFounder(interaction, member);
             const checkTeam = await Validation.memberShouldBeOnATeam(interaction, member);
@@ -113,61 +114,63 @@ class SuggestRandomMap {
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
-            collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-                if (collector.ended || buttonInteraction.customId !== customId) {
-                    return;
-                }
-
+            collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
                 await buttonInteraction.deferUpdate();
 
-                const buttonUser = buttonInteraction.user,
-                    buttonMember = Discord.findGuildMemberById(buttonUser.id);
+                return buttonSemaphore.callFunction(async () => {
+                    if (collector.ended || buttonInteraction.customId !== customId) {
+                        return;
+                    }
 
-                let team, map;
-                try {
-                    await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
-                    team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
-                    await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
-                    await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
-                    await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
-                    await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
-                    await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
-                    await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
-                    map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, checkMap, buttonMember);
-                    await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the randomly suggested map.", true);
-                } catch (err) {
-                    Validation.logButtonError(interaction, buttonInteraction, err);
-                    return;
-                }
+                    const buttonUser = buttonInteraction.user,
+                        buttonMember = Discord.findGuildMemberById(buttonUser.id);
 
-                try {
-                    await challenge.setMap(map.map);
-                } catch (err) {
+                    let team, map;
+                    try {
+                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                        team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
+                        await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
+                        await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
+                        map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, checkMap, buttonMember);
+                        await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the randomly suggested map.", true);
+                    } catch (err) {
+                        Validation.logButtonError(interaction, buttonInteraction, err);
+                        return;
+                    }
+
+                    try {
+                        await challenge.setMap(map.map);
+                    } catch (err) {
+                        await interaction.editReply({components: []});
+                        await interaction.followUp({
+                            embeds: [
+                                Discord.embedBuilder({
+                                    description: `Sorry, ${buttonMember}, but there was a server error.  An admin will be notified about this.`,
+                                    color: 0xff0000
+                                })
+                            ]
+                        });
+                        collector.stop();
+                        throw err;
+                    }
+
                     await interaction.editReply({components: []});
                     await interaction.followUp({
                         embeds: [
                             Discord.embedBuilder({
-                                description: `Sorry, ${buttonMember}, but there was a server error.  An admin will be notified about this.`,
-                                color: 0xff0000
+                                description: `The map for this match has been set to the randomly chosen map of **${challenge.details.map}**.`,
+                                color: team.role.color
                             })
                         ]
                     });
+
                     collector.stop();
-                    throw err;
-                }
-
-                await interaction.editReply({components: []});
-                await interaction.followUp({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `The map for this match has been set to the randomly chosen map of **${challenge.details.map}**.`,
-                            color: team.role.color
-                        })
-                    ]
                 });
-
-                collector.stop();
-            }));
+            });
 
             collector.on("end", async () => {
                 try {

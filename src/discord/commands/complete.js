@@ -120,47 +120,49 @@ class Complete {
 
         const collector = response.createMessageComponentCollector({time: 890000});
 
-        collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-            if (collector.ended || buttonInteraction.customId !== customId) {
-                return;
-            }
-
+        collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
             await buttonInteraction.deferUpdate();
 
-            let newTeam;
-            try {
-                newTeam = await Complete.validate(interaction, member);
-            } catch (err) {
-                Validation.logButtonError(interaction, buttonInteraction, err);
-                return;
-            }
+            return buttonSemaphore.callFunction(async () => {
+                if (collector.ended || buttonInteraction.customId !== customId) {
+                    return;
+                }
 
-            let team;
-            try {
-                team = await newTeam.createTeam();
-            } catch (err) {
+                let newTeam;
+                try {
+                    newTeam = await Complete.validate(interaction, member);
+                } catch (err) {
+                    Validation.logButtonError(interaction, buttonInteraction, err);
+                    return;
+                }
+
+                let team;
+                try {
+                    team = await newTeam.createTeam();
+                } catch (err) {
+                    try {
+                        await interaction.editReply({components: []});
+                    } catch {}
+                    await interaction.followUp({
+                        embeds: [
+                            Discord.embedBuilder({
+                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                color: 0xff0000
+                            })
+                        ]
+                    });
+                    collector.stop();
+                    throw err;
+                }
+
                 try {
                     await interaction.editReply({components: []});
                 } catch {}
-                await interaction.followUp({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                            color: 0xff0000
-                        })
-                    ]
-                });
+                await Discord.queue(`Congratulations, ${member}!  Your team has been created!  You may now visit ${team.teamChannel} for team chat, and ${team.captainsChannel} for private chat with your team captains as well as system notifications for your team.`, member);
+
                 collector.stop();
-                throw err;
-            }
-
-            try {
-                await interaction.editReply({components: []});
-            } catch {}
-            await Discord.queue(`Congratulations, ${member}!  Your team has been created!  You may now visit ${team.teamChannel} for team chat, and ${team.captainsChannel} for private chat with your team captains as well as system notifications for your team.`, member);
-
-            collector.stop();
-        }));
+            });
+        });
 
         collector.on("end", async () => {
             try {

@@ -67,12 +67,15 @@ class Clock {
      * @param {DiscordJs.User} user The user initiating the interaction.
      * @returns {Promise<boolean>} A promise that returns whether the interaction was successfully handled.
      */
-    static handle(interaction, user) {
+    static async handle(interaction, user) {
+        const response = await interaction.deferReply({ephemeral: true});
+
         return commandSemaphore.callFunction(async () => {
             const member = Discord.findGuildMemberById(user.id),
                 challenge = await Validation.interactionShouldBeInChallengeChannel(interaction, member);
             if (!challenge) {
-                await interaction.reply({
+                await interaction.deleteReply();
+                await interaction.followUp({
                     embeds: [
                         Discord.embedBuilder({
                             description: `Sorry, ${member}, but this command can only be used in a challenge channel.`,
@@ -83,8 +86,6 @@ class Clock {
                 });
                 return false;
             }
-
-            const response = await interaction.deferReply({ephemeral: true});
 
             await Clock.validate(interaction, challenge, member);
 
@@ -108,50 +109,52 @@ class Clock {
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
-            collector.on("collect", (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => buttonSemaphore.callFunction(async () => {
-                if (collector.ended || buttonInteraction.customId !== customId) {
-                    return;
-                }
-
+            collector.on("collect", async (/** @type {DiscordJs.ButtonInteraction} */buttonInteraction) => {
                 await buttonInteraction.deferUpdate();
 
-                let team;
-                try {
-                    team = await Clock.validate(interaction, challenge, member);
-                } catch (err) {
-                    Validation.logButtonError(interaction, buttonInteraction, err);
-                    return;
-                }
+                return buttonSemaphore.callFunction(async () => {
+                    if (collector.ended || buttonInteraction.customId !== customId) {
+                        return;
+                    }
 
-                try {
-                    await challenge.clock(team);
-                } catch (err) {
+                    let team;
+                    try {
+                        team = await Clock.validate(interaction, challenge, member);
+                    } catch (err) {
+                        Validation.logButtonError(interaction, buttonInteraction, err);
+                        return;
+                    }
+
+                    try {
+                        await challenge.clock(team);
+                    } catch (err) {
+                        await interaction.editReply({components: []});
+                        await interaction.followUp({
+                            embeds: [
+                                Discord.embedBuilder({
+                                    description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                    color: 0xff0000
+                                })
+                            ]
+                        });
+                        collector.stop();
+                        throw err;
+                    }
+
                     await interaction.editReply({components: []});
                     await interaction.followUp({
                         embeds: [
                             Discord.embedBuilder({
-                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                                color: 0xff0000
+                                description: `**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`,
+                                color: team.role.color
                             })
-                        ]
+                        ],
+                        ephemeral: false
                     });
+
                     collector.stop();
-                    throw err;
-                }
-
-                await interaction.editReply({components: []});
-                await interaction.followUp({
-                    embeds: [
-                        Discord.embedBuilder({
-                            description: `**${team.name}** has put this challenge on the clock!  Both teams have 28 days to get this match scheduled.  If the match is not scheduled within that time, this match will be adjudicated by an admin to determine if penalties need to be assessed.`,
-                            color: team.role.color
-                        })
-                    ],
-                    ephemeral: false
                 });
-
-                collector.stop();
-            }));
+            });
 
             collector.on("end", async () => {
                 try {
