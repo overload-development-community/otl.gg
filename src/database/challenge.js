@@ -997,6 +997,8 @@ class ChallengeDb {
                 c.UsingHomeMapTeam,
                 c.ChallengingTeamPenalized,
                 c.ChallengedTeamPenalized,
+                c.SuggestedTime,
+                c.SuggestedTimeTeamId,
                 c.ReportingTeamId,
                 c.ChallengingTeamScore,
                 c.ChallengedTeamScore,
@@ -1045,6 +1047,8 @@ class ChallengeDb {
             usingHomeMapTeam: data.recordsets[0][0].UsingHomeMapTeam,
             challengingTeamPenalized: data.recordsets[0][0].ChallengingTeamPenalized,
             challengedTeamPenalized: data.recordsets[0][0].ChallengedTeamPenalized,
+            suggestedTime: data.recordsets[0][0].SuggestedTime,
+            suggestedTimeTeamId: data.recordsets[0][0].SuggestedTimeTeamId,
             reportingTeamId: data.recordsets[0][0].ReportingTeamId,
             challengingTeamScore: data.recordsets[0][0].ChallengingTeamScore,
             challengedTeamScore: data.recordsets[0][0].ChallengedTeamScore,
@@ -2123,6 +2127,30 @@ class ChallengeDb {
         if (!settings.disableRedis) {
             await Cache.invalidate([`${settings.redisPrefix}:invalidate:challenge:updated`]);
         }
+    }
+
+    //                                        #    ###    #
+    //                                        #     #
+    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
+    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##
+    //               ###   ###
+    /**
+     * Suggests a time for a challenge.
+     * @param {Challenge} challenge The challenge.
+     * @param {Team} team The team issuing the suggestion.
+     * @param {Date} date The time.
+     * @returns {Promise} A promise that resolves when the time has been suggested.
+     */
+    static async suggestTime(challenge, team, date) {
+        await db.query(/* sql */`
+            UPDATE tblChallenge SET SuggestedTime = @date, SuggestedTimeTeamId = @teamId WHERE ChallengeId = @challengeId
+        `, {
+            date: {type: Db.DATETIME, value: date},
+            teamId: {type: Db.INT, value: team.id},
+            challengeId: {type: Db.INT, value: challenge.id}
+        });
     }
 
     //                           ##         ##

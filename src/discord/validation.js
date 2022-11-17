@@ -540,6 +540,34 @@ class Validation {
         }
     }
 
+    //       #           ##    ##                             ##   #                 ##       #  #  #                     ##                                   #             #  ###    #
+    //       #            #     #                            #  #  #                  #       #  #  #                    #  #                                  #             #   #
+    //  ##   ###    ###   #     #     ##   ###    ###   ##    #    ###    ##   #  #   #     ###  ####   ###  # #    ##    #    #  #   ###   ###   ##    ###   ###    ##    ###   #    ##    # #    ##
+    // #     #  #  #  #   #     #    # ##  #  #  #  #  # ##    #   #  #  #  #  #  #   #    #  #  #  #  #  #  # #   # ##    #   #  #  #  #  #  #  # ##  ##      #    # ##  #  #   #     #    ####  # ##
+    // #     #  #  # ##   #     #    ##    #  #   ##   ##    #  #  #  #  #  #  #  #   #    #  #  #  #  # ##  # #   ##    #  #  #  #   ##    ##   ##      ##    #    ##    #  #   #     #    #  #  ##
+    //  ##   #  #   # #  ###   ###    ##   #  #  #      ##    ##   #  #   ##    ###  ###    ###  #  #   # #   #     ##    ##    ###  #     #      ##   ###      ##   ##    ###   #    ###   #  #   ##
+    //                                            ###                                                                                 ###   ###
+    /**
+     * Validates that a challenge has a suggested time.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {Challenge} challenge The challenge.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async challengeShouldHaveSuggestedTime(interaction, challenge, member) {
+        if (!challenge.details.suggestedTime) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but there is no time suggested for this match yet.  Suggest one with the \`/suggesttime\` command.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning("Time not yet suggested.");
+        }
+    }
+
     //       #           ##    ##                             ##   #                 ##       #  #  #                    ###                      ##    #
     //       #            #     #                            #  #  #                  #       #  #  #                     #                      #  #
     //  ##   ###    ###   #     #     ##   ###    ###   ##    #    ###    ##   #  #   #     ###  ####   ###  # #    ##    #     ##    ###  # #    #    ##    ####   ##

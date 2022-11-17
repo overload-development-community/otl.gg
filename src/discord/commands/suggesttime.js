@@ -124,12 +124,14 @@ class SuggestTime {
             await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
-                        description: `**${checkTeam.name}** is suggesting to play at **<t:${Math.floor(date.getTime() / 1000)}:F>**.  **${(checkTeam.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam).name}**, do you agree to this suggestion?`,
+                        description: `**${checkTeam.name}** is suggesting to play at **<t:${Math.floor(date.getTime() / 1000)}:F>**.  **${(checkTeam.id === challenge.challengingTeam.id ? challenge.challengedTeam : challenge.challengingTeam).name}**, do you agree to this suggestion?  Either click the button below, or use the \`/confirmtime\` command.`,
                         color: 0xffff00
                     })
                 ],
                 components: [row]
             });
+
+            challenge.suggestTime(checkTeam, date);
 
             const collector = response.createMessageComponentCollector({time: 890000});
 
@@ -150,6 +152,7 @@ class SuggestTime {
                     await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);
                     await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
                     await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
+                    await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested time.", true);
                 } catch (err) {
                     Validation.logButtonError(interaction, buttonInteraction, err);
                     return;

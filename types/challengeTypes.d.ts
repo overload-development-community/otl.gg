@@ -108,6 +108,8 @@ declare namespace ChallengeTypes {
         usingHomeMapTeam: boolean
         challengingTeamPenalized: boolean
         challengedTeamPenalized: boolean
+        suggestedTime: Date
+        suggestedTimeTeamId: number
         reportingTeamId: number
         challengingTeamScore: number
         challengedTeamScore: number

@@ -1459,6 +1459,8 @@ class Challenge {
             usingHomeMapTeam: details.usingHomeMapTeam,
             challengingTeamPenalized: details.challengingTeamPenalized,
             challengedTeamPenalized: details.challengedTeamPenalized,
+            suggestedTime: details.suggestedTime,
+            suggestedTimeTeam: details.suggestedTimeTeamId ? details.suggestedTimeTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             reportingTeam: details.reportingTeamId ? details.reportingTeamId === this.challengingTeam.id ? this.challengingTeam : this.challengedTeam : void 0,
             challengingTeamScore: details.challengingTeamScore,
             challengedTeamScore: details.challengedTeamScore,
@@ -2324,6 +2326,34 @@ class Challenge {
                 throw new Exception("There was a Discord error adding a VoD to the VoDs channel.", err);
             }
         }
+    }
+
+    //                                        #    ###    #
+    //                                        #     #
+    //  ###   #  #   ###   ###   ##    ###   ###    #    ##    # #    ##
+    // ##     #  #  #  #  #  #  # ##  ##      #     #     #    ####  # ##
+    //   ##   #  #   ##    ##   ##      ##    #     #     #    #  #  ##
+    // ###     ###  #     #      ##   ###      ##   #    ###   #  #   ##
+    //               ###   ###
+    /**
+     * Suggests a time for the challenge.
+     * @param {Team} team The team suggesting the time.
+     * @param {Date} date The time.
+     * @returns {Promise} A promise that resolves when the team size has been suggested.
+     */
+    async suggestTime(team, date) {
+        if (!this.details) {
+            await this.loadDetails();
+        }
+
+        try {
+            await Db.suggestTime(this, team, date);
+        } catch (err) {
+            throw new Exception("There was a database error suggesting a time for a challenge.", err);
+        }
+
+        this.details.suggestedTime = date;
+        this.details.suggestedTimeTeam = team;
     }
 
     //                           ##         ##

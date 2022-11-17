@@ -168,6 +168,8 @@ declare namespace ChallengeDbTypes {
                 UsingHomeMapTeam: boolean
                 ChallengingTeamPenalized: boolean
                 ChallengedTeamPenalized: boolean
+                SuggestedTime: Date
+                SuggestedTimeTeamId: number
                 ReportingTeamId: number
                 ChallengingTeamScore: number
                 ChallengedTeamScore: number
