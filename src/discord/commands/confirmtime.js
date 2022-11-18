@@ -108,8 +108,7 @@ class ConfirmTime {
             try {
                 await challenge.setTime(challenge.details.suggestedTime);
             } catch (err) {
-                await interaction.editReply({components: []});
-                await interaction.followUp({
+                await interaction.editReply({
                     embeds: [
                         Discord.embedBuilder({
                             description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
@@ -120,7 +119,7 @@ class ConfirmTime {
                 throw err;
             }
 
-            await interaction.followUp({
+            await interaction.editReply({
                 embeds: [
                     Discord.embedBuilder({
                         description: "The time for this match has been set.",
