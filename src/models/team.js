@@ -1813,6 +1813,26 @@ class Team {
         }
     }
 
+    //               #    #
+    //               #    #
+    //  ###    ##   ###   #      ##    ###   ###  #  #   ##
+    // ##     # ##   #    #     # ##  #  #  #  #  #  #  # ##
+    //   ##   ##     #    #     ##    # ##   ##   #  #  ##
+    // ###     ##     ##  ####   ##    # #  #      ###   ##
+    //                                       ###
+    /**
+     * Sets a team's league.
+     * @param {string} league The league to set, "Upper" or "Lower".
+     * @returns {Promise} A promise that resolves when the team's league has been set.
+     */
+    async setLeague(league) {
+        try {
+            await Db.setLowerTier(this, league === "Lower");
+        } catch (err) {
+            throw new Exception("There was a database error setting a team's league.", err);
+        }
+    }
+
     //               #    #                 #
     //               #    #                 #
     //  ###    ##   ###   #      ##    ##   # #

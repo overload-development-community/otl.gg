@@ -2308,6 +2308,38 @@ class TeamDb {
         });
     }
 
+    //               #    #                             ###    #
+    //               #    #                              #
+    //  ###    ##   ###   #      ##   #  #   ##   ###    #    ##     ##   ###
+    // ##     # ##   #    #     #  #  #  #  # ##  #  #   #     #    # ##  #  #
+    //   ##   ##     #    #     #  #  ####  ##    #      #     #    ##    #
+    // ###     ##     ##  ####   ##   ####   ##   #      #    ###    ##   #
+    /**
+     * Adds or removes a team to the list of lower tiers.
+     * @param {Team} team The team to set into the lower tier.
+     * @param {boolean} lower Whether the team should be in the lower tier or not.
+     * @returns {Promise} A promise that resolves when the team's lower tier state has been set.
+     */
+    static async setLowerTier(team, lower) {
+        await db.query(/* sql */`
+            DECLARE @season INT
+
+            SELECT TOP 1
+                @season = Season
+            FROM tblSeason
+            WHERE DateStart <= GETUTCDATE()
+                AND DateEnd > GETUTCDATE()
+            ORDER BY Season DESC
+
+            ${lower ? /* sql */`
+                IF NOT EXISTS(SELECT TOP 1 1 FROM tblLowerTier WHERE TeamId = @teamId AND Season = @season)
+                    INSERT INTO tblLowerTier (TeamId, Season) VALUES (@teamId, @season)
+            ` : /* sql */ `
+                DELETE FROM tblLowerTier WHERE TeamId = @teamId AND Season = @season
+            `}
+        `, {teamId: {type: Db.INT, value: team.id}});
+    }
+
     //               #    #  #
     //               #    ## #
     //  ###    ##   ###   ## #   ###  # #    ##
