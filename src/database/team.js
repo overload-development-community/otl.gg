@@ -2327,8 +2327,6 @@ class TeamDb {
             SELECT TOP 1
                 @season = Season
             FROM tblSeason
-            WHERE DateStart <= GETUTCDATE()
-                AND DateEnd > GETUTCDATE()
             ORDER BY Season DESC
 
             ${lower ? /* sql */`

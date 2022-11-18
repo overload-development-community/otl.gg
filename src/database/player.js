@@ -2237,7 +2237,7 @@ class PlayerDb {
             FROM tblSeason
             ORDER BY Season DESC
 
-            SELECT TOP 5
+            SELECT
                 p.PlayerId,
                 p.Name,
                 r.TeamId,
@@ -2272,9 +2272,11 @@ class PlayerDb {
                     WHERE c3.Season = @season
                         AND c3.Postseason = 0
                         AND c3.GameType = 'TA'
+                        AND (CASE WHEN s3.TeamId = c3.ChallengingTeamId THEN c3.ChallengedTeamId ELSE c3.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
                     GROUP BY s3.TeamId
                 ) g2 ON r2.TeamId = g2.TeamId
                 WHERE c2.Season = @season
+                    AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
                 GROUP BY s2.PlayerId, g2.Games
             ) g ON p.PlayerId = g.PlayerId
             WHERE c.MatchTime IS NOT NULL
@@ -2282,8 +2284,10 @@ class PlayerDb {
                 AND c.Postseason = 0
                 AND c.GameType = 'TA'
                 AND g.PctPlayed >= 0.1
+                AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
             GROUP BY p.PlayerId, p.Name, r.TeamId, t.Name, t.Tag, t.Disbanded, t.Locked
             ORDER BY CAST(SUM(s.Kills) + SUM(s.Assists) AS FLOAT) / CASE WHEN SUM(s.Deaths) = 0 THEN 1 ELSE SUM(s.Deaths) END DESC
+
 
             SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
         `);
