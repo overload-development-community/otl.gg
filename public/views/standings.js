@@ -60,7 +60,7 @@ class StandingsView {
                     <div class="header">${records2}</div>
                     <div class="header">${records3}</div>
                     <div class="header">${map || ""}</div>
-                    ${standings.filter((s) => !s.disbanded).map((s, index) => /* html */`
+                    ${(isNaN(season) || season === seasonList.length ? standings.filter((s) => !s.disbanded) : standings).map((s, index) => /* html */`
                         <div class="pos numeric">${s.wins > 0 || s.losses > 0 || s.ties > 0 ? index + 1 : ""}</div>
                         <div class="tag"><div class="diamond${(team = teams.getTeam(s.teamId, s.name, s.tag, s.disbanded, s.locked)).role && team.role.color ? "" : "-empty"}" ${team.role && team.role.color ? `style="background-color: ${team.role.hexColor};"` : ""}></div> <a href="/team/${team.tag}">${team.tag}</a></div>
                         <div class="team-name"><a href="/team/${team.tag}">${team.name}</a></div>
@@ -73,7 +73,7 @@ class StandingsView {
                         <div class="numeric">${s.winsMap > 0 || s.lossesMap > 0 || s.tiesMap > 0 ? `${s.winsMap}-${s.lossesMap}${s.tiesMap === 0 ? "" : `-${s.tiesMap}`}` : ""}</div>
                     `).join("")}
                 </div>
-                ${standings.filter((s) => s.disbanded).length > 0 ? /* html */`
+                ${(isNaN(season) || season === seasonList.length) && standings.filter((s) => s.disbanded).length > 0 ? /* html */`
                     <div class="section">Disbanded Teams</div>
                     <div id="disbanded">
                         <div class="header before"></div>
