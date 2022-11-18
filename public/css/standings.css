@@ -8,11 +8,11 @@
 }
 
 #standings .header.before {
-    grid-column-end: span 5;
+    grid-column-end: span 6;
 }
 
 #disbanded .header.before {
-    grid-column-end: span 4;
+    grid-column-end: span 5;
 }
 
 #body .header.records {
@@ -22,7 +22,7 @@
 
 #standings {
     display: grid;
-    grid-template-columns: repeat(9, auto);
+    grid-template-columns: repeat(10, auto);
     padding: 10px;
 }
 
@@ -76,7 +76,38 @@
     margin: 1px 3px;
 }
 
+#standings .provisional, #disbanded .provisional {
+    color: #999999;
+    font-style: italic;
+}
+
+#disbanded {
+    display: grid;
+    grid-template-columns: repeat(9, auto);
+    padding: 10px;
+}
+
 @media (max-width: 1000px) {
+    #standings {
+        grid-template-columns: repeat(9, auto);
+    }
+
+    #disbanded {
+        grid-template-columns: repeat(8, auto);
+    }
+
+    #standings .league, #disbanded .league {
+        display: none;
+    }
+
+    #standings .header.before {
+        grid-column-end: span 5;
+    }
+
+    #disbanded .header.before {
+        grid-column-end: span 4;
+    }
+
     #standings div.header, #disbanded div.header {
         font-size: 18px;
     }
@@ -101,12 +132,20 @@
         grid-template-columns: repeat(8, auto);
     }
 
-    #standings .team-name {
+    #disbanded {
+        grid-template-columns: repeat(7, auto);
+    }
+
+    #standings .team-name, #disbanded .team-name {
         display: none;
     }
 
     #standings .header.before {
         grid-column-end: span 4;
+    }
+
+    #disbanded .header.before {
+        grid-column-end: span 3;
     }
 }
 
@@ -126,15 +165,4 @@
     #standings .diamond, #standings .diamond-empty {
         display: none;
     }
-}
-
-#standings .provisional, #disbanded .provisional {
-    color: #999999;
-    font-style: italic;
-}
-
-#disbanded {
-    display: grid;
-    grid-template-columns: repeat(8, auto);
-    padding: 10px;
 }

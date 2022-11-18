@@ -1834,7 +1834,7 @@ class TeamDb {
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
                 Rating,
-                Wins, Losses, Ties, Wins1, Losses1, Ties1, Wins2, Losses2, Ties2, Wins3, Losses3, Ties3${map ? ", WinsMap, LossesMap, TiesMap" : ""}
+                Wins, Losses, Ties, League, Wins1, Losses1, Ties1, Wins2, Losses2, Ties2, Wins3, Losses3, Ties3${map ? ", WinsMap, LossesMap, TiesMap" : ""}
             FROM
             (
                 SELECT
@@ -1847,6 +1847,7 @@ class TeamDb {
                     (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
                     (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
                     (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties,
+                    CASE WHEN EXISTS(SELECT TOP 1 1 FROM tblLowerTier lt WHERE lt.TeamId = t.TeamId AND lt.Season = @season) THEN 'Lower' ELSE 'Upper' END League,
                     ${records === "Team Size Records" ? /* sql */`
                         (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins1,
                         (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE c.Season = @season AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses1,
@@ -1895,7 +1896,30 @@ class TeamDb {
             map: {type: Db.VARCHAR(100), value: map}
         });
 
-        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({teamId: row.TeamId, name: row.Name, tag: row.Tag, disbanded: row.Disbanded, locked: row.Locked, rating: row.Rating, wins: row.Wins, losses: row.Losses, ties: row.Ties, wins1: row.Wins1, losses1: row.Losses1, ties1: row.Ties1, wins2: row.Wins2, losses2: row.Losses2, ties2: row.Ties2, wins3: row.Wins3, losses3: row.Losses3, ties3: row.Ties3, winsMap: row.WinsMap || 0, lossesMap: row.LossesMap || 0, tiesMap: row.TiesMap || 0})) || [];
+        cache = data && data.recordsets && data.recordsets[0] && data.recordsets[0].map((row) => ({
+            teamId: row.TeamId,
+            name: row.Name,
+            tag: row.Tag,
+            disbanded: row.Disbanded,
+            locked: row.Locked,
+            rating: row.Rating,
+            wins: row.Wins,
+            losses: row.Losses,
+            ties: row.Ties,
+            league: row.League,
+            wins1: row.Wins1,
+            losses1: row.Losses1,
+            ties1: row.Ties1,
+            wins2: row.Wins2,
+            losses2: row.Losses2,
+            ties2: row.Ties2,
+            wins3: row.Wins3,
+            losses3: row.Losses3,
+            ties3: row.Ties3,
+            winsMap: row.WinsMap || 0,
+            lossesMap: row.LossesMap || 0,
+            tiesMap: row.TiesMap || 0
+        })) || [];
 
         if (!settings.disableRedis) {
             await Cache.add(key, cache, !season && data && data.recordsets && data.recordsets[1] && data.recordsets[1][0] && data.recordsets[1][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`, `${settings.redisPrefix}:invalidate:team:status`]);

@@ -114,6 +114,7 @@ declare namespace TeamTypes {
     }
 
     type Standing = TeamRecord & {
+        league: string
         wins1: number
         losses1: number
         ties1: number

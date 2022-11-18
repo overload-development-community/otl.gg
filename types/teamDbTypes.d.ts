@@ -500,6 +500,7 @@ declare namespace TeamDbTypes {
     type GetSeasonStandingsRecordsets = {
         recordsets: [
             (TeamData & {
+                League: string
                 Wins1: number
                 Losses1: number
                 Ties1: number

@@ -2237,7 +2237,7 @@ class PlayerDb {
             FROM tblSeason
             ORDER BY Season DESC
 
-            SELECT
+            SELECT TOP 5
                 p.PlayerId,
                 p.Name,
                 r.TeamId,
