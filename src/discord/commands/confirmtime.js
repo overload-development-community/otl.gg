@@ -120,7 +120,6 @@ class ConfirmTime {
                 throw err;
             }
 
-            await interaction.editReply({components: []});
             await interaction.followUp({
                 embeds: [
                     Discord.embedBuilder({
