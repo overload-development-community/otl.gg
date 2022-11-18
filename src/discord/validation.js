@@ -1090,7 +1090,8 @@ class Validation {
         try {
             return await Challenge.getByChannel(interaction.channel);
         } catch (err) {
-            await interaction.reply({
+            await interaction.deleteReply();
+            await interaction.followUp({
                 embeds: [
                     Discord.embedBuilder({
                         description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
