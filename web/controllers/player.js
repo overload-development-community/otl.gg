@@ -43,6 +43,7 @@ class Player {
             playerId = isNaN(Number.parseInt(req.params.id, 10)) ? 0 : Number.parseInt(req.params.id, 10),
             postseason = !!req.query.postseason,
             gameType = !queryGameType || ["TA", "CTF"].indexOf(queryGameType.toUpperCase()) === -1 ? "TA" : queryGameType.toUpperCase(),
+            all = !!req.query.all,
             validSeasonNumbers = await Season.getSeasonNumbers();
 
         let season = isNaN(+querySeason) ? void 0 : Number.parseInt(querySeason, 10);
@@ -52,7 +53,7 @@ class Player {
             season = void 0;
         }
 
-        const career = await PlayerModel.getCareer(playerId, season, postseason, gameType);
+        const career = await PlayerModel.getCareer(playerId, season, postseason, gameType, all);
 
         if (career) {
             const seasonList = career.career.map((c) => c.season).filter((s, index, seasons) => seasons.indexOf(s) === index).sort(),
@@ -106,6 +107,7 @@ class Player {
                     seasonList,
                     season,
                     postseason,
+                    all,
                     gameType,
                     opponents: career.opponents,
                     maps: career.maps,

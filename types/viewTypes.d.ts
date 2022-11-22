@@ -71,6 +71,7 @@ declare namespace ViewTypes {
         seasonList: number[]
         season: number
         postseason: boolean
+        all: boolean,
         gameType: string
         teams: Teams
     }

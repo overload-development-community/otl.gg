@@ -195,7 +195,7 @@ class PlayerDb {
      * @param {number} season The season to get the player's career data for, 0 for all time.
      * @param {boolean} postseason Whether to get postseason records.
      * @param {string} gameType The game type to get data for.
-     * @param {bool} all Whether to show stats for all leagues.
+     * @param {boolean} all Whether to show stats for all leagues.
      * @returns {Promise<PlayerTypes.CareerData>} A promise that resolves with a player's career data.
      */
     static async getCareer(playerId, season, postseason, gameType, all) {
