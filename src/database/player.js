@@ -1985,11 +1985,13 @@ class PlayerDb {
                         WHERE (@season = 0 OR c3.Season = @season)
                             AND c3.Postseason = @postseason
                             AND c3.GameType = @gameType
+                            AND (CASE WHEN s3.TeamId = c3.ChallengingTeamId THEN c3.ChallengedTeamId ELSE c3.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
                         GROUP BY s3.TeamId
                     ) g2 ON r2.TeamId = g2.TeamId
                     WHERE (@season = 0 OR c2.Season = @season)
                         AND c2.Postseason = @postseason
                         AND c2.GameType = @gameType
+                        AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
                     GROUP BY s2.PlayerId, g2.Games
                 ) g on p.PlayerId = g.PlayerId
             `}
@@ -2011,7 +2013,8 @@ class PlayerDb {
                 WHERE (@season = 0 OR c2.Season = @season)
                     AND c2.Postseason = @postseason
                     AND c2.GameType = 'TA'
-                GROUP BY s2.PlayerId
+                    AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
+            GROUP BY s2.PlayerId
             ) s3 ON s.PlayerId = s3.PlayerId
             LEFT OUTER JOIN (
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
@@ -2024,6 +2027,7 @@ class PlayerDb {
                 AND c.Postseason = @postseason
                 AND c.GameType = @gameType
                 AND ls.Row = 1
+                AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = @season)
                 ${all ? "" : /* sql */`
                     AND g.PctPlayed >= 0.1
                 `}
