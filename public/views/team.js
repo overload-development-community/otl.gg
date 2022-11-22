@@ -87,7 +87,7 @@ class TeamView {
                             Rating: <span class="numeric ${teamData.records.wins + teamData.records.losses + teamData.records.ties < 10 ? "provisional" : ""}">${Math.round(teamData.records.rating)}</span>
                         `}
                     </div>
-                    ${!season || season < 7 || teamData.ratings.length === 0 ? "" : /* html */`
+                    ${season === 0 || season < 7 || teamData.ratings.length === 0 ? "" : /* html */`
                         <div class="opponents" style="grid-column-end: span 2;">
                             <div class="header">Tag</div>
                             <div class="header opponent">Opponent</div>
