@@ -639,7 +639,7 @@ class TeamDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
                 AND c.GameType = 'TA'
-                AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
+                ${postseason ? "" : "AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)"}
             GROUP BY s.PlayerId, p.Name, d.Games, d.Damage, d.Deaths, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
             ORDER BY p.Name
 
