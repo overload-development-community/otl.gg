@@ -470,6 +470,11 @@ class TeamDb {
                 ORDER BY Season DESC
             END
 
+            SELECT Season, Award, Description
+            FROM tblTeamAward
+            WHERE TeamId = @teamId
+            ORDER BY Season, CASE Award WHEN 'MSI' THEN NULL ELSE Award END
+
             SELECT
                 TeamId, Name, Tag, Disbanded, Locked,
                 Rating,
@@ -694,61 +699,66 @@ class TeamDb {
             postseason: {type: Db.BIT, value: postseason}
         });
 
-        cache = data && data.recordsets && data.recordsets.length >= 6 && {
-            records: data.recordsets[0][0] && {
-                teamId: data.recordsets[0][0].TeamId,
-                name: data.recordsets[0][0].Name,
-                tag: data.recordsets[0][0].Tag,
-                disbanded: data.recordsets[0][0].Disbanded,
-                locked: data.recordsets[0][0].Locked,
-                rating: data.recordsets[0][0].Rating,
-                wins: data.recordsets[0][0].Wins,
-                losses: data.recordsets[0][0].Losses,
-                ties: data.recordsets[0][0].Ties,
-                winsTA: data.recordsets[0][0].WinsTA,
-                lossesTA: data.recordsets[0][0].LossesTA,
-                tiesTA: data.recordsets[0][0].TiesTA,
-                winsCTF: data.recordsets[0][0].WinsCTF,
-                lossesCTF: data.recordsets[0][0].LossesCTF,
-                tiesCTF: data.recordsets[0][0].TiesCTF,
-                winsHomeTA: data.recordsets[0][0].WinsHomeTA,
-                lossesHomeTA: data.recordsets[0][0].LossesHomeTA,
-                tiesHomeTA: data.recordsets[0][0].TiesHomeTA,
-                winsAwayTA: data.recordsets[0][0].WinsAwayTA,
-                lossesAwayTA: data.recordsets[0][0].LossesAwayTA,
-                tiesAwayTA: data.recordsets[0][0].TiesAwayTA,
-                winsNeutralTA: data.recordsets[0][0].WinsNeutralTA,
-                lossesNeutralTA: data.recordsets[0][0].LossesNeutralTA,
-                tiesNeutralTA: data.recordsets[0][0].TiesNeutralTA,
-                winsHomeCTF: data.recordsets[0][0].WinsHomeCTF,
-                lossesHomeCTF: data.recordsets[0][0].LossesHomeCTF,
-                tiesHomeCTF: data.recordsets[0][0].TiesHomeCTF,
-                winsAwayCTF: data.recordsets[0][0].WinsAwayCTF,
-                lossesAwayCTF: data.recordsets[0][0].LossesAwayCTF,
-                tiesAwayCTF: data.recordsets[0][0].TiesAwayCTF,
-                winsNeutralCTF: data.recordsets[0][0].WinsNeutralCTF,
-                lossesNeutralCTF: data.recordsets[0][0].LossesNeutralCTF,
-                tiesNeutralCTF: data.recordsets[0][0].TiesNeutralCTF,
-                wins2v2TA: data.recordsets[0][0].Wins2v2TA,
-                losses2v2TA: data.recordsets[0][0].Losses2v2TA,
-                ties2v2TA: data.recordsets[0][0].Ties2v2TA,
-                wins3v3TA: data.recordsets[0][0].Wins3v3TA,
-                losses3v3TA: data.recordsets[0][0].Losses3v3TA,
-                ties3v3TA: data.recordsets[0][0].Ties3v3TA,
-                wins4v4TA: data.recordsets[0][0].Wins4v4TA,
-                losses4v4TA: data.recordsets[0][0].Losses4v4TA,
-                ties4v4TA: data.recordsets[0][0].Ties4v4TA,
-                wins2v2CTF: data.recordsets[0][0].Wins2v2CTF,
-                losses2v2CTF: data.recordsets[0][0].Losses2v2CTF,
-                ties2v2CTF: data.recordsets[0][0].Ties2v2CTF,
-                wins3v3CTF: data.recordsets[0][0].Wins3v3CTF,
-                losses3v3CTF: data.recordsets[0][0].Losses3v3CTF,
-                ties3v3CTF: data.recordsets[0][0].Ties3v3CTF,
-                wins4v4CTF: data.recordsets[0][0].Wins4v4CTF,
-                losses4v4CTF: data.recordsets[0][0].Losses4v4CTF,
-                ties4v4CTF: data.recordsets[0][0].Ties4v4CTF
+        cache = data && data.recordsets && data.recordsets.length === 8 && {
+            awards: data.recordsets[0].map((row) => ({
+                season: row.Season,
+                award: row.Award,
+                description: row.Description
+            })),
+            records: data.recordsets[1][0] && {
+                teamId: data.recordsets[1][0].TeamId,
+                name: data.recordsets[1][0].Name,
+                tag: data.recordsets[1][0].Tag,
+                disbanded: data.recordsets[1][0].Disbanded,
+                locked: data.recordsets[1][0].Locked,
+                rating: data.recordsets[1][0].Rating,
+                wins: data.recordsets[1][0].Wins,
+                losses: data.recordsets[1][0].Losses,
+                ties: data.recordsets[1][0].Ties,
+                winsTA: data.recordsets[1][0].WinsTA,
+                lossesTA: data.recordsets[1][0].LossesTA,
+                tiesTA: data.recordsets[1][0].TiesTA,
+                winsCTF: data.recordsets[1][0].WinsCTF,
+                lossesCTF: data.recordsets[1][0].LossesCTF,
+                tiesCTF: data.recordsets[1][0].TiesCTF,
+                winsHomeTA: data.recordsets[1][0].WinsHomeTA,
+                lossesHomeTA: data.recordsets[1][0].LossesHomeTA,
+                tiesHomeTA: data.recordsets[1][0].TiesHomeTA,
+                winsAwayTA: data.recordsets[1][0].WinsAwayTA,
+                lossesAwayTA: data.recordsets[1][0].LossesAwayTA,
+                tiesAwayTA: data.recordsets[1][0].TiesAwayTA,
+                winsNeutralTA: data.recordsets[1][0].WinsNeutralTA,
+                lossesNeutralTA: data.recordsets[1][0].LossesNeutralTA,
+                tiesNeutralTA: data.recordsets[1][0].TiesNeutralTA,
+                winsHomeCTF: data.recordsets[1][0].WinsHomeCTF,
+                lossesHomeCTF: data.recordsets[1][0].LossesHomeCTF,
+                tiesHomeCTF: data.recordsets[1][0].TiesHomeCTF,
+                winsAwayCTF: data.recordsets[1][0].WinsAwayCTF,
+                lossesAwayCTF: data.recordsets[1][0].LossesAwayCTF,
+                tiesAwayCTF: data.recordsets[1][0].TiesAwayCTF,
+                winsNeutralCTF: data.recordsets[1][0].WinsNeutralCTF,
+                lossesNeutralCTF: data.recordsets[1][0].LossesNeutralCTF,
+                tiesNeutralCTF: data.recordsets[1][0].TiesNeutralCTF,
+                wins2v2TA: data.recordsets[1][0].Wins2v2TA,
+                losses2v2TA: data.recordsets[1][0].Losses2v2TA,
+                ties2v2TA: data.recordsets[1][0].Ties2v2TA,
+                wins3v3TA: data.recordsets[1][0].Wins3v3TA,
+                losses3v3TA: data.recordsets[1][0].Losses3v3TA,
+                ties3v3TA: data.recordsets[1][0].Ties3v3TA,
+                wins4v4TA: data.recordsets[1][0].Wins4v4TA,
+                losses4v4TA: data.recordsets[1][0].Losses4v4TA,
+                ties4v4TA: data.recordsets[1][0].Ties4v4TA,
+                wins2v2CTF: data.recordsets[1][0].Wins2v2CTF,
+                losses2v2CTF: data.recordsets[1][0].Losses2v2CTF,
+                ties2v2CTF: data.recordsets[1][0].Ties2v2CTF,
+                wins3v3CTF: data.recordsets[1][0].Wins3v3CTF,
+                losses3v3CTF: data.recordsets[1][0].Losses3v3CTF,
+                ties3v3CTF: data.recordsets[1][0].Ties3v3CTF,
+                wins4v4CTF: data.recordsets[1][0].Wins4v4CTF,
+                losses4v4CTF: data.recordsets[1][0].Losses4v4CTF,
+                ties4v4CTF: data.recordsets[1][0].Ties4v4CTF
             } || void 0,
-            opponents: data.recordsets[1].map((row) => ({
+            opponents: data.recordsets[2].map((row) => ({
                 teamId: row.TeamId,
                 name: row.Name,
                 tag: row.Tag,
@@ -757,7 +767,7 @@ class TeamDb {
                 ties: row.Ties,
                 gameType: row.GameType
             })),
-            ratings: data.recordsets[2].map((row) => ({
+            ratings: data.recordsets[3].map((row) => ({
                 teamId: row.TeamId,
                 name: row.Name,
                 tag: row.Tag,
@@ -765,14 +775,14 @@ class TeamDb {
                 games: row.Games,
                 qualified: row.Qualified
             })),
-            maps: data.recordsets[3].map((row) => ({
+            maps: data.recordsets[4].map((row) => ({
                 map: row.Map,
                 wins: row.Wins,
                 losses: row.Losses,
                 ties: row.Ties,
                 gameType: row.GameType
             })),
-            statsTA: data.recordsets[4].map((row) => ({
+            statsTA: data.recordsets[5].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,
                 games: row.Games,
@@ -796,7 +806,7 @@ class TeamDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             })),
-            statsCTF: data.recordsets[5].map((row) => ({
+            statsCTF: data.recordsets[6].map((row) => ({
                 playerId: row.PlayerId,
                 name: row.Name,
                 games: row.Games,
@@ -826,10 +836,10 @@ class TeamDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             }))
-        } || {records: void 0, opponents: void 0, ratings: void 0, maps: void 0, statsTA: void 0, statsCTF: void 0};
+        } || {awards: void 0, records: void 0, opponents: void 0, ratings: void 0, maps: void 0, statsTA: void 0, statsCTF: void 0};
 
         if (!settings.disableRedis) {
-            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[7] && data.recordsets[7][0] && data.recordsets[7][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
 
         return cache;

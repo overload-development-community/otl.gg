@@ -445,3 +445,18 @@ span.grey {
         display: none;
     }
 }
+
+#awards {
+    padding-bottom: 10px;
+    grid-column: span 4;
+}
+
+#awards .award {
+    display: inline-block;
+    padding-right: 10px;
+}
+
+#awards .award img {
+    width: 32px;
+    height: 32px;
+}

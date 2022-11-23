@@ -85,6 +85,11 @@ declare namespace TeamDbTypes {
 
     type GetDataRecordsets = {
         recordsets: [
+            {
+                Season: number
+                Award: string
+                Description: string
+            }[],
             (TeamData & {
                 WinsTA: number
                 LossesTA: number

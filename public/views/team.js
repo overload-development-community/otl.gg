@@ -45,6 +45,14 @@ class TeamView {
                     <div class="section">Primary Time Zone</div>
                     <div>${timezone}</div>
                 </div>
+                ${teamData.awards.length === 0 ? "" : /* html */`
+                    <div id="awards">
+                        <div class="section">Trophy Case</div>
+                        ${teamData.awards.map((award) => /* html */`
+                            <div class="award"><img src="/images/${{"MSI": "overdrive", "1st": "invulnerability", "2nd": "superupgrade", "3rd": "upgrade"}[award.award]}.png" title="${award.description}" /></div>
+                        `).join("")}
+                    </div>
+                `}
                 <div id="homes-2v2">
                     <div class="section">Team Anarchy 2v2<br />Home Maps</div>
                     ${teamInfo.homes.filter((h) => h.gameType === "2v2").map((h) => /* html */`

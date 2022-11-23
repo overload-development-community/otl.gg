@@ -174,6 +174,11 @@ declare namespace TeamTypes {
     }
 
     type TeamStats = {
+        awards: {
+            season: number
+            award: string
+            description: string
+        }[]
         records: (TeamRecord & {
             winsTA: number
             lossesTA: number
