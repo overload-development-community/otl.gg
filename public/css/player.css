@@ -484,3 +484,21 @@
     font-size: 12px;
     width: 6px;
 }
+
+#awards {
+    padding-bottom: 10px;
+}
+
+#awards .award {
+    display: inline-block;
+    padding-left: 10px;
+}
+
+#awards .award img {
+    width: 32px;
+    height: 32px;
+}
+
+.section {
+    padding-top: 10px;
+}

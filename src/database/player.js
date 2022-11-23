@@ -230,6 +230,11 @@ class PlayerDb {
             ) ON r.PlayerId = p.PlayerId
             WHERE p.PlayerId = @playerId
 
+            SELECT Season, Award, Description
+            FROM tblPlayerAward
+            WHERE PlayerId = @playerId
+            ORDER BY Season, CASE Award WHEN 'MSI' THEN NULL ELSE Award END
+
             SELECT c.Season, c.Postseason, s.TeamId, t.Tag, t.Name TeamName, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, ISNULL(d.Damage, 0) Damage, ISNULL(d.Games, 0) GamesWithDamage, ISNULL(d.Deaths, 0) DeathsInGamesWithDamage, SUM(c.OvertimePeriods) OvertimePeriods
             FROM tblStat s
             INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
@@ -441,7 +446,7 @@ class PlayerDb {
             postseason: {type: Db.BIT, value: postseason},
             gameType: {type: Db.VARCHAR(5), value: gameType}
         });
-        cache = data && data.recordsets && data.recordsets.length === 7 && data.recordsets[0].length > 0 && {
+        cache = data && data.recordsets && data.recordsets.length === 8 && data.recordsets[0].length > 0 && {
             player: {
                 name: data.recordsets[0][0].Name,
                 twitchName: data.recordsets[0][0].TwitchName,
@@ -450,7 +455,12 @@ class PlayerDb {
                 tag: data.recordsets[0][0].Tag,
                 teamName: data.recordsets[0][0].TeamName
             },
-            career: data.recordsets[1].map((row) => ({
+            awards: data.recordsets[1].map((row) => ({
+                season: row.Season,
+                award: row.Award,
+                description: row.Description
+            })),
+            career: data.recordsets[2].map((row) => ({
                 season: row.Season,
                 postseason: row.Postseason,
                 teamId: row.TeamId,
@@ -469,7 +479,7 @@ class PlayerDb {
                 deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 overtimePeriods: row.OvertimePeriods
             })),
-            careerTeams: data.recordsets[2].map((row) => ({
+            careerTeams: data.recordsets[3].map((row) => ({
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
@@ -486,7 +496,7 @@ class PlayerDb {
                 deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
                 overtimePeriods: row.OvertimePeriods
             })),
-            opponents: data.recordsets[3].map((row) => ({
+            opponents: data.recordsets[4].map((row) => ({
                 teamId: row.TeamId,
                 tag: row.Tag,
                 teamName: row.TeamName,
@@ -513,7 +523,7 @@ class PlayerDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             })),
-            maps: data.recordsets[4].map((row) => ({
+            maps: data.recordsets[5].map((row) => ({
                 map: row.Map,
                 games: row.Games,
                 captures: row.Captures,
@@ -540,14 +550,14 @@ class PlayerDb {
                 bestDeaths: row.BestDeaths,
                 bestDamage: row.BestDamage
             })),
-            damage: data.recordsets[5].reduce((prev, cur) => {
+            damage: data.recordsets[6].reduce((prev, cur) => {
                 prev[cur.Weapon] = cur.Damage;
                 return prev;
             }, {})
         } || void 0;
 
         if (!settings.disableRedis) {
-            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[6] && data.recordsets[6][0] && data.recordsets[6][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[7] && data.recordsets[7][0] && data.recordsets[7][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:player:${playerId}:updated`]);
         }
 
         return cache;

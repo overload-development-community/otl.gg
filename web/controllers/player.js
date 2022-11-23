@@ -100,6 +100,7 @@ class Player {
                 {css: ["/css/player.css"]},
                 PlayerView.get({
                     playerId,
+                    awards: career.awards,
                     player: career.player,
                     career: career.career,
                     totals,

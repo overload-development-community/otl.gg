@@ -10,6 +10,11 @@ declare namespace PlayerTypes {
             tag: string
             teamName: string
         }
+        awards: {
+            season: number
+            award: string
+            description: string
+        }[]
         career: (GameStats & CTFStats & {
             season: number
             postseason: boolean

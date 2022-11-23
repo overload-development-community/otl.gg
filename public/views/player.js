@@ -28,7 +28,7 @@ class PlayerView {
      * @returns {string} An HTML string of the player.
      */
     static get(data) {
-        const {playerId, player, career, totals, careerTeams, seasonList, season, postseason, all, gameType, opponents, maps, damage, teams} = data;
+        const {playerId, awards, player, career, totals, careerTeams, seasonList, season, postseason, all, gameType, opponents, maps, damage, teams} = data;
         let team;
 
         return /* html */`
@@ -53,6 +53,14 @@ class PlayerView {
                     </div>
                 ` : ""}
             </div>
+            ${awards.length === 0 ? "" : /* html */`
+                <div id="awards">
+                    <div class="section">Trophy Case</div>
+                    ${awards.map((award) => /* html */`
+                        <div class="award"><img src="/images/${{"MSI": "overdrive", "1st": "invulnerability", "2nd": "superupgrade", "3rd": "upgrade"}[award.award]}.png" title="${award.description}" /></div>
+                    `).join("")}
+                </div>
+            `}
             <div class="options">
                 <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, "TA", all, season, postseason)}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, "CTF", all, season, postseason)}">Capture the Flag</a>`}<br />
                 <span class="grey">Regular Season Stats:</span> ${all ? /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, false, season, postseason)}">vs. Upper League</a>` : "vs. Upper League"} | ${all ? "vs. All" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, true, season, postseason)}">vs. All</a>`}<br />

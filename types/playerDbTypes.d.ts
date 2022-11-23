@@ -36,6 +36,11 @@ declare namespace PlayerDbTypes {
                 Tag: string
                 TeamName: string
             }[],
+            {
+                Season: number
+                Award: string
+                Description: string
+            }[],
             (GameStats & CTFStats & {
                 Season: number
                 Postseason: boolean
