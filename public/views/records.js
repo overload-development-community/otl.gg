@@ -43,7 +43,7 @@ class RecordsView {
                 `).join(" | ")} | ${teamId ? /* html */`<a href="/records?gameType=${gameType}&recordType=${recordType}${isNaN(season) ? "" : `&season=${season}${postseason ? "&postseason=yes" : ""}`}">All Teams</a>` : "All Teams"}<br />
             </div>
             <div class="section">Records</div>
-            <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"} for ${gameTypeName}</div>
+            <div class="subsection">for ${gameTypeName} for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "all time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season vs. upper league teams"}</div>
             <div id="records">
                 <div class="header category">Category</div>
                 <div class="header holder">Holder</div>

@@ -55,7 +55,7 @@ class PlayersView {
                 `}
             </div>
             <div class="section">Player Stats</div>
-            <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"} for ${gameTypeName}</div>
+            <div class="subsection">for ${gameTypeName} for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "all time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season vs. upper league teams"}</div>
             ${gameType === "TA" ? /* html */`
                 ${stats.length === 0 ? /* html */`
                     <div id="no-results">No Team Anarchy stats available.</div>

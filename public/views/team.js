@@ -168,7 +168,7 @@ class TeamView {
                 </div>
                 ${teamData.statsTA.length === 0 && teamData.statsCTF.length === 0 ? "" : /* html */ `
                     <div class="section">Player Stats</div>
-                    <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
+                    <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "all time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season vs. upper league teams"}</div>
                     ${teamData.statsTA.length === 0 ? "" : /* html */ `
                         <div class="section">Team Anarchy</div>
                         <div class="stats stats-ta">

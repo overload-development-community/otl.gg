@@ -54,8 +54,8 @@ class PlayerView {
                 ` : ""}
             </div>
             <div class="options">
-                <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=TA${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=CTF${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">Capture the Flag</a>`}<br />
-                <span class="grey">Stats:</span> ${all ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}${postseason ? "&postseason=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">vs. Upper League</a>` : "vs. Upper League"} | ${all ? "vs. All" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}${postseason ? "&postseason=yes" : ""}&all=yes${isNaN(season) ? "" : `&season=${season}`}">vs. All</a>`}<br />
+                <span class="grey">Game Type:</span> ${gameType === "TA" ? "Team Anarchy" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, "TA", all, season, postseason)}">Team Anarchy</a>`} | ${gameType === "CTF" ? "Capture the Flag" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, "CTF", all, season, postseason)}">Capture the Flag</a>`}<br />
+                <span class="grey">Regular Season Stats:</span> ${all ? /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, false, season, postseason)}">vs. Upper League</a>` : "vs. Upper League"} | ${all ? "vs. All" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, true, season, postseason)}">vs. All</a>`}<br />
             </div>
             ${career.length === 0 ? /* html */`
                 <div id="no-stats">There are no player stats available for this game type.</div>
@@ -206,9 +206,9 @@ class PlayerView {
                 </div>
                 <div class="options">
                     <span class="grey">Season:</span> ${seasonList.map((seasonNumber, index) => /* html */`
-                        ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&season=${seasonNumber}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">${seasonNumber}</a>` : seasonNumber}
-                    `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&season=0${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}">All Time</a>`}<br />
-                    <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}&postseason=yes${all ? "&all=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">Yes</a>`} | ${postseason ? /* html */`<a href="/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(player.name, player.tag))}?gameType=${gameType}${all ? "&all=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}">No</a>` : "No"}
+                        ${!isNaN(season) && season !== seasonNumber || isNaN(season) && index + 1 !== seasonList.length ? /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, all, seasonNumber, postseason)}">${seasonNumber}</a>` : seasonNumber}
+                    `).join(" | ")} | ${season === 0 ? "All Time" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, all, 0, postseason)}">All Time</a>`}<br />
+                    <span class="grey">Postseason:</span> ${postseason ? "Yes" : /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, all, season, true)}">Yes</a>`} | ${postseason ? /* html */`<a href="${PlayerView.getLink(playerId, player.name, player.tag, gameType, all, season, false)}">No</a>` : "No"}
                 </div>
                 <div class="section">Performance</div>
                 <div class="subsection">for ${isNaN(season) ? `Season ${Math.max(...seasonList)}` : season === 0 ? "All Time" : `Season ${season}`} during the ${postseason ? "postseason" : "regular season"}</div>
@@ -381,6 +381,28 @@ class PlayerView {
                 ` : ""}
             `}
         `;
+    }
+
+    //              #    #      #          #
+    //              #    #                 #
+    //  ###   ##   ###   #     ##    ###   # #
+    // #  #  # ##   #    #      #    #  #  ##
+    //  ##   ##     #    #      #    #  #  # #
+    // #      ##     ##  ####  ###   #  #  #  #
+    //  ###
+    /**
+     * Gets the link for the page based on the parameters.
+     * @param {number} playerId The player ID.
+     * @param {string} name The player name.
+     * @param {string} tag The player tag.
+     * @param {string} gameType The game type.
+     * @param {boolean} all Whether to show all stats.
+     * @param {number} season The season number.
+     * @param {boolean} postseason Whether to show postseason stats.
+     * @returns {string} The link.
+     */
+    static getLink(playerId, name, tag, gameType, all, season, postseason) {
+        return /* html */`/player/${playerId}/${encodeURIComponent(PlayerView.Common.normalizeName(name, tag))}?gameType=${gameType || "TA"}${postseason ? "&postseason=yes" : ""}${all ? "&all=yes" : ""}${isNaN(season) ? "" : `&season=${season}`}`;
     }
 }
 
