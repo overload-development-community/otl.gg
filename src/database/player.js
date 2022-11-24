@@ -2149,24 +2149,30 @@ class PlayerDb {
                 SELECT s2.PlayerId, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
-                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
-                    FROM tblDamage
-                    WHERE TeamId <> OpponentTeamId
-                    GROUP BY PlayerId, ChallengeId
+                    SELECT d2.PlayerId, d2.ChallengeId, SUM(d2.Damage) Damage
+                    FROM tblDamage d2
+                    INNER JOIN vwCompletedChallenge c3 ON d2.ChallengeId = c3.ChallengeId
+                    WHERE d2.TeamId <> d2.OpponentTeamId
+                        AND d2.OpponentTeamId NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c3.Season)
+                    GROUP BY d2.PlayerId, d2.ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 INNER JOIN (
-                    SELECT PlayerId, ChallengeId, SUM(Deaths) Deaths
-                    FROM tblStat
-                    GROUP BY PlayerId, ChallengeId
+                    SELECT s3.PlayerId, s3.TeamId, s3.ChallengeId, SUM(s3.Deaths) Deaths
+                    FROM tblStat s3
+                    INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
+                        AND (CASE WHEN s3.TeamId = c3.ChallengingTeamId THEN c3.ChallengedTeamId ELSE c3.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c3.Season)
+                    GROUP BY s3.PlayerId, s3.TeamId, s3.ChallengeId
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.Season = @season
                     AND c2.Postseason = 0
                     AND c2.GameType = 'TA'
+                    AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)
                 GROUP BY s2.PlayerId
             ) d ON p.PlayerId = d.PlayerId
             WHERE p.DiscordId = @discordId
                 AND c.Season = @season
                 AND c.GameType = 'TA'
+                AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
             GROUP BY d.Damage, d.Deaths
 
             SELECT COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, @season Season
@@ -2177,19 +2183,23 @@ class PlayerDb {
                 SELECT d.PlayerId, SUM(d.Damage) Damage
                 FROM vwCompletedChallenge c2
                 INNER JOIN (
-                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
-                    FROM tblDamage
-                    WHERE TeamId <> OpponentTeamId
-                    GROUP BY PlayerId, ChallengeId
+                    SELECT d2.PlayerId, d2.TeamId, d2.ChallengeId, SUM(d2.Damage) Damage
+                    FROM tblDamage d2
+                    INNER JOIN vwCompletedChallenge c3 ON d2.ChallengeId = c3.ChallengeId
+                    WHERE d2.TeamId <> d2.OpponentTeamId
+                        AND d2.OpponentTeamId NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c3.Season)
+                    GROUP BY d2.PlayerId, d2.TeamId, d2.ChallengeId
                 ) d ON d.ChallengeId = c2.ChallengeId
                 WHERE c2.Season = @season
                     AND c2.Postseason = 0
                     AND c2.GameType = 'CTF'
+                    AND (CASE WHEN d.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)
                 GROUP BY d.PlayerId
             ) d ON p.PlayerId = d.PlayerId
             WHERE p.DiscordId = @discordId
                 AND c.Season = @season
                 AND c.GameType = 'CTF'
+                AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
             GROUP BY d.Damage
 
             SELECT d.Weapon, SUM(Damage) Damage
