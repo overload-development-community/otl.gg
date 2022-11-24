@@ -8,7 +8,9 @@
  * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
  * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
  * @typedef {import("../../types/teamTypes").TeamInfo} TeamTypes.TeamInfo
+ * @typedef {import("../../types/teamTypes").TeamCTFMapStats} TeamTypes.TeamCTFMapStats
  * @typedef {import("../../types/teamTypes").TeamStats} TeamTypes.TeamStats
+ * @typedef {import("../../types/teamTypes").TeamTAMapStats} TeamTypes.TeamTAMapStats
  */
 
 const Db = require("../database/team"),
@@ -217,6 +219,52 @@ class Team {
             return await Db.getData(team, season, postseason);
         } catch (err) {
             throw new Exception("There was a database error getting team data.", err);
+        }
+    }
+
+    //              #    ###          #          ####               ##   ###   ####  #  #
+    //              #    #  #         #          #                 #  #   #    #     ####
+    //  ###   ##   ###   #  #   ###  ###    ###  ###    ##   ###   #      #    ###   ####   ###  ###
+    // #  #  # ##   #    #  #  #  #   #    #  #  #     #  #  #  #  #      #    #     #  #  #  #  #  #
+    //  ##   ##     #    #  #  # ##   #    # ##  #     #  #  #     #  #   #    #     #  #  # ##  #  #
+    // #      ##     ##  ###    # #    ##   # #  #      ##   #      ##    #    #     #  #   # #  ###
+    //  ###                                                                                      #
+    /**
+     * Gets data for the team for a CTF map.
+     * @param {Team} team The team to get the data for.
+     * @param {string} map The map.
+     * @param {number} season The season to get the team's data for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<TeamTypes.TeamCTFMapStats>} The team data.
+     */
+    static async getDataForCTFMap(team, map, season, postseason) {
+        try {
+            return await Db.getDataForCTFMap(team, map, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting team data for a capture the flag map.", err);
+        }
+    }
+
+    //              #    ###          #          ####              ###    ##   #  #
+    //              #    #  #         #          #                  #    #  #  ####
+    //  ###   ##   ###   #  #   ###  ###    ###  ###    ##   ###    #    #  #  ####   ###  ###
+    // #  #  # ##   #    #  #  #  #   #    #  #  #     #  #  #  #   #    ####  #  #  #  #  #  #
+    //  ##   ##     #    #  #  # ##   #    # ##  #     #  #  #      #    #  #  #  #  # ##  #  #
+    // #      ##     ##  ###    # #    ##   # #  #      ##   #      #    #  #  #  #   # #  ###
+    //  ###                                                                                #
+    /**
+     * Gets data for the team for a team anarchy map.
+     * @param {Team} team The team to get the data for.
+     * @param {string} map The map.
+     * @param {number} season The season to get the team's data for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<TeamTypes.TeamTAMapStats>} The team data.
+     */
+    static async getDataForTAMap(team, map, season, postseason) {
+        try {
+            return await Db.getDataForTAMap(team, map, season, postseason);
+        } catch (err) {
+            throw new Exception("There was a database error getting team data for a team anarchy map.", err);
         }
     }
 

@@ -129,6 +129,74 @@ declare namespace TeamTypes {
         tiesMap: number
     }
 
+    type TeamCTFMapStats = {
+        records: {
+            teamId: number
+            name: string
+            tag: string
+            wins: number
+            losses: number
+            ties: number
+            winsHome: number
+            lossesHome: number
+            tiesHome: number
+            winsAway: number
+            lossesAway: number
+            tiesAway: number
+            winsNeutral: number
+            lossesNeutral: number
+            tiesNeutral: number
+            wins2v2: number
+            losses2v2: number
+            ties2v2: number
+            wins3v3: number
+            losses3v3: number
+            ties3v3: number
+            wins4v4: number
+            losses4v4: number
+            ties4v4: number
+        }
+        opponents: {
+            teamId: number
+            name: string
+            tag: string
+            wins: number
+            losses: number
+            ties: number
+        }[]
+        stats: {
+            playerId: number
+            name: string
+            games: number
+            captures: number
+            pickups: number
+            carrierKills: number
+            returns: number
+            kills: number
+            assists: number
+            deaths: number
+            damage: number
+            overtimePeriods: number
+            teamId: number
+            teamName: string
+            teamTag: string
+            challengeId: number
+            challengingTeamTag: string
+            challengedTeamTag: string
+            map: string
+            matchTime: Date
+            bestCaptures: number
+            bestPickups: number
+            bestCarrierKills: number
+            bestReturns: number
+            bestKills: number
+            bestAssists: number
+            bestDeaths: number
+            bestDamage: number
+        }[]
+        gameLog: TeamTypes.GameLog[]
+    }
+
     type TeamData = {
         member?: DiscordJs.GuildMember
         id: number
@@ -289,6 +357,68 @@ declare namespace TeamTypes {
             bestDeaths: number
             bestDamage: number
         })[]
+    }
+
+    type TeamTAMapStats = {
+        records: {
+            teamId: number
+            name: string
+            tag: string
+            wins: number
+            losses: number
+            ties: number
+            winsHome: number
+            lossesHome: number
+            tiesHome: number
+            winsAway: number
+            lossesAway: number
+            tiesAway: number
+            winsNeutral: number
+            lossesNeutral: number
+            tiesNeutral: number
+            wins2v2: number
+            losses2v2: number
+            ties2v2: number
+            wins3v3: number
+            losses3v3: number
+            ties3v3: number
+            wins4v4: number
+            losses4v4: number
+            ties4v4: number
+        }
+        opponents: {
+            teamId: number
+            name: string
+            tag: string
+            wins: number
+            losses: number
+            ties: number
+        }[]
+        stats: {
+            playerId: number
+            name: string
+            games: number
+            kills: number
+            assists: number
+            deaths: number
+            damage: number
+            gamesWithDamage: number
+            deathsInGamesWithDamage: number
+            overtimePeriods: number
+            teamId: number
+            teamName: string
+            teamTag: string
+            challengeId: number
+            challengingTeamTag: string
+            challengedTeamTag: string
+            map: string
+            matchTime: Date
+            bestKills: number
+            bestAssists: number
+            bestDeaths: number
+            bestDamage: number
+        }[]
+        gameLog: TeamTypes.GameLog[]
     }
 }
 

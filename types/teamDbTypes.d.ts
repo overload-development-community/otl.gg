@@ -204,6 +204,184 @@ declare namespace TeamDbTypes {
         ]
     }
 
+    type GetDataForCTFMapRecordsets = {
+        recordsets: [
+            {
+                TeamId: number
+                Name: string
+                Tag: string
+                Wins: number
+                Losses: number
+                Ties: number
+                WinsHome: number
+                LossesHome: number
+                TiesHome: number
+                WinsAway: number
+                LossesAway: number
+                TiesAway: number
+                WinsNeutral: number
+                LossesNeutral: number
+                TiesNeutral: number
+                Wins2v2: number
+                Losses2v2: number
+                Ties2v2: number
+                Wins3v3: number
+                Losses3v3: number
+                Ties3v3: number
+                Wins4v4: number
+                Losses4v4: number
+                Ties4v4: number
+            }[],
+            {
+                TeamId: number
+                Name: string
+                Tag: string
+                Wins: number
+                Losses: number
+                Ties: number
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Captures: number
+                Pickups: number
+                CarrierKills: number
+                Returns: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                OvertimePeriods: number
+                TeamId: number
+                TeamName: string
+                TeamTag: string
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestCaptures: number
+                BestPickups: number
+                BestCarrierKills: number
+                BestReturns: number
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            (PlayerDbTypes.GameStats & PlayerDbTypes.CTFStats & {
+                ChallengeId: number
+                ChallengingTeamId: number
+                ChallengingTeamName: string
+                ChallengingTeamTag: string
+                ChallengingTeamScore: number
+                ChallengedTeamId: number
+                ChallengedTeamName: string
+                ChallengedTeamTag: string
+                ChallengedTeamScore: number
+                RatingChange: number
+                Map: string
+                MatchTime: Date
+                GameType: string
+                StatTeamId: number
+                StatTeamName: string
+                StatTeamTag: string
+                PlayerId: number
+                Name: string
+            })[],
+            {
+                DateEnd: Date
+            }[]
+        ]
+    }
+
+    type GetDataForTAMapRecordsets = {
+        recordsets: [
+            {
+                TeamId: number
+                Name: string
+                Tag: string
+                Wins: number
+                Losses: number
+                Ties: number
+                WinsHome: number
+                LossesHome: number
+                TiesHome: number
+                WinsAway: number
+                LossesAway: number
+                TiesAway: number
+                WinsNeutral: number
+                LossesNeutral: number
+                TiesNeutral: number
+                Wins2v2: number
+                Losses2v2: number
+                Ties2v2: number
+                Wins3v3: number
+                Losses3v3: number
+                Ties3v3: number
+                Wins4v4: number
+                Losses4v4: number
+                Ties4v4: number
+            }[],
+            {
+                TeamId: number
+                Name: string
+                Tag: string
+                Wins: number
+                Losses: number
+                Ties: number
+            }[],
+            {
+                PlayerId: number
+                Name: string
+                Games: number
+                Kills: number
+                Assists: number
+                Deaths: number
+                Damage: number
+                GamesWithDamage: number
+                DeathsInGamesWithDamage: number
+                OvertimePeriods: number
+                TeamId: number
+                TeamName: string
+                TeamTag: string
+                ChallengeId: number
+                ChallengingTeamTag: string
+                ChallengedTeamTag: string
+                Map: string
+                MatchTime: Date
+                BestKills: number
+                BestAssists: number
+                BestDeaths: number
+                BestDamage: number
+            }[],
+            (PlayerDbTypes.GameStats & PlayerDbTypes.CTFStats & {
+                ChallengeId: number
+                ChallengingTeamId: number
+                ChallengingTeamName: string
+                ChallengingTeamTag: string
+                ChallengingTeamScore: number
+                ChallengedTeamId: number
+                ChallengedTeamName: string
+                ChallengedTeamTag: string
+                ChallengedTeamScore: number
+                RatingChange: number
+                Map: string
+                MatchTime: Date
+                GameType: string
+                StatTeamId: number
+                StatTeamName: string
+                StatTeamTag: string
+                PlayerId: number
+                Name: string
+            })[],
+            {
+                DateEnd: Date
+            }[]
+        ]
+    }
+
     type GetGameLogRecordsets = {
         recordsets: [
             (PlayerDbTypes.GameStats & PlayerDbTypes.CTFStats & {

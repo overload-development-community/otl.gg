@@ -158,7 +158,7 @@ class TeamView {
                             <div class="header">Map</div>
                             <div class="header">Record</div>
                             ${teamData.maps.filter((o) => o.gameType === "TA").map((map) => /* html */`
-                                <div class="map">${map.map}</div>
+                                <div class="map"><a href="/team/${pageTeam.tag}/map/ta-${map.map}">${map.map}</a></div>
                                 <div class="numeric">${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
                             `).join("")}
                         `}
@@ -168,7 +168,7 @@ class TeamView {
                             <div class="header">Map</div>
                             <div class="header">Record</div>
                             ${teamData.maps.filter((o) => o.gameType === "CTF").map((map) => /* html */`
-                                <div class="map">${map.map}</div>
+                                <div class="map"><a href="/team/${pageTeam.tag}/map/ctf-${map.map}">${map.map}</a></div>
                                 <div class="numeric">${map.wins}-${map.losses}${map.ties ? `-${map.ties}` : ""}</div>
                             `).join("")}
                         `}

@@ -130,6 +130,26 @@ declare namespace ViewTypes {
         teams: Teams
     }
 
+    type TeamCTFMapViewParameters = {
+        pageTeam: Team
+        map: string
+        seasonList: number[]
+        teamData: TeamTypes.TeamCTFMapStats
+        season: number
+        postseason: boolean
+        teams: Teams
+    }
+
+    type TeamTAMapViewParameters = {
+        pageTeam: Team
+        map: string
+        seasonList: number[]
+        teamData: TeamTypes.TeamTAMapStats
+        season: number
+        postseason: boolean
+        teams: Teams
+    }
+
     type TeamViewParameters = {
         pageTeam: Team
         teamInfo: TeamTypes.TeamInfo

@@ -16,6 +16,8 @@
  * @typedef {import("../../types/teamDbTypes").GetByPilotRecordsets} TeamDbTypes.GetByPilotRecordsets
  * @typedef {import("../../types/teamDbTypes").GetClockedChallengeCountRecordsets} TeamDbTypes.GetClockedChallengeCountRecordsets
  * @typedef {import("../../types/teamDbTypes").GetDataRecordsets} TeamDbTypes.GetDataRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetDataForCTFMapRecordsets} TeamDbTypes.GetDataForCTFMapRecordsets
+ * @typedef {import("../../types/teamDbTypes").GetDataForTAMapRecordsets} TeamDbTypes.GetDataForTAMapRecordsets
  * @typedef {import("../../types/teamDbTypes").GetGameLogRecordsets} TeamDbTypes.GetGameLogRecordsets
  * @typedef {import("../../types/teamDbTypes").GetHeadToHeadStatsRecordsets} TeamDbTypes.GetHeadToHeadStatsRecordsets
  * @typedef {import("../../types/teamDbTypes").GetHomeMapsRecordsets} TeamDbTypes.GetHomeMapsRecordsets
@@ -37,9 +39,11 @@
  * @typedef {import("../../types/teamTypes").GameLog} TeamTypes.GameLog
  * @typedef {import("../../types/teamTypes").HeadToHeadStats} TeamTypes.HeadToHeadStats
  * @typedef {import("../../types/teamTypes").Standing} TeamTypes.Standing
+ * @typedef {import("../../types/teamTypes").TeamCTFMapStats} TeamTypes.TeamCTFMapStats
  * @typedef {import("../../types/teamTypes").TeamData} TeamTypes.TeamData
  * @typedef {import("../../types/teamTypes").TeamInfo} TeamTypes.TeamInfo
  * @typedef {import("../../types/teamTypes").TeamStats} TeamTypes.TeamStats
+ * @typedef {import("../../types/teamTypes").TeamTAMapStats} TeamTypes.TeamTAMapStats
  */
 
 const Cache = require("@roncli/node-redis").Cache,
@@ -840,6 +844,645 @@ class TeamDb {
 
         if (!settings.disableRedis) {
             await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[7] && data.recordsets[7][0] && data.recordsets[7][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
+
+        return cache;
+    }
+
+    //              #    ###          #          ####               ##   ###   ####  #  #
+    //              #    #  #         #          #                 #  #   #    #     ####
+    //  ###   ##   ###   #  #   ###  ###    ###  ###    ##   ###   #      #    ###   ####   ###  ###
+    // #  #  # ##   #    #  #  #  #   #    #  #  #     #  #  #  #  #      #    #     #  #  #  #  #  #
+    //  ##   ##     #    #  #  # ##   #    # ##  #     #  #  #     #  #   #    #     #  #  # ##  #  #
+    // #      ##     ##  ###    # #    ##   # #  #      ##   #      ##    #    #     #  #   # #  ###
+    //  ###                                                                                      #
+    /**
+     * Gets data for the team for a CTF map.
+     * @param {Team} team The team to get the data for.
+     * @param {string} map The map.
+     * @param {number} season The season to get the team's data for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<TeamTypes.TeamCTFMapStats>} The team data.
+     */
+    static async getDataForCTFMap(team, map, season, postseason) {
+        const key = `${settings.redisPrefix}:db:team:getDataForTAMap:${team.tag}:${map}:${season === void 0 ? "null" : season}:${!!postseason}`;
+
+        /** @type {TeamTypes.TeamCTFMapStats} */
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
+
+        if (cache) {
+            return cache;
+        }
+
+        /** @type {TeamDbTypes.GetDataForCTFMapRecordsets} */
+        const data = await db.query(/* sql */`
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
+
+            SELECT
+                t.TeamId,
+                t.Name,
+                t.Tag,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 2 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 3 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 3 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize = 3 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize >= 4 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins4v4,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize >= 4 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses4v4,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'CTF' AND c.Map = @map AND c.TeamSize >= 4 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties4v4
+            FROM tblTeam t
+            WHERE t.TeamId = @teamId
+
+            SELECT
+                CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END TeamId,
+                t.Name,
+                t.Tag,
+                SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore > c.ChallengingTeamScore)) THEN 1 ELSE 0 END) Wins,
+                SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore < c.ChallengingTeamScore)) THEN 1 ELSE 0 END) Losses,
+                SUM(CASE WHEN c.ChallengingTeamScore = c.ChallengedTeamScore THEN 1 ELSE 0 END) Ties
+            FROM vwCompletedChallenge c
+            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = t.TeamId
+            WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'CTF'
+                AND c.Map = @map
+            GROUP BY CASE WHEN ChallengingTeamId = @teamId THEN ChallengedTeamId ELSE ChallengingTeamId END, t.Name, t.Tag
+            ORDER BY t.Name
+
+            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage Damage, SUM(c.OvertimePeriods) OvertimePeriods, t.TeamId, t.Name TeamName, t.Tag TeamTag, bc.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, bc.Map, bc.MatchTime, sb.Captures BestCaptures, sb.Pickups BestPickups, sb.CarrierKills BestCarrierKills, sb.Returns BestReturns, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
+            FROM tblStat s
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN (
+                SELECT
+                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, s.TeamId ORDER BY s.Captures DESC, s.CarrierKills DESC, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    d.Damage
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c2 ON s.ChallengeId = c2.ChallengeId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c2.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+                WHERE (@season = 0 OR c2.Season = @season)
+                    AND c2.Postseason = @postseason
+                    AND c2.GameType = 'CTF'
+                    ${postseason ? "" : "AND (CASE WHEN s.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)"}
+            ) sb ON s.PlayerId = sb.PlayerId AND sb.TeamId = @teamId AND sb.Row = 1
+            INNER JOIN tblChallenge bc ON sb.ChallengeId = bc.ChallengeId
+            INNER JOIN tblTeam t ON (CASE WHEN bc.ChallengingTeamId = @teamId THEN bc.ChallengedTeamId ELSE bc.ChallengingTeamId END) = t.TeamId
+            INNER JOIN tblTeam t1 ON bc.ChallengingTeamId = t1.TeamId
+            INNER JOIN tblTeam t2 ON bc.ChallengedTeamId = t2.TeamId
+            LEFT OUTER JOIN (
+                SELECT s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE (@season = 0 OR c2.Season = @season)
+                    AND c2.Postseason = @postseason
+                    AND c2.GameType = 'CTF'
+                    AND c2.Map = @map
+                    AND s2.TeamId = @teamId
+                    ${postseason ? "" : "AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)"}
+                GROUP BY s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND s.TeamId = d.TeamId
+            WHERE s.TeamId = @teamId
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'CTF'
+                AND c.Map = @map
+                ${postseason ? "" : "AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)"}
+            GROUP BY s.PlayerId, p.Name, d.Games, d.Damage, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Captures, sb.Pickups, sb.CarrierKills, sb.Returns, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
+            ORDER BY p.Name
+
+            SELECT
+                c.ChallengeId,
+                c.ChallengingTeamId,
+                tc1.Name ChallengingTeamName,
+                tc1.Tag ChallengingTeamTag,
+                c.ChallengingTeamScore,
+                c.ChallengedTeamId,
+                tc2.Name ChallengedTeamName,
+                tc2.Tag ChallengedTeamTag,
+                c.ChallengedTeamScore,
+                CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = @teamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange,
+                c.Map,
+                c.MatchTime,
+                c.GameType,
+                s.TeamId StatTeamId,
+                tc3.Name StatTeamName,
+                tc3.Tag StatTeamTag,
+                s.PlayerId,
+                p.Name,
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns,
+                s.Kills,
+                s.Assists,
+                s.Deaths,
+                s.Damage
+            FROM vwCompletedChallenge c
+            INNER JOIN tblTeam tc1 ON c.ChallengingTeamId = tc1.TeamId
+            INNER JOIN tblTeam tc2 ON c.ChallengedTeamId = tc2.TeamId
+            LEFT OUTER JOIN (
+                SELECT
+                    ROW_NUMBER() OVER (PARTITION BY s.ChallengeId ORDER BY s.Captures DESC, s.CarrierKills DESC, CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    d.Damage
+                FROM tblStat s
+                INNER JOIN tblChallenge c2 ON s.ChallengeId = c2.ChallengeId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c2.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+            ) s ON c.ChallengeId = s.ChallengeId AND s.Row = 1
+            LEFT OUTER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN tblTeam tc3 ON s.TeamId = tc3.TeamId
+            WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'CTF'
+                AND c.Map = @map
+            ORDER BY c.MatchTime
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            season: {type: Db.INT, value: season},
+            postseason: {type: Db.BIT, value: postseason}
+        });
+
+        cache = data && data.recordsets && data.recordsets.length === 5 && {
+            records: data.recordsets[0][0] && {
+                teamId: data.recordsets[0][0].TeamId,
+                name: data.recordsets[0][0].Name,
+                tag: data.recordsets[0][0].Tag,
+                wins: data.recordsets[0][0].Wins,
+                losses: data.recordsets[0][0].Losses,
+                ties: data.recordsets[0][0].Ties,
+                winsHome: data.recordsets[0][0].WinsHome,
+                lossesHome: data.recordsets[0][0].LossesHome,
+                tiesHome: data.recordsets[0][0].TiesHome,
+                winsAway: data.recordsets[0][0].WinsAway,
+                lossesAway: data.recordsets[0][0].LossesAway,
+                tiesAway: data.recordsets[0][0].TiesAway,
+                winsNeutral: data.recordsets[0][0].WinsNeutral,
+                lossesNeutral: data.recordsets[0][0].LossesNeutral,
+                tiesNeutral: data.recordsets[0][0].TiesNeutral,
+                wins2v2: data.recordsets[0][0].Wins2v2,
+                losses2v2: data.recordsets[0][0].Losses2v2,
+                ties2v2: data.recordsets[0][0].Ties2v2,
+                wins3v3: data.recordsets[0][0].Wins3v3,
+                losses3v3: data.recordsets[0][0].Losses3v3,
+                ties3v3: data.recordsets[0][0].Ties3v3,
+                wins4v4: data.recordsets[0][0].Wins4v4,
+                losses4v4: data.recordsets[0][0].Losses4v4,
+                ties4v4: data.recordsets[0][0].Ties4v4
+            } || void 0,
+            opponents: data.recordsets[1].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            })),
+            stats: data.recordsets[2].map((row) => ({
+                playerId: row.PlayerId,
+                name: row.Name,
+                games: row.Games,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.CarrierKills,
+                returns: row.Returns,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                damage: row.Damage,
+                overtimePeriods: row.OvertimePeriods,
+                teamId: row.TeamId,
+                teamName: row.TeamName,
+                teamTag: row.TeamTag,
+                challengeId: row.ChallengeId,
+                challengingTeamTag: row.ChallengingTeamTag,
+                challengedTeamTag: row.ChallengedTeamTag,
+                map: row.Map,
+                matchTime: row.MatchTime,
+                bestCaptures: row.BestCaptures,
+                bestPickups: row.BestPickups,
+                bestCarrierKills: row.BestCarrierKills,
+                bestReturns: row.BestReturns,
+                bestKills: row.BestKills,
+                bestAssists: row.BestAssists,
+                bestDeaths: row.BestDeaths,
+                bestDamage: row.BestDamage
+            })),
+            gameLog: data.recordsets[3].map((row) => ({
+                challengeId: row.ChallengeId,
+                challengingTeamId: row.ChallengingTeamId,
+                challengingTeamName: row.ChallengingTeamName,
+                challengingTeamTag: row.ChallengingTeamTag,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamId: row.ChallengedTeamId,
+                challengedTeamName: row.ChallengedTeamName,
+                challengedTeamTag: row.ChallengedTeamTag,
+                challengedTeamScore: row.ChallengedTeamScore,
+                ratingChange: row.RatingChange,
+                map: row.Map,
+                matchTime: row.MatchTime,
+                gameType: row.GameType,
+                statTeamId: row.StatTeamId,
+                statTeamName: row.StatTeamName,
+                statTeamTag: row.StatTeamTag,
+                playerId: row.PlayerId,
+                name: row.Name,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.Pickups,
+                returns: row.Returns,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                damage: row.Damage
+            }))
+        } || {records: void 0, opponents: void 0, stats: void 0, gameLog: void 0};
+
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
+        }
+
+        return cache;
+    }
+
+    //              #    ###          #          ####              ###    ##   #  #
+    //              #    #  #         #          #                  #    #  #  ####
+    //  ###   ##   ###   #  #   ###  ###    ###  ###    ##   ###    #    #  #  ####   ###  ###
+    // #  #  # ##   #    #  #  #  #   #    #  #  #     #  #  #  #   #    ####  #  #  #  #  #  #
+    //  ##   ##     #    #  #  # ##   #    # ##  #     #  #  #      #    #  #  #  #  # ##  #  #
+    // #      ##     ##  ###    # #    ##   # #  #      ##   #      #    #  #  #  #   # #  ###
+    //  ###                                                                                #
+    /**
+     * Gets data for the team for a team anarchy map.
+     * @param {Team} team The team to get the data for.
+     * @param {string} map The map.
+     * @param {number} season The season to get the team's data for, 0 for all time.
+     * @param {boolean} postseason Whether to get postseason records.
+     * @returns {Promise<TeamTypes.TeamTAMapStats>} The team data.
+     */
+    static async getDataForTAMap(team, map, season, postseason) {
+        const key = `${settings.redisPrefix}:db:team:getDataForTAMap:${team.tag}:${map}:${season === void 0 ? "null" : season}:${!!postseason}`;
+
+        /** @type {TeamTypes.TeamTAMapStats} */
+        let cache;
+
+        if (!settings.disableRedis) {
+            cache = await Cache.get(key);
+        }
+
+        if (cache) {
+            return cache;
+        }
+
+        /** @type {TeamDbTypes.GetDataForTAMapRecordsets} */
+        const data = await db.query(/* sql */`
+            IF @season IS NULL
+            BEGIN
+                SELECT TOP 1
+                    @season = Season
+                FROM tblSeason
+                WHERE DateStart <= GETUTCDATE()
+                    AND DateEnd > GETUTCDATE()
+                ORDER BY Season DESC
+            END
+
+            SELECT
+                t.TeamId,
+                t.Name,
+                t.Tag,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId = t.TeamId AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesHome,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 1 AND c.HomeMapTeamId <> t.TeamId AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesAway,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) WinsNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) LossesNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.UsingHomeMapTeam = 0 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) TiesNeutral,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 2 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 2 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties2v2,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 3 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 3 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize = 3 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties3v3,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize >= 4 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore > c.ChallengingTeamScore))) Wins4v4,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize >= 4 AND ((c.ChallengingTeamId = t.TeamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = t.TeamId AND c.ChallengedTeamScore < c.ChallengingTeamScore))) Losses4v4,
+                (SELECT COUNT(*) FROM vwCompletedChallenge c WHERE (@season = 0 OR c.Season = @season) AND c.Postseason = @postseason AND c.GameType = 'TA' AND c.Map = @map AND c.TeamSize >= 4 AND (c.ChallengingTeamId = t.TeamId OR c.ChallengedTeamId = t.TeamId) AND c.ChallengedTeamScore = c.ChallengingTeamScore) Ties4v4
+            FROM tblTeam t
+            WHERE t.TeamId = @teamId
+
+            SELECT
+                CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END TeamId,
+                t.Name,
+                t.Tag,
+                SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore > c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore > c.ChallengingTeamScore)) THEN 1 ELSE 0 END) Wins,
+                SUM(CASE WHEN ((c.ChallengingTeamId = @teamId AND c.ChallengingTeamScore < c.ChallengedTeamScore) OR (c.ChallengedTeamId = @teamId AND c.ChallengedTeamScore < c.ChallengingTeamScore)) THEN 1 ELSE 0 END) Losses,
+                SUM(CASE WHEN c.ChallengingTeamScore = c.ChallengedTeamScore THEN 1 ELSE 0 END) Ties
+            FROM vwCompletedChallenge c
+            INNER JOIN tblTeam t ON CASE WHEN c.ChallengingTeamId = @teamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END = t.TeamId
+            WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'TA'
+                AND c.Map = @map
+            GROUP BY CASE WHEN ChallengingTeamId = @teamId THEN ChallengedTeamId ELSE ChallengingTeamId END, t.Name, t.Tag
+            ORDER BY t.Name
+
+            SELECT s.PlayerId, p.Name, COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, SUM(c.OvertimePeriods) OvertimePeriods, t.TeamId, t.Name TeamName, t.Tag TeamTag, bc.ChallengeId, t1.Tag ChallengingTeamTag, t2.Tag ChallengedTeamTag, bc.Map, bc.MatchTime, sb.Kills BestKills, sb.Assists BestAssists, sb.Deaths BestDeaths, sb.Damage BestDamage
+            FROM tblStat s
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN (
+                SELECT
+                    ROW_NUMBER() OVER (PARTITION BY s.PlayerId, s.TeamId ORDER BY CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    d.Damage
+                FROM tblStat s
+                INNER JOIN vwCompletedChallenge c2 ON s.ChallengeId = c2.ChallengeId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c2.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+                WHERE (@season = 0 OR c2.Season = @season)
+                    AND c2.Postseason = @postseason
+                    AND c2.GameType = 'TA'
+                    AND c2.Map = @map
+                    ${postseason ? "" : "AND (CASE WHEN s.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)"}
+            ) sb ON s.PlayerId = sb.PlayerId AND sb.TeamId = @teamId AND sb.Row = 1
+            INNER JOIN tblChallenge bc ON sb.ChallengeId = bc.ChallengeId
+            INNER JOIN tblTeam t ON (CASE WHEN bc.ChallengingTeamId = @teamId THEN bc.ChallengedTeamId ELSE bc.ChallengingTeamId END) = t.TeamId
+            INNER JOIN tblTeam t1 ON bc.ChallengingTeamId = t1.TeamId
+            INNER JOIN tblTeam t2 ON bc.ChallengedTeamId = t2.TeamId
+            LEFT OUTER JOIN (
+                SELECT s2.TeamId, s2.PlayerId, COUNT(DISTINCT c2.ChallengeId) Games, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT TeamId, PlayerId, ChallengeId, SUM(Deaths) Deaths
+                    FROM tblStat
+                    GROUP BY TeamId, PlayerId, ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE (@season = 0 OR c2.Season = @season)
+                    AND c2.Postseason = @postseason
+                    AND c2.GameType = 'TA'
+                    AND c2.Map = @map
+                    AND s2.TeamId = @teamId
+                    ${postseason ? "" : "AND (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season)"}
+                GROUP BY s2.TeamId, s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId AND s.TeamId = d.TeamId
+            WHERE s.TeamId = @teamId
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'TA'
+                AND c.Map = @map
+                ${postseason ? "" : "AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)"}
+            GROUP BY s.PlayerId, p.Name, d.Games, d.Damage, d.Deaths, t.TeamId, t.Tag, t.Name, bc.ChallengeId, t1.Tag, t2.Tag, bc.Map, bc.MatchTime, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
+            ORDER BY p.Name
+
+            SELECT
+                c.ChallengeId,
+                c.ChallengingTeamId,
+                tc1.Name ChallengingTeamName,
+                tc1.Tag ChallengingTeamTag,
+                c.ChallengingTeamScore,
+                c.ChallengedTeamId,
+                tc2.Name ChallengedTeamName,
+                tc2.Tag ChallengedTeamTag,
+                c.ChallengedTeamScore,
+                CASE WHEN c.RatingChange IS NULL THEN NULL ELSE CASE WHEN c.ChallengingTeamId = @teamId THEN c.RatingChange ELSE 0 - c.RatingChange END END RatingChange,
+                c.Map,
+                c.MatchTime,
+                c.GameType,
+                s.TeamId StatTeamId,
+                tc3.Name StatTeamName,
+                tc3.Tag StatTeamTag,
+                s.PlayerId,
+                p.Name,
+                s.Captures,
+                s.Pickups,
+                s.CarrierKills,
+                s.Returns,
+                s.Kills,
+                s.Assists,
+                s.Deaths,
+                s.Damage
+            FROM vwCompletedChallenge c
+            INNER JOIN tblTeam tc1 ON c.ChallengingTeamId = tc1.TeamId
+            INNER JOIN tblTeam tc2 ON c.ChallengedTeamId = tc2.TeamId
+            LEFT OUTER JOIN (
+                SELECT
+                    ROW_NUMBER() OVER (PARTITION BY s.ChallengeId ORDER BY CAST(s.Kills + s.Assists AS FLOAT) / CASE WHEN s.Deaths < 1 THEN 1 ELSE s.Deaths END DESC) Row,
+                    s.ChallengeId,
+                    s.PlayerId,
+                    s.TeamId,
+                    s.Captures,
+                    s.Pickups,
+                    s.CarrierKills,
+                    s.Returns,
+                    s.Kills,
+                    s.Assists,
+                    s.Deaths,
+                    d.Damage
+                FROM tblStat s
+                INNER JOIN tblChallenge c2 ON s.ChallengeId = c2.ChallengeId
+                LEFT OUTER JOIN (
+                    SELECT PlayerId, ChallengeId, SUM(Damage) Damage
+                    FROM tblDamage
+                    WHERE TeamId <> OpponentTeamId
+                    GROUP BY PlayerId, ChallengeId
+                ) d ON c2.ChallengeId = d.ChallengeId AND s.PlayerId = d.PlayerId
+            ) s ON c.ChallengeId = s.ChallengeId AND s.Row = 1
+            LEFT OUTER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN tblTeam tc3 ON s.TeamId = tc3.TeamId
+            WHERE (c.ChallengingTeamId = @teamId OR c.ChallengedTeamId = @teamId)
+                AND (@season = 0 OR c.Season = @season)
+                AND c.Postseason = @postseason
+                AND c.GameType = 'TA'
+                AND c.Map = @map
+            ORDER BY c.MatchTime
+
+            SELECT TOP 1 DateEnd FROM tblSeason WHERE DateEnd > GETUTCDATE()
+        `, {
+            teamId: {type: Db.INT, value: team.id},
+            map: {type: Db.VARCHAR(100), value: map},
+            season: {type: Db.INT, value: season},
+            postseason: {type: Db.BIT, value: postseason}
+        });
+
+        cache = data && data.recordsets && data.recordsets.length === 5 && {
+            records: data.recordsets[0][0] && {
+                teamId: data.recordsets[0][0].TeamId,
+                name: data.recordsets[0][0].Name,
+                tag: data.recordsets[0][0].Tag,
+                wins: data.recordsets[0][0].Wins,
+                losses: data.recordsets[0][0].Losses,
+                ties: data.recordsets[0][0].Ties,
+                winsHome: data.recordsets[0][0].WinsHome,
+                lossesHome: data.recordsets[0][0].LossesHome,
+                tiesHome: data.recordsets[0][0].TiesHome,
+                winsAway: data.recordsets[0][0].WinsAway,
+                lossesAway: data.recordsets[0][0].LossesAway,
+                tiesAway: data.recordsets[0][0].TiesAway,
+                winsNeutral: data.recordsets[0][0].WinsNeutral,
+                lossesNeutral: data.recordsets[0][0].LossesNeutral,
+                tiesNeutral: data.recordsets[0][0].TiesNeutral,
+                wins2v2: data.recordsets[0][0].Wins2v2,
+                losses2v2: data.recordsets[0][0].Losses2v2,
+                ties2v2: data.recordsets[0][0].Ties2v2,
+                wins3v3: data.recordsets[0][0].Wins3v3,
+                losses3v3: data.recordsets[0][0].Losses3v3,
+                ties3v3: data.recordsets[0][0].Ties3v3,
+                wins4v4: data.recordsets[0][0].Wins4v4,
+                losses4v4: data.recordsets[0][0].Losses4v4,
+                ties4v4: data.recordsets[0][0].Ties4v4
+            } || void 0,
+            opponents: data.recordsets[1].map((row) => ({
+                teamId: row.TeamId,
+                name: row.Name,
+                tag: row.Tag,
+                wins: row.Wins,
+                losses: row.Losses,
+                ties: row.Ties
+            })),
+            stats: data.recordsets[2].map((row) => ({
+                playerId: row.PlayerId,
+                name: row.Name,
+                games: row.Games,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                damage: row.Damage,
+                gamesWithDamage: row.GamesWithDamage,
+                deathsInGamesWithDamage: row.DeathsInGamesWithDamage,
+                overtimePeriods: row.OvertimePeriods,
+                teamId: row.TeamId,
+                teamName: row.TeamName,
+                teamTag: row.TeamTag,
+                challengeId: row.ChallengeId,
+                challengingTeamTag: row.ChallengingTeamTag,
+                challengedTeamTag: row.ChallengedTeamTag,
+                map: row.Map,
+                matchTime: row.MatchTime,
+                bestKills: row.BestKills,
+                bestAssists: row.BestAssists,
+                bestDeaths: row.BestDeaths,
+                bestDamage: row.BestDamage
+            })),
+            gameLog: data.recordsets[3].map((row) => ({
+                challengeId: row.ChallengeId,
+                challengingTeamId: row.ChallengingTeamId,
+                challengingTeamName: row.ChallengingTeamName,
+                challengingTeamTag: row.ChallengingTeamTag,
+                challengingTeamScore: row.ChallengingTeamScore,
+                challengedTeamId: row.ChallengedTeamId,
+                challengedTeamName: row.ChallengedTeamName,
+                challengedTeamTag: row.ChallengedTeamTag,
+                challengedTeamScore: row.ChallengedTeamScore,
+                ratingChange: row.RatingChange,
+                map: row.Map,
+                matchTime: row.MatchTime,
+                gameType: row.GameType,
+                statTeamId: row.StatTeamId,
+                statTeamName: row.StatTeamName,
+                statTeamTag: row.StatTeamTag,
+                playerId: row.PlayerId,
+                name: row.Name,
+                captures: row.Captures,
+                pickups: row.Pickups,
+                carrierKills: row.Pickups,
+                returns: row.Returns,
+                kills: row.Kills,
+                assists: row.Assists,
+                deaths: row.Deaths,
+                damage: row.Damage
+            }))
+        } || {records: void 0, opponents: void 0, stats: void 0, gameLog: void 0};
+
+        if (!settings.disableRedis) {
+            await Cache.add(key, cache, season === void 0 && data && data.recordsets && data.recordsets[4] && data.recordsets[4][0] && data.recordsets[4][0].DateEnd || void 0, [`${settings.redisPrefix}:invalidate:challenge:closed`]);
         }
 
         return cache;
