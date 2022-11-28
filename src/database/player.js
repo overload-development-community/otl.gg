@@ -256,12 +256,16 @@ class PlayerDb {
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.GameType = @gameType
                     AND d.PlayerId = @playerId
-                    AND (c2.Postseason = 1 OR (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season))
+                    ${all ? "" : /* sql */`
+                        AND (c2.Postseason = 1 OR (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season))
+                    `}
                 GROUP BY c2.Season, c2.Postseason, s2.PlayerId, s2.TeamId
             ) d ON p.PlayerId = d.PlayerId AND t.TeamID = d.TeamID AND c.Season = d.Season AND c.Postseason = d.Postseason
             WHERE s.PlayerId = @playerId
                 AND c.GameType = @gameType
-                AND (c.Postseason = 1 OR (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season))
+                ${all ? "" : /* sql */`
+                    AND (c.Postseason = 1 OR (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season))
+                `}
             GROUP BY c.Season, c.Postseason, s.TeamId, t.Tag, t.Name, d.Damage, d.Games, d.Deaths
             ORDER BY c.Season, c.Postseason, MIN(c.MatchTime)
 
@@ -285,12 +289,16 @@ class PlayerDb {
                     GROUP BY TeamId, PlayerId, ChallengeId
                 ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
                 WHERE c2.GameType = @gameType
-                    AND (c2.Postseason = 1 OR (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season))
+                    ${all ? "" : /* sql */`
+                        AND (c2.Postseason = 1 OR (CASE WHEN s2.TeamId = c2.ChallengingTeamId THEN c2.ChallengedTeamId ELSE c2.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c2.Season))
+                    `}
                 GROUP BY s2.TeamId, s2.PlayerId
             ) d ON p.PlayerId = d.PlayerId AND s.TeamId = d.TeamId
             WHERE s.PlayerId = @playerId
                 AND c.GameType = @gameType
-                AND (c.Postseason = 1 OR (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season))
+                ${all ? "" : /* sql */`
+                    AND (c.Postseason = 1 OR (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season))
+                `}
             GROUP BY s.TeamId, t.Tag, t.Name, d.Damage, d.Games, d.Deaths
             ORDER BY t.Name
 
