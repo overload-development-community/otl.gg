@@ -210,9 +210,11 @@ class TeamDb {
         /** @type {TeamDbTypes.CreateRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
+            DECLARE @season INT
             DECLARE @teamId INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+            SELECT @season = MAX(Season) FROM tblSeason
 
             INSERT INTO tblTeam (Name, Tag) VALUES (@name, @tag)
 
@@ -230,6 +232,8 @@ class TeamDb {
             INSERT INTO tblJoinBan (PlayerId) VALUES (@playerId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
             DELETE FROM tblNewTeam WHERE NewTeamId = @newTeamId
+            INSERT INTO tblLowerTier (TeamID, Season) VALUES (@teamId, @season)
+            INSERT INTO tblTeamRating (Season, TeamID, Rating, Qualified) VALUES (@season, @teamId, 0, 0)
 
             SELECT @teamId TeamId, @playerId PlayerId
         `, {
@@ -2794,8 +2798,10 @@ class TeamDb {
         /** @type {TeamDbTypes.ReinstateRecordsets} */
         const data = await db.query(/* sql */`
             DECLARE @playerId INT
+            DECLARE @season INT
 
             SELECT @playerId = PlayerId FROM tblPlayer WHERE DiscordId = @discordId
+            SELECT @season = MAX(Season) FROM tblSeason
 
             UPDATE tblTeam SET Disbanded = 0 WHERE TeamId = @teamId
 
@@ -2804,6 +2810,11 @@ class TeamDb {
             DELETE FROM tblJoinBan WHERE PlayerId = @playerId
             INSERT INTO tblJoinBan (PlayerId) VALUES (@playerId)
             DELETE FROM tblTeamBan WHERE TeamId = @teamId AND PlayerId = @playerId
+            MERGE tblLowerTier lt
+                USING (VALUES (@teamId, @season)) AS v (TeamId, Season)
+                ON lt.TeamId = v.TeamId AND lt.Season = v.Season
+            WHEN NOT MATCHED THEN
+                INSERT (TeamId, Season) VALUES (v.TeamId, v.Season);
 
             SELECT @playerId PlayerId
         `, {
