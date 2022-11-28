@@ -4,6 +4,24 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.2.0 - 11/27/2022
+
+* The league has been divided into two tiers, the upper league and the lower league.
+* New `/league` command to manually move teams into the appropriate league as necessary.
+* Individual player stats are now reported vs. upper league teams only, except on an individual player's page, where it defaults to vs. upper league teams, but you can choose vs. all teams.
+* New teams are now set to lower league and not qualified automatically.
+* Reinstated teams are now set to lower league automatically.
+* The records page does not count games vs. lower league teams.
+* New team map performance page.  Get to it by clicking on a map name in the records section of a team page.
+* Team awards are now shown.  Currently, we show MSI winners, and 1st, 2nd, and 3rd place finishers in the season championships.  Awards are for teams and all individuals that played a match in the appropriate tournament.  Best of the Rest tournament winners will probably be added later, stay tuned!
+* Disbanded teams are only shown in the current season.  If they played in a previous season, they are listed among all teams, regardless if they left in that season.
+* Standings page now indicates which league a team is in, and was in for previous seasons.
+* Improved SEO for the website, so that Google search results are more descriptive.
+* Fix various bugs with page options on the team page.
+* Fix pluralization bug on records page.
+* Fix various issues with Discord interactions.
+* Package updates.
+
 ## v8.1.5 - 11/16/2022
 
 * Added `/confirmtime` as a workaround for the `/suggesttime` button disappearing.  This is the only confirm command planned for now.
