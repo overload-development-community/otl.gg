@@ -166,12 +166,23 @@ declare namespace PlayerTypes {
     }
 
     type PlayerStats = {
-        ta: GameStats & {
-            games: number
-            deathsInGamesWithDamage: number
+        upper: {
+            ta: GameStats & {
+                games: number
+                deathsInGamesWithDamage: number
+            }
+            ctf: GameStats & CTFStats & {
+                games: number
+            }
         }
-        ctf: GameStats & CTFStats & {
-            games: number
+        all: {
+            ta: GameStats & {
+                games: number
+                deathsInGamesWithDamage: number
+            }
+            ctf: GameStats & CTFStats & {
+                games: number
+            }
         }
         damage: {
             [x: string]: number

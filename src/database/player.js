@@ -2210,6 +2210,60 @@ class PlayerDb {
                 AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
             GROUP BY d.Damage
 
+            SELECT COUNT(s.StatId) Games, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Deaths DeathsInGamesWithDamage, @season Season
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN (
+                SELECT s2.PlayerId, SUM(d.Damage) Damage, SUM(s2.Deaths) Deaths
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT d2.PlayerId, d2.ChallengeId, SUM(d2.Damage) Damage
+                    FROM tblDamage d2
+                    INNER JOIN vwCompletedChallenge c3 ON d2.ChallengeId = c3.ChallengeId
+                    WHERE d2.TeamId <> d2.OpponentTeamId
+                    GROUP BY d2.PlayerId, d2.ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                INNER JOIN (
+                    SELECT s3.PlayerId, s3.TeamId, s3.ChallengeId, SUM(s3.Deaths) Deaths
+                    FROM tblStat s3
+                    INNER JOIN vwCompletedChallenge c3 ON s3.ChallengeId = c3.ChallengeId
+                    GROUP BY s3.PlayerId, s3.TeamId, s3.ChallengeId
+                ) s2 ON d.PlayerId = s2.PlayerId AND s2.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                    AND c2.Postseason = 0
+                    AND c2.GameType = 'TA'
+                GROUP BY s2.PlayerId
+            ) d ON p.PlayerId = d.PlayerId
+            WHERE p.DiscordId = @discordId
+                AND c.Season = @season
+                AND c.GameType = 'TA'
+            GROUP BY d.Damage, d.Deaths
+
+            SELECT COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, @season Season
+            FROM tblStat s
+            INNER JOIN vwCompletedChallenge c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
+            LEFT OUTER JOIN (
+                SELECT d.PlayerId, SUM(d.Damage) Damage
+                FROM vwCompletedChallenge c2
+                INNER JOIN (
+                    SELECT d2.PlayerId, d2.TeamId, d2.ChallengeId, SUM(d2.Damage) Damage
+                    FROM tblDamage d2
+                    INNER JOIN vwCompletedChallenge c3 ON d2.ChallengeId = c3.ChallengeId
+                    WHERE d2.TeamId <> d2.OpponentTeamId
+                    GROUP BY d2.PlayerId, d2.TeamId, d2.ChallengeId
+                ) d ON d.ChallengeId = c2.ChallengeId
+                WHERE c2.Season = @season
+                    AND c2.Postseason = 0
+                    AND c2.GameType = 'CTF'
+                GROUP BY d.PlayerId
+            ) d ON p.PlayerId = d.PlayerId
+            WHERE p.DiscordId = @discordId
+                AND c.Season = @season
+                AND c.GameType = 'CTF'
+            GROUP BY d.Damage
+
             SELECT d.Weapon, SUM(Damage) Damage
             FROM tblDamage d
             INNER JOIN vwCompletedChallenge c ON d.ChallengeId = c.ChallengeId
@@ -2227,34 +2281,57 @@ class PlayerDb {
             ) ON p.PlayerId = r.PlayerId
             WHERE p.DiscordId = @discordId
         `, {discordId: {type: Db.VARCHAR(24), value: pilot.id}});
-        return data && data.recordsets && data.recordsets.length === 4 && {
-            ta: data.recordsets[0].length === 0 ? void 0 : {
-                games: data.recordsets[0][0].Games,
-                kills: data.recordsets[0][0].Kills,
-                assists: data.recordsets[0][0].Assists,
-                deaths: data.recordsets[0][0].Deaths,
-                damage: data.recordsets[0][0].Damage,
-                deathsInGamesWithDamage: data.recordsets[0][0].DeathsInGamesWithDamage
+        return data && data.recordsets && data.recordsets.length === 6 && {
+            upper: {
+                ta: data.recordsets[0].length === 0 ? void 0 : {
+                    games: data.recordsets[0][0].Games,
+                    kills: data.recordsets[0][0].Kills,
+                    assists: data.recordsets[0][0].Assists,
+                    deaths: data.recordsets[0][0].Deaths,
+                    damage: data.recordsets[0][0].Damage,
+                    deathsInGamesWithDamage: data.recordsets[0][0].DeathsInGamesWithDamage
+                },
+                ctf: data.recordsets[1].length === 0 ? void 0 : {
+                    games: data.recordsets[1][0].Games,
+                    captures: data.recordsets[1][0].Captures,
+                    pickups: data.recordsets[1][0].Pickups,
+                    carrierKills: data.recordsets[1][0].CarrierKills,
+                    returns: data.recordsets[1][0].Returns,
+                    kills: data.recordsets[1][0].Kills,
+                    assists: data.recordsets[1][0].Assists,
+                    deaths: data.recordsets[1][0].Deaths,
+                    damage: data.recordsets[1][0].Damage
+                }
             },
-            ctf: data.recordsets[1].length === 0 ? void 0 : {
-                games: data.recordsets[1][0].Games,
-                captures: data.recordsets[1][0].Captures,
-                pickups: data.recordsets[1][0].Pickups,
-                carrierKills: data.recordsets[1][0].CarrierKills,
-                returns: data.recordsets[1][0].Returns,
-                kills: data.recordsets[1][0].Kills,
-                assists: data.recordsets[1][0].Assists,
-                deaths: data.recordsets[1][0].Deaths,
-                damage: data.recordsets[1][0].Damage
+            all: {
+                ta: data.recordsets[2].length === 0 ? void 0 : {
+                    games: data.recordsets[2][0].Games,
+                    kills: data.recordsets[2][0].Kills,
+                    assists: data.recordsets[2][0].Assists,
+                    deaths: data.recordsets[2][0].Deaths,
+                    damage: data.recordsets[2][0].Damage,
+                    deathsInGamesWithDamage: data.recordsets[2][0].DeathsInGamesWithDamage
+                },
+                ctf: data.recordsets[3].length === 0 ? void 0 : {
+                    games: data.recordsets[3][0].Games,
+                    captures: data.recordsets[3][0].Captures,
+                    pickups: data.recordsets[3][0].Pickups,
+                    carrierKills: data.recordsets[3][0].CarrierKills,
+                    returns: data.recordsets[3][0].Returns,
+                    kills: data.recordsets[3][0].Kills,
+                    assists: data.recordsets[3][0].Assists,
+                    deaths: data.recordsets[3][0].Deaths,
+                    damage: data.recordsets[3][0].Damage
+                }
             },
-            damage: data.recordsets[2].reduce((prev, cur) => {
+            damage: data.recordsets[4].reduce((prev, cur) => {
                 prev[cur.Weapon] = cur.Damage;
                 return prev;
             }, {}),
-            playerId: data.recordsets[3][0].PlayerId,
-            name: data.recordsets[3][0].Name,
-            tag: data.recordsets[3][0].Tag,
-            season: data.recordsets[3][0].Season
+            playerId: data.recordsets[5][0].PlayerId,
+            name: data.recordsets[5][0].Name,
+            tag: data.recordsets[5][0].Tag,
+            season: data.recordsets[5][0].Season
         } || void 0;
     }
 

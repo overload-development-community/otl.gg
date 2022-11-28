@@ -604,6 +604,13 @@ declare namespace PlayerDbTypes {
             (GameStats & CTFStats & {
                 Games: number
             })[],
+            (GameStats & {
+                Games: number
+                DeathsInGamesWithDamage: number
+            })[],
+            (GameStats & CTFStats & {
+                Games: number
+            })[],
             {
                 Weapon: string
                 Damage: number

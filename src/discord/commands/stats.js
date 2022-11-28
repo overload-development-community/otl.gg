@@ -80,20 +80,34 @@ class Stats {
             throw err;
         }
 
-        if (stats && (stats.ta ? stats.ta.games : 0) + (stats.ctf ? stats.ctf.games : 0) > 0) {
+        if (stats && stats.upper && stats.all && (stats.upper.ta ? stats.upper.ta.games : 0) + (stats.upper.ctf ? stats.upper.ctf.games : 0) + (stats.all.ta ? stats.all.ta.games : 0) + (stats.all.ctf ? stats.all.ctf.games : 0) > 0) {
             const fields = [];
 
-            if (stats.ta && stats.ta.games > 0) {
+            if (stats.upper.ta && stats.upper.ta.games > 0) {
                 fields.push({
-                    name: "Team Anarchy",
-                    value: `${stats.ta.games} Game${stats.ta.games === 1 ? "" : "s"}, ${((stats.ta.kills + stats.ta.assists) / (stats.ta.deaths < 1 ? 1 : stats.ta.deaths)).toFixed(3)} KDA, ${stats.ta.kills} Kill${stats.ta.kills === 1 ? "" : "s"}, ${stats.ta.assists} Assist${stats.ta.assists === 1 ? "" : "s"}, ${stats.ta.deaths} Death${stats.ta.deaths === 1 ? "" : "s"}${stats.ta.damage ? `, ${stats.ta.damage.toFixed(0)} Damage, ${(stats.ta.damage / Math.max(stats.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
+                    name: "Team Anarchy vs. Upper League",
+                    value: `${stats.upper.ta.games} Game${stats.upper.ta.games === 1 ? "" : "s"}, ${((stats.upper.ta.kills + stats.upper.ta.assists) / (stats.upper.ta.deaths < 1 ? 1 : stats.upper.ta.deaths)).toFixed(3)} KDA, ${stats.upper.ta.kills} Kill${stats.upper.ta.kills === 1 ? "" : "s"}, ${stats.upper.ta.assists} Assist${stats.upper.ta.assists === 1 ? "" : "s"}, ${stats.upper.ta.deaths} Death${stats.upper.ta.deaths === 1 ? "" : "s"}${stats.upper.ta.damage ? `, ${stats.upper.ta.damage.toFixed(0)} Damage, ${(stats.upper.ta.damage / Math.max(stats.upper.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
                 });
             }
 
-            if (stats.ctf && stats.ctf.games > 0) {
+            if (stats.upper.ctf && stats.upper.ctf.games > 0) {
                 fields.push({
-                    name: "Capture the Flag",
-                    value: `${stats.ctf.games} Game${stats.ctf.games === 1 ? "" : "s"}, ${stats.ctf.captures} Capture${stats.ctf.captures === 1 ? "" : "s"}, ${stats.ctf.pickups} Pickup${stats.ctf.pickups === 1 ? "" : "s"}, ${stats.ctf.carrierKills} Carrier Kill${stats.ctf.carrierKills === 1 ? "" : "s"}, ${stats.ctf.returns} Return${stats.ctf.returns === 1 ? "" : "s"}, ${((stats.ctf.kills + stats.ctf.assists) / (stats.ctf.deaths < 1 ? 1 : stats.ctf.deaths)).toFixed(3)} KDA${stats.ctf.damage ? `, ${stats.ctf.damage.toFixed(0)} Damage` : ""}`
+                    name: "Capture the Flag vs. Upper League",
+                    value: `${stats.upper.ctf.games} Game${stats.upper.ctf.games === 1 ? "" : "s"}, ${stats.upper.ctf.captures} Capture${stats.upper.ctf.captures === 1 ? "" : "s"}, ${stats.upper.ctf.pickups} Pickup${stats.upper.ctf.pickups === 1 ? "" : "s"}, ${stats.upper.ctf.carrierKills} Carrier Kill${stats.upper.ctf.carrierKills === 1 ? "" : "s"}, ${stats.upper.ctf.returns} Return${stats.upper.ctf.returns === 1 ? "" : "s"}, ${((stats.upper.ctf.kills + stats.upper.ctf.assists) / (stats.upper.ctf.deaths < 1 ? 1 : stats.upper.ctf.deaths)).toFixed(3)} KDA${stats.upper.ctf.damage ? `, ${stats.upper.ctf.damage.toFixed(0)} Damage` : ""}`
+                });
+            }
+
+            if (stats.all.ta && stats.all.ta.games > 0) {
+                fields.push({
+                    name: "Team Anarchy vs. All Teams",
+                    value: `${stats.all.ta.games} Game${stats.all.ta.games === 1 ? "" : "s"}, ${((stats.all.ta.kills + stats.all.ta.assists) / (stats.all.ta.deaths < 1 ? 1 : stats.all.ta.deaths)).toFixed(3)} KDA, ${stats.all.ta.kills} Kill${stats.all.ta.kills === 1 ? "" : "s"}, ${stats.all.ta.assists} Assist${stats.all.ta.assists === 1 ? "" : "s"}, ${stats.all.ta.deaths} Death${stats.all.ta.deaths === 1 ? "" : "s"}${stats.all.ta.damage ? `, ${stats.all.ta.damage.toFixed(0)} Damage, ${(stats.all.ta.damage / Math.max(stats.all.ta.deathsInGamesWithDamage, 1)).toFixed(2)} Damage Per Death` : ""}`
+                });
+            }
+
+            if (stats.all.ctf && stats.all.ctf.games > 0) {
+                fields.push({
+                    name: "Capture the Flag vs. All Teams",
+                    value: `${stats.all.ctf.games} Game${stats.all.ctf.games === 1 ? "" : "s"}, ${stats.all.ctf.captures} Capture${stats.all.ctf.captures === 1 ? "" : "s"}, ${stats.all.ctf.pickups} Pickup${stats.all.ctf.pickups === 1 ? "" : "s"}, ${stats.all.ctf.carrierKills} Carrier Kill${stats.all.ctf.carrierKills === 1 ? "" : "s"}, ${stats.all.ctf.returns} Return${stats.all.ctf.returns === 1 ? "" : "s"}, ${((stats.all.ctf.kills + stats.all.ctf.assists) / (stats.all.ctf.deaths < 1 ? 1 : stats.all.ctf.deaths)).toFixed(3)} KDA${stats.all.ctf.damage ? `, ${stats.all.ctf.damage.toFixed(0)} Damage` : ""}`
                 });
             }
 
