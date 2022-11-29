@@ -70,7 +70,7 @@ class OpponentView {
                         <div class="title">Chance of Winning</div>
                         <div class="team1wins">${statistics.team1Score > statistics.team2Score ? `<div class="diamond${team1.role && team1.role.color ? "" : "-empty"}" ${team1.role && team1.role.color ? `style="background-color: ${team1.role.hexColor};"` : ""}></div>` : ""} <a href="/team/${team1.tag}">${team1.tag}</a> <span class="numeric">${(100 * statistics.chance).toFixed(2)}</span>%</div>
                         <div class="ties"></div>
-                        <div class="team2wins"><span class="numeric">${(100 * (1 - statistics.chance)).toFixed(2)}%</span> <a href="/team/${team2.tag}">${team2.tag}</a> ${statistics.team1Score < statistics.team2Score ? `<div class="diamond${team2.role && team2.role.color ? "" : "-empty"}" ${team2.role && team2.role.color ? `style="background-color: ${team2.role.hexColor};"` : ""}></div>` : ""}</div>
+                        <div class="team2wins"><span class="numeric">${(100 * (1 - statistics.chance)).toFixed(2)}</span>% <a href="/team/${team2.tag}">${team2.tag}</a> ${statistics.team1Score < statistics.team2Score ? `<div class="diamond${team2.role && team2.role.color ? "" : "-empty"}" ${team2.role && team2.role.color ? `style="background-color: ${team2.role.hexColor};"` : ""}></div>` : ""}</div>
                         <div></div>
                     `}
                 </div>

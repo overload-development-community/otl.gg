@@ -61,7 +61,7 @@ class Opponent {
             /** @type {number[]} */
             const pctDiff = [];
 
-            matches.forEach((match) => {
+            matches.filter((match) => match.gameType === "TA").forEach((match) => {
                 pctDiff.push((match.challengingTeamScore <= match.challengedTeamScore && match.challengingTeamId === team1.id || match.challengingTeamScore > match.challengedTeamScore && match.challengingTeamId === team2.id ? -1 : 1) * (1 - (match.challengingTeamScore <= match.challengedTeamScore ? match.challengingTeamScore / match.challengedTeamScore : match.challengedTeamScore / match.challengingTeamScore)));
             });
 
