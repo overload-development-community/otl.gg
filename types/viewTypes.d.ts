@@ -55,6 +55,12 @@ declare namespace ViewTypes {
         seasonList: number[]
         season: number
         postseason: boolean
+        statistics: {
+            team1Score: number
+            team2Score: number
+            marginOfError: number
+            chance: number
+        }
     }
 
     type PlayerViewParameters = PlayerTypes.CareerData & {

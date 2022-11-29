@@ -28,7 +28,7 @@ class OpponentView {
      * @returns {string} An HTML string of the team.
      */
     static get(data) {
-        const {team1, team2, seasonList, season, postseason, records, stats, matches} = data;
+        const {team1, team2, seasonList, season, postseason, records, stats, matches, statistics} = data;
         let team;
 
         return /* html */`
@@ -60,6 +60,19 @@ class OpponentView {
                         <div class="team2wins"><span class="numeric">${record.team2wins}</span> <a href="/team/${team2.tag}">${team2.tag}</a> ${record.team1wins < record.team2wins ? `<div class="diamond${team2.role && team2.role.color ? "" : "-empty"}" ${team2.role && team2.role.color ? `style="background-color: ${team2.role.hexColor};"` : ""}></div>` : ""}</div>
                         <div></div>
                     `).join("")}
+                    ${matches.length === 0 ? "" : /* html */`
+                        <div class="section">Odds</div>
+                        <div class="title">Projected Score</div>
+                        <div class="team1wins">${statistics.team1Score > statistics.team2Score ? `<div class="diamond${team1.role && team1.role.color ? "" : "-empty"}" ${team1.role && team1.role.color ? `style="background-color: ${team1.role.hexColor};"` : ""}></div>` : ""} <a href="/team/${team1.tag}">${team1.tag}</a> <span class="numeric">${statistics.team1Score.toFixed(1)}</span></div>
+                        <div class="ties">+/- <span class="numeric">${statistics.marginOfError.toFixed(1)}</span></div>
+                        <div class="team2wins"><span class="numeric">${statistics.team2Score.toFixed(1)}</span> <a href="/team/${team2.tag}">${team2.tag}</a> ${statistics.team1Score < statistics.team2Score ? `<div class="diamond${team2.role && team2.role.color ? "" : "-empty"}" ${team2.role && team2.role.color ? `style="background-color: ${team2.role.hexColor};"` : ""}></div>` : ""}</div>
+                        <div></div>
+                        <div class="title">Chance of Winning</div>
+                        <div class="team1wins">${statistics.team1Score > statistics.team2Score ? `<div class="diamond${team1.role && team1.role.color ? "" : "-empty"}" ${team1.role && team1.role.color ? `style="background-color: ${team1.role.hexColor};"` : ""}></div>` : ""} <a href="/team/${team1.tag}">${team1.tag}</a> <span class="numeric">${(100 * statistics.chance).toFixed(2)}</span>%</div>
+                        <div class="ties"></div>
+                        <div class="team2wins"><span class="numeric">${(100 * (1 - statistics.chance)).toFixed(2)}%</span> <a href="/team/${team2.tag}">${team2.tag}</a> ${statistics.team1Score < statistics.team2Score ? `<div class="diamond${team2.role && team2.role.color ? "" : "-empty"}" ${team2.role && team2.role.color ? `style="background-color: ${team2.role.hexColor};"` : ""}></div>` : ""}</div>
+                        <div></div>
+                    `}
                 </div>
                 ${stats.team1.statsTA.length === 0 && stats.team1.statsCTF.length === 0 ? "" : /* html */ `
                     <div class="players">
