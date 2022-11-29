@@ -4,6 +4,11 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v8.2.1 - 11/28/2022
+
+* Added an odds section to the head to head page that shows projected score and chance of winning with 95% confidence.
+* Package updates.
+
 ## v8.2.0 - 11/27/2022
 
 * The league has been divided into two tiers, the upper league and the lower league.
