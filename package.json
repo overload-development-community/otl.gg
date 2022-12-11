@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@azure/arm-compute": "19.2.0",
-        "@azure/identity": "3.1.1",
+        "@azure/identity": "3.1.2",
         "@googleapis/calendar": "3.0.0",
         "@roncli/node-database": "roncli/node-database#v1.2.12",
         "@roncli/node-redis": "roncli/node-redis#v0.1.17",
