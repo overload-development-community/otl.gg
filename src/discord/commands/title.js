@@ -31,7 +31,7 @@ class Title {
                 .setMaxLength(100)
                 .setRequired(false))
             .setName("title")
-            .setDescription("Swaps the colors for a game.")
+            .setDescription("Sets the title for the game.")
             .setDefaultMemberPermissions("0");
     }
 
