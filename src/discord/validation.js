@@ -1167,7 +1167,7 @@ class Validation {
                 continue;
             }
 
-            Validation.challengeShouldHaveDetails(interaction, previousChallenge, member);
+            await Validation.challengeShouldHaveDetails(interaction, previousChallenge, member);
 
             if (homeMaps[option - 1] === previousChallenge.details.map) {
                 await interaction.reply({
