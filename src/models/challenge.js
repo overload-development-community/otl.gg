@@ -2829,13 +2829,30 @@ class Challenge {
                             reason: "Match update."
                         });
                     } else if (this.details.discordEvent.isScheduled()) {
-                        await this.details.discordEvent.edit({
-                            name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
-                            scheduledStartTime: this.details.matchTime,
-                            scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
-                            description: eventParameters.join("\n"),
-                            reason: "Match update."
-                        });
+                        try {
+                            await this.details.discordEvent.edit({
+                                name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                                scheduledStartTime: this.details.matchTime,
+                                scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
+                                description: eventParameters.join("\n"),
+                                reason: "Match update."
+                            });
+                        } catch {
+                            await this.details.discordEvent.delete();
+
+                            this.details.discordEvent = void 0;
+
+                            this.details.discordEvent = await Discord.createEvent({
+                                name: `${this.details.title ? `${this.details.title} - ` : ""}${this.challengingTeam.name} vs ${this.challengedTeam.name}`,
+                                scheduledStartTime: this.details.matchTime,
+                                scheduledEndTime: new Date(this.details.matchTime.getTime() + 60 * 60 * 1000),
+                                privacyLevel: DiscordJs.GuildScheduledEventPrivacyLevel.GuildOnly,
+                                entityType: DiscordJs.GuildScheduledEventEntityType.External,
+                                description: eventParameters.join("\n"),
+                                entityMetadata: {location: "OTL"},
+                                reason: "Match update."
+                            });
+                        }
                     } else {
                         await this.details.discordEvent.delete();
 
