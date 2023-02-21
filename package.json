@@ -39,7 +39,7 @@
         "tzdata": "1.0.36"
     },
     "devDependencies": {
-        "@babel/core": "7.20.12",
+        "@babel/core": "7.21.0",
         "@babel/eslint-parser": "7.19.1",
         "@types/csso": "5.0.0",
         "@types/express": "4.17.16",
