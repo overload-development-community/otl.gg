@@ -510,6 +510,17 @@ class Validation {
             });
             throw err;
         }
+
+        if (!challenge.details) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+        }
     }
 
     //       #           ##    ##                             ##   #                 ##       #  #  #                    #  #
