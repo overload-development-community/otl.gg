@@ -1696,7 +1696,7 @@ class Challenge {
             if (!challenge.details.teamSize) {
                 msg.addFields({
                     name: "Please select the team size!",
-                    value: "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `/suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can use `/confirmteamsize` to confirm the suggestion, or suggest their own."
+                    value: "Both teams must agree on the team size the match should be played at.  This must be done before reporting the match.  Use `/suggestteamsize (2|3|4|5|6|7|8)` to suggest the team size, and your opponent can confirm the suggestion, or suggest their own."
                 });
             }
 
