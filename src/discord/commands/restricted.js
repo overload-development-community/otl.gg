@@ -58,7 +58,7 @@ class Restricted {
             return false;
         }
 
-        await interaction.deferReply({ephemeral: true});
+        await interaction.deferReply({ephemeral: false});
 
         await Validation.memberShouldBeOwner(interaction, member);
         await Validation.teamShouldBeLocked(interaction, challenge.challengingTeam, member);
