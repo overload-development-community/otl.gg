@@ -1203,7 +1203,7 @@ class Challenge {
         this.setNotifyMatchStarting();
 
         try {
-            await Discord.queue(`The match at ${this.channel} has been confirmed with the final score **${this.challengingTeam.name}** ${this.details.challengingTeamScore} to **${this.challengedTeam.name}** ${this.details.challengedTeamScore}.  Please add stats and close the channel.`, Discord.alertsChannel);
+            await Discord.queue(`The match ${this.details.title ? `${this.details.title} ` : ""}at ${this.channel} has been confirmed with the final score **${this.challengingTeam.name}** ${this.details.challengingTeamScore} to **${this.challengedTeam.name}** ${this.details.challengedTeamScore}.  Please add stats and close the channel.`, Discord.alertsChannel);
 
             await this.updatePinnedPost();
         } catch (err) {
