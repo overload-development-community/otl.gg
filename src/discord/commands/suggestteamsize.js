@@ -119,6 +119,7 @@ class SuggestTeamSize {
             await Validation.challengeShouldHaveDetails(interaction, challenge, member);
             await Validation.challengeShouldNotBeVoided(interaction, challenge, member);
             await Validation.challengeShouldNotBeConfirmed(interaction, challenge, member);
+            await Validation.challengeShouldBeScheduled(interaction, challenge, member);
 
             const otherTeam = challenge.challengingTeam.id === checkTeam.id ? challenge.challengedTeam : challenge.challengingTeam;
 
@@ -162,6 +163,7 @@ class SuggestTeamSize {
                         await Validation.challengeShouldNotBeVoided(interaction, challenge, buttonMember);
                         await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
                         await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested team size.", true);
+                        await Validation.challengeShouldBeScheduled(interaction, challenge, buttonMember);
                     } catch (err) {
                         Validation.logButtonError(interaction, buttonInteraction, err);
                         return;

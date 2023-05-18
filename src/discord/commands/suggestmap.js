@@ -111,6 +111,7 @@ class SuggestMap {
             await Validation.challengeShouldNotBeLocked(interaction, challenge, member);
             await Validation.challengeShouldNotBePenalized(interaction, challenge, member);
             await Validation.challengeShouldHaveTeamSize(interaction, challenge, member);
+            await Validation.challengeShouldBeScheduled(interaction, challenge, member);
             const checkMap = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, interaction.options.getString("map", true), member);
             Validation.challengeHomesShouldNotIncludeMap(interaction, challenge, checkMap, member);
 
@@ -157,6 +158,7 @@ class SuggestMap {
                         await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
                         await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
                         await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldBeScheduled(interaction, challenge, buttonMember);
                         map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, interaction.options.getString("map", true), buttonMember);
                         await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the suggested map.", true);
                     } catch (err) {

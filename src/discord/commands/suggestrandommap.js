@@ -90,6 +90,7 @@ class SuggestRandomMap {
             await Validation.challengeShouldNotBeLocked(interaction, challenge, member);
             await Validation.challengeShouldNotBePenalized(interaction, challenge, member);
             await Validation.challengeShouldHaveTeamSize(interaction, challenge, member);
+            await Validation.challengeShouldBeScheduled(interaction, challenge, member);
             const checkMap = await Validation.randomMapShouldExist(interaction, challenge, member);
 
             const otherTeam = challenge.challengingTeam.id === checkTeam.id ? challenge.challengedTeam : challenge.challengingTeam;
@@ -135,6 +136,7 @@ class SuggestRandomMap {
                         await Validation.challengeShouldNotBeConfirmed(interaction, challenge, buttonMember);
                         await Validation.challengeShouldNotBeLocked(interaction, challenge, buttonMember);
                         await Validation.challengeShouldNotBePenalized(interaction, challenge, buttonMember);
+                        await Validation.challengeShouldBeScheduled(interaction, challenge, buttonMember);
                         map = await Validation.mapShouldBeValid(interaction, challenge.details.gameType, checkMap, buttonMember);
                         await Validation.teamsShouldBeDifferent(interaction, team, checkTeam, buttonMember, "but someone from the other team has to confirm the randomly suggested map.", true);
                     } catch (err) {

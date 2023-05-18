@@ -1,7 +1,7 @@
 /**
  * @typedef {import("../../types/azureTypes").Server} AzureTypes.Server
- * @typedef {import("../../types/ChallengeTypes").GameBoxScore} ChallengeTypes.GameBoxScore
- * @typedef {import("../../types/ChallengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
+ * @typedef {import("../../types/challengeTypes").GameBoxScore} ChallengeTypes.GameBoxScore
+ * @typedef {import("../../types/challengeTypes").GamePlayerStatsByTeam} ChallengeTypes.GamePlayerStatsByTeam
  * @typedef {import("discord.js").ButtonInteraction} DiscordJs.ButtonInteraction
  * @typedef {import("discord.js").ChatInputCommandInteraction} DiscordJs.ChatInputCommandInteraction
  * @typedef {import("discord.js").GuildMember} DiscordJs.GuildMember
