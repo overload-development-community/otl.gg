@@ -364,7 +364,7 @@ class PlayerDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
                 AND c.GameType = @gameType
-                ${all ? "" : /* sql */`
+                ${!postseason && all ? "" : /* sql */`
                     AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
                 `}
             GROUP BY o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Map, sb.Captures, sb.Pickups, sb.CarrierKills, sb.Returns, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
@@ -432,7 +432,7 @@ class PlayerDb {
                 AND (@season = 0 OR c.Season = @season)
                 AND c.Postseason = @postseason
                 AND c.GameType = @gameType
-                ${all ? "" : /* sql */`
+                ${!postseason && all ? "" : /* sql */`
                     AND (CASE WHEN s.TeamId = c.ChallengingTeamId THEN c.ChallengedTeamId ELSE c.ChallengingTeamId END) NOT IN (SELECT TeamId FROM tblLowerTier WHERE Season = c.Season)
                 `}
             GROUP BY c.Map, o.TeamId, o.Tag, o.Name, sb.ChallengeId, sb.ChallengingTeamTag, sb.ChallengedTeamTag, sb.MatchTime, sb.Captures, sb.Pickups, sb.CarrierKills, sb.Returns, sb.Kills, sb.Assists, sb.Deaths, sb.Damage
