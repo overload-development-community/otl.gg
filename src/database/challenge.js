@@ -2068,7 +2068,7 @@ class ChallengeDb {
      */
     static async setTime(challenge, date) {
         await db.query(/* sql */`
-            UPDATE tblChallenge SET MatchTime = @date, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL WHERE ChallengeId = @challengeId
+            UPDATE tblChallenge SET MatchTime = @date, DateMatchTimeNotified = NULL, DateMatchTimePassedNotified = NULL, SuggestedTime = NULL, SuggestedTimeTeamId = NULL WHERE ChallengeId = @challengeId
         `, {
             challengeId: {type: Db.INT, value: challenge.id},
             date: {type: Db.DATETIME, value: date}
