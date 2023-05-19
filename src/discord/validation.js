@@ -263,6 +263,35 @@ class Validation {
         }
     }
 
+    //       #           ##    ##                             ##   #                 ##       #  ###          ##   ##       #
+    //       #            #     #                            #  #  #                  #       #  #  #        #  #   #       #
+    //  ##   ###    ###   #     #     ##   ###    ###   ##    #    ###    ##   #  #   #     ###  ###    ##   #  #   #     ###   ##   ###
+    // #     #  #  #  #   #     #    # ##  #  #  #  #  # ##    #   #  #  #  #  #  #   #    #  #  #  #  # ##  #  #   #    #  #  # ##  #  #
+    // #     #  #  # ##   #     #    ##    #  #   ##   ##    #  #  #  #  #  #  #  #   #    #  #  #  #  ##    #  #   #    #  #  ##    #
+    //  ##   #  #   # #  ###   ###    ##   #  #  #      ##    ##   #  #   ##    ###  ###    ###  ###    ##    ##   ###    ###   ##   #
+    //                                            ###
+    /**
+     * Validates that a challenge should be older than a certain number of days.
+     * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
+     * @param {Challenge} challenge The challenge.
+     * @param {number} days The number of days.
+     * @param {DiscordJs.GuildMember} member The member.
+     * @returns {Promise} A promise that resolves when the validation is complete.
+     */
+    static async challengeShouldBeOlder(interaction, challenge, days, member) {
+        if (challenge.details.dateAdded.getDate() + days * 24 * 60 * 60 * 1000 > Date.now()) {
+            await interaction.editReply({
+                embeds: [
+                    Discord.embedBuilder({
+                        description: `Sorry, ${member}, but this challenge needs to be older than ${days} day${days === 1 ? "" : "s"}.`,
+                        color: 0xff0000
+                    })
+                ]
+            });
+            throw new Warning(`Match is newer than ${days} day${days === 1 ? "" : "s"}.`);
+        }
+    }
+
     //       #           ##    ##                             ##   #                 ##       #  ###          ##         ###   #            ##   ##                #
     //       #            #     #                            #  #  #                  #       #  #  #        #  #         #    #           #  #   #                #
     //  ##   ###    ###   #     #     ##   ###    ###   ##    #    ###    ##   #  #   #     ###  ###    ##   #  #  ###    #    ###    ##   #      #     ##    ##   # #

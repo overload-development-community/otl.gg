@@ -191,6 +191,7 @@ class Clock {
         await Validation.challengeShouldNotBeLocked(interaction, challenge, member);
         await Validation.teamShouldNotHaveRecentlyClocked(interaction, team, member);
         await Validation.teamsShouldNotHaveTooManyClockedChallenges(interaction, challenge, member);
+        await Validation.challengeShouldBeOlder(interaction, challenge, 14, member);
 
         return team;
     }
