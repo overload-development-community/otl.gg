@@ -18,7 +18,7 @@
         "url": "https://github.com/overload-development-community/otl.gg.git"
     },
     "dependencies": {
-        "@azure/arm-compute": "20.0.0",
+        "@azure/arm-compute": "21.0.0",
         "@azure/identity": "3.2.2",
         "@googleapis/calendar": "6.0.0",
         "@roncli/node-database": "roncli/node-database#v1.2.13",
