@@ -128,7 +128,7 @@ class SuggestRandomMap {
 
                     let team, map;
                     try {
-                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember, true);
                         team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
                         await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
                         await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);

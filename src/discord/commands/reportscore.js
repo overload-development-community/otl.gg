@@ -196,7 +196,7 @@ class ReportScore {
                         buttonMember = Discord.findGuildMemberById(buttonUser.id);
 
                     try {
-                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember, true);
                         const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
                         await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
                         await Validation.teamsShouldBeDifferent(interaction, checkTeam, team, buttonMember, "but someone from the other team has to confirm the match.", true);

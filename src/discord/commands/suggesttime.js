@@ -149,7 +149,7 @@ class SuggestTime {
                         buttonMember = Discord.findGuildMemberById(buttonUser.id);
 
                     try {
-                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember);
+                        await Validation.memberShouldBeCaptainOrFounder(interaction, buttonMember, true);
                         const team = await Validation.memberShouldBeOnATeam(interaction, buttonMember);
                         await Validation.teamShouldBeInChallenge(interaction, team, challenge, buttonMember);
                         await Validation.challengeShouldHaveDetails(interaction, challenge, buttonMember);

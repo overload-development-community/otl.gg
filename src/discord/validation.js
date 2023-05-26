@@ -1435,18 +1435,30 @@ class Validation {
      * Validates that the member is a captain or founder.
      * @param {DiscordJs.ChatInputCommandInteraction} interaction The interaction.
      * @param {DiscordJs.GuildMember} member The member.
+     * @param {boolean} [edit] Whether to edit the original message.  Defaults to false.
      * @returns {Promise} A promise that resolves when the validation is complete.
      */
-    static async memberShouldBeCaptainOrFounder(interaction, member) {
+    static async memberShouldBeCaptainOrFounder(interaction, member, edit) {
         if (!member.isCaptainOrFounder()) {
-            await interaction.editReply({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `Sorry, ${member}, but you must be a team captain or founder to use this command.`,
-                        color: 0xff0000
-                    })
-                ]
-            });
+            if (edit) {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but you must be a team captain or founder to use this command.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+            } else {
+                await interaction.reply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but you must be a team captain or founder to use this command.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+            }
             throw new Warning("Member is not a captain or founder.");
         }
     }
