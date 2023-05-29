@@ -703,6 +703,15 @@ class ChallengeDb {
 
             SELECT @gameType = GameType, @postseason = Postseason FROM tblChallenge WHERE ChallengeId = @challengeId
 
+            DECLARE @lastChallengeId INT
+            SELECT @lastChallengeId = MAX(c.ChallengeId)
+            FROM tblChallenge c
+            CROSS JOIN tblChallenge c2
+            WHERE c2.ChallengeId = @challengeId
+                AND c.ChallengeId < @challengeId
+                AND (c.ChallengingTeamId = c2.ChallengingTeamId OR c.ChallengingTeamId = c2.ChallengedTeamId)
+                AND (c.ChallengedTeamId = c2.ChallengingTeamId OR c.ChallengedTeamId = c2.ChallengedTeamId)
+
             SELECT
                 ChallengingTeamWins, ChallengingTeamLosses, ChallengingTeamTies,
                 ChallengingTeamRating,
@@ -745,7 +754,6 @@ class ChallengeDb {
                 LEFT OUTER JOIN tblTeamRating tr2 ON c.ChallengedTeamId = tr2.TeamId AND tr2.Season = @season
                 LEFT OUTER JOIN (
                     SELECT
-                        ROW_NUMBER() OVER (PARTITION BY CASE WHEN c.ChallengingTeamId < c.ChallengedTeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END, CASE WHEN c.ChallengingTeamId > c.ChallengedTeamId THEN c.ChallengingTeamId ELSE c.ChallengedTeamId END ORDER BY c.MatchTime DESC) Row,
                         c.ChallengeId,
                         c.ChallengingTeamId,
                         c.ChallengingTeamScore,
@@ -784,6 +792,7 @@ class ChallengeDb {
                             FROM tblStat s2
                             INNER JOIN tblChallenge c2 ON s2.ChallengeId = c2.ChallengeId
                             LEFT OUTER JOIN tblDamage d ON c2.ChallengeId = d.ChallengeId AND s2.PlayerId = d.PlayerId AND d.TeamId <> d.OpponentTeamId
+                            WHERE s2.ChallengeId = @lastChallengeId
                             GROUP BY
                                 s2.ChallengeId,
                                 s2.PlayerId,
@@ -799,8 +808,9 @@ class ChallengeDb {
                         ) s
                         INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
                     ) ON c.ChallengeId = s.ChallengeId AND s.Row = 1
-                ) s ON ((c.ChallengingTeamId = s.ChallengingTeamId AND c.ChallengedTeamId = s.ChallengedTeamId) OR (c.ChallengingTeamId = s.ChallengedTeamId AND c.ChallengedTeamId = s.ChallengingTeamId)) AND s.Row = 1
+                ) s ON ((c.ChallengingTeamId = s.ChallengingTeamId AND c.ChallengedTeamId = s.ChallengedTeamId) OR (c.ChallengingTeamId = s.ChallengedTeamId AND c.ChallengedTeamId = s.ChallengingTeamId))
                 WHERE c.ChallengeId = @challengeId
+                    AND s.ChallengeId = @lastChallengeId
             ) a
 
             SELECT p.Name, COUNT(s.StatId) Games, SUM(s.Captures) Captures, SUM(s.Pickups) Pickups, SUM(s.CarrierKills) CarrierKills, SUM(s.Returns) Returns, SUM(s.Kills) Kills, SUM(s.Assists) Assists, SUM(s.Deaths) Deaths, d.Damage, d.Games GamesWithDamage, d.Deaths DeathsInGamesWithDamage, CASE WHEN cs.StreamerId IS NULL THEN NULL ELSE p.TwitchName END TwitchName
