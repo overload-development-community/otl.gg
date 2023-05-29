@@ -1210,7 +1210,7 @@ class Validation {
             await Validation.challengeShouldHaveDetails(interaction, previousChallenge, member);
 
             if (homeMaps[option - 1] === previousChallenge.details.map) {
-                await interaction.reply({
+                await interaction.editReply({
                     embeds: [
                         Discord.embedBuilder({
                             description: `Sorry, ${member}, but this map for the home team was picked earlier in the series.  Please pick a different map.`,
