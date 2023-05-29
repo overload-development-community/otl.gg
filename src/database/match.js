@@ -69,6 +69,25 @@ class MatchDb {
                 SELECT @season = MAX(Season) FROM vwCompletedChallenge
             END
 
+            DECLARE @matches TABLE (
+                ChallengeId INT,
+                Title VARCHAR(100),
+                ChallengingTeamId INT,
+                ChallengedTeamId INT,
+                ChallengingTeamScore INT,
+                ChallengedTeamScore INT,
+                MatchTime DATETIME,
+                Map VARCHAR(100),
+                DateClosed DATETIME,
+                OvertimePeriods INT,
+                VoD VARCHAR(100),
+                RatingChange FLOAT,
+                ChallengingTeamRating FLOAT,
+                ChallengedTeamRating FLOAT,
+                GameType VARCHAR(5)
+            )
+
+            INSERT INTO @matches
             SELECT
                 ChallengeId,
                 Title,
@@ -97,6 +116,8 @@ class MatchDb {
                 AND Row <= @page * @matchesPerPage
             ORDER BY MatchTime DESC
 
+            SELECT * FROM @matches
+
             SELECT
                 s.ChallengeId,
                 s.TeamId,
@@ -116,28 +137,19 @@ class MatchDb {
             FROM tblStat s
             INNER JOIN tblTeam t ON s.TeamId = t.TeamId
             INNER JOIN tblPlayer p ON s.PlayerId = p.PlayerId
-            INNER JOIN (
-                SELECT *, ROW_NUMBER() OVER (ORDER BY MatchTime DESC) Row
-                FROM vwCompletedChallenge
-                WHERE MatchTime IS NOT NULL
-                    AND Season = @season
-                    AND DateVoided IS NULL
-                    AND DateConfirmed IS NOT NULL
-            ) c ON s.ChallengeId = c.ChallengeId
+            INNER JOIN @matches m ON s.ChallengeId = m.ChallengeId
             LEFT OUTER JOIN (
                 SELECT ChallengeId, PlayerId, SUM(Damage) Damage
                 FROM tblDamage
                 WHERE TeamId <> OpponentTeamId
                 GROUP BY ChallengeId, PlayerId
-            ) d ON c.ChallengeId = d.ChallengeId AND d.PlayerId = s.PlayerId
+            ) d ON m.ChallengeId = d.ChallengeId AND d.PlayerId = s.PlayerId
             LEFT OUTER JOIN (
                 SELECT ChallengeId, OpponentPlayerId, SUM(Damage) Damage
                 FROM tblDamage
                 WHERE TeamId <> OpponentTeamId OR PlayerId = OpponentPlayerId
                 GROUP BY ChallengeId, OpponentPlayerId
-            ) d2 ON c.ChallengeId = d2.ChallengeId AND d2.OpponentPlayerId = s.PlayerId
-            WHERE Row >= @page * @matchesPerPage - (@matchesPerPage - 1)
-                AND Row <= @page * @matchesPerPage
+            ) d2 ON m.ChallengeId = d2.ChallengeId AND d2.OpponentPlayerId = s.PlayerId
             GROUP BY
                 s.ChallengeId,
                 s.TeamId,
