@@ -4,6 +4,25 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v9.0.0 - 5/29/2023
+
+* `/clock` can no longer be done within 14 days of the challenge's creation date.
+* A match must be scheduled before the team size and map can be set.
+* `/confirmtime` now only works once per suggested time.
+* Fixed bug with `/pickmap` during tournament sets, and added debugging to prevent future issues.
+* Player page no longer filters postseason stats by league.
+* Matches page no longer misses stats for the last game on the page.
+* Cast page performance improved.
+* Match page no longer crashes if it doesn't have a match date.
+* Fixed descriptions for some slash commands.
+* Fixed bug with Discord considering events both scheduled and non-scheduled at the same time.  Quantum events, I guess?
+* Change the startup order so that Azure starts before Discord, which starts before the website.
+* Removed reference to `/confirmteamsize`.
+* Various bug fixes with `/disband` and `/notqualified`.
+* `/closegame`, `/voidgame`, and `/disband` will no longer swallow errors if the error message in Discord fails.
+* Results of several admin commands are now visible in chat.
+* Alerts channel now shows game title if it has one.
+
 ## v8.2.1 - 11/28/2022
 
 * Added an odds section to the head to head page that shows projected score and chance of winning with 95% confidence.
