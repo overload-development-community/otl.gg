@@ -45,6 +45,13 @@ const Azure = require("./src/azure"),
         await Cache.flush();
     }
 
+    // Startup Azure.
+    Azure.startup();
+
+    // Startup Discord.
+    Discord.startup();
+    await Discord.connect();
+
     // Setup express app.
     const app = express();
 
@@ -57,13 +64,6 @@ const Azure = require("./src/azure"),
         console.log(err);
         return;
     }
-
-    // Startup Discord.
-    Discord.startup();
-    await Discord.connect();
-
-    // Startup Azure.
-    Azure.startup();
 
     // Add morgan extensions.
     morganExtensions(morgan);
