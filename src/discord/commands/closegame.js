@@ -80,7 +80,7 @@ class CloseGame {
                         })
                     ]
                 });
-            } catch (_) {}
+            } catch {}
             throw err;
         }
 
