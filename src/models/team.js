@@ -913,9 +913,11 @@ class Team {
 
         for (const challengeId of challengeIds) {
             const challenge = await Challenge.getById(challengeId);
-            await challenge.loadDetails();
-            if (challenge && !challenge.details.dateConfirmed) {
-                challenge.void(this);
+            if (challenge) {
+                await challenge.loadDetails();
+                if (!challenge.details.dateConfirmed) {
+                    challenge.void(this);
+                }
             }
         }
     }
