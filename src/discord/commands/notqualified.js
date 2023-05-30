@@ -76,7 +76,7 @@ class NotQualified {
             embeds: [
                 Discord.embedBuilder({
                     description: `**${team.name}** is set as no longer being qualified to affect other teams' ratings.`,
-                    color: team.role.color
+                    color: team.role ? team.role.color : void 0
                 })
             ]
         });
