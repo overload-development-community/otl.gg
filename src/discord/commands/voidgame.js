@@ -65,14 +65,16 @@ class VoidGame {
         try {
             await challenge.void();
         } catch (err) {
-            await interaction.editReply({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
-                    })
-                ]
-            });
+            try {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+            } catch {}
             throw err;
         }
 
