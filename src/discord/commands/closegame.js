@@ -71,14 +71,16 @@ class CloseGame {
         try {
             await challenge.close(member, stats);
         } catch (err) {
-            await interaction.editReply({
-                embeds: [
-                    Discord.embedBuilder({
-                        description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                        color: 0xff0000
-                    })
-                ]
-            });
+            try {
+                await interaction.editReply({
+                    embeds: [
+                        Discord.embedBuilder({
+                            description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                            color: 0xff0000
+                        })
+                    ]
+                });
+            } catch (_) {}
             throw err;
         }
 

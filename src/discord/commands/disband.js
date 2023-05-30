@@ -128,15 +128,17 @@ class Disband {
                     try {
                         await interaction.editReply({components: []});
                     } catch {}
-                    await interaction.followUp({
-                        embeds: [
-                            Discord.embedBuilder({
-                                description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
-                                color: 0xff0000
-                            })
-                        ]
-                    });
-                    collector.stop();
+                    try {
+                        collector.stop();
+                        await interaction.followUp({
+                            embeds: [
+                                Discord.embedBuilder({
+                                    description: `Sorry, ${member}, but there was a server error.  An admin will be notified about this.`,
+                                    color: 0xff0000
+                                })
+                            ]
+                        });
+                    } catch {}
                     throw err;
                 }
 
