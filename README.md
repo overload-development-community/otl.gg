@@ -22,6 +22,7 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 * `/closegame`, `/voidgame`, and `/disband` will no longer swallow errors if the error message in Discord fails.
 * Results of several admin commands are now visible in chat.
 * Alerts channel now shows game title if it has one.
+* Package updates.
 
 ## v8.2.1 - 11/28/2022
 
