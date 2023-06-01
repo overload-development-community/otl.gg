@@ -34,7 +34,7 @@
         "mathjs": "11.8.0",
         "morgan": "1.10.0",
         "node-schedule": "2.1.1",
-        "terser": "5.17.6",
+        "terser": "5.17.7",
         "timezonecomplete": "5.12.4",
         "tzdata": "1.0.38"
     },
