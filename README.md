@@ -4,6 +4,10 @@ The Discord bot and website used for the Overload Teams League.  Visit the OTL a
 
 # Version History
 
+## v9.0.1 - 6/6/2023
+* Updates required for removal of Discord discriminator.
+* Package updates.
+
 ## v9.0.0 - 5/29/2023
 
 * `/clock` can no longer be done within 14 days of the challenge's creation date.
