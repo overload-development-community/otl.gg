@@ -45,6 +45,9 @@ let founderRole;
 /** @type {DiscordJs.TextChannel} */
 let matchResultsChannel;
 
+/** @type {DiscordJs.Role} */
+let otlAdministratorRole;
+
 /** @type {DiscordJs.Guild} */
 let otlGuild;
 
@@ -395,6 +398,7 @@ class Discord {
             captainRole = otlGuild.roles.cache.find((r) => r.name === "Captain");
             exemptRole = otlGuild.roles.cache.find((r) => r.name === "Cap Exempt");
             founderRole = otlGuild.roles.cache.find((r) => r.name === "Founder");
+            otlAdministratorRole = otlGuild.roles.cache.find((r) => r.name === "OTL Administrator");
             testersRole = otlGuild.roles.cache.find((r) => r.name === "Testers");
 
             alertsChannel = /** @type {DiscordJs.TextChannel} */ (otlGuild.channels.cache.find((c) => c.name === "otlbot-alerts")); // eslint-disable-line no-extra-parens
@@ -708,7 +712,7 @@ class Discord {
     //  ##   #      ##    # #    ##   ##   #  #   ##   ###    ##
     /**
      * Creates a new role on the Discord server.
-     * @param {DiscordJs.CreateRoleOptions} data The role data.
+     * @param {DiscordJs.RoleCreateOptions} data The role data.
      * @returns {Promise<DiscordJs.Role>} A promise that resolves with the created role.
      */
     static createRole(data) {
@@ -929,7 +933,7 @@ class Discord {
      * @returns {boolean} Whether the user is the owner.
      */
     static isOwner(member) {
-        return member && member.user.username === settings.admin.username && member.user.discriminator === settings.admin.discriminator;
+        return !!(member && otlAdministratorRole.members.find((m) => m.id === member.id));
     }
 }
 
