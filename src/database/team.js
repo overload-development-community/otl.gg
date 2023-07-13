@@ -478,6 +478,11 @@ class TeamDb {
                 ORDER BY Season DESC
             END
 
+            IF @season IS NULL
+            BEGIN
+                SELECT @season = MAX(Season) FROM tblSeason
+            END
+
             SELECT Season, Award, Description
             FROM tblTeamAward
             WHERE TeamId = @teamId
