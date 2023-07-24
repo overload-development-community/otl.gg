@@ -28,7 +28,7 @@ const Challenge = require("../models/challenge"),
     teamNameParse = /^[0-9a-zA-Z' -]{6,25}$/,
     teamTagParse = /^[0-9A-Z]{1,5}$/,
     timestampParse = /^(?<minutes>[1-9]?[0-9]):(?<seconds>[0-9]{2}(?:\.[0-9]{3})?)$/,
-    trackerUrlParse = /^https:\/\/(?:tracker|olproxy).otl.gg\/archive\/(?<gameId>[1-9][0-9]*)$/,
+    trackerUrlParse = /^https:\/\/tracker.otl.gg\/archive\/(?<gameId>[1-9][0-9]*)$/,
     urlParse = /^https?:\/\/.+$/;
 
 //  #   #          ##      #        #          #       #
