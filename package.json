@@ -36,7 +36,7 @@
         "node-schedule": "2.1.1",
         "terser": "5.24.0",
         "timezonecomplete": "5.12.4",
-        "tzdata": "1.0.38"
+        "tzdata": "1.0.39"
     },
     "devDependencies": {
         "@babel/core": "7.23.6",
